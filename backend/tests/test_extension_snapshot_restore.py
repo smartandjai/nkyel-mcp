@@ -8,7 +8,7 @@ import stat
 
 import pytest
 
-from deerflow.extensions.manager import _FileSnapshot
+from nkyel.extensions.manager import _FileSnapshot
 
 
 def test_restore_keeps_the_previous_content_when_the_publish_fails(tmp_path, monkeypatch):

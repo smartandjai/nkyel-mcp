@@ -10,8 +10,8 @@ from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, Syst
 from langchain_core.outputs import ChatGeneration, ChatResult
 from pydantic import Field
 
-from deerflow.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
+from nkyel.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
 
 
 def _char_count(messages) -> int:
@@ -92,7 +92,7 @@ def _assert_complete_inputs(model, selected, budget=None) -> str:
 
 class TestSummaryFailureSafety:
     def test_summary_model_failure_does_not_destroy_history(self):
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=_RaisingChatModel(),
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -109,7 +109,7 @@ class TestSummaryWritesChannel:
     @pytest.mark.asyncio
     async def test_rescued_user_does_not_drop_earlier_tool_exchanges(self, async_mode):
         model = _RecordingSummaryModel()
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=model,
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -146,7 +146,7 @@ class TestSummaryWritesChannel:
     @pytest.mark.asyncio
     async def test_oversized_rescued_user_window_keeps_recent_exchanges(self, async_mode, previous_summary, trim_limit):
         model = _RecordingSummaryModel()
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=model,
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -193,7 +193,7 @@ class TestSummaryWritesChannel:
     @pytest.mark.asyncio
     async def test_mixed_history_covers_old_request_and_tool_results(self, async_mode):
         model = _RecordingSummaryModel(vary_responses=True)
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=model,
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -228,7 +228,7 @@ class TestSummaryWritesChannel:
 
     def test_tool_source_coverage_applies_budget_before_escaping(self):
         model = _RecordingSummaryModel(vary_responses=True)
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=model,
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -253,8 +253,8 @@ class TestSummaryWritesChannel:
         encoded_sections = [re.findall(r"<(existing_summary|new_messages)>\n(.*?)\n</\1>", prompt, re.DOTALL) for prompt in model.prompts]
         assert any(sum(len(body) for _, body in sections) > 80 for sections in encoded_sections)
 
-    def _middleware(self) -> DeerFlowSummarizationMiddleware:
-        return DeerFlowSummarizationMiddleware(
+    def _middleware(self) -> NkyelSummarizationMiddleware:
+        return NkyelSummarizationMiddleware(
             model=_StaticChatModel(text="COMPRESSED_SUMMARY"),
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -271,7 +271,7 @@ class TestSummaryWritesChannel:
         assert any(isinstance(message, RemoveMessage) for message in out["messages"])
 
     def test_empty_summary_window_after_rescue_does_not_overwrite_existing_summary(self):
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=_StaticChatModel(text="SHOULD_NOT_BE_USED"),
             trigger=("messages", 2),
             keep=("messages", 1),
@@ -296,7 +296,7 @@ class TestSummaryWritesChannel:
 
     def test_existing_summary_is_included_when_creating_next_summary(self):
         model = _RecordingSummaryModel(text="UPDATED_SUMMARY")
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=model,
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -317,7 +317,7 @@ class TestSummaryWritesChannel:
         assert "OLD_SUMMARY_SENTINEL" in model.prompts[-1]
 
     def test_summary_text_counts_toward_summarization_trigger(self):
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=_StaticChatModel(text="UPDATED_SUMMARY"),
             trigger=("tokens", 80),
             keep=("messages", 2),
@@ -340,7 +340,7 @@ class TestSummaryWritesChannel:
         assert out["summary_text"] == "UPDATED_SUMMARY"
 
     def test_compact_state_force_ignores_trigger_threshold(self):
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=_StaticChatModel(text="FORCED_SUMMARY"),
             trigger=("messages", 100),
             keep=("messages", 2),
@@ -355,7 +355,7 @@ class TestSummaryWritesChannel:
         assert len(result.messages_to_summarize) > 0
 
     def test_single_prompt_builder_rejects_previous_summary_requiring_clipping(self):
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=_StaticChatModel(text="UPDATED_SUMMARY"),
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -372,7 +372,7 @@ class TestSummaryWritesChannel:
         assert prompt is None
 
     def test_single_prompt_builder_rejects_source_exceeding_budget(self):
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=_StaticChatModel(text="UPDATED_SUMMARY"),
             trigger=("messages", 4),
             keep=("messages", 2),
@@ -393,7 +393,7 @@ class TestSummaryWritesChannel:
             return _char_count(messages)
 
         model = _RecordingSummaryModel(vary_responses=True)
-        middleware = DeerFlowSummarizationMiddleware(
+        middleware = NkyelSummarizationMiddleware(
             model=model,
             trigger=("messages", 4),
             keep=("messages", 2),

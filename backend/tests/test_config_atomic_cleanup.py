@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.config.managed_models import ManagedModelStore
-from deerflow.config.secret_file import read_or_create_secret_file
+from nkyel.config.managed_models import ManagedModelStore
+from nkyel.config.secret_file import read_or_create_secret_file
 
 
 def _fail_unlink_where(predicate: Callable[[Path], bool], monkeypatch: pytest.MonkeyPatch) -> list[Path]:
@@ -55,8 +55,8 @@ def test_secret_creation_keeps_the_replace_error_when_cleanup_also_fails(tmp_pat
     def failing_replace(*_args, **_kwargs):
         raise OSError(5, "publish failed")
 
-    monkeypatch.setattr("deerflow.config.secret_file.os.link", no_hard_links)
-    monkeypatch.setattr("deerflow.config.secret_file.os.replace", failing_replace)
+    monkeypatch.setattr("nkyel.config.secret_file.os.link", no_hard_links)
+    monkeypatch.setattr("nkyel.config.secret_file.os.replace", failing_replace)
     attempts = _fail_unlink_where(lambda candidate: candidate.suffix == ".replacing", monkeypatch)
 
     with pytest.raises(OSError) as raised:
@@ -82,7 +82,7 @@ def test_managed_model_write_keeps_the_replace_error_when_cleanup_also_fails(tmp
     def failing_replace(*_args, **_kwargs):
         raise OSError(5, "publish failed")
 
-    monkeypatch.setattr("deerflow.config.managed_models.os.replace", failing_replace)
+    monkeypatch.setattr("nkyel.config.managed_models.os.replace", failing_replace)
     attempts = _fail_unlink_where(lambda candidate: candidate.parent == tmp_path and candidate != target, monkeypatch)
 
     with pytest.raises(OSError) as raised:

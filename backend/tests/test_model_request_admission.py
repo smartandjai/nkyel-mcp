@@ -10,8 +10,8 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from deerflow.config.model_config import RequestAdmissionConfig
-from deerflow.models import request_admission as admission
+from nkyel.config.model_config import RequestAdmissionConfig
+from nkyel.models import request_admission as admission
 
 
 @pytest.fixture
@@ -138,21 +138,21 @@ def test_non_integer_inputs_remain_rejected(values):
 
 def test_env_substitution_reaches_request_admission_from_config_file(monkeypatch, tmp_path):
     """``config.example.yaml`` promises ``$VAR`` for every field; the two strict integers must honor it end to end."""
-    from deerflow.config.app_config import AppConfig
+    from nkyel.config.app_config import AppConfig
 
-    monkeypatch.setenv("DEER_FLOW_TEST_RPM", "60")
-    monkeypatch.setenv("DEER_FLOW_TEST_QUEUE", "512")
+    monkeypatch.setenv("NKYEL_TEST_RPM", "60")
+    monkeypatch.setenv("NKYEL_TEST_QUEUE", "512")
     path = tmp_path / "config.yaml"
     path.write_text(
         yaml.safe_dump(
             {
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "models": [
                     {
                         "name": "paced",
                         "use": "langchain_openai:ChatOpenAI",
                         "model": "gpt-test",
-                        "request_admission": {"requests_per_minute": "$DEER_FLOW_TEST_RPM", "max_queue_size": "$DEER_FLOW_TEST_QUEUE"},
+                        "request_admission": {"requests_per_minute": "$NKYEL_TEST_RPM", "max_queue_size": "$NKYEL_TEST_QUEUE"},
                     }
                 ],
             }
@@ -222,13 +222,13 @@ def test_group_sharing_isolation_and_conflict(registry, clock):
 def make_model(monkeypatch, *, name="a", policy=None, provider=False):
     from langchain_core.language_models.fake_chat_models import FakeListChatModel
 
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.model_config import ModelConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.models import factory
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.model_config import ModelConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.models import factory
 
     model = ModelConfig(name=name, use="langchain_openai:ChatOpenAI", model="test", api_key="offline-test-key", request_admission=policy)
-    config = AppConfig(models=[model], sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+    config = AppConfig(models=[model], sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
     if not provider:
         monkeypatch.setattr(factory, "resolve_class", lambda *args: FakeListChatModel)
     return factory.create_chat_model(name, app_config=config, attach_tracing=False, **({} if provider else {"responses": ["ok"]}))
@@ -284,16 +284,16 @@ async def test_claude_admission_does_not_retry_inside_provider(registry, mode, s
     import anthropic
     import httpx
 
-    from deerflow.config.app_config import AppConfig
-    from deerflow.models.factory import create_chat_model
+    from nkyel.config.app_config import AppConfig
+    from nkyel.models.factory import create_chat_model
 
     config = AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "models": [
                 {
                     "name": "claude-paced",
-                    "use": "deerflow.models.claude_provider:ClaudeChatModel",
+                    "use": "nkyel.models.claude_provider:ClaudeChatModel",
                     "model": "claude-sonnet-4-6",
                     "api_key": "offline-test-key",
                     "request_admission": {"requests_per_minute": 1, "max_wait_seconds": 0.01},
@@ -343,7 +343,7 @@ async def test_claude_admission_does_not_retry_inside_provider(registry, mode, s
 
 @pytest.mark.parametrize("kwargs,attempts", [({}, 3), ({"retry_max_attempts": 7}, 7)])
 def test_claude_without_admission_preserves_wrapper_retries(kwargs, attempts):
-    from deerflow.models.claude_provider import ClaudeChatModel
+    from nkyel.models.claude_provider import ClaudeChatModel
 
     model = ClaudeChatModel(model="claude-sonnet-4-6", api_key="offline-test-key", **kwargs)
     assert model.retry_max_attempts == attempts
@@ -352,7 +352,7 @@ def test_claude_without_admission_preserves_wrapper_retries(kwargs, attempts):
 def test_claude_custom_rate_limiter_preserves_wrapper_retries():
     from langchain_core.rate_limiters import InMemoryRateLimiter
 
-    from deerflow.models.claude_provider import ClaudeChatModel
+    from nkyel.models.claude_provider import ClaudeChatModel
 
     model = ClaudeChatModel(model="claude-sonnet-4-6", api_key="offline-test-key", rate_limiter=InMemoryRateLimiter(), retry_max_attempts=7)
     assert model.retry_max_attempts == 7
@@ -360,8 +360,8 @@ def test_claude_custom_rate_limiter_preserves_wrapper_retries():
 
 @pytest.fixture
 def codex_credentials(monkeypatch):
-    from deerflow.models import openai_codex_provider as provider
-    from deerflow.models.credential_loader import CodexCliCredential
+    from nkyel.models import openai_codex_provider as provider
+    from nkyel.models.credential_loader import CodexCliCredential
 
     monkeypatch.setattr(provider, "load_codex_cli_credential", lambda: CodexCliCredential("offline-test-token", "offline-test-account"))
 
@@ -373,17 +373,17 @@ def codex_credentials(monkeypatch):
 async def test_codex_factory_retry_policy_respects_admission(monkeypatch, registry, codex_credentials, mode, status, enabled):
     import httpx
 
-    from deerflow.config.app_config import AppConfig
-    from deerflow.models import openai_codex_provider as provider
-    from deerflow.models.factory import create_chat_model
+    from nkyel.config.app_config import AppConfig
+    from nkyel.models import openai_codex_provider as provider
+    from nkyel.models.factory import create_chat_model
 
     config = AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "models": [
                 {
                     "name": "codex-paced",
-                    "use": "deerflow.models.openai_codex_provider:CodexChatModel",
+                    "use": "nkyel.models.openai_codex_provider:CodexChatModel",
                     "model": "gpt-5.4",
                     "request_admission": {"requests_per_minute": 1, "max_wait_seconds": 0.01} if enabled else None,
                     "retry_max_attempts": 7,
@@ -428,7 +428,7 @@ async def test_codex_factory_retry_policy_respects_admission(monkeypatch, regist
 
 
 def test_codex_without_admission_preserves_default_retries(codex_credentials):
-    from deerflow.models.openai_codex_provider import CodexChatModel
+    from nkyel.models.openai_codex_provider import CodexChatModel
 
     assert CodexChatModel().retry_max_attempts == 3
 
@@ -440,21 +440,21 @@ async def test_codex_529_middleware_retry_reenters_admission(monkeypatch, regist
     import httpx
     from langchain.agents import create_agent
 
-    from deerflow.agents.middlewares import llm_error_handling_middleware as errors
-    from deerflow.config.app_config import AppConfig
-    from deerflow.models import openai_codex_provider as provider
-    from deerflow.models.factory import create_chat_model
+    from nkyel.agents.middlewares import llm_error_handling_middleware as errors
+    from nkyel.config.app_config import AppConfig
+    from nkyel.models import openai_codex_provider as provider
+    from nkyel.models.factory import create_chat_model
 
     monkeypatch.setattr(errors, "_PROCESS_LIMITER", None)
     monkeypatch.setattr(errors, "_CAP_RESOLVED", False)
     config = AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "llm_call": {"retry_max_attempts": 2, "retry_base_delay_ms": 25, "retry_cap_delay_ms": 25},
             "models": [
                 {
                     "name": "codex-paced",
-                    "use": "deerflow.models.openai_codex_provider:CodexChatModel",
+                    "use": "nkyel.models.openai_codex_provider:CodexChatModel",
                     "model": "gpt-5.4",
                     "request_admission": {"requests_per_minute": 60, "max_wait_seconds": 2},
                 }
@@ -508,8 +508,8 @@ async def test_codex_529_middleware_retry_reenters_admission(monkeypatch, regist
 def test_provider_warns_only_when_admission_overrides_retries(codex_credentials, caplog, provider, limiter_kind, attempts):
     from langchain_core.rate_limiters import InMemoryRateLimiter
 
-    from deerflow.models.claude_provider import ClaudeChatModel
-    from deerflow.models.openai_codex_provider import CodexChatModel
+    from nkyel.models.claude_provider import ClaudeChatModel
+    from nkyel.models.openai_codex_provider import CodexChatModel
 
     limiter = None
     if limiter_kind == "admission":
@@ -531,9 +531,9 @@ def test_provider_warns_only_when_admission_overrides_retries(codex_credentials,
 
 
 def test_admission_failures_are_not_retried_as_provider_errors(monkeypatch):
-    from deerflow.agents.middlewares import llm_error_handling_middleware as errors
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.agents.middlewares import llm_error_handling_middleware as errors
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     monkeypatch.setattr(errors, "_PROCESS_LIMITER", None)
     monkeypatch.setattr(errors, "_CAP_RESOLVED", False)

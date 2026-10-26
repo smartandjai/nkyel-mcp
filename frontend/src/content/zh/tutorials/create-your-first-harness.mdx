@@ -1,22 +1,22 @@
 ---
 title: 创建你的第一个 Harness
-description: 本教程介绍如何以编程方式使用 DeerFlow Harness Python SDK——直接在你的 Python 代码中导入和使用 DeerFlow，而不是通过 Web 界面。
+description: 本教程介绍如何以编程方式使用 nkyel Harness Python SDK——直接在你的 Python 代码中导入和使用 nkyel，而不是通过 Web 界面。
 ---
 
 # 创建你的第一个 Harness
 
-本教程介绍如何以编程方式使用 DeerFlow Harness Python SDK——直接在你的 Python 代码中导入和使用 DeerFlow，而不是通过 Web 界面。
+本教程介绍如何以编程方式使用 nkyel Harness Python SDK——直接在你的 Python 代码中导入和使用 nkyel，而不是通过 Web 界面。
 
 ## 前置条件
 
 - Python 3.12+
 - 已安装 `uv`
-- 已克隆 DeerFlow 仓库
+- 已克隆 nkyel 仓库
 
 ## 安装
 
 ```bash
-cd deer-flow/backend
+cd nkyel/backend
 uv sync
 ```
 
@@ -34,12 +34,12 @@ models:
     api_key: $OPENAI_API_KEY
 
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
 
 tools:
-  - use: deerflow.community.ddg_search.tools:web_search_tool
-  - use: deerflow.sandbox.tools:read_file_tool
-  - use: deerflow.sandbox.tools:write_file_tool
+  - use: nkyel.community.ddg_search.tools:web_search_tool
+  - use: nkyel.sandbox.tools:read_file_tool
+  - use: nkyel.sandbox.tools:write_file_tool
 ```
 
 ## 编写代码
@@ -48,14 +48,14 @@ tools:
 
 ```python
 import os
-from deerflow.client import DeerFlowClient
+from nkyel.client import NkyelClient
 
 # 设置 API Key
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # 客户端自行加载 config.yaml；如需指定文件，
-# 请在创建客户端前设置 DEER_FLOW_CONFIG_PATH。
-client = DeerFlowClient()
+# 请在创建客户端前设置 NKYEL_CONFIG_PATH。
+client = NkyelClient()
 
 for event in client.stream(
     message="用 Python 写一个斐波那契数列函数，包含文档字符串",

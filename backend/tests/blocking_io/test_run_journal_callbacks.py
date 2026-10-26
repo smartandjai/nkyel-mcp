@@ -9,8 +9,8 @@ from langchain_core.callbacks.manager import ahandle_event
 from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.types import Command
 
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 pytestmark = pytest.mark.asyncio
 

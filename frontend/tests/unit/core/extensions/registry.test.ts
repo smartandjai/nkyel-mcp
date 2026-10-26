@@ -30,7 +30,7 @@ afterEach(() => {
 for (const backend of [
   "",
   "https://backend.example",
-  "https://backend.example/deerflow",
+  "https://backend.example/nkyel",
   "/gateway",
 ]) {
   test(`loads authenticated code with backend base ${backend || "same origin"}`, async () => {

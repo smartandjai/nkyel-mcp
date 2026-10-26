@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from deerflow.scheduler.schedules import (
+from nkyel.scheduler.schedules import (
     next_run_at,
     normalize_cron_expression,
     parse_interval_seconds,

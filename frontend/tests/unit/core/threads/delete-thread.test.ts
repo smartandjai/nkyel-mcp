@@ -20,11 +20,11 @@ function makeThread(
 test("finds only sidecar threads attached to the deleted parent thread", async () => {
   const search = rs.fn().mockResolvedValueOnce([
     makeThread("sidecar-1", {
-      deerflow_sidecar: true,
+      nkyel_sidecar: true,
       parent_thread_id: "parent-1",
     }),
     makeThread("sidecar-other-parent", {
-      deerflow_sidecar: true,
+      nkyel_sidecar: true,
       parent_thread_id: "parent-2",
     }),
     makeThread("primary-1"),
@@ -43,7 +43,7 @@ test("finds only sidecar threads attached to the deleted parent thread", async (
 
   expect(search).toHaveBeenCalledWith({
     metadata: {
-      deerflow_sidecar: true,
+      nkyel_sidecar: true,
       parent_thread_id: "parent-1",
     },
     limit: 100,

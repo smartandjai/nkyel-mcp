@@ -4,8 +4,8 @@ const meta: MetaRecord = {
   index: {
     title: "简介",
   },
-  "why-deerflow": {
-    title: "为什么选择 DeerFlow",
+  "why-nkyel": {
+    title: "为什么选择 nkyel",
   },
   "core-concepts": {
     title: "核心概念",

@@ -6,63 +6,63 @@ import type { LoadedContribution } from "./registry";
 export const extensionCatalog = [
   {
     key: "agentTeams",
-    package: "deerflow-extension-agent-teams",
+    package: "nkyel-extension-agent-teams",
     namespace: "community.agent-teams",
   },
   {
     key: "bookmarks",
-    package: "deerflow-extension-bookmarks",
+    package: "nkyel-extension-bookmarks",
     namespace: "community.bookmarks",
     icon: "bookmark",
   },
   {
     key: "context",
-    package: "deerflow-extension-jev-context",
+    package: "nkyel-extension-jev-context",
     namespace: "community.jev-context",
   },
   {
     key: "classify",
-    package: "deerflow-extension-jev-classify",
+    package: "nkyel-extension-jev-classify",
     namespace: "community.jev-classify",
   },
   {
     key: "screening",
-    package: "deerflow-extension-jev-screening",
+    package: "nkyel-extension-jev-screening",
     namespace: null,
   },
   {
     key: "workflows",
-    package: "deerflow-extension-workflows",
+    package: "nkyel-extension-workflows",
     namespace: "community.workflows",
   },
   {
     key: "reportSections",
-    package: "deerflow-extension-report-sections",
+    package: "nkyel-extension-report-sections",
     namespace: "community.report-sections",
   },
   {
     key: "retrieval",
-    package: "deerflow-extension-retrieval",
+    package: "nkyel-extension-retrieval",
     namespace: "example.retrieval",
   },
   {
     key: "knowledge",
-    package: "deerflow-extension-knowledge",
+    package: "nkyel-extension-knowledge",
     namespace: null,
   },
   {
     key: "knowledgeManagement",
-    package: "deerflow-extension-knowledge-management",
+    package: "nkyel-extension-knowledge-management",
     namespace: "knowledge-management",
   },
   {
     key: "knowledgePlatform",
-    package: "deerflow-extension-knowledge-platform",
+    package: "nkyel-extension-knowledge-platform",
     namespace: "knowledge-platform",
   },
-  { key: "lightrag", package: "deerflow-extension-lightrag", namespace: null },
-  { key: "weknora", package: "deerflow-extension-weknora", namespace: null },
-  { key: "example", package: "deerflow-extension-example", namespace: null },
+  { key: "lightrag", package: "nkyel-extension-lightrag", namespace: null },
+  { key: "weknora", package: "nkyel-extension-weknora", namespace: null },
+  { key: "example", package: "nkyel-extension-example", namespace: null },
 ] as const;
 
 export interface ExtensionCatalogEntry {

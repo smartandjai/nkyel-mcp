@@ -1,6 +1,6 @@
 """External-consumer contract fixture: imports only the standalone public API."""
 
-from deerflow_extension_api import ExtensionRuntimeDeps
+from nkyel_extension_api import ExtensionRuntimeDeps
 
 
 async def exercise(deps: ExtensionRuntimeDeps, *, thread_id: str, run_id: str, name: str):

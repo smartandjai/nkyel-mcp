@@ -6,7 +6,7 @@ import pytest
 
 from app.gateway.capabilities import AdapterContext, MCPAdapter
 from app.gateway.routers import capabilities
-from deerflow.config.extensions_config import ExtensionsConfig
+from nkyel.config.extensions_config import ExtensionsConfig
 
 
 @pytest.mark.asyncio

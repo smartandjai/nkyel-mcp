@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
+from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
 
 SEPARATORS = [chr(0x85), chr(0x2028), chr(0x2029)]
 SEPARATOR_IDS = ["next-line", "line-separator", "paragraph-separator"]

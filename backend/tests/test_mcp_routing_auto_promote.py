@@ -10,12 +10,12 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool as as_tool
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.agents.middlewares.deferred_tool_filter_middleware import DeferredToolFilterMiddleware
-from deerflow.agents.middlewares.mcp_routing_middleware import McpRoutingMiddleware, assert_mcp_routing_before_deferred_filter
-from deerflow.agents.thread_state import ThreadState, merge_promoted
-from deerflow.tools.builtins.tool_search import assemble_deferred_tools, build_mcp_routing_middleware
-from deerflow.tools.mcp_metadata import tag_mcp_routing, tag_mcp_tool
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+from nkyel.agents.middlewares.deferred_tool_filter_middleware import DeferredToolFilterMiddleware
+from nkyel.agents.middlewares.mcp_routing_middleware import McpRoutingMiddleware, assert_mcp_routing_before_deferred_filter
+from nkyel.agents.thread_state import ThreadState, merge_promoted
+from nkyel.tools.builtins.tool_search import assemble_deferred_tools, build_mcp_routing_middleware
+from nkyel.tools.mcp_metadata import tag_mcp_routing, tag_mcp_tool
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
 
 class _Recorder:

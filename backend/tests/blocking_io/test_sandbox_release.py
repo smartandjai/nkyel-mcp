@@ -51,7 +51,7 @@ class _BlockingProbeStore:
         return True
 
     def renew(self, sandbox_id: str):
-        from deerflow.community.aio_sandbox.ownership import RenewOutcome
+        from nkyel.community.aio_sandbox.ownership import RenewOutcome
 
         self._blocking_touch()
         return RenewOutcome.RENEWED
@@ -68,10 +68,10 @@ class _BlockingProbeStore:
 
 def _make_provider_with_active_sandbox(tmp_path: Path, sandbox_id: str):
     """A real provider (no ``__init__``) holding one active sandbox to release."""
-    from deerflow.community.aio_sandbox.aio_sandbox_provider import AioSandboxProvider
-    from deerflow.community.aio_sandbox.sandbox_info import SandboxInfo
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
-    from deerflow.sandbox.acquire_serialization import AcquireSerializer
+    from nkyel.community.aio_sandbox.aio_sandbox_provider import AioSandboxProvider
+    from nkyel.community.aio_sandbox.sandbox_info import SandboxInfo
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.sandbox.acquire_serialization import AcquireSerializer
 
     provider = AioSandboxProvider.__new__(AioSandboxProvider)
     provider._lock = threading.Lock()
@@ -83,7 +83,7 @@ def _make_provider_with_active_sandbox(tmp_path: Path, sandbox_id: str):
         sandbox_id: SandboxInfo(
             sandbox_id=sandbox_id,
             sandbox_url="http://localhost:8080",
-            container_name=f"deer-flow-sandbox-{sandbox_id}",
+            container_name=f"nkyel-sandbox-{sandbox_id}",
             created_at=1.0,
         )
     }
@@ -116,7 +116,7 @@ async def test_aafter_agent_offloads_release_off_the_event_loop(tmp_path, monkey
     If it regresses to calling ``release`` directly, the probe's file IO trips
     the strict Blockbuster gate.
     """
-    import deerflow.sandbox.middleware as mw_mod
+    import nkyel.sandbox.middleware as mw_mod
 
     provider = _make_provider_with_active_sandbox(tmp_path, "sb-release")
     monkeypatch.setattr(mw_mod, "get_sandbox_provider", lambda: provider)

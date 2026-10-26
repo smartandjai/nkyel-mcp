@@ -17,9 +17,9 @@
     "redaction": "Allowlisted fields only; no host paths, account names, raw errors, container prefixes or resource IDs"
   },
   "candidate_production_sha256": {
-    "backend/packages/harness/deerflow/community/aio_sandbox/aio_sandbox_provider.py": "09657b79e1bd6ca272945018ad8bc085635e26538a1b2bb330a19af5303794e7",
-    "backend/packages/harness/deerflow/community/aio_sandbox/local_backend.py": "7d6af6d83f52829c8be03d3451a2db3f34c6b0293e6d10827165909d8b8190f1",
-    "backend/packages/harness/deerflow/sandbox/sandbox_provider.py": "de39a17853c5275fe8d2735427151f5859196c533b6dc807d3a4196589329cee"
+    "backend/packages/harness/nkyel/community/aio_sandbox/aio_sandbox_provider.py": "09657b79e1bd6ca272945018ad8bc085635e26538a1b2bb330a19af5303794e7",
+    "backend/packages/harness/nkyel/community/aio_sandbox/local_backend.py": "7d6af6d83f52829c8be03d3451a2db3f34c6b0293e6d10827165909d8b8190f1",
+    "backend/packages/harness/nkyel/sandbox/sandbox_provider.py": "de39a17853c5275fe8d2735427151f5859196c533b6dc807d3a4196589329cee"
   },
   "scenarios": [
     {

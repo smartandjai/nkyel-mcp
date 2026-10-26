@@ -27,7 +27,7 @@ from support.detectors.repo_root import resolve_repo_root
 REPO_ROOT = resolve_repo_root(Path(__file__))
 DEFAULT_SCAN_PATHS = (
     REPO_ROOT / "backend" / "app",
-    REPO_ROOT / "backend" / "packages" / "harness" / "deerflow",
+    REPO_ROOT / "backend" / "packages" / "harness" / "nkyel",
 )
 IGNORED_DIR_NAMES = {
     ".git",
@@ -162,11 +162,11 @@ EXACT_CALL_RULES: dict[str, _CallRule] = {
         ASYNCIO_DEFAULT_EXECUTOR,
         "Offloads synchronous work into the asyncio default executor.",
     ),
-    "deerflow.utils.file_io.run_file_io": _CallRule(
+    "nkyel.utils.file_io.run_file_io": _CallRule(
         "INFO",
         "ASYNC_FILE_IO_OFFLOAD",
         DEDICATED_EXECUTOR,
-        "Offloads filesystem work into DeerFlow's dedicated file-IO executor.",
+        "Offloads filesystem work into nkyel's dedicated file-IO executor.",
     ),
     "anyio.to_thread.run_sync": _CallRule(
         "INFO",
@@ -220,13 +220,13 @@ EXACT_CALL_RULES: dict[str, _CallRule] = {
         "INFO",
         "SYNC_TOOL_WRAPPER",
         DEDICATED_EXECUTOR,
-        "Adapts an async tool for sync invocation through DeerFlow's dedicated tool executor.",
+        "Adapts an async tool for sync invocation through nkyel's dedicated tool executor.",
     ),
-    "deerflow.tools.sync.make_sync_tool_wrapper": _CallRule(
+    "nkyel.tools.sync.make_sync_tool_wrapper": _CallRule(
         "INFO",
         "SYNC_TOOL_WRAPPER",
         DEDICATED_EXECUTOR,
-        "Adapts an async tool for sync invocation through DeerFlow's dedicated tool executor.",
+        "Adapts an async tool for sync invocation through nkyel's dedicated tool executor.",
     ),
 }
 THREAD_POOL_CONSTRUCTORS = {"concurrent.futures.ThreadPoolExecutor"}
@@ -451,7 +451,7 @@ class BoundaryVisitor(ast.NodeVisitor):
                     "starlette.concurrency.run_in_threadpool",
                 }:
                     kinds.add(ANYIO_WORKER_THREAD)
-                elif call_name == "deerflow.utils.file_io.run_file_io":
+                elif call_name == "nkyel.utils.file_io.run_file_io":
                     kinds.add(DEDICATED_EXECUTOR)
                 elif self._is_run_in_executor(call_name):
                     kinds.add(self._executor_boundary_kind(node))
@@ -936,7 +936,7 @@ def inspect_configured_components(
     from langchain_core.tools import BaseTool
 
     if resolve_tool is None or resolve_model is None:
-        from deerflow.reflection import resolve_class, resolve_variable
+        from nkyel.reflection import resolve_class, resolve_variable
 
         resolve_tool = resolve_tool or resolve_variable
         resolve_model = resolve_model or resolve_class
@@ -994,7 +994,7 @@ def _inspect_config_file(config_path: Path) -> RuntimeInventory:
     harness_path = REPO_ROOT / "backend" / "packages" / "harness"
     if str(harness_path) not in sys.path:
         sys.path.insert(0, str(harness_path))
-    from deerflow.config.app_config import AppConfig
+    from nkyel.config.app_config import AppConfig
 
     config = AppConfig.from_file(str(config_path))
     return inspect_configured_components(config)

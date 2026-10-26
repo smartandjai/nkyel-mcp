@@ -1,7 +1,7 @@
-"""ChannelStore — persists IM chat-to-DeerFlow thread bindings.
+"""ChannelStore — persists IM chat-to-nkyel thread bindings.
 
 ``ChannelManager`` maps every unbound IM conversation
-(``channel_name:chat_id[:topic_id]``) to the DeerFlow thread it runs on. Two
+(``channel_name:chat_id[:topic_id]``) to the nkyel thread it runs on. Two
 implementations share the :class:`ChannelStore` protocol:
 
 - :class:`SqlChannelStore` keeps the bindings in the ``channel_thread_bindings``
@@ -48,8 +48,8 @@ from typing import Any, Protocol
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from deerflow.persistence.channel_thread_bindings import ChannelThreadBinding, SqlChannelThreadBindingRepository, binding_key, split_binding_key
-from deerflow.persistence.channel_thread_bindings.model import BINDING_KEY_LENGTH, CHANNEL_NAME_LENGTH, CHAT_ID_LENGTH, THREAD_ID_LENGTH, TOPIC_ID_LENGTH, USER_ID_LENGTH
+from nkyel.persistence.channel_thread_bindings import ChannelThreadBinding, SqlChannelThreadBindingRepository, binding_key, split_binding_key
+from nkyel.persistence.channel_thread_bindings.model import BINDING_KEY_LENGTH, CHANNEL_NAME_LENGTH, CHAT_ID_LENGTH, THREAD_ID_LENGTH, TOPIC_ID_LENGTH, USER_ID_LENGTH
 
 logger = logging.getLogger(__name__)
 
@@ -58,10 +58,10 @@ MIGRATED_SUFFIX = ".migrated"
 
 
 class ChannelStore(Protocol):
-    """Async mapping from an IM conversation/topic to its DeerFlow ``thread_id``."""
+    """Async mapping from an IM conversation/topic to its nkyel ``thread_id``."""
 
     async def get_thread_id(self, channel_name: str, chat_id: str, topic_id: str | None = None) -> str | None:
-        """Look up the DeerFlow thread_id for a given IM conversation/topic."""
+        """Look up the nkyel thread_id for a given IM conversation/topic."""
         ...
 
     async def set_thread_id(self, channel_name: str, chat_id: str, thread_id: str, *, topic_id: str | None = None, user_id: str = "") -> None:
@@ -83,13 +83,13 @@ class ChannelStore(Protocol):
 
 def default_store_path() -> Path:
     """``{base_dir}/channels/store.json`` (resolves ``base_dir`` through realpath: call off the loop)."""
-    from deerflow.config.paths import get_paths
+    from nkyel.config.paths import get_paths
 
     return Path(get_paths().base_dir) / "channels" / "store.json"
 
 
 class JsonChannelStore:
-    """JSON-file-backed store that maps IM conversations to DeerFlow threads.
+    """JSON-file-backed store that maps IM conversations to nkyel threads.
 
     Data layout (on disk)::
 
@@ -404,7 +404,7 @@ def resolve_channel_store(app_config: Any | None, *, session_factory: Any = _UNR
     """Pick the store for ``database.backend``: JSON for ``memory`` (or no config), SQL for a database.
 
     ``session_factory`` defaults to the process engine's
-    (``deerflow.persistence.engine.get_session_factory``); passing ``None``
+    (``nkyel.persistence.engine.get_session_factory``); passing ``None``
     models a configured database whose engine is not initialised, which falls
     back to the JSON file with a warning so a bare ``ChannelService`` keeps
     working. ``path`` is the JSON file (default ``{base_dir}/channels/store.json``),
@@ -414,7 +414,7 @@ def resolve_channel_store(app_config: Any | None, *, session_factory: Any = _UNR
     store_path = Path(path) if path is not None else default_store_path()
     if backend in ("sqlite", "postgres"):
         if session_factory is _UNRESOLVED:
-            from deerflow.persistence.engine import get_session_factory
+            from nkyel.persistence.engine import get_session_factory
 
             session_factory = get_session_factory()
         if session_factory is not None:

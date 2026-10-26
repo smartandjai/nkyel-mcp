@@ -12,9 +12,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config import paths as paths_module
-from deerflow.config.paths import Paths
-from deerflow.integrations import lark_cli
+from nkyel.config import paths as paths_module
+from nkyel.config.paths import Paths
+from nkyel.integrations import lark_cli
 
 pytestmark = pytest.mark.filterwarnings("error::pytest.PytestUnhandledThreadExceptionWarning")
 

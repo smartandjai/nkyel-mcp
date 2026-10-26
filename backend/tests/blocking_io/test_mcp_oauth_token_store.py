@@ -23,13 +23,13 @@ import sqlalchemy as sa
 from cryptography.fernet import Fernet
 from sqlalchemy.orm import sessionmaker
 
-from deerflow.config.credentials_key import CredentialsCipher
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp import oauth_store
-from deerflow.mcp.oauth import OAuthTokenManager
-from deerflow.mcp.oauth_store import McpOAuthTokenKey, McpOAuthTokenStore, oauth_config_fingerprint
-from deerflow.persistence.base import Base
-from deerflow.persistence.mcp_oauth_tokens import McpOAuthTokenRow, SqlMcpOAuthTokenRepository
+from nkyel.config.credentials_key import CredentialsCipher
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp import oauth_store
+from nkyel.mcp.oauth import OAuthTokenManager
+from nkyel.mcp.oauth_store import McpOAuthTokenKey, McpOAuthTokenStore, oauth_config_fingerprint
+from nkyel.persistence.base import Base
+from nkyel.persistence.mcp_oauth_tokens import McpOAuthTokenRow, SqlMcpOAuthTokenRepository
 
 pytestmark = pytest.mark.asyncio
 

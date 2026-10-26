@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deerflow.utils.file_conversion import (
+from nkyel.utils.file_conversion import (
     _MIN_CHARS_PER_PAGE,
     MAX_OUTLINE_ENTRIES,
     _do_convert,
@@ -106,7 +106,7 @@ class TestDoConvert:
         docx.write_bytes(b"PK fake docx")
 
         with patch(
-            "deerflow.utils.file_conversion._convert_with_markitdown",
+            "nkyel.utils.file_conversion._convert_with_markitdown",
             return_value="# Markdown from MarkItDown",
         ) as mock_md:
             result = _do_convert(docx, "auto")
@@ -123,14 +123,14 @@ class TestDoConvert:
 
         with (
             patch(
-                "deerflow.utils.file_conversion._convert_pdf_with_pymupdf4llm",
+                "nkyel.utils.file_conversion._convert_pdf_with_pymupdf4llm",
                 return_value=dense_text,
             ),
             patch(
-                "deerflow.utils.file_conversion._pymupdf_output_too_sparse",
+                "nkyel.utils.file_conversion._pymupdf_output_too_sparse",
                 return_value=False,
             ),
-            patch("deerflow.utils.file_conversion._convert_with_markitdown") as mock_md,
+            patch("nkyel.utils.file_conversion._convert_with_markitdown") as mock_md,
         ):
             result = _do_convert(pdf, "auto")
 
@@ -144,15 +144,15 @@ class TestDoConvert:
 
         with (
             patch(
-                "deerflow.utils.file_conversion._convert_pdf_with_pymupdf4llm",
+                "nkyel.utils.file_conversion._convert_pdf_with_pymupdf4llm",
                 return_value="x" * 612,  # 19.7 chars/page for 31-page doc
             ),
             patch(
-                "deerflow.utils.file_conversion._pymupdf_output_too_sparse",
+                "nkyel.utils.file_conversion._pymupdf_output_too_sparse",
                 return_value=True,
             ),
             patch(
-                "deerflow.utils.file_conversion._convert_with_markitdown",
+                "nkyel.utils.file_conversion._convert_with_markitdown",
                 return_value="OCR result via MarkItDown",
             ) as mock_md,
         ):
@@ -170,10 +170,10 @@ class TestDoConvert:
 
         with (
             patch(
-                "deerflow.utils.file_conversion._convert_pdf_with_pymupdf4llm",
+                "nkyel.utils.file_conversion._convert_pdf_with_pymupdf4llm",
                 return_value=sparse_text,
             ),
-            patch("deerflow.utils.file_conversion._convert_with_markitdown") as mock_md,
+            patch("nkyel.utils.file_conversion._convert_with_markitdown") as mock_md,
         ):
             result = _do_convert(pdf, "pymupdf4llm")
 
@@ -186,9 +186,9 @@ class TestDoConvert:
         pdf.write_bytes(b"%PDF-1.4 fake")
 
         with (
-            patch("deerflow.utils.file_conversion._convert_pdf_with_pymupdf4llm") as mock_pymu,
+            patch("nkyel.utils.file_conversion._convert_pdf_with_pymupdf4llm") as mock_pymu,
             patch(
-                "deerflow.utils.file_conversion._convert_with_markitdown",
+                "nkyel.utils.file_conversion._convert_with_markitdown",
                 return_value="MarkItDown result",
             ),
         ):
@@ -204,11 +204,11 @@ class TestDoConvert:
 
         with (
             patch(
-                "deerflow.utils.file_conversion._convert_pdf_with_pymupdf4llm",
+                "nkyel.utils.file_conversion._convert_pdf_with_pymupdf4llm",
                 return_value=None,  # None signals not installed
             ),
             patch(
-                "deerflow.utils.file_conversion._convert_with_markitdown",
+                "nkyel.utils.file_conversion._convert_with_markitdown",
                 return_value="MarkItDown fallback",
             ) as mock_md,
         ):
@@ -223,21 +223,21 @@ class TestGetPdfConverter:
         cfg = MagicMock()
         cfg.uploads = {"pdf_converter": "markitdown"}
 
-        with patch("deerflow.utils.file_conversion.get_app_config", return_value=cfg):
+        with patch("nkyel.utils.file_conversion.get_app_config", return_value=cfg):
             assert _get_pdf_converter() == "markitdown"
 
     def test_reads_attribute_backed_uploads_config(self):
         cfg = MagicMock()
         cfg.uploads = MagicMock(pdf_converter="pymupdf4llm")
 
-        with patch("deerflow.utils.file_conversion.get_app_config", return_value=cfg):
+        with patch("nkyel.utils.file_conversion.get_app_config", return_value=cfg):
             assert _get_pdf_converter() == "pymupdf4llm"
 
     def test_invalid_value_falls_back_to_auto(self):
         cfg = MagicMock()
         cfg.uploads = {"pdf_converter": "not-a-real-converter"}
 
-        with patch("deerflow.utils.file_conversion.get_app_config", return_value=cfg):
+        with patch("nkyel.utils.file_conversion.get_app_config", return_value=cfg):
             assert _get_pdf_converter() == "auto"
 
 
@@ -261,8 +261,8 @@ class TestConvertFileToMarkdown:
 
         try:
             with (
-                patch("deerflow.utils.file_conversion._get_pdf_converter", return_value="auto"),
-                patch("deerflow.utils.file_conversion._do_convert", side_effect=convert),
+                patch("nkyel.utils.file_conversion._get_pdf_converter", return_value="auto"),
+                patch("nkyel.utils.file_conversion._do_convert", side_effect=convert),
             ):
                 md_path = _run(convert_file_to_markdown(source))
         finally:
@@ -286,8 +286,8 @@ class TestConvertFileToMarkdown:
             raise RuntimeError("conversion failed")
 
         with (
-            patch("deerflow.utils.file_conversion._get_pdf_converter", return_value="auto"),
-            patch("deerflow.utils.file_conversion._do_convert", side_effect=fail_conversion),
+            patch("nkyel.utils.file_conversion._get_pdf_converter", return_value="auto"),
+            patch("nkyel.utils.file_conversion._do_convert", side_effect=fail_conversion),
         ):
             result = _run(convert_file_to_markdown(pdf))
 
@@ -303,9 +303,9 @@ class TestConvertFileToMarkdown:
         chinese_content = "# 中文报告\n\n这是测试内容。"
 
         with (
-            patch("deerflow.utils.file_conversion._get_pdf_converter", return_value="auto"),
+            patch("nkyel.utils.file_conversion._get_pdf_converter", return_value="auto"),
             patch(
-                "deerflow.utils.file_conversion._do_convert",
+                "nkyel.utils.file_conversion._do_convert",
                 return_value=chinese_content,
             ),
         ):
@@ -522,7 +522,7 @@ def test_cancelled_conversion_drains_write_and_removes_partial(tmp_path, monkeyp
     src.write_text("hello")
 
     # Isolate write cancellation from parser imports and conversion latency.
-    monkeypatch.setattr("deerflow.utils.file_conversion._do_convert", lambda _path, _converter: "hello")
+    monkeypatch.setattr("nkyel.utils.file_conversion._do_convert", lambda _path, _converter: "hello")
     monkeypatch.setattr(Path, "write_text", _blocking_write_text)
 
     async def _scenario():
@@ -567,7 +567,7 @@ def test_conversion_inside_file_io_worker_runs_nested_offload_inline(tmp_path, m
     """
     import threading
 
-    from deerflow.utils import file_io
+    from nkyel.utils import file_io
 
     observed: dict[str, object] = {}
 

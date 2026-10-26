@@ -16,7 +16,7 @@ source-level statelessness the replica claim rests on.
 Review of #6543 found that both budgets rendered ``minAvailable`` through
 ``| int``, which turns a percentage such as ``"50%"`` (a value Kubernetes
 accepts) into ``0`` -- a budget that protects nothing -- so the tests also pin
-the shared ``deer-flow.pdbMinAvailable`` helper: integers pass through, digit
+the shared ``nkyel.pdbMinAvailable`` helper: integers pass through, digit
 strings from ``--set-string`` become integers, percentages stay quoted, and
 ``0`` or anything else fails the render naming the values key.
 
@@ -35,7 +35,7 @@ import pytest
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CHART = REPO_ROOT / "deploy" / "helm" / "deer-flow"
+CHART = REPO_ROOT / "deploy" / "helm" / "nkyel"
 VALUES = CHART / "values.yaml"
 README = CHART / "README.md"
 DEPLOYMENT_TEMPLATE = CHART / "templates" / "provisioner-deployment.yaml"
@@ -48,7 +48,7 @@ PROVISIONER_README = REPO_ROOT / "docker" / "provisioner" / "README.md"
 
 # A selector block as both templates spell it: the shared selector helper plus
 # the component label, so the budget can only ever count provisioner Pods.
-SELECTOR_BLOCK = re.compile(r"matchLabels:\n\s+\{\{- include \"deer-flow.selectorLabels\" \. \| nindent 6 \}\}\n\s+app\.kubernetes\.io/component: provisioner\n")
+SELECTOR_BLOCK = re.compile(r"matchLabels:\n\s+\{\{- include \"nkyel.selectorLabels\" \. \| nindent 6 \}\}\n\s+app\.kubernetes\.io/component: provisioner\n")
 
 # Methods that mutate a container in place. A module-level container touched by
 # one of these from a request handler would be per-Pod state the chart's
@@ -65,7 +65,7 @@ def _helm(*args: str) -> subprocess.CompletedProcess[str]:
     helm = shutil.which("helm")
     if helm is None:
         pytest.skip("helm is unavailable")
-    return subprocess.run([helm, "template", "deer-flow", str(CHART), *args], capture_output=True, text=True)
+    return subprocess.run([helm, "template", "nkyel", str(CHART), *args], capture_output=True, text=True)
 
 
 def _render(*args: str) -> list[dict]:
@@ -86,7 +86,7 @@ def _render_failure(*args: str) -> str:
 
 
 def _min_available_include(component: str) -> str:
-    return f'minAvailable: {{{{ include "deer-flow.pdbMinAvailable" (dict "value" $pdb.minAvailable "key" "{component}.podDisruptionBudget.minAvailable") }}}}'
+    return f'minAvailable: {{{{ include "nkyel.pdbMinAvailable" (dict "value" $pdb.minAvailable "key" "{component}.podDisruptionBudget.minAvailable") }}}}'
 
 
 def _find(documents: list[dict], kind: str, name_suffix: str) -> dict | None:
@@ -152,7 +152,7 @@ def test_pdb_template_is_guarded_on_enabled_and_more_than_one_replica() -> None:
     assert "{{- $pdb := .Values.provisioner.podDisruptionBudget | default dict -}}" in template
     assert "apiVersion: policy/v1" in template
     assert "kind: PodDisruptionBudget" in template
-    assert 'name: {{ include "deer-flow.fullname" . }}-provisioner' in template, "must not collide with the gateway budget"
+    assert 'name: {{ include "nkyel.fullname" . }}-provisioner' in template, "must not collide with the gateway budget"
     assert _min_available_include("provisioner") in template, "minAvailable goes through the shared helper so a percentage survives"
     assert template.count("app.kubernetes.io/component: provisioner") == 2, "once in metadata.labels, once in the selector"
     assert SELECTOR_BLOCK.search(template), "the selector must match the Deployment's Pod labels exactly"
@@ -162,7 +162,7 @@ def test_provisioner_pdb_mirrors_the_gateway_pdb() -> None:
     """Same shape as the gateway budget so the two stay reviewable side by side."""
     gateway = GATEWAY_PDB_TEMPLATE.read_text(encoding="utf-8").replace("gateway", "provisioner")
     provisioner = PDB_TEMPLATE.read_text(encoding="utf-8")
-    for line in ("apiVersion: policy/v1", "kind: PodDisruptionBudget", 'name: {{ include "deer-flow.fullname" . }}-provisioner', _min_available_include("provisioner")):
+    for line in ("apiVersion: policy/v1", "kind: PodDisruptionBudget", 'name: {{ include "nkyel.fullname" . }}-provisioner', _min_available_include("provisioner")):
         assert line in gateway and line in provisioner, line
 
 
@@ -177,7 +177,7 @@ def test_both_budgets_render_min_available_through_the_shared_helper(component: 
 
 def _helper_block() -> str:
     helpers = HELPERS_TEMPLATE.read_text(encoding="utf-8")
-    start = helpers.index('{{- define "deer-flow.pdbMinAvailable" -}}')
+    start = helpers.index('{{- define "nkyel.pdbMinAvailable" -}}')
     end = helpers.find("{{- define ", start + 1)
     return helpers[start:] if end == -1 else helpers[start:end]
 
@@ -215,7 +215,7 @@ def test_operator_notes_document_the_provisioner_replicas() -> None:
         assert needle in readme, needle
     assert "409" in values, "the comment explains why a concurrent create on another replica is harmless"
     assert "replica" in provisioner_readme, "the provisioner's own README must say it can run several replicas"
-    assert "app=deer-flow-sandbox" in provisioner_readme or "labels" in provisioner_readme, "and that the labelled K8s objects are the only registry"
+    assert "app=nkyel-sandbox" in provisioner_readme or "labels" in provisioner_readme, "and that the labelled K8s objects are the only registry"
     assert "that one provisioner" not in readme, "the health note must not promise a single provisioner Pod"
 
 
@@ -229,7 +229,7 @@ def test_provisioner_keeps_no_state_between_requests() -> None:
     background = sorted({node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute) and node.attr in BACKGROUND_WORK})
     assert background == [], f"a background loop would run once per replica: {background}"
     assert source.count("exc.status != 409") >= 2, "Pod and Service create must both tolerate AlreadyExists from a concurrent creator"
-    assert 'label_selector="app=deer-flow-sandbox"' in source, "the label is the registry every replica lists from"
+    assert 'label_selector="app=nkyel-sandbox"' in source, "the label is the registry every replica lists from"
 
 
 @pytest.mark.parametrize("replicas", [1, 2, 3])

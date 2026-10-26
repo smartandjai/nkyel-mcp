@@ -24,8 +24,8 @@ Usage::
 Providers
 ---------
 ``boxlite``       BoxLite micro-VM sandbox (requires ``pip install boxlite``).
-``aio-docker``    AIO Docker sandbox (requires Docker daemon + ``deerflow-harness`` extras).
-``opensandbox``   OpenSandbox service (requires ``deerflow-harness[opensandbox]`` and sandbox config).
+``aio-docker``    AIO Docker sandbox (requires Docker daemon + ``nkyel-harness`` extras).
+``opensandbox``   OpenSandbox service (requires ``nkyel-harness[opensandbox]`` and sandbox config).
 
 Scenarios
 ---------
@@ -194,7 +194,7 @@ def _make_boxlite_provider(config: dict[str, Any]) -> tuple[Any, dict[str, Any]]
     On BoxLite 0.9.7 only, retries a failed create after fixing missing execute
     bits on extracted ``boxlite-shim`` binaries under ``~/.boxlite/boxes``.
     """
-    from deerflow.community.boxlite.provider import BoxliteProvider
+    from nkyel.community.boxlite.provider import BoxliteProvider
 
     sandbox_attrs = {
         "image": config.get("image") or "python:3.12-slim",
@@ -210,7 +210,7 @@ def _make_boxlite_provider(config: dict[str, Any]) -> tuple[Any, dict[str, Any]]
         sandbox_attrs["environment"] = config["environment"]
 
     with _patched_module_attr(
-        "deerflow.community.boxlite.provider",
+        "nkyel.community.boxlite.provider",
         "get_app_config",
         lambda: _stub_config(sandbox_attrs),
     ):
@@ -232,8 +232,8 @@ def _make_boxlite_provider(config: dict[str, Any]) -> tuple[Any, dict[str, Any]]
 
 def _make_aio_provider(config: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
     """Create an AioSandboxProvider with stub config."""
-    from deerflow.community.aio_sandbox.aio_sandbox_provider import AioSandboxProvider
-    from deerflow.config.sandbox_config import SandboxNetworkConfig
+    from nkyel.community.aio_sandbox.aio_sandbox_provider import AioSandboxProvider
+    from nkyel.config.sandbox_config import SandboxNetworkConfig
 
     sandbox_attrs = {
         "image": config.get("image"),
@@ -249,7 +249,7 @@ def _make_aio_provider(config: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
     stub.sandbox.network = SandboxNetworkConfig()
 
     with _patched_module_attr(
-        "deerflow.community.aio_sandbox.aio_sandbox_provider",
+        "nkyel.community.aio_sandbox.aio_sandbox_provider",
         "get_app_config",
         lambda: stub,
     ):
@@ -259,8 +259,8 @@ def _make_aio_provider(config: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
 
 def _make_opensandbox_provider(config: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
     """Use the configured connection and the production lifecycle, with strict cleanup accounting."""
-    from deerflow.community.opensandbox.provider import OpenSandboxProvider
-    from deerflow.config.app_config import get_app_config, pop_current_app_config, push_current_app_config
+    from nkyel.community.opensandbox.provider import OpenSandboxProvider
+    from nkyel.config.app_config import get_app_config, pop_current_app_config, push_current_app_config
 
     class BenchmarkOpenSandboxProvider(OpenSandboxProvider):
         # Production cleanup logs failures and continues. A benchmark must still
@@ -775,7 +775,7 @@ def main(argv: list[str] | None = None) -> int:
         "health_check_skip_seconds": args.health_check_skip_seconds,
         "image": args.image,
         # Never discover/clean containers belonging to a user's regular stack.
-        "container_prefix": f"deerflow-bench-{args.run_id}",
+        "container_prefix": f"nkyel-bench-{args.run_id}",
     }
 
     factory = PROVIDER_FACTORIES[args.provider]

@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deerflow.community.ddg_search import tools
+from nkyel.community.ddg_search import tools
 
 
 @pytest.mark.parametrize(
@@ -38,12 +38,12 @@ def test_web_search_tool_max_results_with_real_ddgs(monkeypatch, caplog, configu
     from ddgs.ddgs import DDGS
     from ddgs.results import TextResult
 
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.tool_config import ToolConfig
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.tool_config import ToolConfig
 
     monkeypatch.setenv("DDG_TEST_MAX_RESULTS", env_value)
     caplog.set_level(logging.WARNING, logger=tools.__name__)
-    raw_config = {"name": "web_search", "group": "web", "use": "deerflow.community.ddg_search.tools:web_search_tool"}
+    raw_config = {"name": "web_search", "group": "web", "use": "nkyel.community.ddg_search.tools:web_search_tool"}
     if configured_limit is not None:
         raw_config["max_results"] = configured_limit
     tool_config = ToolConfig.model_validate(AppConfig.resolve_env_variables(raw_config))
@@ -188,7 +188,7 @@ def test_search_text_time_range_excludes_explicit_filter_agnostic_backends(
 
 
 def test_web_search_tool_reads_ddgs_options_from_config() -> None:
-    with patch("deerflow.community.ddg_search.tools.get_app_config") as mock_config:
+    with patch("nkyel.community.ddg_search.tools.get_app_config") as mock_config:
         tool_config = MagicMock()
         tool_config.model_extra = {
             "max_results": 3,
@@ -198,7 +198,7 @@ def test_web_search_tool_reads_ddgs_options_from_config() -> None:
         }
         mock_config.return_value.get_tool_config.return_value = tool_config
 
-        with patch("deerflow.community.ddg_search.tools._search_text") as mock_search:
+        with patch("nkyel.community.ddg_search.tools._search_text") as mock_search:
             mock_search.return_value = [{"title": "Result", "href": "https://example.com", "body": "Snippet"}]
 
             result = tools.web_search_tool.invoke({"query": "latest news", "max_results": 8, "time_range": "week"})

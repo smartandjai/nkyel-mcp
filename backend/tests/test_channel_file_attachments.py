@@ -230,7 +230,7 @@ class TestResolveAttachments:
         (also used by the artifact editor) is exercised end to end.
         """
         from app.channels.manager import _resolve_attachments
-        from deerflow.config.paths import Paths
+        from nkyel.config.paths import Paths
 
         paths = Paths(tmp_path)
         outputs_dir = paths.sandbox_outputs_dir("t1", user_id="owner-1")
@@ -304,7 +304,7 @@ class TestInboundFileIngestion:
                 return payloads[file_info["index"]]
 
             messages = [InboundMessage(channel_name="test-channel", chat_id="chat-1", user_id="user-1", text="attachment", files=[{"filename": "report.txt", "index": index}]) for index in range(2)]
-            with patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir), patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": reader}):
+            with patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir), patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": reader}):
                 tasks = [asyncio.create_task(manager._ingest_inbound_files("thread-1", msg)) for msg in messages]
                 try:
                     return await asyncio.wait_for(asyncio.gather(*tasks), timeout=10)
@@ -341,7 +341,7 @@ class TestInboundFileIngestion:
             return new_payload
 
         msg = InboundMessage(channel_name="test-channel", chat_id="chat-1", user_id="user-1", text="attachment", files=[{"filename": "report.txt"}])
-        with patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir), patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": reader}):
+        with patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir), patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": reader}):
             result = asyncio.run(manager._ingest_inbound_files("thread-1", msg))
 
         assert len(result) == 1
@@ -372,7 +372,7 @@ class TestInboundFileIngestion:
             return inbound_payload
 
         msg = InboundMessage(channel_name="test-channel", chat_id="chat-1", user_id="user-1", text="attachment", files=[{"filename": "report.pdf"}])
-        with patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir), patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": reader}):
+        with patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir), patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": reader}):
             result = asyncio.run(manager._ingest_inbound_files("thread-1", msg))
 
         assert len(result) == 1
@@ -397,7 +397,7 @@ class TestInboundFileIngestion:
             ],
         )
 
-        with patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir):
+        with patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir):
             result = _run(manager._ingest_inbound_files("thread-1", msg))
 
         assert [item["filename"] for item in result] == ["Report.txt", "report_1.txt"]
@@ -417,7 +417,7 @@ class TestInboundFileIngestion:
             files=[{"type": "file", "filename": "report.pdf", "_content": b"pdf bytes"}],
         )
 
-        with patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir):
+        with patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir):
             result = _run(manager._ingest_inbound_files("thread-1", msg))
 
         assert result == [
@@ -451,7 +451,7 @@ class TestInboundFileIngestion:
             return b"attacker data"
 
         with (
-            patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir),
+            patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir),
             patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": fake_reader}, clear=False),
         ):
             result = _run(manager._ingest_inbound_files("thread-1", msg))
@@ -480,7 +480,7 @@ class TestInboundFileIngestion:
             return b"attacker data"
 
         with (
-            patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir),
+            patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir),
             patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": fake_reader}, clear=False),
         ):
             result = _run(manager._ingest_inbound_files("thread-1", msg))
@@ -510,7 +510,7 @@ class TestInboundFileIngestion:
             return b"new attachment data"
 
         with (
-            patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir),
+            patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir),
             patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": fake_reader}, clear=False),
         ):
             result = _run(manager._ingest_inbound_files("thread-1", msg))
@@ -691,7 +691,7 @@ class TestInboundFileSandboxPerms:
             files=[{"type": "image", "filename": "photo.jpg", "_content": b"\x89PNG data"}],
         )
 
-        with patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir):
+        with patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir):
             _run(manager._ingest_inbound_files("thread-1", msg))
 
         dest = uploads_dir / "photo.jpg"
@@ -705,7 +705,7 @@ class TestInboundFileSandboxPerms:
         from io import BytesIO
 
         from app.channels.feishu import FeishuChannel
-        from deerflow.config.paths import Paths
+        from nkyel.config.paths import Paths
 
         monkeypatch.setattr("app.channels.feishu.get_paths", lambda: Paths(str(tmp_path)))
         monkeypatch.setattr("app.channels.feishu.get_sandbox_provider", _MountedProvider)
@@ -749,7 +749,7 @@ class TestInboundFileSandboxPerms:
         from unittest.mock import AsyncMock
 
         from app.channels.dingtalk import DingTalkChannel
-        from deerflow.config.paths import Paths
+        from nkyel.config.paths import Paths
 
         monkeypatch.setattr("app.channels.dingtalk.get_paths", lambda: Paths(str(tmp_path)))
         monkeypatch.setattr("app.channels.dingtalk.get_sandbox_provider", _MountedProvider)
@@ -946,7 +946,7 @@ class TestBaseChannelOnOutbound:
         feedback = ch.sent_messages[-1]
         assert "1/2" in feedback.text
         assert "fail.txt" in feedback.text and "ok.txt" not in feedback.text
-        assert "DeerFlow" in feedback.text
+        assert "nkyel" in feedback.text
         assert "private upload details" not in feedback.text
         assert feedback.attachments == []
         assert f1.exists() and f2.exists()
@@ -994,7 +994,7 @@ class TestBaseChannelOnOutbound:
         assert channel.sent_messages[0].text.index(expected) < channel.sent_messages[0].text.index(text)
         assert all(a.filename in channel.sent_messages[0].text for a in msg.attachments)
         assert all(channel.sent_messages[0].text.count(a.filename) == 1 for a in msg.attachments)
-        assert "DeerFlow" in channel.sent_messages[0].text
+        assert "nkyel" in channel.sent_messages[0].text
         assert not channel.sent_files
         assert msg.text == original_text and len(msg.attachments) == 2
 
@@ -1150,7 +1150,7 @@ class TestManagerArtifactResolution:
 
         # Basic smoke test: empty artifacts returns empty list
         mock_paths = MagicMock()
-        with patch("deerflow.config.paths.get_paths", return_value=mock_paths):
+        with patch("nkyel.config.paths.get_paths", return_value=mock_paths):
             result = _resolve_attachments("t1", [])
         assert result == []
 
@@ -1435,7 +1435,7 @@ class TestWecomMediaUrlGate:
         import httpx
 
         from app.channels import manager
-        from deerflow.logging_config import UrlRedactionFilter, install_url_log_redaction
+        from nkyel.logging_config import UrlRedactionFilter, install_url_log_redaction
 
         class _AsyncBody(httpx.AsyncByteStream):
             async def __aiter__(self):
@@ -1474,7 +1474,7 @@ class TestWecomMediaUrlGate:
         import httpx
 
         from app.channels.wechat import WechatChannel
-        from deerflow.logging_config import install_url_log_redaction
+        from nkyel.logging_config import install_url_log_redaction
 
         class _AsyncBody(httpx.AsyncByteStream):
             async def __aiter__(self):
@@ -1533,7 +1533,7 @@ class TestWecomMediaUrlGate:
                     files=[{"url": secret_url}],
                 )
                 with (
-                    patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir),
+                    patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir),
                     patch.dict(manager.INBOUND_FILE_READERS, {"test-channel": reader}, clear=False),
                 ):
                     assert _run(manager._ingest_inbound_files("thread-1", msg)) == []
@@ -1584,7 +1584,7 @@ class TestWecomMediaUrlGate:
         )
 
         with caplog.at_level(_logging.WARNING, logger="app.channels.manager"):
-            with patch("deerflow.uploads.manager.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.uploads.manager.ensure_uploads_dir", return_value=uploads_dir):
                 assert _run(manager._ingest_inbound_files("thread-1", msg)) == []
 
         assert "BearerSecret" not in caplog.text
@@ -1758,8 +1758,8 @@ def test_embedded_upload_retries_claim_collision(tmp_path, monkeypatch, channel_
     from types import SimpleNamespace
     from unittest.mock import AsyncMock
 
-    from deerflow.config.paths import Paths
-    from deerflow.uploads.manager import write_upload_file_no_symlink
+    from nkyel.config.paths import Paths
+    from nkyel.uploads.manager import write_upload_file_no_symlink
 
     paths = Paths(str(tmp_path))
     paths.ensure_thread_dirs("thread-1", user_id="owner")

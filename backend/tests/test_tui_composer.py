@@ -5,7 +5,7 @@ from textual import events
 from textual.app import App, ComposeResult
 from textual.geometry import Offset
 
-from deerflow.tui.widgets.composer import ComposerInput
+from nkyel.tui.widgets.composer import ComposerInput
 
 
 class _Harness(App):

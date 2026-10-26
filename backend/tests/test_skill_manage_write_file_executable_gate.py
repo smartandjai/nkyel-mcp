@@ -1,6 +1,6 @@
 """Regression coverage for the write_file executable-content gate in skill_manage.
 
-Executable content is whatever the shared ``deerflow/skills/package_files.py``
+Executable content is whatever the shared ``nkyel/skills/package_files.py``
 rule classifies as code: a file under the *top-level* ``scripts/`` directory of a
 skill package, a code-suffixed file anywhere in the package, or an extensionless
 file that starts with a shebang (``is_code_file``). Every other support file is
@@ -26,7 +26,7 @@ from types import SimpleNamespace
 import anyio
 import pytest
 
-skill_manage_module = importlib.import_module("deerflow.tools.skill_manage_tool")
+skill_manage_module = importlib.import_module("nkyel.tools.skill_manage_tool")
 
 #: Paths the shared code-file rule classifies as executable content, with content
 #: that exercises the three clauses: a code suffix outside ``scripts/``, a
@@ -54,7 +54,7 @@ def _skill_content(name: str, description: str = "Demo skill") -> str:
 
 
 async def _async_result(decision: str, reason: str):
-    from deerflow.skills.security_scanner import ScanResult
+    from nkyel.skills.security_scanner import ScanResult
 
     return ScanResult(decision=decision, reason=reason)
 
@@ -64,7 +64,7 @@ def _make_config(skills_root: Path, *, security_fail_closed: bool = True):
         skills=SimpleNamespace(
             get_skills_path=lambda: skills_root,
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         ),
         skill_evolution=SimpleNamespace(enabled=True, moderation_model_name=None, security_fail_closed=security_fail_closed),
     )
@@ -90,12 +90,12 @@ def _setup_skill(monkeypatch, tmp_path, *, security_fail_closed: bool = True, sc
     """
     skills_root = tmp_path / "skills"
     config = _make_config(skills_root, security_fail_closed=security_fail_closed)
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.skills.security_scanner.get_app_config", lambda: config)
-    from deerflow.config.paths import Paths
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.skills.security_scanner.get_app_config", lambda: config)
+    from nkyel.config.paths import Paths
 
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
 
     async def _refresh(user_id: str):
         return None
@@ -131,10 +131,10 @@ def _use_real_moderation_and_make_it_unavailable(monkeypatch, tmp_path, *, secur
     """Create the demo skill, then hand the gate the real scanner with no model."""
     runtime, skill_dir = _setup_skill(monkeypatch, tmp_path, security_fail_closed=security_fail_closed)
 
-    from deerflow.skills.security_scanner import scan_skill_content
+    from nkyel.skills.security_scanner import scan_skill_content
 
     monkeypatch.setattr(skill_manage_module, "scan_skill_content", scan_skill_content)
-    monkeypatch.setattr("deerflow.skills.security_scanner.create_chat_model", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("moderation provider unavailable")))
+    monkeypatch.setattr("nkyel.skills.security_scanner.create_chat_model", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("moderation provider unavailable")))
     return runtime, skill_dir
 
 
@@ -327,7 +327,7 @@ def test_write_file_writes_support_file_when_moderation_unavailable_and_fail_ope
     ],
 )
 def test_is_scripts_member_uses_the_shared_posix_rule(path, expected):
-    from deerflow.skills.package_files import is_scripts_member
+    from nkyel.skills.package_files import is_scripts_member
 
     assert is_scripts_member(path) is expected
 
@@ -344,6 +344,6 @@ def test_is_scripts_member_uses_the_shared_posix_rule(path, expected):
     ],
 )
 def test_is_code_file_covers_code_suffixes_and_shebangs_anywhere_in_the_package(path, head, expected):
-    from deerflow.skills.package_files import is_code_file
+    from nkyel.skills.package_files import is_code_file
 
     assert is_code_file(path, head) is expected

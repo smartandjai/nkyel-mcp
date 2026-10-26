@@ -1,17 +1,17 @@
 ---
 title: Developers and Integration
-description: What to know when using create_deerflow_agent or SubagentRuntime directly, the structured contracts, where extensions can observe and intervene, the security boundaries, and the background execution registry rules.
+description: What to know when using create_nkyel_agent or SubagentRuntime directly, the structured contracts, where extensions can observe and intervene, the security boundaries, and the background execution registry rules.
 ---
 
 import { Callout } from "nextra/components";
 
 # Developers and Integration
 
-This chapter is for developers embedding the DeerFlow harness in their own programs, writing extensions, or consuming the frontend contracts.
+This chapter is for developers embedding the nkyel harness in their own programs, writing extensions, or consuming the frontend contracts.
 
-## Integrating create_deerflow_agent directly
+## Integrating create_nkyel_agent directly
 
-`create_deerflow_agent` builds a graph without the Gateway. Subagent-relevant points:
+`create_nkyel_agent` builds a graph without the Gateway. Subagent-relevant points:
 
 - Enabling the `subagent` feature through `RuntimeFeatures` installs `SubagentLimitMiddleware` (concurrency and per-run total) and registers the `task` tool. You may pass a `SubagentRuntime`; it requires the `subagent` feature and cannot be combined with full middleware takeover.
 - `DurableContextMiddleware` is now **always** on the factory chain. It writes the delegation ledger, which the per-run total and the "already delegated" guidance depend on, and it re-injects `summary_text` after summarization. Older factory graphs lacked it, so those features silently did nothing.
@@ -37,7 +37,7 @@ The LangGraph Server entrypoint must be a concrete module-level function; the ha
 - `start()` starts the owned batch worker; `stop()` drains running work without a bound under the lifecycle lock and propagates the caller's cancellation. It runs the batch service stop in a shielded, separately owned task, so it completes even when the caller cancels repeatedly.
 - `async with` is supported.
 
-Public exports: `deerflow.agents` provides `create_deerflow_agent`, `RuntimeFeatures`, `make_lead_agent`, `ThreadState`, and more; `deerflow.subagents` provides `SubagentConfig`, `SubagentExecutor`, `SubagentResult`, `SubagentRuntime`, `get_available_subagent_names`, `get_subagent_config`, and `list_subagents`. Both are lazy exports.
+Public exports: `nkyel.agents` provides `create_nkyel_agent`, `RuntimeFeatures`, `make_lead_agent`, `ThreadState`, and more; `nkyel.subagents` provides `SubagentConfig`, `SubagentExecutor`, `SubagentResult`, `SubagentRuntime`, `get_available_subagent_names`, `get_subagent_config`, and `list_subagents`. Both are lazy exports.
 
 ## Structured contracts
 
@@ -76,7 +76,7 @@ Extensions implementing `TaskLifecycleContributor` receive `on_task_start(app_st
 
 ### Assembly observation
 
-When an assembly observer is registered, the executor emits an assembly descriptor after building the graph (`prompt_template_id` is `deerflow-subagent-v1`). Its `effective_policies.subagents` is filtered by the caller's `allowed_subagents`, so the full catalog is never leaked to observers. Without an observer the whole step is skipped.
+When an assembly observer is registered, the executor emits an assembly descriptor after building the graph (`prompt_template_id` is `nkyel-subagent-v1`). Its `effective_policies.subagents` is filtered by the caller's `allowed_subagents`, so the full catalog is never leaked to observers. Without an observer the whole step is skipped.
 
 ## Security boundaries
 

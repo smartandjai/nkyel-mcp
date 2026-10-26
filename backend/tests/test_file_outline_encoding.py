@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.utils.file_outline import extract_outline, extract_outline_for_file
+from nkyel.utils.file_outline import extract_outline, extract_outline_for_file
 
 
 @pytest.mark.parametrize("encoding", ["utf-8", "utf-8-sig"])

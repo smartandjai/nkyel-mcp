@@ -6,9 +6,9 @@ import logging
 import os
 from types import SimpleNamespace
 
-from deerflow.runtime.user_context import DEFAULT_USER_ID
+from nkyel.runtime.user_context import DEFAULT_USER_ID
 
-AUTH_DISABLED_ENV_VAR = "DEER_FLOW_AUTH_DISABLED"
+AUTH_DISABLED_ENV_VAR = "NKYEL_AUTH_DISABLED"
 AUTH_DISABLED_USER_ID = DEFAULT_USER_ID
 AUTH_DISABLED_USER_EMAIL = "default@test.local"
 
@@ -17,7 +17,7 @@ AUTH_SOURCE_INTERNAL = "internal"
 AUTH_SOURCE_PAT = "pat"
 AUTH_SOURCE_AUTH_DISABLED = "auth_disabled"
 
-_PRODUCTION_ENV_VARS: tuple[str, ...] = ("DEER_FLOW_ENV", "ENVIRONMENT")
+_PRODUCTION_ENV_VARS: tuple[str, ...] = ("NKYEL_ENV", "ENVIRONMENT")
 _PRODUCTION_ENV_VALUES: frozenset[str] = frozenset({"prod", "production"})
 
 logger = logging.getLogger(__name__)

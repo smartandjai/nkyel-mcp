@@ -69,7 +69,7 @@ def _run_launcher(tmp_path: Path, *, timeout: str | None, ready_at: int = 145, a
     (checkout / "config.yaml").write_text("models: []\n", encoding="utf-8", newline="\n")
     (tmp_path / "clock").write_text("0\n", encoding="utf-8", newline="\n")
     bash = require_script_bash()
-    env = {key: value for key, value in os.environ.items() if key not in {"BASH_ENV", "ENV", "DEER_FLOW_GATEWAY_STARTUP_TIMEOUT", "DEER_FLOW_ENV_FILE"}}
+    env = {key: value for key, value in os.environ.items() if key not in {"BASH_ENV", "ENV", "NKYEL_GATEWAY_STARTUP_TIMEOUT", "NKYEL_ENV_FILE"}}
     env.update(
         TEST_BASH=bash,
         TEST_PYTHON=Path(sys.executable).as_posix(),
@@ -77,15 +77,15 @@ def _run_launcher(tmp_path: Path, *, timeout: str | None, ready_at: int = 145, a
         TEST_STARTED=(tmp_path / "started").as_posix(),
         TEST_CLEANUP=(tmp_path / "cleanup").as_posix(),
         TEST_READY_AT=str(ready_at),
-        DEER_FLOW_HOME=(tmp_path / "runtime").as_posix(),
-        DEER_FLOW_PROJECT_ROOT=checkout.as_posix(),
-        DEER_FLOW_CONFIG_PATH=(checkout / "config.yaml").as_posix(),
+        NKYEL_HOME=(tmp_path / "runtime").as_posix(),
+        NKYEL_PROJECT_ROOT=checkout.as_posix(),
+        NKYEL_CONFIG_PATH=(checkout / "config.yaml").as_posix(),
     )
     if timeout is not None:
         if dotenv:
-            (checkout / ".env").write_text(f"DEER_FLOW_GATEWAY_STARTUP_TIMEOUT={timeout}\n", encoding="utf-8", newline="\n")
+            (checkout / ".env").write_text(f"NKYEL_GATEWAY_STARTUP_TIMEOUT={timeout}\n", encoding="utf-8", newline="\n")
         else:
-            env["DEER_FLOW_GATEWAY_STARTUP_TIMEOUT"] = timeout
+            env["NKYEL_GATEWAY_STARTUP_TIMEOUT"] = timeout
     return subprocess.run(
         [bash, "-c", _PRELUDE, "startup-timeout-test", (scripts / "serve.sh").as_posix(), "--skip-install", *args],
         cwd=checkout,
@@ -120,7 +120,7 @@ def test_default_gateway_timeout_remains_bounded(tmp_path: Path) -> None:
     assert result.returncode == 1, result.stdout + result.stderr
     assert "after 30s" in result.stdout
     assert "Gateway is still initializing" in result.stdout
-    assert "DEER_FLOW_GATEWAY_STARTUP_TIMEOUT" in result.stdout
+    assert "NKYEL_GATEWAY_STARTUP_TIMEOUT" in result.stdout
     assert (tmp_path / "cleanup").read_text(encoding="utf-8").splitlines() == ["cleanup", "cleanup"]
 
 
@@ -136,7 +136,7 @@ def test_configured_gateway_timeout_still_times_out_and_cleans_up(tmp_path: Path
 def test_invalid_gateway_timeout_does_not_stop_services(tmp_path: Path, value: str, action: str) -> None:
     result = _run_launcher(tmp_path, timeout=value, args=(action,))
     assert result.returncode == 1, result.stdout + result.stderr
-    assert "DEER_FLOW_GATEWAY_STARTUP_TIMEOUT must be a positive integer" in result.stdout + result.stderr
+    assert "NKYEL_GATEWAY_STARTUP_TIMEOUT must be a positive integer" in result.stdout + result.stderr
     assert not (tmp_path / "cleanup").exists()
     assert not (tmp_path / "started").exists()
 

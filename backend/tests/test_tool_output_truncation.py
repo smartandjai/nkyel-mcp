@@ -8,7 +8,7 @@ These functions truncate long tool outputs to prevent context window overflow.
 
 import re
 
-from deerflow.sandbox.tools import _truncate_bash_output, _truncate_ls_output, _truncate_read_file_output
+from nkyel.sandbox.tools import _truncate_bash_output, _truncate_ls_output, _truncate_read_file_output
 
 
 def _head_and_marker(result: str) -> tuple[str, str]:

@@ -15,18 +15,18 @@ def _content(description: str) -> str:
 def _mutate_in_process(base_dir, action, content, gate_phase, ready, start, attempted, parked, release, done):
     # Use spawn, not fork: each worker has its own lock registry and storage.
     from app.gateway.routers import skills as router
-    from deerflow.config.paths import Paths
-    from deerflow.skills.security_scanner import ScanResult
-    from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+    from nkyel.config.paths import Paths
+    from nkyel.skills.security_scanner import ScanResult
+    from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
     config = SimpleNamespace(
         skills=SimpleNamespace(get_skills_path=lambda: base_dir / "skills", container_path="/mnt/skills"),
         skill_evolution=SimpleNamespace(enabled=True, moderation_model_name=None),
     )
     with pytest.MonkeyPatch.context() as patch:
-        patch.setattr("deerflow.config.get_app_config", lambda: config)
-        patch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=base_dir))
-        patch.setattr("deerflow.config.paths._paths", None)
+        patch.setattr("nkyel.config.get_app_config", lambda: config)
+        patch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=base_dir))
+        patch.setattr("nkyel.config.paths._paths", None)
         storage = UserScopedSkillStorage("default", host_path=str(base_dir / "skills"))
         patch.setattr(router, "_get_user_skill_storage", lambda cfg: storage)
         patch.setattr(router, "get_effective_user_id", lambda: "default")

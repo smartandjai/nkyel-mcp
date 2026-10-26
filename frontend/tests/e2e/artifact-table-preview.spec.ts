@@ -118,19 +118,19 @@ test("previews real Worker results, paginates, toggles source, and opens a wide 
       name: "Includes online orders, excludes refunds",
     }),
   ).toBeVisible();
-  if (process.env.DEERFLOW_SCREENSHOT_DIR) {
-    await mkdir(process.env.DEERFLOW_SCREENSHOT_DIR, { recursive: true });
+  if (process.env.NKYEL_SCREENSHOT_DIR) {
+    await mkdir(process.env.NKYEL_SCREENSHOT_DIR, { recursive: true });
     await page.bringToFront();
     await expect(panel.getByRole("table")).toBeVisible();
     await page.screenshot({
       path: path.join(
-        process.env.DEERFLOW_SCREENSHOT_DIR,
+        process.env.NKYEL_SCREENSHOT_DIR,
         "csv-preview-chat.png",
       ),
     });
     await viewer.screenshot({
       path: path.join(
-        process.env.DEERFLOW_SCREENSHOT_DIR,
+        process.env.NKYEL_SCREENSHOT_DIR,
         "csv-preview-window.png",
       ),
     });
@@ -140,10 +140,10 @@ test("previews real Worker results, paginates, toggles source, and opens a wide 
   expect(
     await viewer.evaluate(() => document.documentElement.scrollWidth),
   ).toBeLessThanOrEqual(390);
-  if (process.env.DEERFLOW_SCREENSHOT_DIR) {
+  if (process.env.NKYEL_SCREENSHOT_DIR) {
     await viewer.screenshot({
       path: path.join(
-        process.env.DEERFLOW_SCREENSHOT_DIR,
+        process.env.NKYEL_SCREENSHOT_DIR,
         "csv-preview-mobile.png",
       ),
     });

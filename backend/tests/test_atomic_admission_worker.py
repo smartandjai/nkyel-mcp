@@ -9,10 +9,10 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import MessagesState, StateGraph
 from test_terminal_store_contract import store as store
 
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.runtime import RunManager, RunStatus
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.worker import RunContext, run_agent
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.runtime import RunManager, RunStatus
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.worker import RunContext, run_agent
 
 
 @pytest.fixture

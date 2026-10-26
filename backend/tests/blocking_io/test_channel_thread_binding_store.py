@@ -27,13 +27,13 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 # Pre-import so lazy imports inside the store are cached no-ops under the gate.
-import deerflow.persistence.models  # noqa: F401
+import nkyel.persistence.models  # noqa: F401
 from app.channels.connection_identity import lookup_thread_id
 from app.channels.manager import ChannelManager
 from app.channels.message_bus import InboundMessage, MessageBus
 from app.channels.store import ChannelStore, JsonChannelStore, SqlChannelStore
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_thread_bindings import ChannelThreadBindingRow
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_thread_bindings import ChannelThreadBindingRow
 
 pytestmark = pytest.mark.asyncio
 

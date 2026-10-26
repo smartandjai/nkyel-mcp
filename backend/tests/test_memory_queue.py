@@ -2,8 +2,8 @@ import threading
 import time
 from unittest.mock import MagicMock, call, patch
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.queue import ConversationContext, MemoryUpdateQueue
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.queue import ConversationContext, MemoryUpdateQueue
 
 
 def _queue(updater: MagicMock | None = None) -> MemoryUpdateQueue:
@@ -79,7 +79,7 @@ def test_flush_nowait_cancels_existing_timer_and_starts_immediate_timer() -> Non
     queue._timer = existing_timer
     created_timer = MagicMock()
 
-    with patch("deerflow.agents.memory.backends.deermem.deermem.core.queue.threading.Timer", return_value=created_timer) as timer_cls:
+    with patch("nkyel.agents.memory.backends.deermem.deermem.core.queue.threading.Timer", return_value=created_timer) as timer_cls:
         queue.flush_nowait()
 
     existing_timer.cancel.assert_called_once_with()
@@ -95,7 +95,7 @@ def test_add_nowait_cancels_existing_timer_and_starts_immediate_timer() -> None:
     queue._timer = existing_timer
     created_timer = MagicMock()
 
-    with patch("deerflow.agents.memory.backends.deermem.deermem.core.queue.threading.Timer", return_value=created_timer) as timer_cls:
+    with patch("nkyel.agents.memory.backends.deermem.deermem.core.queue.threading.Timer", return_value=created_timer) as timer_cls:
         queue.add_nowait(thread_id="thread-1", messages=["conversation"], agent_name="lead-agent")
 
     existing_timer.cancel.assert_called_once_with()
@@ -117,7 +117,7 @@ def test_process_queue_defers_reprocess_when_already_processing() -> None:
     queue = _queue()
     queue._processing = True
 
-    with patch("deerflow.agents.memory.backends.deermem.deermem.core.queue.threading.Timer") as timer_cls:
+    with patch("nkyel.agents.memory.backends.deermem.deermem.core.queue.threading.Timer") as timer_cls:
         queue._process_queue()
 
     timer_cls.assert_not_called()
@@ -141,7 +141,7 @@ def test_finishing_worker_reschedules_once_when_reprocess_pending() -> None:
 
     mock_updater.update_memory.side_effect = _enqueue_more_while_processing
 
-    with patch("deerflow.agents.memory.backends.deermem.deermem.core.queue.threading.Timer", return_value=created_timer) as timer_cls:
+    with patch("nkyel.agents.memory.backends.deermem.deermem.core.queue.threading.Timer", return_value=created_timer) as timer_cls:
         queue._process_queue()
 
     timer_cls.assert_called_once_with(0.05, queue._process_queue)
@@ -159,7 +159,7 @@ def test_finishing_worker_does_not_reschedule_when_no_work_remains() -> None:
     queue._items = [ConversationContext(thread_id="thread-1", messages=["only"], agent_name="lead_agent")]
     queue._reprocess_pending = True
 
-    with patch("deerflow.agents.memory.backends.deermem.deermem.core.queue.threading.Timer") as timer_cls:
+    with patch("nkyel.agents.memory.backends.deermem.deermem.core.queue.threading.Timer") as timer_cls:
         queue._process_queue()
 
     timer_cls.assert_not_called()
@@ -220,7 +220,7 @@ def test_process_queue_updates_different_agents_in_same_thread_separately() -> N
     mock_updater.update_memory.return_value = True
     queue._updater = mock_updater
 
-    with patch("deerflow.agents.memory.backends.deermem.deermem.core.queue.time.sleep"):
+    with patch("nkyel.agents.memory.backends.deermem.deermem.core.queue.time.sleep"):
         queue.flush()
 
     assert mock_updater.update_memory.call_count == 2
@@ -260,7 +260,7 @@ def test_process_queue_forwards_trace_id_to_updater() -> None:
 # queue are not lost either.
 # ---------------------------------------------------------------------------
 
-_QUEUE_MODULE = "deerflow.agents.memory.backends.deermem.deermem.core.queue"
+_QUEUE_MODULE = "nkyel.agents.memory.backends.deermem.deermem.core.queue"
 
 
 def test_flush_sync_noop_on_empty_queue() -> None:

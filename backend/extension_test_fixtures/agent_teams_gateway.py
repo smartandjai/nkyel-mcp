@@ -12,10 +12,10 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import uvicorn
-from deerflow_extension_api import AgentRun, AgentRunError
-from deerflow_extension_api.agent_runs import AGENT_RUNS_RESOLVER_KEY
-from deerflow_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
-from deerflow_extension_api.plugins import ToolContext
+from nkyel_extension_api import AgentRun, AgentRunError
+from nkyel_extension_api.agent_runs import AGENT_RUNS_RESOLVER_KEY
+from nkyel_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
+from nkyel_extension_api.plugins import ToolContext
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from langchain.agents import create_agent
@@ -25,9 +25,9 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.gateway.routers.plugins import router
-from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
-from deerflow.tools.builtins.clarification_tool import ask_clarification_tool
+from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.tools.builtins.clarification_tool import ask_clarification_tool
 
 
 class PreviewModel(FakeMessagesListChatModel):
@@ -103,8 +103,8 @@ class PreviewRuns:
 
 
 def create_app(directory):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-agent-teams"))
-    extensions, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_agent_teams:install", config={"enabled": True, "storage_path": str(Path(directory) / "teams.sqlite")}, required=True)])
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-agent-teams"))
+    extensions, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_agent_teams:install", config={"enabled": True, "storage_path": str(Path(directory) / "teams.sqlite")}, required=True)])
     assert not diagnostics
     ((_, plugin),) = extensions.plugins
     service = plugin.backend[0].handler.__self__
@@ -168,7 +168,7 @@ const {default: plugin} = await import(descriptor.entry);
 const context = {namespace: descriptor.namespace, locale: new URLSearchParams(location.search).get('locale') || 'en', settings: descriptor.settings,
 signal: new AbortController().signal, openConversation: async id => {window.openedThread = id},
 async callBackend(action,payload){
-const response = await fetch(`/api/plugins/${descriptor.namespace}/actions/${action}`, {method:'POST',headers:{'Content-Type':'application/json','X-Deerflow-Plugin-Viewer':descriptor.viewer_id},body:JSON.stringify(payload)});
+const response = await fetch(`/api/plugins/${descriptor.namespace}/actions/${action}`, {method:'POST',headers:{'Content-Type':'application/json','X-Nkyel-Plugin-Viewer':descriptor.viewer_id},body:JSON.stringify(payload)});
 const result = await response.json(); if(!response.ok) throw new Error(result.detail); return result; }};
 window.teamPlugin = plugin; window.teamContext = context;
 const root = document.querySelector('#root').attachShadow({mode:'open'});
@@ -179,5 +179,5 @@ window.teamView = plugin.surfaces[0].mount(root, context);
 
 
 if __name__ == "__main__":
-    with TemporaryDirectory(prefix="deerflow-teams-preview-") as directory:
+    with TemporaryDirectory(prefix="nkyel-teams-preview-") as directory:
         uvicorn.run(create_app(directory), host="127.0.0.1", port=int(sys.argv[1]), log_level="warning")

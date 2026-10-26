@@ -12,8 +12,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from deerflow.runtime.events.store.base import RunEventStore
-    from deerflow.runtime.runs.manager import RunManager
+    from nkyel.runtime.events.store.base import RunEventStore
+    from nkyel.runtime.runs.manager import RunManager
 
 logger = logging.getLogger(__name__)
 

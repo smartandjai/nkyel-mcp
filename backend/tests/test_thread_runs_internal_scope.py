@@ -28,15 +28,15 @@ from app.gateway.auth_disabled import AUTH_SOURCE_INTERNAL, AUTH_SOURCE_SESSION
 from app.gateway.authz import AuthContext, Permissions
 from app.gateway.internal_auth import INTERNAL_OWNER_USER_ID_HEADER_NAME, get_internal_user
 from app.gateway.routers import thread_runs
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.run.sql import RunRepository
-from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.user_context import reset_current_user, set_current_user
-from deerflow.workspace_changes.types import WORKSPACE_CHANGES_EVENT_TYPE
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.run.sql import RunRepository
+from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.user_context import reset_current_user, set_current_user
+from nkyel.workspace_changes.types import WORKSPACE_CHANGES_EVENT_TYPE
 
 THREAD_ID = "thread-scope"
 BROWSER_USER_ID = UUID("00000000-0000-0000-0000-00000000000a")

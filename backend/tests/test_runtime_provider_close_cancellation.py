@@ -3,11 +3,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.runtime.checkpoint_cache import provider as checkpoint_provider
-from deerflow.runtime.checkpoint_cache import redis as checkpoint_redis
-from deerflow.runtime.stream_bridge import async_provider as stream_provider
-from deerflow.runtime.stream_bridge import memory as stream_memory
-from deerflow.runtime.stream_bridge import redis as stream_redis
+from nkyel.runtime.checkpoint_cache import provider as checkpoint_provider
+from nkyel.runtime.checkpoint_cache import redis as checkpoint_redis
+from nkyel.runtime.stream_bridge import async_provider as stream_provider
+from nkyel.runtime.stream_bridge import memory as stream_memory
+from nkyel.runtime.stream_bridge import redis as stream_redis
 
 
 class _BlockingCheckpointCache:

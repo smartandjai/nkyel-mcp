@@ -6,8 +6,8 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langchain_core.messages.content import create_file_block, create_image_block
 
-from deerflow.agents.thread_state import merge_tool_artifacts
-from deerflow.tools.artifact_registry import (
+from nkyel.agents.thread_state import merge_tool_artifacts
+from nkyel.tools.artifact_registry import (
     _detect_refs_in_text,
     extract_artifacts_from_result,
     generate_handle,
@@ -95,7 +95,7 @@ def test_text_refs_followed_by_cjk_punctuation(ref, suffix):
 @pytest.mark.parametrize("content_block", [False, True])
 @pytest.mark.parametrize("directory_name", ["项目（归档）", "项目【归档】", "项目《归档》", "项目“归档”", "项目‘归档’", "项目（归档【旧版】）", "项目）归档（完成）"])
 def test_glob_result_preserves_balanced_cjk_directory_names(directory_name, content_block):
-    from deerflow.sandbox.tools import _format_glob_results
+    from nkyel.sandbox.tools import _format_glob_results
 
     root = "/mnt/user-data/workspace"
     path = f"{root}/{directory_name}"

@@ -25,7 +25,7 @@ from app.channels.message_bus import (
     OutboundMessage,
     ResolvedAttachment,
 )
-from deerflow.uploads.manager import is_upload_staging_file, normalize_filename
+from nkyel.uploads.manager import is_upload_staging_file, normalize_filename
 
 logger = logging.getLogger(__name__)
 SLACK_STOP_TIMEOUT_SECONDS = 5.0
@@ -771,7 +771,7 @@ class SlackChannel(Channel):
             },
             status="connected",
         )
-        await self._post_connection_reply(channel_id, "Slack connected to DeerFlow.", thread_ts)
+        await self._post_connection_reply(channel_id, "Slack connected to nkyel.", thread_ts)
         return True
 
     async def _post_connection_reply(self, channel_id: str, text: str, thread_ts: str | None = None) -> None:

@@ -1,10 +1,10 @@
 """Unit tests for the shared config-file content-signature helper.
 
-``deerflow.config.file_signature.get_config_signature`` was extracted from
+``nkyel.config.file_signature.get_config_signature`` was extracted from
 verbatim-duplicate implementations that used to live independently in
-``deerflow.config.app_config`` and ``deerflow.mcp.cache`` (flagged in review
+``nkyel.config.app_config`` and ``nkyel.mcp.cache`` (flagged in review
 on PR #4124: "now a verbatim duplicate of
-``deerflow/config/app_config.py::_get_config_signature`` / ``_ConfigSignature``
+``nkyel/config/app_config.py::_get_config_signature`` / ``_ConfigSignature``
 ... worth a follow-up to extract both into a small shared helper"). These
 tests cover the shared implementation directly, and pin that both former
 call sites now delegate to it instead of maintaining independent copies that
@@ -17,7 +17,7 @@ import hashlib
 import os
 from pathlib import Path
 
-from deerflow.config.file_signature import ConfigSignature, get_config_signature, read_config_with_signature
+from nkyel.config.file_signature import ConfigSignature, get_config_signature, read_config_with_signature
 
 
 def test_missing_file_returns_none(tmp_path: Path):
@@ -69,8 +69,8 @@ def test_app_config_and_mcp_cache_share_the_same_implementation():
     delegate to this shared helper rather than maintaining independent
     verbatim copies that can silently drift apart over time.
     """
-    import deerflow.config.app_config as app_config_module
-    import deerflow.mcp.cache as cache_module
+    import nkyel.config.app_config as app_config_module
+    import nkyel.mcp.cache as cache_module
 
     assert app_config_module._get_config_signature is get_config_signature
     assert cache_module._get_config_signature is get_config_signature
@@ -101,8 +101,8 @@ def test_read_config_with_signature_raises_for_a_missing_file(tmp_path: Path):
 
 def test_app_config_cache_loader_reads_through_the_shared_reader():
     """``_load_and_cache_app_config`` must parse the same bytes the shared reader signed."""
-    import deerflow.config.app_config as app_config_module
-    import deerflow.config.file_signature as file_signature_module
+    import nkyel.config.app_config as app_config_module
+    import nkyel.config.file_signature as file_signature_module
 
     assert app_config_module._read_config_with_signature is file_signature_module.read_config_with_signature
 

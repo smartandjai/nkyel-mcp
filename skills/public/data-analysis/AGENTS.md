@@ -10,7 +10,7 @@ readable input's identity. Bump the namespace if table-mapping semantics change.
 
 Regressions live under the repository's root tests directory. They use
 real DuckDB. Excel and CLI integration additionally run with an already installed
-official spatial extension via `DEERFLOW_TEST_SPATIAL_DIRECTORY`; default tests
+official spatial extension via `NKYEL_TEST_SPATIAL_DIRECTORY`; default tests
 never download that extension. Keep table lookup and persisted-cache checks tied
 to distinct source values, rather than only inspecting generated names.
 

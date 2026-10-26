@@ -15,8 +15,8 @@ from langchain_core.tools import InjectedToolCallId, StructuredTool
 from langgraph.prebuilt.tool_node import ToolCallRequest
 from langgraph.types import Command
 
-from deerflow.agents.middlewares.read_before_write_middleware import READ_MARK_KEY, WRITE_BLOCK_KEY, ReadBeforeWriteMiddleware
-from deerflow.sandbox.read_file_contract import READ_FILE_INVALID_RANGE
+from nkyel.agents.middlewares.read_before_write_middleware import READ_MARK_KEY, WRITE_BLOCK_KEY, ReadBeforeWriteMiddleware
+from nkyel.sandbox.read_file_contract import READ_FILE_INVALID_RANGE
 
 
 class GateTestModel(GenericFakeChatModel):

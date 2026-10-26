@@ -1,6 +1,6 @@
 """The neutral Guardrail -> observer authorization handoff."""
 
-from deerflow.authz.outcome import (
+from nkyel.authz.outcome import (
     _MAX_TRACKED_OUTCOMES,
     AUTHORIZATION_OUTCOME_CONTEXT_KEY,
     AuthorizationOutcome,

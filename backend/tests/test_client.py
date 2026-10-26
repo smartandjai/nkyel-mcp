@@ -1,4 +1,4 @@
-"""Tests for DeerFlowClient."""
+"""Tests for NkyelClient."""
 
 import asyncio
 import concurrent.futures
@@ -27,20 +27,20 @@ from app.gateway.routers.models import ModelResponse, ModelsListResponse
 from app.gateway.routers.skills import SkillInstallResponse, SkillResponse, SkillsListResponse
 from app.gateway.routers.threads import ThreadGoalResponse
 from app.gateway.routers.uploads import UploadResponse
-from deerflow.agents.middlewares.view_image_middleware import ViewImageMiddleware
-from deerflow.agents.thread_state import DeltaThreadState, ThreadState
-from deerflow.client import DeerFlowClient, StreamEvent
-from deerflow.config.agents_config import AgentConfig
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.extensions_config import ExtensionsConfig, McpServerConfig
-from deerflow.config.paths import Paths
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.sandbox.lease import ensure_sandbox_lease_owner, get_sandbox_lease_manager
-from deerflow.sandbox.sandbox_provider import reset_sandbox_provider, set_sandbox_provider
-from deerflow.skills.types import SkillCategory
-from deerflow.tools.mcp_metadata import tag_mcp_tool
-from deerflow.uploads.manager import PathTraversalError
+from nkyel.agents.middlewares.view_image_middleware import ViewImageMiddleware
+from nkyel.agents.thread_state import DeltaThreadState, ThreadState
+from nkyel.client import NkyelClient, StreamEvent
+from nkyel.config.agents_config import AgentConfig
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.extensions_config import ExtensionsConfig, McpServerConfig
+from nkyel.config.paths import Paths
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.sandbox.lease import ensure_sandbox_lease_owner, get_sandbox_lease_manager
+from nkyel.sandbox.sandbox_provider import reset_sandbox_provider, set_sandbox_provider
+from nkyel.skills.types import SkillCategory
+from nkyel.tools.mcp_metadata import tag_mcp_tool
+from nkyel.uploads.manager import PathTraversalError
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -70,23 +70,23 @@ def mock_app_config():
 
 @pytest.fixture
 def client(mock_app_config, tmp_path):
-    """Create a DeerFlowClient with mocked config loading."""
-    import deerflow.skills.storage as _storage_mod
-    from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+    """Create a NkyelClient with mocked config loading."""
+    import nkyel.skills.storage as _storage_mod
+    from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
     _storage_mod._default_skill_storage = LocalSkillStorage(host_path=str(tmp_path))
-    with patch("deerflow.client.get_app_config", return_value=mock_app_config):
-        return DeerFlowClient()
+    with patch("nkyel.client.get_app_config", return_value=mock_app_config):
+        return NkyelClient()
 
 
 @pytest.fixture
 def allow_skill_security_scan():
     async def _scan(*args, **kwargs):
-        from deerflow.skills.security_scanner import ScanResult
+        from nkyel.skills.security_scanner import ScanResult
 
         return ScanResult(decision="allow", reason="ok")
 
-    with patch("deerflow.skills.installer.scan_skill_content", _scan):
+    with patch("nkyel.skills.installer.scan_skill_content", _scan):
         yield
 
 
@@ -108,8 +108,8 @@ class TestClientInit:
 
     def test_custom_params(self, mock_app_config):
         mock_middleware = MagicMock()
-        with patch("deerflow.client.get_app_config", return_value=mock_app_config):
-            c = DeerFlowClient(model_name="gpt-4", thinking_enabled=False, subagent_enabled=True, plan_mode=True, agent_name="test-agent", available_skills={"skill1", "skill2"}, middlewares=[mock_middleware])
+        with patch("nkyel.client.get_app_config", return_value=mock_app_config):
+            c = NkyelClient(model_name="gpt-4", thinking_enabled=False, subagent_enabled=True, plan_mode=True, agent_name="test-agent", available_skills={"skill1", "skill2"}, middlewares=[mock_middleware])
         assert c._model_name == "gpt-4"
         assert c._thinking_enabled is False
         assert c._subagent_enabled is True
@@ -119,72 +119,72 @@ class TestClientInit:
         assert c._middlewares == [mock_middleware]
 
     def test_invalid_agent_name(self, mock_app_config):
-        with patch("deerflow.client.get_app_config", return_value=mock_app_config):
+        with patch("nkyel.client.get_app_config", return_value=mock_app_config):
             with pytest.raises(ValueError, match="Invalid agent name"):
-                DeerFlowClient(agent_name="invalid name with spaces!")
+                NkyelClient(agent_name="invalid name with spaces!")
             with pytest.raises(ValueError, match="Invalid agent name"):
-                DeerFlowClient(agent_name="../path/traversal")
+                NkyelClient(agent_name="../path/traversal")
 
     def test_agent_name_with_trailing_newline_rejected(self, mock_app_config):
-        with patch("deerflow.client.get_app_config", return_value=mock_app_config):
+        with patch("nkyel.client.get_app_config", return_value=mock_app_config):
             # The client's own guard must reject this at construction; the
             # memory store's later fullmatch check uses different phrasing.
             with pytest.raises(ValueError, match="Must match pattern"):
-                DeerFlowClient(agent_name="reviewer\n")
+                NkyelClient(agent_name="reviewer\n")
 
     def test_custom_config_path(self, mock_app_config):
         with (
-            patch("deerflow.client.reload_app_config") as mock_reload,
-            patch("deerflow.client.get_app_config", return_value=mock_app_config),
+            patch("nkyel.client.reload_app_config") as mock_reload,
+            patch("nkyel.client.get_app_config", return_value=mock_app_config),
         ):
-            DeerFlowClient(config_path="/tmp/custom.yaml")
+            NkyelClient(config_path="/tmp/custom.yaml")
             mock_reload.assert_called_once_with("/tmp/custom.yaml")
 
     def test_installs_process_subagent_capacity_from_frozen_config(self, mock_app_config):
         runtime_config = SubagentRuntimeConfig(max_running=7)
         mock_app_config.subagent_runtime = runtime_config
         with (
-            patch("deerflow.client.get_app_config", return_value=mock_app_config),
-            patch("deerflow.client.configure_subagent_execution_capacity") as configure,
+            patch("nkyel.client.get_app_config", return_value=mock_app_config),
+            patch("nkyel.client.configure_subagent_execution_capacity") as configure,
         ):
-            DeerFlowClient()
+            NkyelClient()
         configure.assert_called_once_with(runtime_config)
 
     def test_checkpointer_stored(self, mock_app_config):
         cp = MagicMock()
-        with patch("deerflow.client.get_app_config", return_value=mock_app_config):
-            c = DeerFlowClient(checkpointer=cp)
+        with patch("nkyel.client.get_app_config", return_value=mock_app_config):
+            c = NkyelClient(checkpointer=cp)
         assert c._checkpointer is cp
 
     def test_process_mode_is_frozen_from_app_config(self, mock_app_config, monkeypatch: pytest.MonkeyPatch):
-        from deerflow.runtime import checkpoint_mode
+        from nkyel.runtime import checkpoint_mode
 
         monkeypatch.setattr(checkpoint_mode, "_frozen_checkpoint_channel_mode", None)
-        with patch("deerflow.client.get_app_config", return_value=mock_app_config):
-            client = DeerFlowClient()
+        with patch("nkyel.client.get_app_config", return_value=mock_app_config):
+            client = NkyelClient()
         assert client._checkpoint_channel_mode == "full"
 
         mock_app_config.database.checkpoint_channel_mode = "delta"
         with (
-            patch("deerflow.client.get_app_config", return_value=mock_app_config),
+            patch("nkyel.client.get_app_config", return_value=mock_app_config),
             pytest.raises(
                 checkpoint_mode.CheckpointModeReconfigurationError,
                 match="restart",
             ),
         ):
-            DeerFlowClient()
+            NkyelClient()
 
     def test_delta_snapshot_frequency_is_frozen_from_app_config(self, mock_app_config):
         from typing import get_type_hints
 
         from langgraph.channels import DeltaChannel
 
-        from deerflow.agents import thread_state
+        from nkyel.agents import thread_state
 
         mock_app_config.database.checkpoint_channel_mode = "delta"
         mock_app_config.database.checkpoint_delta.snapshot_frequency = 7
-        with patch("deerflow.client.get_app_config", return_value=mock_app_config):
-            DeerFlowClient()
+        with patch("nkyel.client.get_app_config", return_value=mock_app_config):
+            NkyelClient()
 
         schema = thread_state.get_thread_state_schema("delta")
         hint = get_type_hints(schema, include_extras=True)["messages"]
@@ -224,7 +224,7 @@ class TestConfigQueries:
         skill.category = "public"
         skill.enabled = True
 
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]) as mock_load:
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]) as mock_load:
             result = client.list_skills()
             mock_load.assert_called_once_with(enabled_only=False)
 
@@ -239,7 +239,7 @@ class TestConfigQueries:
         }
 
     def test_list_skills_enabled_only(self, client):
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[]) as mock_load:
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[]) as mock_load:
             client.list_skills(enabled_only=True)
             # UserScopedSkillStorage.load_skills calls super().load_skills(enabled_only=False)
             # then filters enabled-only itself, so the parent call always uses enabled_only=False.
@@ -249,7 +249,7 @@ class TestConfigQueries:
         memory = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.get_memory.return_value = memory
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.get_memory()
             mock_mgr.get_memory.assert_called_once()
         assert result == memory
@@ -258,7 +258,7 @@ class TestConfigQueries:
         memory = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.get_memory.return_value = memory
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.export_memory()
             mock_mgr.get_memory.assert_called_once()
         assert result == memory
@@ -334,7 +334,7 @@ class TestStream:
         agent.stream.assert_called_once()
         call_kwargs = agent.stream.call_args.kwargs
         # ``messages`` enables token-level streaming of AI text deltas;
-        # see DeerFlowClient.stream() docstring and GitHub issue #1969.
+        # see NkyelClient.stream() docstring and GitHub issue #1969.
         assert call_kwargs["stream_mode"] == ["values", "messages", "custom"]
 
         assert events[0].type == "custom"
@@ -361,7 +361,7 @@ class TestStream:
         assert call_kwargs["context"]["agent_name"] == "test-agent-1"
 
     def test_full_mode_overwrites_internal_delta_before_agent_creation(self, client):
-        from deerflow.runtime.checkpoint_mode import (
+        from nkyel.runtime.checkpoint_mode import (
             CHECKPOINT_MODE_METADATA_KEY,
             INTERNAL_CHECKPOINT_MODE_KEY,
         )
@@ -399,7 +399,7 @@ class TestStream:
     def test_full_mode_rejects_delta_before_agent_creation(self, client):
         from types import SimpleNamespace
 
-        from deerflow.runtime.checkpoint_mode import (
+        from nkyel.runtime.checkpoint_mode import (
             CHECKPOINT_MODE_METADATA_KEY,
             CheckpointModeMismatchError,
         )
@@ -617,7 +617,7 @@ class TestStream:
     def test_messages_mode_emits_token_deltas(self, client):
         """stream() forwards LangGraph ``messages`` mode chunks as delta events.
 
-        Regression for bytedance/deer-flow#1969 — before the fix the client
+        Regression for bytedance/nkyel#1969 — before the fix the client
         only subscribed to ``values`` mode, so LLM output was delivered as
         a single cumulative dump after each graph node finished instead of
         token-by-token deltas as the model generated them.
@@ -765,13 +765,13 @@ class TestStream:
 
     @pytest.mark.parametrize("streamed", [True, False])
     def test_stream_carries_llm_error_fallback_flag_to_headless_cli(self, client, streamed):
-        """``deerflow --print`` / ``--json`` read the fallback flag from stream events to exit non-zero."""
-        from deerflow.tui.cli import _RunOutcome
+        """``nkyel --print`` / ``--json`` read the fallback flag from stream events to exit non-zero."""
+        from nkyel.tui.cli import _RunOutcome
 
         fallback = AIMessage(
             content="The configured LLM provider rejected the request because authentication or access is invalid.",
             id="ai-1",
-            additional_kwargs={"deerflow_error_fallback": True, "error_type": "AuthenticationError", "error_reason": "auth"},
+            additional_kwargs={"nkyel_error_fallback": True, "error_type": "AuthenticationError", "error_reason": "auth"},
         )
         chunks = [("values", {"messages": [HumanMessage(content="hi", id="h-1"), fallback]})]
         if streamed:
@@ -1341,7 +1341,7 @@ class TestChat:
     )
     def test_headless_and_chat_share_final_answer_selection(self, client, events, expected):
         """The CLI and chat must agree on interleaved deltas and metadata-only events."""
-        from deerflow.tui.cli import _RunOutcome
+        from nkyel.tui.cli import _RunOutcome
 
         with patch.object(client, "stream", return_value=iter(events)):
             assert client.chat("q", thread_id="t-shared-answer") == expected
@@ -1375,7 +1375,7 @@ class TestChat:
         from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
         from langchain_core.tools import tool
 
-        from deerflow.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
+        from nkyel.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
 
         class _ToolCallingFakeModel(FakeMessagesListChatModel):
             def bind_tools(self, tools, **kwargs):
@@ -1424,7 +1424,7 @@ class TestChat:
 
 class TestExtractText:
     def test_string(self):
-        assert DeerFlowClient._extract_text("hello") == "hello"
+        assert NkyelClient._extract_text("hello") == "hello"
 
     def test_list_text_blocks(self):
         content = [
@@ -1432,16 +1432,16 @@ class TestExtractText:
             {"type": "thinking", "thinking": "skip"},
             {"type": "text", "text": "second"},
         ]
-        assert DeerFlowClient._extract_text(content) == "first\nsecond"
+        assert NkyelClient._extract_text(content) == "first\nsecond"
 
     def test_list_plain_strings(self):
-        assert DeerFlowClient._extract_text(["a", "b"]) == "a\nb"
+        assert NkyelClient._extract_text(["a", "b"]) == "a\nb"
 
     def test_empty_list(self):
-        assert DeerFlowClient._extract_text([]) == ""
+        assert NkyelClient._extract_text([]) == ""
 
     def test_other_type(self):
-        assert DeerFlowClient._extract_text(42) == "42"
+        assert NkyelClient._extract_text(42) == "42"
 
 
 # ---------------------------------------------------------------------------
@@ -1452,10 +1452,10 @@ class TestExtractText:
 class TestClientMcpSelection:
     @pytest.fixture
     def mcp_client(self, client):
-        from deerflow.config.app_config import AppConfig
-        from deerflow.config.sandbox_config import SandboxConfig
+        from nkyel.config.app_config import AppConfig
+        from nkyel.config.sandbox_config import SandboxConfig
 
-        app_config = AppConfig(models=[], sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+        app_config = AppConfig(models=[], sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
         app_config.tool_search.enabled = False
         client._app_config = app_config
         client._agent_name = "researcher"
@@ -1464,17 +1464,17 @@ class TestClientMcpSelection:
         graph = MagicMock()
         graph.stream.return_value = []
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=graph) as create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
-            patch("deerflow.client.load_agent_config") as load_config,
-            patch("deerflow.tools.tools.get_app_config", return_value=app_config),
-            patch("deerflow.config.acp_config.get_acp_agents", return_value={}),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=graph) as create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.load_agent_config") as load_config,
+            patch("nkyel.tools.tools.get_app_config", return_value=app_config),
+            patch("nkyel.config.acp_config.get_acp_agents", return_value={}),
             patch.object(ExtensionsConfig, "from_file", return_value=extensions),
-            patch("deerflow.mcp.cache.get_cached_mcp_tools", return_value=cached_tools),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.mcp.cache.get_cached_mcp_tools", return_value=cached_tools),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             yield SimpleNamespace(client=client, graph=graph, create_agent=create_agent, load_config=load_config, cached_tools=cached_tools)
 
@@ -1483,7 +1483,7 @@ class TestClientMcpSelection:
         [(None, ["work_search", "personal_search"]), ([], []), (["installation-A"], ["work_search"])],
     )
     def test_selects_mcp_tools_without_changing_shared_cache(self, mcp_client, selection, expected_names):
-        from deerflow.tools.mcp_metadata import is_mcp_tool
+        from nkyel.tools.mcp_metadata import is_mcp_tool
 
         mcp_client.load_config.return_value = AgentConfig(name="researcher", mcp_plugins=selection)
         config = mcp_client.client._get_runnable_config("t1")
@@ -1562,14 +1562,14 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]) as mock_build_middlewares,
-            patch("deerflow.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
-            patch("deerflow.client.load_agent_config", return_value=agent_config) as mock_load_agent_config,
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]) as mock_build_middlewares,
+            patch("nkyel.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
+            patch("nkyel.client.load_agent_config", return_value=agent_config) as mock_load_agent_config,
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config, context={"user_id": "owner-1"})
 
@@ -1586,13 +1586,13 @@ class TestEnsureAgent:
         tools = [StructuredTool.from_function(lambda: "", name=name, description=name) for name in tool_names]
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=tools),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config, context={"user_id": "owner-1"})
 
@@ -1603,17 +1603,17 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
             patch(
-                "deerflow.client.load_agent_config",
+                "nkyel.client.load_agent_config",
                 return_value=AgentConfig(name="stateful-agent"),
             ) as mock_load_agent_config,
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config, context={"user_id": "owner-1"})
             client._ensure_agent(config, context={"user_id": "owner-1"})
@@ -1626,20 +1626,20 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", side_effect=[MagicMock(), MagicMock()]),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", side_effect=[MagicMock(), MagicMock()]),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
             patch(
-                "deerflow.client.load_agent_config",
+                "nkyel.client.load_agent_config",
                 side_effect=[
                     AgentConfig(name="custom-agent", memory_enabled=False),
                     AgentConfig(name="custom-agent", memory_enabled=True),
                 ],
             ) as mock_load_agent_config,
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config, context={"user_id": "owner-1"})
             client.reset_agent()
@@ -1665,14 +1665,14 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]) as mock_build_middlewares,
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.load_agent_config", side_effect=config_error) as mock_load_agent_config,
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]) as mock_build_middlewares,
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.load_agent_config", side_effect=config_error) as mock_load_agent_config,
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config, context={"user_id": "owner-1"})
             client._ensure_agent(config, context={"user_id": "owner-1"})
@@ -1682,7 +1682,7 @@ class TestEnsureAgent:
         assert "using the memory-enabled compatibility default" in caplog.text
 
     def test_authorization_filters_framework_tools_and_reuses_provider(self, client, mock_app_config):
-        from deerflow.authz.provider import AuthzDecision, AuthzReason
+        from nkyel.authz.provider import AuthzDecision, AuthzReason
 
         class Provider:
             name = "test"
@@ -1705,7 +1705,7 @@ class TestEnsureAgent:
             provider=AuthorizationProviderConfig(use="unused:Provider"),
         )
         mock_app_config.skills.deferred_discovery = True
-        from deerflow.config.task_continuity_config import TaskContinuityConfig
+        from nkyel.config.task_continuity_config import TaskContinuityConfig
 
         mock_app_config.task_continuity = TaskContinuityConfig(enabled=True)
         client._app_config = mock_app_config
@@ -1715,17 +1715,17 @@ class TestEnsureAgent:
         describe_tool = StructuredTool.from_function(lambda: "describe", name="describe_skill", description="describe")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]) as mock_build_middlewares,
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[MagicMock()]),
-            patch("deerflow.client.build_skill_search_setup", return_value=SimpleNamespace(describe_skill_tool=describe_tool, skill_names=frozenset({"example"}))),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]) as mock_build_middlewares,
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[MagicMock()]),
+            patch("nkyel.client.build_skill_search_setup", return_value=SimpleNamespace(describe_skill_tool=describe_tool, skill_names=frozenset({"example"}))),
             patch.object(client, "_get_tools", return_value=[safe_tool, denied_tool]),
-            patch("deerflow.authz.tool_filter.resolve_authorization_provider", return_value=provider),
-            patch("deerflow.agents.lead_agent.agent.resolve_authorization_provider", return_value=provider),
-            patch("deerflow.authz.skill_filter.resolve_authorization_provider", return_value=provider),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.authz.tool_filter.resolve_authorization_provider", return_value=provider),
+            patch("nkyel.agents.lead_agent.agent.resolve_authorization_provider", return_value=provider),
+            patch("nkyel.authz.skill_filter.resolve_authorization_provider", return_value=provider),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(client._get_runnable_config("t1"), context={"user_role": "user"})
 
@@ -1736,20 +1736,20 @@ class TestEnsureAgent:
         mock_app_config.authorization = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"tools": {"allow": "*"}}}},
             ),
         )
         client._app_config = mock_app_config
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", side_effect=[MagicMock(), MagicMock()]) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", side_effect=[MagicMock(), MagicMock()]) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             config = client._get_runnable_config("t1")
             client._ensure_agent(config, context={"user_id": "u1", "user_role": "user", "authz_attributes": {"department": "eng"}})
@@ -1763,13 +1763,13 @@ class TestEnsureAgent:
         client._app_config = mock_app_config
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", side_effect=[MagicMock(), MagicMock()]) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]) as mock_build_middlewares,
-            patch("deerflow.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", side_effect=[MagicMock(), MagicMock()]) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]) as mock_build_middlewares,
+            patch("nkyel.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             config = client._get_runnable_config("t1")
             client._ensure_agent(config, context={"user_id": "alice"})
@@ -1783,7 +1783,7 @@ class TestEnsureAgent:
         mock_app_config.authorization = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"tools": {"allow": "*"}}}},
             ),
         )
@@ -1791,13 +1791,13 @@ class TestEnsureAgent:
         attributes = {"groups": ["reader"]}
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", side_effect=[MagicMock(), MagicMock()]) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", side_effect=[MagicMock(), MagicMock()]) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             config = client._get_runnable_config("t1")
             context = {
@@ -1819,20 +1819,20 @@ class TestEnsureAgent:
         describe_tool = StructuredTool.from_function(lambda: "describe", name="describe_skill", description="describe")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[MagicMock()]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[MagicMock()]),
             patch(
-                "deerflow.client.build_skill_search_setup",
+                "nkyel.client.build_skill_search_setup",
                 return_value=SimpleNamespace(
                     describe_skill_tool=describe_tool,
                     skill_names=frozenset({"example"}),
                 ),
             ),
             patch.object(client, "_get_tools", return_value=[mcp_tool]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(client._get_runnable_config("t1"))
 
@@ -1848,14 +1848,14 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=mock_agent) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]) as mock_build_middlewares,
-            patch("deerflow.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
-            patch("deerflow.client.load_agent_config", return_value=AgentConfig(name="custom-agent")),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=mock_agent) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]) as mock_build_middlewares,
+            patch("nkyel.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
+            patch("nkyel.client.load_agent_config", return_value=AgentConfig(name="custom-agent")),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
         ):
             client._agent_name = "custom-agent"
             client._available_skills = {"test_skill"}
@@ -1880,13 +1880,13 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t-delta")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=mock_agent) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[middleware]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=mock_agent) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[middleware]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config)
 
@@ -1901,13 +1901,13 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=mock_agent) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=mock_agent) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=mock_checkpointer),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=mock_checkpointer),
         ):
             client._ensure_agent(config)
 
@@ -1927,13 +1927,13 @@ class TestEnsureAgent:
             return [MagicMock()] + custom + [mock_clarification]
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=mock_agent) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", side_effect=fake_build_middlewares),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=mock_agent) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", side_effect=fake_build_middlewares),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
         ):
             client._ensure_agent(config)
 
@@ -1947,13 +1947,13 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=mock_agent) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=mock_agent) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config)
 
@@ -1961,7 +1961,7 @@ class TestEnsureAgent:
 
     def test_reuses_agent_same_config(self, client):
         """_ensure_agent does not recreate if config key unchanged."""
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         mock_agent = MagicMock()
         client._agent = mock_agent
@@ -2008,13 +2008,13 @@ class TestEnsureAgent:
         )
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", side_effect=[MagicMock(), MagicMock()]) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", side_effect=[MagicMock(), MagicMock()]) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config1)
             client._ensure_agent(config2)
@@ -2028,13 +2028,13 @@ class TestEnsureAgent:
         config["configurable"].update({"subagent_enabled": True, "max_total_subagents": None})
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(config)
 
@@ -2045,7 +2045,7 @@ class TestEnsureAgent:
         (parity with agent.py — config flag must not be a silent no-op on the embedded path)."""
         from pathlib import Path
 
-        from deerflow.skills.types import Skill, SkillCategory
+        from nkyel.skills.types import Skill, SkillCategory
 
         fake_skill = Skill(
             name="deep-research",
@@ -2065,13 +2065,13 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[fake_skill]),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[fake_skill]),
         ):
             client._ensure_agent(config)
 
@@ -2083,7 +2083,7 @@ class TestEnsureAgent:
         """When skills.deferred_discovery=False, skill_names is None so the legacy prompt path runs."""
         from pathlib import Path
 
-        from deerflow.skills.types import Skill, SkillCategory
+        from nkyel.skills.types import Skill, SkillCategory
 
         fake_skill = Skill(
             name="deep-research",
@@ -2103,13 +2103,13 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt") as mock_apply_prompt,
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[fake_skill]),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[fake_skill]),
         ):
             client._ensure_agent(config)
 
@@ -2126,8 +2126,8 @@ class TestEnsureAgent:
         """
         from langchain_core.tools import tool as as_tool
 
-        from deerflow.agents.middlewares.mcp_routing_middleware import McpRoutingMiddleware
-        from deerflow.tools.mcp_metadata import tag_mcp_routing, tag_mcp_tool
+        from nkyel.agents.middlewares.mcp_routing_middleware import McpRoutingMiddleware
+        from nkyel.tools.mcp_metadata import tag_mcp_routing, tag_mcp_tool
 
         @as_tool
         def postgres_query(sql: str) -> str:
@@ -2144,13 +2144,13 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]) as mock_build_middlewares,
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]) as mock_build_middlewares,
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
             patch.object(client, "_get_tools", return_value=[postgres_query]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
         ):
             client._ensure_agent(config)
 
@@ -2166,13 +2166,13 @@ class TestEnsureAgent:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]) as mock_build_middlewares,
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]) as mock_build_middlewares,
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
         ):
             client._ensure_agent(config)
 
@@ -2375,8 +2375,8 @@ class TestThreadQueries:
             client.list_threads(sort_by="title")
 
     def test_tui_session_resolves_past_a_busy_thread(self, client, saver):
-        from deerflow.tui.cli import LaunchPlan
-        from deerflow.tui.session import Session
+        from nkyel.tui.cli import LaunchPlan
+        from nkyel.tui.session import Session
 
         client._checkpointer = saver
         put_thread(saver, "t-old", ["2023-01-01T10:00:00Z"], title="Old chat")
@@ -2396,7 +2396,7 @@ class TestThreadQueries:
         mock_checkpointer = MagicMock()
         mock_checkpointer.list.return_value = []
 
-        with patch("deerflow.runtime.checkpointer.provider.get_checkpointer", return_value=mock_checkpointer):
+        with patch("nkyel.runtime.checkpointer.provider.get_checkpointer", return_value=mock_checkpointer):
             # No internal checkpointer, should fetch from provider
             result = client.list_threads()
 
@@ -2434,7 +2434,7 @@ class TestThreadQueries:
 
         with (
             patch.object(client, "_ensure_agent"),
-            patch("deerflow.client.CheckpointStateAccessor.bind", return_value=accessor),
+            patch("nkyel.client.CheckpointStateAccessor.bind", return_value=accessor),
         ):
             result = client.get_thread("t1")
 
@@ -2491,7 +2491,7 @@ class TestThreadQueries:
         accessor = MagicMock()
         accessor.history.return_value = [snapshot]
 
-        with patch("deerflow.client.CheckpointStateAccessor", create=True) as accessor_type:
+        with patch("nkyel.client.CheckpointStateAccessor", create=True) as accessor_type:
             accessor_type.bind.return_value = accessor
             result = client.get_thread("thread-1")
 
@@ -2505,9 +2505,9 @@ class TestThreadQueries:
         client._agent = MagicMock()
 
         with (
-            patch("deerflow.runtime.checkpointer.provider.get_checkpointer", return_value=mock_checkpointer),
+            patch("nkyel.runtime.checkpointer.provider.get_checkpointer", return_value=mock_checkpointer),
             patch.object(client, "_ensure_agent"),
-            patch("deerflow.client.CheckpointStateAccessor.bind", return_value=accessor),
+            patch("nkyel.client.CheckpointStateAccessor.bind", return_value=accessor),
         ):
             result = client.get_thread("t99")
 
@@ -2555,8 +2555,8 @@ async def test_update_mcp_config_installs_the_local_committed_fence(
     """A client write must retire the writer process's own binding, not just publish the token."""
     import test_mcp_cache_reconciliation as harness
 
-    from deerflow.mcp import session_pool as session_pool_module
-    from deerflow.mcp.session_pool import MCPSessionPool
+    from nkyel.mcp import session_pool as session_pool_module
+    from nkyel.mcp.session_pool import MCPSessionPool
 
     cfg = tmp_path / "extensions_config.json"
     pool = MCPSessionPool()
@@ -2585,8 +2585,8 @@ async def test_update_mcp_config_post_commit_failure_still_resets_agent(
     """A committed write whose local handoff fails must not keep the old cached agent."""
     import test_mcp_cache_reconciliation as harness
 
-    from deerflow.mcp import session_pool as session_pool_module
-    from deerflow.mcp.session_pool import MCPSessionPool
+    from nkyel.mcp import session_pool as session_pool_module
+    from nkyel.mcp.session_pool import MCPSessionPool
 
     cfg = tmp_path / "extensions_config.json"
     pool = MCPSessionPool()
@@ -2600,7 +2600,7 @@ async def test_update_mcp_config_post_commit_failure_still_resets_agent(
     def _boom(*_args, **_kwargs):
         raise RuntimeError("prepare failed")
 
-    monkeypatch.setattr("deerflow.mcp.cache.prepare_mcp_reconciliation", _boom)
+    monkeypatch.setattr("nkyel.mcp.cache.prepare_mcp_reconciliation", _boom)
 
     with pytest.raises(RuntimeError, match="saved, but local cache reconciliation failed"):
         client.update_mcp_config({"A": {"enabled": True, "type": "stdio", "command": "cmd-A2"}})
@@ -2619,7 +2619,7 @@ class TestMcpConfig:
         ext_config = MagicMock()
         ext_config.mcp_servers = {"github": server}
 
-        with patch("deerflow.client.get_extensions_config", return_value=ext_config):
+        with patch("nkyel.client.get_extensions_config", return_value=ext_config):
             result = client.get_mcp_config()
 
         assert "mcp_servers" in result
@@ -2641,9 +2641,9 @@ class TestMcpConfig:
             client._agent = MagicMock()
 
             with (
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=tmp_path),
-                patch("deerflow.client.get_extensions_config", return_value=current_config),
-                patch("deerflow.client.reload_extensions_config", return_value=reloaded_config),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=tmp_path),
+                patch("nkyel.client.get_extensions_config", return_value=current_config),
+                patch("nkyel.client.reload_extensions_config", return_value=reloaded_config),
             ):
                 result = client.update_mcp_config({"new-server": {"enabled": True, "type": "sse"}})
 
@@ -2660,13 +2660,13 @@ class TestMcpConfig:
 
     def test_update_mcp_config_preserves_raw_sibling_keys(self, client, reconciler, tmp_path, monkeypatch):  # noqa: F811 - imported fixture
         """Only ``mcpServers`` is replaced; every other key keeps its on-disk ``$VAR`` form."""
-        monkeypatch.setenv("DEERFLOW_TEST_GH_TOKEN", "ghp_live_secret_value")
+        monkeypatch.setenv("NKYEL_TEST_GH_TOKEN", "ghp_live_secret_value")
         config_file = tmp_path / "extensions_config.json"
         config_file.write_text(
             json.dumps(
                 {
                     "mcpServers": {"old": {"type": "stdio", "command": "npx"}},
-                    "mcpInterceptors": {"auth": "$DEERFLOW_TEST_GH_TOKEN"},
+                    "mcpInterceptors": {"auth": "$NKYEL_TEST_GH_TOKEN"},
                     "skills": {"kept": {"enabled": False}},
                 }
             ),
@@ -2674,14 +2674,14 @@ class TestMcpConfig:
         )
 
         with (
-            patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-            patch("deerflow.client.reload_extensions_config", return_value=ExtensionsConfig()),
+            patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+            patch("nkyel.client.reload_extensions_config", return_value=ExtensionsConfig()),
         ):
-            client.update_mcp_config({"new": {"type": "stdio", "command": "uvx", "env": {"TOKEN": "$DEERFLOW_TEST_GH_TOKEN"}}})
+            client.update_mcp_config({"new": {"type": "stdio", "command": "uvx", "env": {"TOKEN": "$NKYEL_TEST_GH_TOKEN"}}})
 
         written = json.loads(config_file.read_text(encoding="utf-8"))
-        assert written["mcpServers"] == {"new": {"type": "stdio", "command": "uvx", "env": {"TOKEN": "$DEERFLOW_TEST_GH_TOKEN"}}}
-        assert written["mcpInterceptors"] == {"auth": "$DEERFLOW_TEST_GH_TOKEN"}
+        assert written["mcpServers"] == {"new": {"type": "stdio", "command": "uvx", "env": {"TOKEN": "$NKYEL_TEST_GH_TOKEN"}}}
+        assert written["mcpInterceptors"] == {"auth": "$NKYEL_TEST_GH_TOKEN"}
         assert written["skills"] == {"kept": {"enabled": False}}
         # The controlled writer also commits the shared lifecycle ledger: "old"
         # was removed (tombstone) and "new" was added, both with fresh tokens.
@@ -2701,8 +2701,8 @@ class TestMcpConfig:
         )
 
         with (
-            patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-            patch("deerflow.client.reload_extensions_config", return_value=ExtensionsConfig()),
+            patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+            patch("nkyel.client.reload_extensions_config", return_value=ExtensionsConfig()),
         ):
             client.update_mcp_config({})
             after_delete = json.loads(config_file.read_text(encoding="utf-8"))["mcpLifecycle"]["servers"]["A"]
@@ -2718,8 +2718,8 @@ class TestMcpConfig:
         reload = MagicMock()
 
         with (
-            patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-            patch("deerflow.client.reload_extensions_config", reload),
+            patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+            patch("nkyel.client.reload_extensions_config", reload),
             pytest.raises(ValueError),
         ):
             client.update_mcp_config({"bad": {"enabled": "not-a-bool"}})
@@ -2745,13 +2745,13 @@ class TestSkillsManagement:
 
     def test_get_skill_found(self, client):
         skill = self._make_skill()
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
             result = client.get_skill("test-skill")
         assert result is not None
         assert result["name"] == "test-skill"
 
     def test_get_skill_not_found(self, client):
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[]):
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[]):
             result = client.get_skill("nonexistent")
         assert result is None
 
@@ -2773,11 +2773,11 @@ class TestSkillsManagement:
             # method is invoked 4 times: provide 4 return values.
             with (
                 patch(
-                    "deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills",
+                    "nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills",
                     side_effect=[[skill], [skill], [updated_skill], [updated_skill]],
                 ),
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=tmp_path),
-                patch("deerflow.client.reload_extensions_config"),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=tmp_path),
+                patch("nkyel.client.reload_extensions_config"),
             ):
                 result = client.update_skill("test-skill", enabled=False)
             assert result["enabled"] is False
@@ -2788,8 +2788,8 @@ class TestSkillsManagement:
             tmp_path.unlink()
 
     def test_update_public_skill_enters_managed_write_before_projection(self, client, tmp_path):
-        from deerflow.skills import projection
-        from deerflow.skills.mutations import guard
+        from nkyel.skills import projection
+        from nkyel.skills.mutations import guard
 
         skill = self._make_skill(enabled=True)
         updated_skill = self._make_skill(enabled=False)
@@ -2815,11 +2815,11 @@ class TestSkillsManagement:
 
         with (
             patch(
-                "deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills",
+                "nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills",
                 side_effect=[[skill], [skill], [updated_skill], [updated_skill]],
             ),
-            patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-            patch("deerflow.client.reload_extensions_config"),
+            patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+            patch("nkyel.client.reload_extensions_config"),
             patch.object(guard, "managed_global_state_write", record_managed_write),
             patch.object(projection, "skill_projection_mutation", record_projection),
         ):
@@ -2838,11 +2838,11 @@ class TestSkillsManagement:
         try:
             with (
                 patch(
-                    "deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills",
+                    "nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills",
                     side_effect=[[skill], [skill], [updated_skill], [updated_skill]],
                 ),
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=tmp_path),
-                patch("deerflow.client.reload_extensions_config"),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=tmp_path),
+                patch("nkyel.client.reload_extensions_config"),
             ):
                 client.update_skill("test-skill", enabled=False)
 
@@ -2854,8 +2854,8 @@ class TestSkillsManagement:
     @staticmethod
     def _config_with_placeholders() -> dict:
         return {
-            "mcpServers": {"github": {"type": "stdio", "command": "npx", "env": {"GITHUB_TOKEN": "$DEERFLOW_TEST_GH_TOKEN", "OPTIONAL": "$DEERFLOW_TEST_UNSET_VAR"}}},
-            "mcpInterceptors": {"auth": "$DEERFLOW_TEST_GH_TOKEN"},
+            "mcpServers": {"github": {"type": "stdio", "command": "npx", "env": {"GITHUB_TOKEN": "$NKYEL_TEST_GH_TOKEN", "OPTIONAL": "$NKYEL_TEST_UNSET_VAR"}}},
+            "mcpInterceptors": {"auth": "$NKYEL_TEST_GH_TOKEN"},
             "skills": {},
         }
 
@@ -2866,8 +2866,8 @@ class TestSkillsManagement:
         ``public`` covers the shared-state path; ``custom`` with non-user-scoped
         storage covers the fallback that also writes ``extensions_config.json``.
         """
-        monkeypatch.setenv("DEERFLOW_TEST_GH_TOKEN", "ghp_live_secret_value")
-        monkeypatch.delenv("DEERFLOW_TEST_UNSET_VAR", raising=False)
+        monkeypatch.setenv("NKYEL_TEST_GH_TOKEN", "ghp_live_secret_value")
+        monkeypatch.delenv("NKYEL_TEST_UNSET_VAR", raising=False)
         config_file = tmp_path / "extensions_config.json"
         config_file.write_text(json.dumps(self._config_with_placeholders()), encoding="utf-8")
 
@@ -2878,9 +2878,9 @@ class TestSkillsManagement:
         storage.load_skills.side_effect = [[skill], [self._make_skill(enabled=False)]]
 
         with (
-            patch("deerflow.client.get_or_new_user_skill_storage", return_value=storage),
-            patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-            patch("deerflow.client.reload_extensions_config"),
+            patch("nkyel.client.get_or_new_user_skill_storage", return_value=storage),
+            patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+            patch("nkyel.client.reload_extensions_config"),
         ):
             client.update_skill("test-skill", enabled=False)
 
@@ -2891,7 +2891,7 @@ class TestSkillsManagement:
         assert "ghp_live_secret_value" not in written_text
 
     def test_update_skill_not_found(self, client):
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[]):
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[]):
             with pytest.raises(ValueError, match="not found"):
                 client.update_skill("nonexistent", enabled=True)
 
@@ -2911,12 +2911,12 @@ class TestSkillsManagement:
             skills_root = tmp_path / "skills"
             (skills_root / "custom").mkdir(parents=True)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
             local_storage = LocalSkillStorage(host_path=str(skills_root))
             with (
-                patch("deerflow.skills.storage._default_skill_storage", local_storage),
-                patch("deerflow.client.get_or_new_user_skill_storage", lambda user_id, **kwargs: local_storage),
+                patch("nkyel.skills.storage._default_skill_storage", local_storage),
+                patch("nkyel.client.get_or_new_user_skill_storage", lambda user_id, **kwargs: local_storage),
             ):
                 result = client.install_skill(archive_path)
 
@@ -2948,7 +2948,7 @@ class TestMemoryManagement:
         imported = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.import_memory.return_value = imported
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.import_memory(imported)
         assert mock_mgr.import_memory.call_count == 1
         call_args = mock_mgr.import_memory.call_args
@@ -2960,7 +2960,7 @@ class TestMemoryManagement:
         data = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.reload_memory.return_value = data
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.reload_memory()
         assert result == data
 
@@ -2971,7 +2971,7 @@ class TestMemoryManagement:
         mock_mgr = MagicMock()
         mock_mgr.reload_memory.side_effect = NotImplementedError("reload not supported")
         mock_mgr.get_memory.side_effect = NotImplementedError("get_memory not supported")
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             with pytest.raises(NotImplementedError, match="implements neither"):
                 client.reload_memory()
         mock_mgr.reload_memory.assert_called_once()
@@ -2981,7 +2981,7 @@ class TestMemoryManagement:
         data = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.clear_memory.return_value = data
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.clear_memory()
         assert result == data
 
@@ -2989,7 +2989,7 @@ class TestMemoryManagement:
         data = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.create_fact.return_value = (data, "fact_new")
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.create_memory_fact(
                 "User prefers concise code reviews.",
                 category="preference",
@@ -3007,7 +3007,7 @@ class TestMemoryManagement:
         data = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.delete_fact.return_value = data
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.delete_memory_fact("fact_123")
             mock_mgr.delete_fact.assert_called_once_with("fact_123", user_id=ANY)
         assert result == data
@@ -3016,7 +3016,7 @@ class TestMemoryManagement:
         data = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.update_fact.return_value = data
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.update_memory_fact(
                 "fact_123",
                 "User prefers spaces",
@@ -3036,7 +3036,7 @@ class TestMemoryManagement:
         data = {"version": "1.0", "facts": []}
         mock_mgr = MagicMock()
         mock_mgr.update_fact.return_value = data
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             result = client.update_memory_fact(
                 "fact_123",
                 "User prefers spaces",
@@ -3058,7 +3058,7 @@ class TestMemoryManagement:
         config.manager_class = "deermem"
         config.backend_config = {}
 
-        with patch("deerflow.config.memory_config.get_memory_config", return_value=config):
+        with patch("nkyel.config.memory_config.get_memory_config", return_value=config):
             result = client.get_memory_config()
 
         assert result["enabled"] is True
@@ -3077,8 +3077,8 @@ class TestMemoryManagement:
         mock_mgr.get_memory.return_value = data
 
         with (
-            patch("deerflow.config.memory_config.get_memory_config", return_value=config),
-            patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr),
+            patch("nkyel.config.memory_config.get_memory_config", return_value=config),
+            patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr),
         ):
             result = client.get_memory_status()
 
@@ -3103,7 +3103,7 @@ class TestUploads:
             uploads_dir = tmp_path / "uploads"
             uploads_dir.mkdir()
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 result = client.upload_files("thread-1", [src_file])
 
             assert result["success"] is True
@@ -3127,7 +3127,7 @@ class TestUploads:
         uploads_dir = tmp_path / "uploads"
         uploads_dir.mkdir()
 
-        with patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+        with patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
             with pytest.raises(ValueError, match="reserved upload staging"):
                 client.upload_files("thread-1", [normal, reserved])
 
@@ -3177,10 +3177,10 @@ class TestUploads:
                 return client.upload_files("thread-async", [first, second])
 
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
-                patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
+                patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
                 patch("concurrent.futures.ThreadPoolExecutor", FakeExecutor),
             ):
                 result = asyncio.run(call_upload())
@@ -3211,10 +3211,10 @@ class TestUploads:
                 return md_path
 
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".docx", ".pdf"}),
-                patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".docx", ".pdf"}),
+                patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
             ):
                 result = client.upload_files("thread-1", [docx, pdf])
 
@@ -3223,7 +3223,7 @@ class TestUploads:
             assert result["files"][1]["markdown_file"] == "a_1.md"
             assert (uploads_dir / "a.md").read_text(encoding="utf-8") == "FROM:a.docx"
             assert (uploads_dir / "a_1.md").read_text(encoding="utf-8") == "FROM:a.pdf"
-            from deerflow.uploads.companions import resolve_companion
+            from nkyel.uploads.companions import resolve_companion
 
             assert resolve_companion(uploads_dir / "a.docx") == uploads_dir / "a.md"
             assert resolve_companion(uploads_dir / "a.pdf") == uploads_dir / "a_1.md"
@@ -3232,12 +3232,12 @@ class TestUploads:
             authored.parent.mkdir()
             authored.write_text("# My notes", encoding="utf-8")  # same byte length as FROM:a.pdf
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
             ):
                 result = client.upload_files("thread-1", [authored])
 
-            from deerflow.utils.file_outline import extract_outline_for_file
+            from nkyel.utils.file_outline import extract_outline_for_file
 
             # Same-name uploads can no longer clobber an earlier file in place
             # (issue #3750): the authored copy lands under the next free
@@ -3275,10 +3275,10 @@ class TestUploads:
                 return md_path
 
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".docx", ".pdf"}),
-                patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=convert_failing_on_docx),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".docx", ".pdf"}),
+                patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=convert_failing_on_docx),
             ):
                 result = client.upload_files("thread-1", [docx, pdf])
 
@@ -3315,10 +3315,10 @@ class TestUploads:
                 return md_path
 
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
-                patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=racing_convert),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
+                patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=racing_convert),
             ):
                 result = client.upload_files("thread-1", [pdf])
 
@@ -3355,10 +3355,10 @@ class TestUploads:
                 return client.upload_files("thread-async", [pdf])
 
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
-                patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=racing_convert),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
+                patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=racing_convert),
             ):
                 result = asyncio.run(call_upload())
 
@@ -3373,7 +3373,7 @@ class TestUploads:
             existing = uploads_dir / "existing.txt"
             existing.write_text("IMPORTANT BYTES")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 with pytest.raises(shutil.SameFileError):
                     client.upload_files("thread-1", [existing])
 
@@ -3398,10 +3398,10 @@ class TestUploads:
                 return md_path
 
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
-                patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
+                patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
             ):
                 result = client.upload_files("thread-1", [pdf])
 
@@ -3416,7 +3416,7 @@ class TestUploads:
             (uploads_dir / "a.txt").write_text("a")
             (uploads_dir / "b.txt").write_text("bb")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 result = client.list_uploads("thread-1")
 
             assert result["count"] == 2
@@ -3434,7 +3434,7 @@ class TestUploads:
             uploads_dir = Path(tmp)
             (uploads_dir / "delete-me.txt").write_text("gone")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 result = client.delete_upload("thread-1", "delete-me.txt")
 
             assert result["success"] is True
@@ -3449,7 +3449,7 @@ class TestUploads:
             (uploads_dir / "report.md").write_text("converted from the docx", encoding="utf-8")
             (uploads_dir / "report.pdf").write_bytes(b"pdf-bytes")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir):
                 result = client.delete_upload("thread-1", "report.pdf")
 
             assert result["success"] is True
@@ -3458,14 +3458,14 @@ class TestUploads:
 
     def test_delete_upload_not_found(self, client):
         with tempfile.TemporaryDirectory() as tmp:
-            with patch("deerflow.client.get_uploads_dir", return_value=Path(tmp)):
+            with patch("nkyel.client.get_uploads_dir", return_value=Path(tmp)):
                 with pytest.raises(FileNotFoundError):
                     client.delete_upload("thread-1", "nope.txt")
 
     def test_delete_upload_path_traversal(self, client):
         with tempfile.TemporaryDirectory() as tmp:
             uploads_dir = Path(tmp)
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 with pytest.raises(PathTraversalError):
                     client.delete_upload("thread-1", "../../etc/passwd")
 
@@ -3477,7 +3477,7 @@ class TestUploads:
 
 class TestArtifacts:
     def test_get_artifact(self, client):
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         with tempfile.TemporaryDirectory() as tmp:
             paths = Paths(base_dir=tmp)
@@ -3486,21 +3486,21 @@ class TestArtifacts:
             outputs.mkdir(parents=True)
             (outputs / "result.txt").write_text("artifact content")
 
-            with patch("deerflow.client.get_paths", return_value=paths):
+            with patch("nkyel.client.get_paths", return_value=paths):
                 content, mime = client.get_artifact("t1", "mnt/user-data/outputs/result.txt")
 
             assert content == b"artifact content"
             assert "text" in mime
 
     def test_get_artifact_not_found(self, client):
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         with tempfile.TemporaryDirectory() as tmp:
             paths = Paths(base_dir=tmp)
             user_id = get_effective_user_id()
             paths.sandbox_outputs_dir("t1", user_id=user_id).mkdir(parents=True)
 
-            with patch("deerflow.client.get_paths", return_value=paths):
+            with patch("nkyel.client.get_paths", return_value=paths):
                 with pytest.raises(FileNotFoundError):
                     client.get_artifact("t1", "mnt/user-data/outputs/nope.txt")
 
@@ -3509,14 +3509,14 @@ class TestArtifacts:
             client.get_artifact("t1", "bad/path/file.txt")
 
     def test_get_artifact_path_traversal(self, client):
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         with tempfile.TemporaryDirectory() as tmp:
             paths = Paths(base_dir=tmp)
             user_id = get_effective_user_id()
             paths.sandbox_outputs_dir("t1", user_id=user_id).mkdir(parents=True)
 
-            with patch("deerflow.client.get_paths", return_value=paths):
+            with patch("nkyel.client.get_paths", return_value=paths):
                 with pytest.raises(PathTraversalError):
                     client.get_artifact("t1", "mnt/user-data/../../../etc/passwd")
 
@@ -3669,7 +3669,7 @@ class TestScenarioFileLifecycle:
             (tmp_path / "report.txt").write_text("quarterly report data")
             (tmp_path / "data.csv").write_text("a,b,c\n1,2,3")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 # Step 1: Upload
                 result = client.upload_files(
                     "t-lifecycle",
@@ -3698,7 +3698,7 @@ class TestScenarioFileLifecycle:
 
     def test_upload_then_read_artifact(self, client):
         """Upload a file, simulate agent producing artifact, read it back."""
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
@@ -3714,7 +3714,7 @@ class TestScenarioFileLifecycle:
             src_file = tmp_path / "input.txt"
             src_file.write_text("raw data to process")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 uploaded = client.upload_files("t-artifact", [src_file])
                 assert len(uploaded["files"]) == 1
 
@@ -3722,7 +3722,7 @@ class TestScenarioFileLifecycle:
             (outputs_dir / "analysis.json").write_text('{"result": "processed"}')
 
             # Retrieve artifact
-            with patch("deerflow.client.get_paths", return_value=paths):
+            with patch("nkyel.client.get_paths", return_value=paths):
                 content, mime = client.get_artifact("t-artifact", "mnt/user-data/outputs/analysis.json")
 
             assert json.loads(content) == {"result": "processed"}
@@ -3759,12 +3759,12 @@ class TestScenarioConfigManagement:
         skill.category = "public"
         skill.enabled = True
 
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
             skills_result = client.list_skills()
         assert len(skills_result["skills"]) == 1
 
         # Get specific skill
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
             detail = client.get_skill("web-search")
         assert detail is not None
         assert detail["enabled"] is True
@@ -3782,9 +3782,9 @@ class TestScenarioConfigManagement:
 
             client._agent = MagicMock()  # Simulate existing agent
             with (
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-                patch("deerflow.client.get_extensions_config", return_value=current_config),
-                patch("deerflow.client.reload_extensions_config", return_value=reloaded_config),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+                patch("nkyel.client.get_extensions_config", return_value=current_config),
+                patch("nkyel.client.reload_extensions_config", return_value=reloaded_config),
             ):
                 mcp_result = client.update_mcp_config({"my-mcp": {"enabled": True}})
             assert "my-mcp" in mcp_result["mcp_servers"]
@@ -3809,10 +3809,10 @@ class TestScenarioConfigManagement:
 
             client._agent = MagicMock()  # Simulate re-created agent
             with (
-                patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", side_effect=[[skill], [toggled]]),
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-                patch("deerflow.client.get_extensions_config", return_value=ext_config),
-                patch("deerflow.client.reload_extensions_config"),
+                patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", side_effect=[[skill], [toggled]]),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+                patch("nkyel.client.get_extensions_config", return_value=ext_config),
+                patch("nkyel.client.reload_extensions_config"),
             ):
                 skill_result = client.update_skill("code-gen", enabled=False)
             assert skill_result["enabled"] is False
@@ -3835,13 +3835,13 @@ class TestScenarioAgentRecreation:
         config_b = client._get_runnable_config("t1", model_name="claude-3")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", side_effect=fake_create_agent),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", side_effect=fake_create_agent),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
         ):
             client._ensure_agent(config_a)
             first_agent = client._agent
@@ -3864,13 +3864,13 @@ class TestScenarioAgentRecreation:
         config = client._get_runnable_config("t1", model_name="gpt-4")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", side_effect=fake_create_agent),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", side_effect=fake_create_agent),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
         ):
             client._ensure_agent(config)
             client._ensure_agent(config)
@@ -3890,13 +3890,13 @@ class TestScenarioAgentRecreation:
         config = client._get_runnable_config("t1")
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", side_effect=fake_create_agent),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", side_effect=fake_create_agent),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[]),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=MagicMock()),
         ):
             client._ensure_agent(config)
             client.reset_agent()
@@ -4005,7 +4005,7 @@ class TestScenarioThreadIsolation:
             def get_dir(thread_id):
                 return uploads_a if thread_id == "thread-a" else uploads_b
 
-            with patch("deerflow.client.get_uploads_dir", side_effect=get_dir), patch("deerflow.client.ensure_uploads_dir", side_effect=get_dir):
+            with patch("nkyel.client.get_uploads_dir", side_effect=get_dir), patch("nkyel.client.ensure_uploads_dir", side_effect=get_dir):
                 client.upload_files("thread-a", [src_file])
 
                 files_a = client.list_uploads("thread-a")
@@ -4016,7 +4016,7 @@ class TestScenarioThreadIsolation:
 
     def test_artifacts_isolated_per_thread(self, client):
         """Artifacts in thread-A are not accessible from thread-B."""
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         with tempfile.TemporaryDirectory() as tmp:
             paths = Paths(base_dir=tmp)
@@ -4026,7 +4026,7 @@ class TestScenarioThreadIsolation:
             paths.sandbox_outputs_dir("thread-b", user_id=user_id).mkdir(parents=True)
             (outputs_a / "result.txt").write_text("thread-a artifact")
 
-            with patch("deerflow.client.get_paths", return_value=paths):
+            with patch("nkyel.client.get_paths", return_value=paths):
                 content, _ = client.get_artifact("thread-a", "mnt/user-data/outputs/result.txt")
                 assert content == b"thread-a artifact"
 
@@ -4059,17 +4059,17 @@ class TestScenarioMemoryWorkflow:
         mock_mgr.get_memory.side_effect = [initial_data, updated_data]
         mock_mgr.reload_memory.return_value = updated_data
 
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             mem = client.get_memory()
         assert len(mem["facts"]) == 1
 
-        with patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr):
+        with patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr):
             refreshed = client.reload_memory()
         assert len(refreshed["facts"]) == 2
 
         with (
-            patch("deerflow.config.memory_config.get_memory_config", return_value=config),
-            patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr),
+            patch("nkyel.config.memory_config.get_memory_config", return_value=config),
+            patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr),
         ):
             status = client.get_memory_status()
         assert status["config"]["enabled"] is True
@@ -4096,12 +4096,12 @@ class TestScenarioSkillInstallAndUse:
             (skills_root / "custom").mkdir(parents=True)
 
             # Step 1: Install
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
             local_storage = LocalSkillStorage(host_path=str(skills_root))
             with (
-                patch("deerflow.skills.storage._default_skill_storage", local_storage),
-                patch("deerflow.client.get_or_new_user_skill_storage", lambda user_id, **kwargs: local_storage),
+                patch("nkyel.skills.storage._default_skill_storage", local_storage),
+                patch("nkyel.client.get_or_new_user_skill_storage", lambda user_id, **kwargs: local_storage),
             ):
                 result = client.install_skill(archive)
             assert result["success"] is True
@@ -4115,7 +4115,7 @@ class TestScenarioSkillInstallAndUse:
             installed_skill.category = "custom"
             installed_skill.enabled = True
 
-            with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[installed_skill]):
+            with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[installed_skill]):
                 skills_result = client.list_skills()
             assert any(s["name"] == "my-analyzer" for s in skills_result["skills"])
 
@@ -4135,10 +4135,10 @@ class TestScenarioSkillInstallAndUse:
             config_file.write_text("{}")
 
             with (
-                patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", side_effect=[[installed_skill], [disabled_skill]]),
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-                patch("deerflow.client.get_extensions_config", return_value=ext_config),
-                patch("deerflow.client.reload_extensions_config"),
+                patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", side_effect=[[installed_skill], [disabled_skill]]),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+                patch("nkyel.client.get_extensions_config", return_value=ext_config),
+                patch("nkyel.client.reload_extensions_config"),
             ):
                 toggled = client.update_skill("my-analyzer", enabled=False)
             assert toggled["enabled"] is False
@@ -4234,10 +4234,10 @@ class TestScenarioEdgeCases:
             pdf_file.write_bytes(b"%PDF-1.4 fake content")
 
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
-                patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=Exception("conversion failed")),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
+                patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=Exception("conversion failed")),
             ):
                 result = client.upload_files("t-pdf-fail", [pdf_file])
 
@@ -4254,7 +4254,7 @@ class TestScenarioEdgeCases:
 
 
 class TestGatewayConformance:
-    """Validate that DeerFlowClient return dicts conform to Gateway Pydantic response models.
+    """Validate that NkyelClient return dicts conform to Gateway Pydantic response models.
 
     Each test calls a client method, then parses the result through the
     corresponding Gateway response model. If the client drifts (missing or
@@ -4272,8 +4272,8 @@ class TestGatewayConformance:
         mock_app_config.models = [model]
         mock_app_config.token_usage.enabled = True
 
-        with patch("deerflow.client.get_app_config", return_value=mock_app_config):
-            client = DeerFlowClient()
+        with patch("nkyel.client.get_app_config", return_value=mock_app_config):
+            client = NkyelClient()
 
         result = client.list_models()
         parsed = ModelsListResponse(**result)
@@ -4292,8 +4292,8 @@ class TestGatewayConformance:
         mock_app_config.models = [model]
         mock_app_config.get_model_config.return_value = model
 
-        with patch("deerflow.client.get_app_config", return_value=mock_app_config):
-            client = DeerFlowClient()
+        with patch("nkyel.client.get_app_config", return_value=mock_app_config):
+            client = NkyelClient()
 
         result = client.get_model("test-model")
         assert result is not None
@@ -4309,7 +4309,7 @@ class TestGatewayConformance:
         skill.category = "public"
         skill.enabled = True
 
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
             result = client.list_skills()
 
         parsed = SkillsListResponse(**result)
@@ -4324,7 +4324,7 @@ class TestGatewayConformance:
         skill.category = "public"
         skill.enabled = True
 
-        with patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
+        with patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]):
             result = client.get_skill("web-search")
 
         assert result is not None
@@ -4340,12 +4340,12 @@ class TestGatewayConformance:
         with zipfile.ZipFile(archive, "w") as zf:
             zf.write(skill_dir / "SKILL.md", "my-skill/SKILL.md")
 
-        from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+        from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
         local_storage = LocalSkillStorage(host_path=str(tmp_path))
         with (
-            patch("deerflow.skills.storage._default_skill_storage", local_storage),
-            patch("deerflow.client.get_or_new_user_skill_storage", lambda user_id, **kwargs: local_storage),
+            patch("nkyel.skills.storage._default_skill_storage", local_storage),
+            patch("nkyel.client.get_or_new_user_skill_storage", lambda user_id, **kwargs: local_storage),
         ):
             result = client.install_skill(archive)
 
@@ -4368,7 +4368,7 @@ class TestGatewayConformance:
         ext_config = MagicMock()
         ext_config.mcp_servers = {"test": server}
 
-        with patch("deerflow.client.get_extensions_config", return_value=ext_config):
+        with patch("nkyel.client.get_extensions_config", return_value=ext_config):
             result = client.get_mcp_config()
 
         parsed = McpConfigResponse(**result)
@@ -4391,9 +4391,9 @@ class TestGatewayConformance:
         config_file.write_text("{}")
 
         with (
-            patch("deerflow.client.get_extensions_config", return_value=ext_config),
-            patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-            patch("deerflow.client.reload_extensions_config", return_value=ext_config),
+            patch("nkyel.client.get_extensions_config", return_value=ext_config),
+            patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+            patch("nkyel.client.reload_extensions_config", return_value=ext_config),
         ):
             result = client.update_mcp_config({"srv": server.model_dump()})
 
@@ -4407,7 +4407,7 @@ class TestGatewayConformance:
         src_file = tmp_path / "hello.txt"
         src_file.write_text("hello")
 
-        with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+        with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
             result = client.upload_files("t-conform", [src_file])
 
         parsed = UploadResponse(**result)
@@ -4435,7 +4435,7 @@ class TestGatewayConformance:
         mem_cfg.manager_class = "deermem"
         mem_cfg.backend_config = {}
 
-        with patch("deerflow.config.memory_config.get_memory_config", return_value=mem_cfg):
+        with patch("nkyel.config.memory_config.get_memory_config", return_value=mem_cfg):
             result = client.get_memory_config()
 
         parsed = MemoryConfigResponse(**result)
@@ -4469,8 +4469,8 @@ class TestGatewayConformance:
         mock_mgr.get_memory.return_value = memory_data
 
         with (
-            patch("deerflow.config.memory_config.get_memory_config", return_value=mem_cfg),
-            patch("deerflow.agents.memory.get_memory_manager", return_value=mock_mgr),
+            patch("nkyel.config.memory_config.get_memory_config", return_value=mem_cfg),
+            patch("nkyel.agents.memory.get_memory_manager", return_value=mock_mgr),
         ):
             result = client.get_memory_status()
 
@@ -4502,18 +4502,18 @@ class TestInstallSkillSecurity:
             (skills_root / "custom").mkdir(parents=True)
 
             # Patch max_total_size to a small value to trigger the bomb check.
-            from deerflow.skills import installer as _installer
+            from nkyel.skills import installer as _installer
 
             orig = _installer.safe_extract_skill_archive
 
             def patched_extract(zf, dest, max_total_size=100):
                 return orig(zf, dest, max_total_size=100)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
             with (
-                patch("deerflow.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))),
-                patch("deerflow.skills.installer.safe_extract_skill_archive", side_effect=patched_extract),
+                patch("nkyel.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))),
+                patch("nkyel.skills.installer.safe_extract_skill_archive", side_effect=patched_extract),
             ):
                 with pytest.raises(ValueError, match="too large"):
                     client.install_skill(archive)
@@ -4528,9 +4528,9 @@ class TestInstallSkillSecurity:
             skills_root = Path(tmp) / "skills"
             (skills_root / "custom").mkdir(parents=True)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
-            with patch("deerflow.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))):
+            with patch("nkyel.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))):
                 with pytest.raises(ValueError, match="unsafe"):
                     client.install_skill(archive)
 
@@ -4544,9 +4544,9 @@ class TestInstallSkillSecurity:
             skills_root = Path(tmp) / "skills"
             (skills_root / "custom").mkdir(parents=True)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
-            with patch("deerflow.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))):
+            with patch("nkyel.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))):
                 with pytest.raises(ValueError, match="unsafe"):
                     client.install_skill(archive)
 
@@ -4568,12 +4568,12 @@ class TestInstallSkillSecurity:
             skills_root = tmp_path / "skills"
             (skills_root / "custom").mkdir(parents=True)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
             local_storage = LocalSkillStorage(host_path=str(skills_root))
             with (
-                patch("deerflow.skills.storage._default_skill_storage", local_storage),
-                patch("deerflow.client.get_or_new_user_skill_storage", lambda user_id, **kwargs: local_storage),
+                patch("nkyel.skills.storage._default_skill_storage", local_storage),
+                patch("nkyel.client.get_or_new_user_skill_storage", lambda user_id, **kwargs: local_storage),
             ):
                 result = client.install_skill(archive)
 
@@ -4598,11 +4598,11 @@ class TestInstallSkillSecurity:
             skills_root = tmp_path / "skills"
             (skills_root / "custom").mkdir(parents=True)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
             with (
-                patch("deerflow.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))),
-                patch("deerflow.skills.validation._validate_skill_frontmatter", return_value=(True, "OK", "../evil")),
+                patch("nkyel.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))),
+                patch("nkyel.skills.validation._validate_skill_frontmatter", return_value=(True, "OK", "../evil")),
             ):
                 with pytest.raises(ValueError, match="Invalid skill name"):
                     client.install_skill(archive)
@@ -4623,12 +4623,12 @@ class TestInstallSkillSecurity:
             skills_root = tmp_path / "skills"
             (skills_root / "custom" / "dupe-skill").mkdir(parents=True)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
             with (
-                patch("deerflow.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))),
-                patch("deerflow.skills.validation._validate_skill_frontmatter", return_value=(True, "OK", "dupe-skill")),
-                patch("deerflow.client.get_or_new_user_skill_storage", return_value=LocalSkillStorage(host_path=str(skills_root))),
+                patch("nkyel.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))),
+                patch("nkyel.skills.validation._validate_skill_frontmatter", return_value=(True, "OK", "dupe-skill")),
+                patch("nkyel.client.get_or_new_user_skill_storage", return_value=LocalSkillStorage(host_path=str(skills_root))),
             ):
                 with pytest.raises(ValueError, match="already exists"):
                     client.install_skill(archive)
@@ -4643,9 +4643,9 @@ class TestInstallSkillSecurity:
             skills_root = Path(tmp) / "skills"
             (skills_root / "custom").mkdir(parents=True)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
-            with patch("deerflow.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))):
+            with patch("nkyel.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))):
                 with pytest.raises(ValueError, match="empty"):
                     client.install_skill(archive)
 
@@ -4664,11 +4664,11 @@ class TestInstallSkillSecurity:
             skills_root = tmp_path / "skills"
             (skills_root / "custom").mkdir(parents=True)
 
-            from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+            from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
             with (
-                patch("deerflow.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))),
-                patch("deerflow.skills.validation._validate_skill_frontmatter", return_value=(False, "Missing name field", "")),
+                patch("nkyel.skills.storage._default_skill_storage", LocalSkillStorage(host_path=str(skills_root))),
+                patch("nkyel.skills.validation._validate_skill_frontmatter", return_value=(False, "Missing name field", "")),
             ):
                 with pytest.raises(ValueError, match="Invalid skill"):
                     client.install_skill(archive)
@@ -4704,7 +4704,7 @@ class TestAtomicWriteJson:
             bad_data = {"key": object()}
 
             with pytest.raises(TypeError):
-                DeerFlowClient._atomic_write_json(target, bad_data)
+                NkyelClient._atomic_write_json(target, bad_data)
 
             # Target should not have been created.
             assert not target.exists()
@@ -4718,7 +4718,7 @@ class TestAtomicWriteJson:
             target = Path(tmp) / "out.json"
             data = {"key": "value", "nested": [1, 2, 3]}
 
-            DeerFlowClient._atomic_write_json(target, data)
+            NkyelClient._atomic_write_json(target, data)
 
             assert target.exists()
             with open(target) as f:
@@ -4735,7 +4735,7 @@ class TestAtomicWriteJson:
 
             bad_data = {"key": object()}
             with pytest.raises(TypeError):
-                DeerFlowClient._atomic_write_json(target, bad_data)
+                NkyelClient._atomic_write_json(target, bad_data)
 
             # Original content must survive.
             with open(target) as f:
@@ -4750,7 +4750,7 @@ class TestAtomicWriteJson:
 class TestConfigUpdateErrors:
     def test_update_mcp_config_no_config_file(self, client):
         """FileNotFoundError when extensions_config.json cannot be located."""
-        with patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=None):
+        with patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=None):
             with pytest.raises(FileNotFoundError, match="Cannot locate"):
                 client.update_mcp_config({"server": {}})
 
@@ -4761,8 +4761,8 @@ class TestConfigUpdateErrors:
         skill.category = SkillCategory.PUBLIC  # Only PUBLIC skills need extensions_config.json
 
         with (
-            patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]),
-            patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=None),
+            patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", return_value=[skill]),
+            patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=None),
         ):
             with pytest.raises(FileNotFoundError, match="Cannot locate"):
                 client.update_skill("some-skill", enabled=False)
@@ -4781,10 +4781,10 @@ class TestConfigUpdateErrors:
             config_file.write_text("{}")
 
             with (
-                patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", side_effect=[[skill], []]),
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-                patch("deerflow.client.get_extensions_config", return_value=ext_config),
-                patch("deerflow.client.reload_extensions_config"),
+                patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", side_effect=[[skill], []]),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+                patch("nkyel.client.get_extensions_config", return_value=ext_config),
+                patch("nkyel.client.reload_extensions_config"),
             ):
                 with pytest.raises(RuntimeError, match="disappeared"):
                     client.update_skill("ghost-skill", enabled=False)
@@ -4960,7 +4960,7 @@ class TestStreamHardening:
 class TestSerializeMessage:
     def test_system_message(self):
         msg = SystemMessage(content="You are a helpful assistant.", id="sys-1")
-        result = DeerFlowClient._serialize_message(msg)
+        result = NkyelClient._serialize_message(msg)
         assert result["type"] == "system"
         assert result["content"] == "You are a helpful assistant."
         assert result["id"] == "sys-1"
@@ -4972,7 +4972,7 @@ class TestSerializeMessage:
         msg.content = "something"
         # Not an instance of AIMessage/ToolMessage/HumanMessage/SystemMessage
         type(msg).__name__ = "CustomMessage"
-        result = DeerFlowClient._serialize_message(msg)
+        result = NkyelClient._serialize_message(msg)
         assert result["type"] == "unknown"
         assert result["id"] == "unk-1"
 
@@ -4982,14 +4982,14 @@ class TestSerializeMessage:
             id="ai-tc",
             tool_calls=[{"name": "bash", "args": {"cmd": "ls"}, "id": "tc-1"}],
         )
-        result = DeerFlowClient._serialize_message(msg)
+        result = NkyelClient._serialize_message(msg)
         assert result["type"] == "ai"
         assert len(result["tool_calls"]) == 1
         assert result["tool_calls"][0]["name"] == "bash"
 
     def test_tool_message_non_string_content(self):
         msg = ToolMessage(content={"key": "value"}, id="tm-1", tool_call_id="tc-1", name="tool")
-        result = DeerFlowClient._serialize_message(msg)
+        result = NkyelClient._serialize_message(msg)
         assert result["type"] == "tool"
         assert isinstance(result["content"], str)
         assert "artifact" not in result
@@ -5004,7 +5004,7 @@ class TestSerializeMessage:
             artifact={"payload": marker},
         )
 
-        result = DeerFlowClient._tool_message_event(msg)
+        result = NkyelClient._tool_message_event(msg)
 
         assert result.data["artifact"] is msg.artifact
 
@@ -5018,7 +5018,7 @@ class TestSerializeMessage:
             artifact={"payload": marker},
         )
 
-        result = DeerFlowClient._serialize_message(msg)
+        result = NkyelClient._serialize_message(msg)
 
         assert result["artifact"] is msg.artifact
 
@@ -5048,7 +5048,7 @@ class TestUploadDeleteSymlink:
                     pytest.skip("symlink creation requires Developer Mode or elevated privileges on Windows")
                 raise
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 # The resolved path of the symlink escapes uploads_dir,
                 # so path traversal check should catch it.
                 with pytest.raises(PathTraversalError):
@@ -5074,7 +5074,7 @@ class TestUploadDeleteSymlink:
                     pytest.skip("symlink creation requires Developer Mode or elevated privileges on Windows")
                 raise
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir):
                 with pytest.raises(FileNotFoundError):
                     client.delete_upload("thread-1", "alias.txt")
 
@@ -5103,7 +5103,7 @@ class TestUploadDeleteSymlink:
             (src_dir / "note.txt").write_text("uploaded")
             (src_dir / "other.txt").write_text("other")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 result = client.upload_files("thread-1", [src_dir / "note.txt", src_dir / "other.txt"])
 
             parsed = UploadResponse(**result)
@@ -5141,10 +5141,10 @@ class TestUploadDeleteSymlink:
                 return md_path
 
             with (
-                patch("deerflow.client.get_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-                patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
-                patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
+                patch("nkyel.client.get_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+                patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
+                patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
             ):
                 result = client.upload_files("thread-1", [pdf])
 
@@ -5166,7 +5166,7 @@ class TestUploadDeleteSymlink:
             src_file = tmp_path / weird_name
             src_file.write_text("data")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 result = client.upload_files("thread-1", [src_file])
 
             assert result["success"] is True
@@ -5182,7 +5182,7 @@ class TestUploadDeleteSymlink:
 class TestArtifactHardening:
     def test_artifact_directory_rejected(self, client):
         """get_artifact rejects paths that resolve to a directory."""
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         with tempfile.TemporaryDirectory() as tmp:
             paths = Paths(base_dir=tmp)
@@ -5190,13 +5190,13 @@ class TestArtifactHardening:
             subdir = paths.sandbox_outputs_dir("t1", user_id=user_id) / "subdir"
             subdir.mkdir(parents=True)
 
-            with patch("deerflow.client.get_paths", return_value=paths):
+            with patch("nkyel.client.get_paths", return_value=paths):
                 with pytest.raises(ValueError, match="not a file"):
                     client.get_artifact("t1", "mnt/user-data/outputs/subdir")
 
     def test_artifact_leading_slash_stripped(self, client):
         """Paths with leading slash are handled correctly."""
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         with tempfile.TemporaryDirectory() as tmp:
             paths = Paths(base_dir=tmp)
@@ -5205,7 +5205,7 @@ class TestArtifactHardening:
             outputs.mkdir(parents=True)
             (outputs / "file.txt").write_text("content")
 
-            with patch("deerflow.client.get_paths", return_value=paths):
+            with patch("nkyel.client.get_paths", return_value=paths):
                 content, _mime = client.get_artifact("t1", "/mnt/user-data/outputs/file.txt")
 
             assert content == b"content"
@@ -5229,7 +5229,7 @@ class TestUploadDuplicateFilenames:
     def test_rejects_substituted_upload_copy(self, client, tmp_path, monkeypatch, companion):
         from support.symlinks import symlink_or_skip
 
-        from deerflow.uploads import manager
+        from nkyel.uploads import manager
 
         uploads = tmp_path / "uploads"
         uploads.mkdir()
@@ -5263,9 +5263,9 @@ class TestUploadDuplicateFilenames:
 
         monkeypatch.setattr(manager.shutil, "copyfileobj", copy_and_swap)
         with (
-            patch("deerflow.client.ensure_uploads_dir", return_value=uploads),
-            patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
-            patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
+            patch("nkyel.client.ensure_uploads_dir", return_value=uploads),
+            patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
+            patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
         ):
             result = client.upload_files("t-dup", [source])
 
@@ -5327,10 +5327,10 @@ class TestUploadDuplicateFilenames:
             return output_path
 
         with (
-            patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
+            patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
             patch("builtins.open", side_effect=synchronized_open),
-            patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
-            patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
+            patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf"}),
+            patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
         ):
             with concurrent.futures.ThreadPoolExecutor(max_workers=count) as pool:
                 futures = [pool.submit(client.upload_files, "t-dup", [source]) for source in sources]
@@ -5345,14 +5345,14 @@ class TestUploadDuplicateFilenames:
             if file["filename"] != source.name:
                 assert file["original_filename"] == source.name
             if suffix == ".pdf":
-                from deerflow.uploads.companions import resolve_companion
+                from nkyel.uploads.companions import resolve_companion
 
                 assert (uploads_dir / file["markdown_file"]).read_bytes() == source.read_bytes()
                 assert resolve_companion(uploads_dir / file["filename"]) == uploads_dir / file["markdown_file"]
         assert len(list(uploads_dir.iterdir())) == count * (2 if suffix == ".pdf" else 1)
 
     def test_concurrent_same_stem_companions_remain_owned(self, client, tmp_path):
-        from deerflow.uploads.companions import resolve_companion
+        from nkyel.uploads.companions import resolve_companion
 
         uploads_dir = tmp_path / "uploads"
         uploads_dir.mkdir()
@@ -5368,9 +5368,9 @@ class TestUploadDuplicateFilenames:
             return output_path
 
         with (
-            patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir),
-            patch("deerflow.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf", ".docx"}),
-            patch("deerflow.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
+            patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir),
+            patch("nkyel.utils.file_conversion.CONVERTIBLE_EXTENSIONS", {".pdf", ".docx"}),
+            patch("nkyel.utils.file_conversion.convert_file_to_markdown", side_effect=fake_convert),
         ):
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
                 futures = [pool.submit(client.upload_files, "t-dup", [source]) for source in sources]
@@ -5395,7 +5395,7 @@ class TestUploadDuplicateFilenames:
         first.write_bytes(b"first")
         second.write_bytes(b"second")
 
-        with patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+        with patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
             client.upload_files("t-dup", [first])
             result = client.upload_files("t-dup", [second])
 
@@ -5422,7 +5422,7 @@ class TestUploadDuplicateFilenames:
             (dir_a / "data.txt").write_text("version A")
             (dir_b / "data.txt").write_text("version B")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 result = client.upload_files("t-dup", [dir_a / "data.txt", dir_b / "data.txt"])
 
             assert result["success"] is True
@@ -5455,7 +5455,7 @@ class TestUploadDuplicateFilenames:
                 d.mkdir()
                 (d / "report.csv").write_text(f"from {name}")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 result = client.upload_files(
                     "t-triple",
                     [tmp_path / "x" / "report.csv", tmp_path / "y" / "report.csv", tmp_path / "z" / "report.csv"],
@@ -5475,7 +5475,7 @@ class TestUploadDuplicateFilenames:
             (tmp_path / "a.txt").write_text("aaa")
             (tmp_path / "b.txt").write_text("bbb")
 
-            with patch("deerflow.client.get_uploads_dir", return_value=uploads_dir), patch("deerflow.client.ensure_uploads_dir", return_value=uploads_dir):
+            with patch("nkyel.client.get_uploads_dir", return_value=uploads_dir), patch("nkyel.client.ensure_uploads_dir", return_value=uploads_dir):
                 result = client.upload_files("t-ok", [tmp_path / "a.txt", tmp_path / "b.txt"])
 
             assert result["success"] is True
@@ -5498,14 +5498,14 @@ class TestBugArtifactPrefixMatchTooLoose:
 
     def test_exact_prefix_without_subpath_accepted(self, client):
         """Bare 'mnt/user-data' is accepted (will later fail as directory, not at prefix)."""
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         with tempfile.TemporaryDirectory() as tmp:
             paths = Paths(base_dir=tmp)
             user_id = get_effective_user_id()
             paths.sandbox_outputs_dir("t1", user_id=user_id).mkdir(parents=True)
 
-            with patch("deerflow.client.get_paths", return_value=paths):
+            with patch("nkyel.client.get_paths", return_value=paths):
                 # Accepted at prefix check, but fails because it's a directory.
                 with pytest.raises(ValueError, match="not a file"):
                     client.get_artifact("t1", "mnt/user-data")
@@ -5525,7 +5525,7 @@ class TestBugListUploadsDeadCode:
             mock_paths = MagicMock()
             mock_paths.sandbox_uploads_dir.return_value = non_existent
 
-            with patch("deerflow.uploads.manager.get_paths", return_value=mock_paths):
+            with patch("nkyel.uploads.manager.get_paths", return_value=mock_paths):
                 result = client.list_uploads("thread-fresh")
 
             # Read path should NOT create the directory
@@ -5551,9 +5551,9 @@ class TestBugAgentInvalidationInconsistency:
             config_file.write_text("{}")
 
             with (
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-                patch("deerflow.client.get_extensions_config", return_value=current_config),
-                patch("deerflow.client.reload_extensions_config", return_value=reloaded),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+                patch("nkyel.client.get_extensions_config", return_value=current_config),
+                patch("nkyel.client.reload_extensions_config", return_value=reloaded),
             ):
                 client.update_mcp_config({})
 
@@ -5583,10 +5583,10 @@ class TestBugAgentInvalidationInconsistency:
             config_file.write_text("{}")
 
             with (
-                patch("deerflow.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", side_effect=[[skill], [updated]]),
-                patch("deerflow.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
-                patch("deerflow.client.get_extensions_config", return_value=ext_config),
-                patch("deerflow.client.reload_extensions_config"),
+                patch("nkyel.skills.storage.local_skill_storage.LocalSkillStorage.load_skills", side_effect=[[skill], [updated]]),
+                patch("nkyel.client.ExtensionsConfig.resolve_config_path", return_value=config_file),
+                patch("nkyel.client.get_extensions_config", return_value=ext_config),
+                patch("nkyel.client.reload_extensions_config"),
             ):
                 client.update_skill("s1", enabled=False)
 

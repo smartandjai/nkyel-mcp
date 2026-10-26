@@ -5,7 +5,7 @@ import { describe, expect, test } from "@rstest/core";
 
 import { enUS, zhCN } from "@/core/i18n";
 import {
-  DEERFLOW_ORIGIN_KEY,
+  NKYEL_ORIGIN_KEY,
   labelOfThreadOrigin,
   THREAD_ORIGIN_KINDS,
   threadOriginOf,
@@ -29,15 +29,15 @@ const thread = (metadata: Record<string, unknown>) => ({ metadata });
 
 describe("threadOriginOf", () => {
   test("the frontend key and kinds equal the contract fixture", () => {
-    expect(CONTRACT.key).toBe(DEERFLOW_ORIGIN_KEY);
+    expect(CONTRACT.key).toBe(NKYEL_ORIGIN_KEY);
     expect([...THREAD_ORIGIN_KINDS].sort()).toEqual([...CONTRACT.kinds].sort());
   });
 
-  test("deerflow_origin wins over channel_source and the legacy task id", () => {
+  test("nkyel_origin wins over channel_source and the legacy task id", () => {
     expect(
       threadOriginOf(
         thread({
-          deerflow_origin: { kind: "schedule" },
+          nkyel_origin: { kind: "schedule" },
           channel_source: { type: "im_channel", provider: "feishu" },
           scheduled_task_id: "task-1",
         }),
@@ -70,7 +70,7 @@ describe("threadOriginOf", () => {
     ).toEqual({ kind: "github", provider: "github" });
     expect(
       threadOriginOf(
-        thread({ deerflow_origin: { kind: "github", provider: "github" } }),
+        thread({ nkyel_origin: { kind: "github", provider: "github" } }),
       ),
     ).toEqual({ kind: "github", provider: "github" });
   });
@@ -79,7 +79,7 @@ describe("threadOriginOf", () => {
     expect(
       threadOriginOf(
         thread({
-          deerflow_origin: { kind: "extension", namespace: "acme.notes" },
+          nkyel_origin: { kind: "extension", namespace: "acme.notes" },
         }),
       ),
     ).toEqual({ kind: "extension", namespace: "acme.notes" });
@@ -87,13 +87,13 @@ describe("threadOriginOf", () => {
 
   test("an unknown kind or a malformed value falls through", () => {
     expect(
-      threadOriginOf(thread({ deerflow_origin: { kind: "browser" } })),
+      threadOriginOf(thread({ nkyel_origin: { kind: "browser" } })),
     ).toBeNull();
-    expect(threadOriginOf(thread({ deerflow_origin: "schedule" }))).toBeNull();
+    expect(threadOriginOf(thread({ nkyel_origin: "schedule" }))).toBeNull();
     expect(
       threadOriginOf(
         thread({
-          deerflow_origin: { kind: "im_channel" },
+          nkyel_origin: { kind: "im_channel" },
           channel_source: { type: "im_channel", provider: "slack" },
         }),
       ),

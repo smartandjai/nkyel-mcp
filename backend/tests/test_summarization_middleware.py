@@ -14,15 +14,15 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langgraph.constants import TAG_NOSTREAM
 from pydantic import ValidationError
 
-from deerflow.agents.memory.summarization_hook import memory_flush_hook
-from deerflow.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY, DynamicContextMiddleware, is_dynamic_context_reminder
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware, SummarizationEvent, SummaryGenerationError, create_summarization_middleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.app_config import AppConfig
-from deerflow.config.memory_config import MemoryConfig
-from deerflow.config.model_config import ModelConfig, ReasoningCapabilities
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.summarization_config import ContextSize, SummarizationConfig
+from nkyel.agents.memory.summarization_hook import memory_flush_hook
+from nkyel.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY, DynamicContextMiddleware, is_dynamic_context_reminder
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware, SummarizationEvent, SummaryGenerationError, create_summarization_middleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.app_config import AppConfig
+from nkyel.config.memory_config import MemoryConfig
+from nkyel.config.model_config import ModelConfig, ReasoningCapabilities
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.summarization_config import ContextSize, SummarizationConfig
 
 
 def _messages() -> list:
@@ -81,12 +81,12 @@ def _middleware(
     before_summarization=None,
     trigger=("messages", 4),
     keep=("messages", 2),
-) -> DeerFlowSummarizationMiddleware:
+) -> NkyelSummarizationMiddleware:
     model = MagicMock()
     model.invoke.return_value = SimpleNamespace(text="compressed summary")
     model.ainvoke = AsyncMock(return_value=SimpleNamespace(text="compressed summary"))
     model.with_config.return_value = model
-    return DeerFlowSummarizationMiddleware(
+    return NkyelSummarizationMiddleware(
         model=model,
         trigger=trigger,
         keep=keep,
@@ -160,7 +160,7 @@ async def test_compaction_skips_a_fully_rescued_partition(asynchronous: bool) ->
 
 
 def test_summarization_middleware_emits_frontend_update_key_in_agent_stream() -> None:
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=_StaticChatModel(text="compressed summary"),
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -175,7 +175,7 @@ def test_summarization_middleware_emits_frontend_update_key_in_agent_stream() ->
 
     chunks = list(agent.stream({"messages": _messages()}, stream_mode="updates"))
     update = next(
-        (chunk["DeerFlowSummarizationMiddleware.before_model"] for chunk in chunks if "DeerFlowSummarizationMiddleware.before_model" in chunk),
+        (chunk["NkyelSummarizationMiddleware.before_model"] for chunk in chunks if "NkyelSummarizationMiddleware.before_model" in chunk),
         None,
     )
 
@@ -195,7 +195,7 @@ def test_summary_model_is_tagged_nostream_to_avoid_stream_pollution() -> None:
             return super()._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
 
     model = _RecordingChatModel(text="compressed summary")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -240,7 +240,7 @@ def test_summarization_does_not_mutate_shared_model_across_concurrent_runs() -> 
             return self._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
 
     model = _BlockingChatModel(text="compressed summary")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -264,7 +264,7 @@ def test_summarization_does_not_mutate_shared_model_across_concurrent_runs() -> 
 def test_raw_model_is_preserved_for_parent_profile_inspection() -> None:
     """self.model must stay the original model so attribute access does not drift."""
     model = _StaticChatModel(text="compressed summary")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -286,7 +286,7 @@ def test_summary_model_preserves_existing_tags_when_adding_nostream() -> None:
     preserve existing tags instead of overwriting them with just [TAG_NOSTREAM].
     """
     tagged_model = _StaticChatModel(text="compressed summary").with_config(tags=["middleware:summarize"])
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=tagged_model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -326,7 +326,7 @@ def test_dynamic_context_reminder_is_preserved_across_summarization() -> None:
     assert emitted[1] is reminder
 
     followup_state = {"messages": [*emitted[1:], HumanMessage(content="Follow-up", id="msg-2")]}
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         assert DynamicContextMiddleware().before_agent(followup_state, _runtime()) is None
 
@@ -412,8 +412,8 @@ async def test_abefore_model_runs_hooks_in_a_worker_with_sync_semantics(caplog: 
 
 def test_memory_flush_hook_skips_when_memory_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     manager = MagicMock()
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=False))
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=False))
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
 
     memory_flush_hook(
         SummarizationEvent(
@@ -430,8 +430,8 @@ def test_memory_flush_hook_skips_when_memory_disabled(monkeypatch: pytest.Monkey
 
 def test_memory_flush_hook_skips_when_thread_id_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     manager = MagicMock()
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=True))
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=True))
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
 
     memory_flush_hook(
         SummarizationEvent(
@@ -453,8 +453,8 @@ def test_memory_flush_hook_forwards_raw_messages_to_manager(monkeypatch: pytest.
         AIMessage(content="Calling tool", tool_calls=[{"name": "search", "id": "tool-1", "args": {}}]),
         AIMessage(content="Final answer"),
     ]
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=True))
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=True))
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
 
     memory_flush_hook(
         SummarizationEvent(
@@ -476,8 +476,8 @@ def test_memory_flush_hook_forwards_raw_messages_to_manager(monkeypatch: pytest.
 
 def test_memory_flush_hook_preserves_agent_scoped_memory(monkeypatch: pytest.MonkeyPatch) -> None:
     manager = MagicMock()
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=True))
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=True))
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
 
     memory_flush_hook(
         SummarizationEvent(
@@ -495,8 +495,8 @@ def test_memory_flush_hook_preserves_agent_scoped_memory(monkeypatch: pytest.Mon
 
 def test_memory_flush_hook_passes_runtime_user_id(monkeypatch: pytest.MonkeyPatch) -> None:
     manager = MagicMock()
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=True))
-    monkeypatch.setattr("deerflow.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_config", lambda: MemoryConfig(enabled=True))
+    monkeypatch.setattr("nkyel.agents.memory.summarization_hook.get_memory_manager", lambda: manager)
 
     memory_flush_hook(
         SummarizationEvent(
@@ -725,7 +725,7 @@ def test_factory_attaches_memory_flush_hook_by_default(monkeypatch):
     and the default ``skip_memory_flush=False``."""
     fake_model = MagicMock()
     fake_model.with_config.return_value = fake_model
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
 
     app_config = SimpleNamespace(
         summarization=SummarizationConfig(enabled=True),
@@ -746,7 +746,7 @@ def test_factory_skip_memory_flush_omits_hook(monkeypatch):
     PARENT thread's durable memory (#3875 Phase 3 review)."""
     fake_model = MagicMock()
     fake_model.with_config.return_value = fake_model
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
 
     app_config = SimpleNamespace(
         summarization=SummarizationConfig(enabled=True),
@@ -764,15 +764,15 @@ def test_memory_opt_out_compaction_never_queues_durable_memory(monkeypatch):
     """A real compaction remains memory-silent when the caller opts out."""
     manager = MagicMock()
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.summarization_middleware.create_chat_model",
+        "nkyel.agents.middlewares.summarization_middleware.create_chat_model",
         lambda **_kw: _StaticChatModel(),
     )
     monkeypatch.setattr(
-        "deerflow.agents.memory.summarization_hook.get_memory_config",
+        "nkyel.agents.memory.summarization_hook.get_memory_config",
         lambda: MemoryConfig(enabled=True),
     )
     monkeypatch.setattr(
-        "deerflow.agents.memory.summarization_hook.get_memory_manager",
+        "nkyel.agents.memory.summarization_hook.get_memory_manager",
         lambda: manager,
     )
     app_config = SimpleNamespace(
@@ -897,12 +897,12 @@ def test_null_model_summarizes_with_the_run_model(monkeypatch: pytest.MonkeyPatc
     injected ``runtime.context['model_name']``, which the production custom-agent /
     subagent contexts never populate."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
 
     default_model = MagicMock()
     default_model.with_config.return_value = default_model
     default_model.invoke.return_value = SimpleNamespace(text="from-default")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=default_model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -926,12 +926,12 @@ def test_explicit_summary_model_failure_falls_back_to_run_model(monkeypatch: pyt
     compaction falls back to the run's own (working) model instead of no-op'ing.
     The fallback is built lazily only after the primary fails."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
 
     explicit = MagicMock()
     explicit.with_config.return_value = explicit
     explicit.invoke.side_effect = RuntimeError("summary provider down")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=explicit,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -953,12 +953,12 @@ def test_explicit_summary_model_failure_falls_back_to_run_model(monkeypatch: pyt
 async def test_async_explicit_failure_falls_back_to_run_model(monkeypatch: pytest.MonkeyPatch) -> None:
     """The async path applies the same run-model fallback as the sync path."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
 
     explicit = MagicMock()
     explicit.with_config.return_value = explicit
     explicit.ainvoke = AsyncMock(side_effect=RuntimeError("summary provider down"))
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=explicit,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -980,12 +980,12 @@ def test_both_summary_models_failing_returns_none_on_automatic_path(monkeypatch:
     """When the explicit model and the run-model fallback both fail, the automatic
     path leaves compaction state unchanged (returns None) rather than raising."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built, fail=True))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built, fail=True))
 
     explicit = MagicMock()
     explicit.with_config.return_value = explicit
     explicit.invoke.side_effect = RuntimeError("provider down")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=explicit,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1007,12 +1007,12 @@ def test_explicit_summary_model_equal_to_run_model_is_not_retried(monkeypatch: p
     fallback: the failed model must not be re-invoked (that would just burn another
     call against a provider we already know is down) and no second model is built."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built, fail=True))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built, fail=True))
 
     explicit = MagicMock()
     explicit.with_config.return_value = explicit
     explicit.invoke.side_effect = RuntimeError("provider down")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=explicit,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1037,12 +1037,12 @@ def test_fallback_construction_error_does_not_escape_automatic_path(monkeypatch:
     def _failing_build(*, name=None, **kwargs):
         raise RuntimeError("cannot build run model")
 
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _failing_build)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _failing_build)
 
     explicit = MagicMock()
     explicit.with_config.return_value = explicit
     explicit.invoke.side_effect = RuntimeError("summary provider down")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=explicit,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1063,11 +1063,11 @@ def test_blank_summary_response_is_not_committed_null_case(monkeypatch: pytest.M
     summary: the automatic path returns None (history preserved, no RemoveMessage)
     instead of removing all history for an empty replacement."""
     run_model = _blank_model()
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kwargs: run_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kwargs: run_model)
 
     default_model = MagicMock()
     default_model.with_config.return_value = default_model
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=default_model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1087,11 +1087,11 @@ def test_blank_summary_response_is_not_committed_null_case(monkeypatch: pytest.M
 async def test_blank_summary_response_is_not_committed_async(monkeypatch: pytest.MonkeyPatch) -> None:
     """Async counterpart: a whitespace-only response leaves compaction state unchanged."""
     run_model = _blank_model()
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kwargs: run_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kwargs: run_model)
 
     default_model = MagicMock()
     default_model.with_config.return_value = default_model
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=default_model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1111,10 +1111,10 @@ def test_blank_primary_summary_falls_back_to_run_model(monkeypatch: pytest.Monke
     """A blank primary response is treated as failure and triggers the run-model
     fallback, exactly as a raised exception would."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
 
     explicit = _blank_model()  # primary returns whitespace
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=explicit,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1139,7 +1139,7 @@ def test_manual_compaction_failure_raises_summary_generation_error(monkeypatch: 
     default_model = MagicMock()
     default_model.with_config.return_value = default_model
     default_model.invoke.side_effect = RuntimeError("provider down")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=default_model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1160,7 +1160,7 @@ def test_force_alone_does_not_raise_on_failure(monkeypatch: pytest.MonkeyPatch) 
     default_model = MagicMock()
     default_model.with_config.return_value = default_model
     default_model.invoke.side_effect = RuntimeError("provider down")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=default_model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1180,7 +1180,7 @@ def test_before_summarization_hook_not_fired_when_summary_fails(monkeypatch: pyt
     default_model.with_config.return_value = default_model
     default_model.invoke.side_effect = RuntimeError("provider down")
     captured: list[SummarizationEvent] = []
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=default_model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1209,7 +1209,7 @@ def _factory_app_config(model_names, *, summary_model_name=None, summarization_k
 
 @pytest.mark.parametrize("trim_limit", [None, 80, 4000])
 def test_factory_preserves_explicit_summary_input_limit(monkeypatch, trim_limit):
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model([]))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model([]))
     config = _factory_app_config(("run-model",))
     config.summarization.trim_tokens_to_summarize = trim_limit
 
@@ -1225,7 +1225,7 @@ def test_factory_null_case_anchor_is_run_model_not_models0(monkeypatch):
     still gets a working summarization middleware — the factory has no eager models[0]
     dependency."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
 
     middleware = create_summarization_middleware(
         app_config=_factory_app_config(("models0", "run-model")),
@@ -1272,7 +1272,7 @@ def test_factory_fraction_trigger_uses_run_model_profile_with_explicit_summary(
     models = {"run-model": run_model, "summary-model": summary_model}
 
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.summarization_middleware.create_chat_model",
+        "nkyel.agents.middlewares.summarization_middleware.create_chat_model",
         lambda *, name=None, **_kwargs: models[name],
     )
     cfg = _factory_app_config(
@@ -1333,7 +1333,7 @@ def test_factory_required_thinking_run_model_anchors_explicit_summary(monkeypatc
             raise ValueError("model requires thinking, but the request asked for it to be disabled")
         return models[name]
 
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _factory)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _factory)
     cfg = _factory_app_config(
         ("run-model", "summary-model"),
         summary_model_name="summary-model",
@@ -1376,7 +1376,7 @@ def test_direct_construction_without_app_config_keeps_run_model_fallback(monkeyp
         thinking="required",
         on_disable_request="reject",
     )
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.get_app_config", lambda: cfg)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.get_app_config", lambda: cfg)
 
     run_model = MagicMock()
     run_model.with_config.return_value = run_model
@@ -1389,12 +1389,12 @@ def test_direct_construction_without_app_config_keeps_run_model_fallback(monkeyp
             raise ValueError("model requires thinking, but the request asked for it to be disabled")
         return run_model
 
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _factory)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _factory)
 
     explicit_summary_model = MagicMock()
     explicit_summary_model.with_config.return_value = explicit_summary_model
     explicit_summary_model.invoke.side_effect = RuntimeError("summary provider down")
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=explicit_summary_model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1429,7 +1429,7 @@ def test_factory_configured_constructor_failure_falls_back_to_run_model(monkeypa
         built.append(name)
         return model
 
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _factory)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _factory)
 
     middleware = create_summarization_middleware(
         app_config=_factory_app_config(("models0", "run-model"), summary_model_name="broken-summary"),
@@ -1468,7 +1468,7 @@ def test_factory_fraction_trigger_degrades_against_profileless_run_model_not_pro
     )
     models = {"run-model": run_model, "summary-model": summary_model}
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.summarization_middleware.create_chat_model",
+        "nkyel.agents.middlewares.summarization_middleware.create_chat_model",
         lambda *, name=None, **_kwargs: models[name],
     )
     cfg = _factory_app_config(
@@ -1479,7 +1479,7 @@ def test_factory_fraction_trigger_degrades_against_profileless_run_model_not_pro
 
     with caplog.at_level(
         "WARNING",
-        logger="deerflow.agents.middlewares.summarization_middleware",
+        logger="nkyel.agents.middlewares.summarization_middleware",
     ):
         middleware = create_summarization_middleware(
             app_config=cfg,
@@ -1509,10 +1509,10 @@ def test_factory_fraction_only_trigger_degrades_to_manual_compaction_only(monkey
     constructs as never-firing so manual compaction (/compact, force=True, never
     consults trigger clauses) keeps working; the warning names the config fix."""
     fake_model = _profileless_anchor_stub()
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
     cfg = _factory_app_config(("models0",), summarization_kwargs={"trigger": ContextSize(type="fraction", value=0.8)})
 
-    with caplog.at_level("WARNING", logger="deerflow.agents.middlewares.summarization_middleware"):
+    with caplog.at_level("WARNING", logger="nkyel.agents.middlewares.summarization_middleware"):
         middleware = create_summarization_middleware(app_config=cfg, run_model_name="models0", keep=("messages", 2))
 
     assert middleware is not None  # degraded, not raised — and not disabled either
@@ -1527,13 +1527,13 @@ def test_factory_drops_only_fraction_clauses_and_keeps_absolute_ones(monkeypatch
     """Mixed [fraction, messages] triggers degrade to the messages clause alone:
     construction succeeds and message-count compaction still fires."""
     fake_model = _profileless_anchor_stub()
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
     cfg = _factory_app_config(
         ("models0",),
         summarization_kwargs={"trigger": [ContextSize(type="fraction", value=0.8), ContextSize(type="messages", value=3)]},
     )
 
-    with caplog.at_level("WARNING", logger="deerflow.agents.middlewares.summarization_middleware"):
+    with caplog.at_level("WARNING", logger="nkyel.agents.middlewares.summarization_middleware"):
         middleware = create_summarization_middleware(app_config=cfg, run_model_name="models0", keep=("messages", 2))
 
     assert middleware is not None  # the absolute clause kept the middleware alive
@@ -1547,13 +1547,13 @@ def test_factory_keep_fraction_falls_back_to_messages_default(monkeypatch, caplo
     """A fraction ``keep`` against a profile-less anchor falls back to the
     messages default instead of failing construction."""
     fake_model = _profileless_anchor_stub()
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
     cfg = _factory_app_config(
         ("models0",),
         summarization_kwargs={"trigger": ContextSize(type="messages", value=3), "keep": ContextSize(type="fraction", value=0.3)},
     )
 
-    with caplog.at_level("WARNING", logger="deerflow.agents.middlewares.summarization_middleware"):
+    with caplog.at_level("WARNING", logger="nkyel.agents.middlewares.summarization_middleware"):
         middleware = create_summarization_middleware(app_config=cfg, run_model_name="models0")
 
     assert middleware is not None
@@ -1566,10 +1566,10 @@ def test_factory_null_trigger_with_fraction_keep_still_constructs(monkeypatch, c
     messages default — rather than disabling compaction. On main this exact config
     crashes the agent build (fraction keep needs a profile)."""
     fake_model = _profileless_anchor_stub()
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: fake_model)
     cfg = _factory_app_config(("models0",), summarization_kwargs={"keep": ContextSize(type="fraction", value=0.3)})
 
-    with caplog.at_level("WARNING", logger="deerflow.agents.middlewares.summarization_middleware"):
+    with caplog.at_level("WARNING", logger="nkyel.agents.middlewares.summarization_middleware"):
         middleware = create_summarization_middleware(app_config=cfg, run_model_name="models0")
 
     assert middleware is not None  # never-firing but constructed, same as any trigger: null setup
@@ -1583,7 +1583,7 @@ def test_factory_fraction_trigger_survives_when_anchor_has_profile(monkeypatch) 
     succeeding is itself the regression pin (#3103: it used to raise)."""
     model = _StaticChatModel(profile={"max_input_tokens": 65536})
     assert model.profile == {"max_input_tokens": 65536}
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", lambda **kw: model)
     cfg = _factory_app_config(("models0",), summarization_kwargs={"trigger": ContextSize(type="fraction", value=0.8)})
 
     middleware = create_summarization_middleware(app_config=cfg, run_model_name="models0", keep=("messages", 2))
@@ -1659,7 +1659,7 @@ def test_factory_wiring_context_window_to_fraction_trigger_end_to_end() -> None:
     )
     cfg = AppConfig(
         models=[model],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         summarization=SummarizationConfig(enabled=True, trigger=ContextSize(type="fraction", value=0.8)),
         memory=MemoryConfig(enabled=False),
     )
@@ -1691,10 +1691,10 @@ def test_text_extraction_failure_falls_back_to_run_model(monkeypatch):
     result, so it must be a candidate failure that falls back to the run model — not an
     exception that escapes automatic compaction."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
 
     primary = _text_raises_model()
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=primary,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -1716,10 +1716,10 @@ def test_text_extraction_failure_falls_back_to_run_model(monkeypatch):
 async def test_text_extraction_failure_falls_back_to_run_model_async(monkeypatch):
     """Async counterpart: a ``.text`` accessor failure falls back to the run model."""
     built: list = []
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", _tracking_create_chat_model(built))
 
     primary = _text_raises_model()
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=primary,
         trigger=("messages", 4),
         keep=("messages", 2),

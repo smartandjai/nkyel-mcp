@@ -20,9 +20,9 @@ from unittest.mock import patch
 import pytest
 from support.symlinks import symlink_or_skip
 
-from deerflow.config.paths import Paths
-from deerflow.skills.storage import get_or_new_skill_storage, reset_skill_storage
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config.paths import Paths
+from nkyel.skills.storage import get_or_new_skill_storage, reset_skill_storage
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 
 def _skill_content(name: str) -> str:
@@ -77,10 +77,10 @@ def test_user_scoped_storage_unlinks_a_symlinked_package_and_keeps_the_projectio
         skills=SimpleNamespace(
             get_skills_path=lambda: skills_root,
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         ),
     )
-    with patch("deerflow.config.paths.get_paths", return_value=Paths(base_dir=tmp_path)), patch("deerflow.config.paths._paths", None):
+    with patch("nkyel.config.paths.get_paths", return_value=Paths(base_dir=tmp_path)), patch("nkyel.config.paths._paths", None):
         storage = UserScopedSkillStorage("test-user", host_path=str(skills_root), app_config=config)
         storage.write_custom_skill("kept-skill", "SKILL.md", _skill_content("kept-skill"))
         external = _plant_external_package(tmp_path, "linked-skill")

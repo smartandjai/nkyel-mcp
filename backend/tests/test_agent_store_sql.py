@@ -14,12 +14,12 @@ from unittest import mock
 import pytest
 from sqlalchemy import create_engine
 
-import deerflow.persistence.agents.model as agent_model
-from deerflow.config.agents_config import AgentConfig
-from deerflow.persistence.agents.base import AgentExistsError
-from deerflow.persistence.agents.model import AgentRow
-from deerflow.persistence.agents.sql import SqlAgentStore
-from deerflow.persistence.base import Base
+import nkyel.persistence.agents.model as agent_model
+from nkyel.config.agents_config import AgentConfig
+from nkyel.persistence.agents.base import AgentExistsError
+from nkyel.persistence.agents.model import AgentRow
+from nkyel.persistence.agents.sql import SqlAgentStore
+from nkyel.persistence.base import Base
 
 
 @pytest.fixture()
@@ -209,7 +209,7 @@ def test_sync_engine_mirrors_async_pragmas(tmp_path):
     # synchronous / busy_timeout are per-connection and must be re-applied here.
     from sqlalchemy import text
 
-    from deerflow.persistence.agents.sql import _get_sessionmaker
+    from nkyel.persistence.agents.sql import _get_sessionmaker
 
     url = f"sqlite:///{tmp_path}/pragma.db"
     Session = _get_sessionmaker(url)
@@ -226,7 +226,7 @@ def test_sync_engine_mirrors_async_pragmas(tmp_path):
 def test_engine_cache_is_reused_per_url(tmp_path):
     # Two stores on the same URL share one cached engine (the lock-guarded
     # double-checked cache), so we never build duplicate engines/pools.
-    from deerflow.persistence.agents.sql import _get_sessionmaker
+    from nkyel.persistence.agents.sql import _get_sessionmaker
 
     url = f"sqlite:///{tmp_path}/reuse.db"
     first = _get_sessionmaker(url)
@@ -239,12 +239,12 @@ def test_delete_preserves_memory_only_dir_when_no_row(store, tmp_path, monkeypat
     # on-disk directory holds only memory/facts data (config lives in the row in
     # db mode), so delete must preserve it and report "not-custom-agent" instead
     # of rmtree-ing a user's memory.
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    from deerflow.config import paths as paths_module
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "_paths", None)
 
-    from deerflow.config.paths import get_paths
+    from nkyel.config.paths import get_paths
 
     facts_dir = get_paths().user_agent_dir("u1", "ghost") / "facts"
     facts_dir.mkdir(parents=True)
@@ -258,12 +258,12 @@ def test_delete_preserves_memory_only_dir_when_no_row(store, tmp_path, monkeypat
 def test_delete_removes_memory_dir_when_row_exists(store, tmp_path, monkeypatch):
     # The complement: when the agent row exists, its co-located on-disk memory is
     # cleaned along with the row.
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    from deerflow.config import paths as paths_module
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "_paths", None)
 
-    from deerflow.config.paths import get_paths
+    from nkyel.config.paths import get_paths
 
     store.create("real", {"name": "real"}, "s", user_id="u1")
     mem_dir = get_paths().user_agent_dir("u1", "real")
@@ -275,7 +275,7 @@ def test_delete_removes_memory_dir_when_row_exists(store, tmp_path, monkeypatch)
 
 
 def test_knowledge_defaults_round_trip_and_stay_owner_scoped(store):
-    from deerflow.knowledge_scope import canonicalize_knowledge_scope
+    from nkyel.knowledge_scope import canonicalize_knowledge_scope
 
     scope = {"version": 1, "mode": "selected", "dataset_ids": ["policies"]}
     store.create("researcher", {"knowledge_scope": scope}, "Soul", user_id="u1")

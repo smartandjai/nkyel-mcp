@@ -8,14 +8,14 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy.dialects import postgresql
 
-from deerflow.persistence.run import RunRepository
-from deerflow.runtime import CancelOutcome, RunManager, RunStatus, ThreadOperationKind
-from deerflow.runtime.runs.manager import ConflictError
-from deerflow.runtime.runs.store.base import RunStore
+from nkyel.persistence.run import RunRepository
+from nkyel.runtime import CancelOutcome, RunManager, RunStatus, ThreadOperationKind
+from nkyel.runtime.runs.manager import ConflictError
+from nkyel.runtime.runs.store.base import RunStore
 
 
 async def _make_repo(tmp_path):
-    from deerflow.persistence.engine import get_session_factory, init_engine
+    from nkyel.persistence.engine import get_session_factory, init_engine
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -23,7 +23,7 @@ async def _make_repo(tmp_path):
 
 
 async def _cleanup():
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     await close_engine()
 
@@ -162,7 +162,7 @@ async def test_non_idempotent_run_remains_compatible_with_legacy_explicit_put_si
 
 @pytest.mark.anyio
 async def test_keyed_resume_rejects_legacy_create_run_atomic_adapter_before_admission():
-    from deerflow.runtime import RunIdempotencyUnsupported
+    from nkyel.runtime import RunIdempotencyUnsupported
 
     manager = RunManager(store=_CustomRunStoreWithoutProgress())
 
@@ -648,7 +648,7 @@ class TestRunRepository:
     @pytest.mark.anyio
     async def test_model_name_persistence(self, tmp_path):
         """RunRepository should persist, normalize, and truncate model_name correctly via SQL."""
-        from deerflow.persistence.engine import get_session_factory, init_engine
+        from nkyel.persistence.engine import get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -868,7 +868,7 @@ class TestRunRepository:
         """
         from datetime import UTC, datetime, timedelta
 
-        from deerflow.config.run_ownership_config import RunOwnershipConfig
+        from nkyel.config.run_ownership_config import RunOwnershipConfig
 
         repo = await _make_repo(tmp_path)
         manager = RunManager(
@@ -931,7 +931,7 @@ class TestRunRepository:
         tmp_path,
         strategy,
     ):
-        from deerflow.config.run_ownership_config import RunOwnershipConfig
+        from nkyel.config.run_ownership_config import RunOwnershipConfig
 
         repo = await _make_repo(tmp_path)
         ownership = RunOwnershipConfig(
@@ -1103,7 +1103,7 @@ class TestRunRepository:
 
         from sqlalchemy.exc import IntegrityError
 
-        from deerflow.runtime.runs.manager import _is_unique_violation
+        from nkyel.runtime.runs.manager import _is_unique_violation
 
         repo = await _make_repo(tmp_path)
 
@@ -1136,7 +1136,7 @@ class TestRunRepository:
         type. The fix gates the fallback on
         ``isinstance(current, (SAIntegrityError, sqlite3.IntegrityError))``.
         """
-        from deerflow.runtime.runs.manager import _is_unique_violation
+        from nkyel.runtime.runs.manager import _is_unique_violation
 
         assert _is_unique_violation(ValueError("duplicate key in input data: 'email'")) is False
         assert _is_unique_violation(RuntimeError("unique violat detected in config")) is False
@@ -1152,7 +1152,7 @@ class TestRunRepository:
         """
         from sqlalchemy.exc import IntegrityError as SAIntegrityError
 
-        from deerflow.runtime.runs.manager import _is_unique_violation
+        from nkyel.runtime.runs.manager import _is_unique_violation
 
         # Simulate psycopg3's sqlstate attribute on a wrapped IntegrityError
         dbapi_err = Exception()
@@ -1455,7 +1455,7 @@ class TestMemoryRunStoreDeleteByThread:
 
     @pytest.mark.anyio
     async def test_removes_only_run_operations_for_the_owner(self):
-        from deerflow.runtime.runs.store.memory import MemoryRunStore
+        from nkyel.runtime.runs.store.memory import MemoryRunStore
 
         store = MemoryRunStore()
         await store.put("alice-run", thread_id="t1", user_id="alice", status="success")
@@ -1479,7 +1479,7 @@ class TestMemoryRunStoreDeleteByThread:
 
     @pytest.mark.anyio
     async def test_keeps_the_thread_index_consistent(self):
-        from deerflow.runtime.runs.store.memory import MemoryRunStore
+        from nkyel.runtime.runs.store.memory import MemoryRunStore
 
         store = MemoryRunStore()
         await store.put("alice-run", thread_id="t1", user_id="alice", status="success")

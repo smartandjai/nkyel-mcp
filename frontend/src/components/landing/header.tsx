@@ -42,7 +42,7 @@ export async function Header({
           rel={isExternalHome ? "noopener noreferrer" : undefined}
           className="font-serif text-xl whitespace-nowrap"
         >
-          DeerFlow
+          nkyel
         </a>
       </div>
       <nav className="ml-auto hidden items-center gap-5 text-sm font-medium sm:flex md:mr-8 md:gap-8">

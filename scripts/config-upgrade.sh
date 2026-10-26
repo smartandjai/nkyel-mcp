@@ -20,43 +20,43 @@ fi
 # Upgrade the config.yaml the Gateway loads. Ask the harness resolver rather
 # than copying its order: with both <checkout>/config.yaml and
 # backend/config.yaml present, `make dev` reads the checkout copy. The import
-# loads .env as the Gateway does; DEER_FLOW_PROJECT_ROOT then defaults to the
+# loads .env as the Gateway does; NKYEL_PROJECT_ROOT then defaults to the
 # checkout, as in serve.sh. Prints nothing when no config exists yet.
 # Pass the payload on stdin instead of `python -c`: on Windows setups where
 # python/uv resolve through pyenv-win shim layers, arguments cross a cmd.exe
 # reparse boundary that mangles multi-line argv (observed as a bogus
 # "IndentationError: unexpected indent" on '|| goto :error'). stdin is safe.
-CONFIG="$(cd "$REPO_ROOT/backend" && REPO_ROOT_WIN_PATH="$REPO_ROOT_WIN" uv run python - <<'DEERFLOW_UPGRADE_PY'
+CONFIG="$(cd "$REPO_ROOT/backend" && REPO_ROOT_WIN_PATH="$REPO_ROOT_WIN" uv run python - <<'NKYEL_UPGRADE_PY'
 import os
 import sys
 
-from deerflow.env import load_selected_env_file
+from nkyel.env import load_selected_env_file
 
-# Honor an explicit DEER_FLOW_ENV_FILE selection first: values loaded here
+# Honor an explicit NKYEL_ENV_FILE selection first: values loaded here
 # keep precedence over anything app_config's import-time load discovers,
 # matching the Gateway. Only with no selector do we load the checkout .env
 # explicitly, so the probe does not depend on dotenv's frame-based discovery
 # anchoring inside the harness package. Bonus: loading before the import
-# below lets DEER_FLOW_PROJECT_ROOT in the checkout .env win over the
+# below lets NKYEL_PROJECT_ROOT in the checkout .env win over the
 # setdefault, as it does for the Gateway.
 if not load_selected_env_file():
     from dotenv import load_dotenv
 
     load_dotenv(os.path.join(os.environ['REPO_ROOT_WIN_PATH'], '.env'))
 
-from deerflow.config.app_config import AppConfig
+from nkyel.config.app_config import AppConfig
 
-os.environ.setdefault('DEER_FLOW_PROJECT_ROOT', os.environ['REPO_ROOT_WIN_PATH'])
+os.environ.setdefault('NKYEL_PROJECT_ROOT', os.environ['REPO_ROOT_WIN_PATH'])
 try:
     sys.stdout.write(str(AppConfig.resolve_config_path()))
 except FileNotFoundError as exc:
-    # An explicit DEER_FLOW_CONFIG_PATH that does not exist stops the Gateway
+    # An explicit NKYEL_CONFIG_PATH that does not exist stops the Gateway
     # too; never upgrade a fallback file in its place.
-    if os.environ.get('DEER_FLOW_CONFIG_PATH'):
+    if os.environ.get('NKYEL_CONFIG_PATH'):
         sys.exit(f'ERROR {exc}')
 except ValueError as exc:
     sys.exit(f'ERROR {exc}')
-DEERFLOW_UPGRADE_PY
+NKYEL_UPGRADE_PY
 )"
 
 if [ ! -f "$EXAMPLE" ]; then
@@ -80,7 +80,7 @@ else
     EXAMPLE_WIN="$EXAMPLE"
 fi
 
-cd "$REPO_ROOT/backend" && CONFIG_WIN_PATH="$CONFIG_WIN" EXAMPLE_WIN_PATH="$EXAMPLE_WIN" uv run python - <<'DEERFLOW_UPGRADE_PY'
+cd "$REPO_ROOT/backend" && CONFIG_WIN_PATH="$CONFIG_WIN" EXAMPLE_WIN_PATH="$EXAMPLE_WIN" uv run python - <<'NKYEL_UPGRADE_PY'
 import os
 import sys, shutil, copy, re, secrets
 from pathlib import Path
@@ -143,7 +143,7 @@ def migrate_knowledge_provider_settings(data):
                 for tool in tools
                 if isinstance(tool, dict)
                 and tool.get('name') == 'knowledge_search'
-                and tool.get('use') == 'deerflow.community.ragflow.tools:knowledge_search_tool'
+                and tool.get('use') == 'nkyel.community.ragflow.tools:knowledge_search_tool'
             ),
             None,
         )
@@ -179,12 +179,12 @@ def migrate_knowledge_provider_settings(data):
 
 MIGRATIONS = {
     1: {
-        'description': 'Rename src.* module paths to deerflow.*',
+        'description': 'Rename src.* module paths to nkyel.*',
         'replacements': [
-            ('src.community.', 'deerflow.community.'),
-            ('src.sandbox.', 'deerflow.sandbox.'),
-            ('src.models.', 'deerflow.models.'),
-            ('src.tools.', 'deerflow.tools.'),
+            ('src.community.', 'nkyel.community.'),
+            ('src.sandbox.', 'nkyel.sandbox.'),
+            ('src.models.', 'nkyel.models.'),
+            ('src.tools.', 'nkyel.tools.'),
         ],
     },
     46: {
@@ -284,4 +284,4 @@ if not migrated and not added:
 print()
 print(f'OK config.yaml upgraded to version {example_version}.')
 print('  Please review the changes and set any new required values.')
-DEERFLOW_UPGRADE_PY
+NKYEL_UPGRADE_PY

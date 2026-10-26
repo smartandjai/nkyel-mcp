@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from deerflow.uploads.manager import is_upload_staging_file, normalize_filename
+from nkyel.uploads.manager import is_upload_staging_file, normalize_filename
 
 
 def safe_inbound_filename(value: Any, fallback: str) -> str:

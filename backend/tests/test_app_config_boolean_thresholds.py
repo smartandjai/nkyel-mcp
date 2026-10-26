@@ -10,8 +10,8 @@ breaker guards already in the repo.
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.app_config import AppConfig, LlmCallConfig
-from deerflow.config.sandbox_config import SandboxConfig
+from nkyel.config.app_config import AppConfig, LlmCallConfig
+from nkyel.config.sandbox_config import SandboxConfig
 
 LLM_CALL_INT_FIELDS = (
     "max_concurrent_calls",

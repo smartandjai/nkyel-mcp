@@ -2,10 +2,10 @@
 
 import pytest
 
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
 
 @pytest.mark.anyio

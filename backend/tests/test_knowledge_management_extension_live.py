@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.live, pytest.mark.asyncio]
 
 
 async def test_live_management_ingestion_to_scoped_evidence(monkeypatch):
-    if os.getenv("DEER_FLOW_RUN_LIVE_TESTS") != "1" or os.getenv("KNOWLEDGE_MANAGEMENT_ALLOW_WRITES") != "1":
+    if os.getenv("NKYEL_RUN_LIVE_TESTS") != "1" or os.getenv("KNOWLEDGE_MANAGEMENT_ALLOW_WRITES") != "1":
         pytest.skip("management writes require two explicit opt-ins")
     required = ["KNOWLEDGE_GATEWAY_URL", "KNOWLEDGE_SESSION_COOKIE", "KNOWLEDGE_CSRF_TOKEN", "KNOWLEDGE_CONNECTION_ID", "WEKNORA_BASE_URL", "WEKNORA_TENANT_ID", "WEKNORA_KNOWLEDGE_BASE_ID", "WEKNORA_API_KEY"]
     if any(not os.getenv(key) for key in required):
@@ -52,10 +52,10 @@ async def test_live_management_ingestion_to_scoped_evidence(monkeypatch):
             pytest.fail("Processing timed out; retain the printed document ID for reconciliation")
         assert state["state"] == "completed" and state["searchable"], "Upstream processing did not complete"
 
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-weknora"))
-    from deerflow_extension_weknora import WeKnoraProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-weknora"))
+    from nkyel_extension_weknora import WeKnoraProvider
 
-    from deerflow.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
+    from nkyel.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
 
     provider = WeKnoraProvider({"spaces": [{"base_url": os.environ["WEKNORA_BASE_URL"], "tenant_id": os.environ["WEKNORA_TENANT_ID"], "api_key_env": "WEKNORA_API_KEY", "user_ids": ["live-probe"], "knowledge_base_ids": [base]}]})
     scope = {"version": 1, "mode": "selected", "dataset_ids": [document["dataset_id"]], "document_filters": [{"dataset_id": document["dataset_id"], "document_ids": [document["document_id"]]}]}

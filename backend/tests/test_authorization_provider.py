@@ -14,23 +14,23 @@ import asyncio
 
 import pytest
 
-from deerflow.authz.adapter import GuardrailAuthorizationAdapter
-from deerflow.authz.provider import (
+from nkyel.authz.adapter import GuardrailAuthorizationAdapter
+from nkyel.authz.provider import (
     AuthorizationProvider,
     AuthzDecision,
     AuthzReason,
     AuthzRequest,
     Principal,
 )
-from deerflow.config.app_config import AppConfig
-from deerflow.config.authorization_config import (
+from nkyel.config.app_config import AppConfig
+from nkyel.config.authorization_config import (
     AuthorizationConfig,
     get_authorization_config,
     load_authorization_config_from_dict,
     reset_authorization_config,
 )
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.guardrails.provider import GuardrailDecision, GuardrailProvider, GuardrailRequest
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.guardrails.provider import GuardrailDecision, GuardrailProvider, GuardrailRequest
 
 # --- Test providers ---
 

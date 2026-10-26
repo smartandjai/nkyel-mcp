@@ -1,13 +1,13 @@
 # Sandbox benchmarks
 
-Run from `backend/` with a readable, isolated DeerFlow config and runtime home.
+Run from `backend/` with a readable, isolated nkyel config and runtime home.
 These commands create real sandbox resources; the ordinary unit suite is offline.
 Pin the sandbox image and record the Git revision, Docker/VM capacity and config.
 Use a disposable home and never point a benchmark at a production provider.
 
 ```sh
-DEER_FLOW_CONFIG_PATH=/absolute/path/benchmark.yaml \
-DEER_FLOW_HOME=/absolute/path/disposable-home \
+NKYEL_CONFIG_PATH=/absolute/path/benchmark.yaml \
+NKYEL_HOME=/absolute/path/disposable-home \
 uv run python scripts/benchmark/sandbox/bench_provider.py \
   --provider aio-docker --image <pinned-image> \
   --scenario cold_unique_thread --no-warmpool --iterations 10 \
@@ -52,16 +52,16 @@ the summary's default grouping does so. Percentiles use inclusive interpolation.
 ## OpenSandbox
 
 `--provider opensandbox` uses the production OpenSandbox provider and reads its
-connection, timeouts and environment from the selected DeerFlow configuration.
-Point `DEER_FLOW_CONFIG_PATH` at a disposable benchmark configuration with the
-[OpenSandbox settings](../../../packages/harness/deerflow/community/opensandbox/README.md)
-and set `DEER_FLOW_HOME` to a disposable local directory. Use a test OpenSandbox
+connection, timeouts and environment from the selected nkyel configuration.
+Point `NKYEL_CONFIG_PATH` at a disposable benchmark configuration with the
+[OpenSandbox settings](../../../packages/harness/nkyel/community/opensandbox/README.md)
+and set `NKYEL_HOME` to a disposable local directory. Use a test OpenSandbox
 service; these commands create and destroy real remote resources. Install the
-optional `deerflow-harness[opensandbox]` dependency before running.
+optional `nkyel-harness[opensandbox]` dependency before running.
 
 ```sh
-DEER_FLOW_CONFIG_PATH=/absolute/path/opensandbox-benchmark.yaml \
-DEER_FLOW_HOME=/absolute/path/disposable-home \
+NKYEL_CONFIG_PATH=/absolute/path/opensandbox-benchmark.yaml \
+NKYEL_HOME=/absolute/path/disposable-home \
 uv run --no-sync python scripts/benchmark/sandbox/bench_provider.py \
   --provider opensandbox --image <pinned-image> \
   --scenario warm_same_thread --workload state_reuse --iterations 10 \
@@ -114,7 +114,7 @@ Run the sampler beside an explicit benchmark run ID:
 
 ```sh
 uv run python -m scripts.benchmark.sandbox.resources \
-  --prefix deerflow-bench-my-run- --output resources.jsonl --duration 60
+  --prefix nkyel-bench-my-run- --output resources.jsonl --duration 60
 # In another terminal, use --run-id my-run in the provider benchmark.
 ```
 

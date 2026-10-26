@@ -27,7 +27,7 @@ export interface SubtaskResultUpdate {
  * ``ToolMessage.additional_kwargs`` for every ``task`` tool result.
  *
  * The values mirror the Python contract in
- * ``backend/packages/harness/deerflow/subagents/status_contract.py``
+ * ``backend/packages/harness/nkyel/subagents/status_contract.py``
  * (``SUBAGENT_STATUS_KEY`` / ``SUBAGENT_ERROR_KEY`` /
  * ``SUBAGENT_RESULT_BRIEF_KEY`` / ``SUBAGENT_RESULT_SHA256_KEY`` /
  * ``SUBAGENT_MODEL_NAME_KEY`` / ``SUBAGENT_TOKEN_USAGE_KEY``). The

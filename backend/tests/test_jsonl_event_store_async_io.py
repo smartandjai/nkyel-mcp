@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
+from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -169,7 +169,7 @@ async def test_put_offloads_write_via_to_thread():
 # ---------------------------------------------------------------------------
 # put_batch failure rollback: a failed append must not leave partial records
 # so a caller re-buffering the batch on retry does not produce duplicates.
-# Regression for deer-flow PR #4082 (review feedback from willem-bd).
+# Regression for nkyel PR #4082 (review feedback from willem-bd).
 # ---------------------------------------------------------------------------
 
 
@@ -178,7 +178,7 @@ async def test_put_batch_failure_rolls_back_no_partial_records(monkeypatch):
     """A failed append is rolled back before the re-buffered batch is retried."""
     import json
 
-    from deerflow.runtime.events.store import jsonl as jsonl_mod
+    from nkyel.runtime.events.store import jsonl as jsonl_mod
 
     real_append = jsonl_mod.JsonlRunEventStore._append_records
 
@@ -231,7 +231,7 @@ async def test_put_batch_failure_rolls_back_no_partial_records(monkeypatch):
 @pytest.mark.anyio
 async def test_mixed_run_batch_failure_restores_all_run_files(monkeypatch):
     """A failed mixed-run append restores prior bytes in every touched file."""
-    from deerflow.runtime.events.store import jsonl as jsonl_mod
+    from nkyel.runtime.events.store import jsonl as jsonl_mod
 
     real_append = jsonl_mod.JsonlRunEventStore._append_records
     append_calls = 0
@@ -271,7 +271,7 @@ async def test_mixed_run_batch_failure_restores_all_run_files(monkeypatch):
 @pytest.mark.anyio
 async def test_mixed_run_batch_logs_error_when_rollback_fails(monkeypatch, caplog):
     """A rollback failure must make possible retry duplicates visible to operators."""
-    from deerflow.runtime.events.store import jsonl as jsonl_mod
+    from nkyel.runtime.events.store import jsonl as jsonl_mod
 
     real_append = jsonl_mod.JsonlRunEventStore._append_records
     real_unlink = Path.unlink
@@ -386,7 +386,7 @@ async def test_db_put_batch_rejects_mixed_thread_ids():
     """DbRunEventStore.put_batch must raise ValueError for cross-thread batches."""
     from unittest.mock import MagicMock
 
-    from deerflow.runtime.events.store.db import DbRunEventStore
+    from nkyel.runtime.events.store.db import DbRunEventStore
 
     mock_sf = MagicMock()
     store = DbRunEventStore(session_factory=mock_sf)

@@ -18,10 +18,10 @@ from fastapi.testclient import TestClient
 
 from app.gateway.auth.models import User
 from app.gateway.routers import memory
-from deerflow.agents.memory import tools
-from deerflow.agents.memory.backends.mem0 import mem0_manager
-from deerflow.agents.memory.backends.mem0.client import Mem0APIError, Mem0Client
-from deerflow.agents.memory.manager import MemoryReadError
+from nkyel.agents.memory import tools
+from nkyel.agents.memory.backends.mem0 import mem0_manager
+from nkyel.agents.memory.backends.mem0.client import Mem0APIError, Mem0Client
+from nkyel.agents.memory.manager import MemoryReadError
 
 OPERATIONS = ["search", "asearch", "get_memory", "export_memory"]
 POLICIES = ["fail_open", "fail_closed"]

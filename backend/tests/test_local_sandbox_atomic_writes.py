@@ -13,8 +13,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from deerflow.sandbox.local import local_sandbox as local
-from deerflow.utils import atomic_write, file_revision_metadata
+from nkyel.sandbox.local import local_sandbox as local
+from nkyel.utils import atomic_write, file_revision_metadata
 
 requires_atomic_revision = pytest.mark.skipif(sys.platform not in {"darwin", "linux"}, reason="Atomic revisions are scoped to Linux/macOS")
 
@@ -386,9 +386,9 @@ def test_replacement_does_not_inherit_new_access_grants(tmp_path, sandbox):
 def test_overwrite_preserves_extended_attributes(tmp_path, sandbox):
     target = tmp_path / "report.md"
     target.write_bytes(b"old\n")
-    subprocess.run(["xattr", "-w", "user.deerflow-test", "retain-me", str(target)], check=True, capture_output=True)
+    subprocess.run(["xattr", "-w", "user.nkyel-test", "retain-me", str(target)], check=True, capture_output=True)
     sandbox.write_file("/mnt/user-data/outputs/report.md", "new\n")
-    attribute = subprocess.check_output(["xattr", "-p", "user.deerflow-test", str(target)], text=True)
+    attribute = subprocess.check_output(["xattr", "-p", "user.nkyel-test", str(target)], text=True)
     assert attribute.strip() == "retain-me"
 
 
@@ -458,7 +458,7 @@ def test_linux_overwrite_preserves_acl_and_attributes(tmp_path, sandbox):
     entries = [(1, 6, 0xFFFFFFFF), (2, 0, 65534), (4, 0, 0xFFFFFFFF), (16, 4, 0xFFFFFFFF), (32, 0, 0xFFFFFFFF)]
     acl = struct.pack("<I", 2) + b"".join(struct.pack("<HHI", *entry) for entry in entries)
     os.setxattr(target, "system.posix_acl_access", acl)
-    os.setxattr(target, "user.deerflow-test", b"retain-me")
+    os.setxattr(target, "user.nkyel-test", b"retain-me")
     before = {name: os.getxattr(target, name) for name in os.listxattr(target)}
     sandbox.write_file("/mnt/user-data/outputs/report.md", "new\n")
     assert {name: os.getxattr(target, name) for name in os.listxattr(target)} == before
@@ -604,8 +604,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from deerflow.sandbox import tools
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.sandbox import tools
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
 
 root = Path(sys.argv[1])
 entry = sys.argv[2]

@@ -11,8 +11,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from deerflow.persistence.notification_deliveries import NotificationDeliveryRepository, NotificationDeliveryRow
-from deerflow.persistence.notification_deliveries.sql import (
+from nkyel.persistence.notification_deliveries import NotificationDeliveryRepository, NotificationDeliveryRow
+from nkyel.persistence.notification_deliveries.sql import (
     _CHANNEL_PARK_MAX_AGE,
     _CHANNEL_PARK_MAX_ATTEMPTS,
 )
@@ -20,7 +20,7 @@ from deerflow.persistence.notification_deliveries.sql import (
 
 @pytest.fixture
 async def repo(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'deliveries.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))

@@ -7,17 +7,17 @@ from datetime import UTC, datetime
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.eviction import (
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.eviction import (
     EVICTION_POLICY_CONFIDENCE,
     EVICTION_POLICY_HYBRID_V1,
     select_facts_for_capacity,
 )
-from deerflow.agents.memory.backends.deermem.deermem.core.paths import (
+from nkyel.agents.memory.backends.deermem.deermem.core.paths import (
     agent_eviction_audit_path,
     agent_usage_path,
 )
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage
 
 NOW = datetime(2026, 8, 13, tzinfo=UTC)
 

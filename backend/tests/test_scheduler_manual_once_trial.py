@@ -13,18 +13,18 @@ import pytest
 import pytest_asyncio
 
 from app.scheduler.service import ScheduledTaskService
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_task_runs.projection import once_run_still_scheduled
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.runtime import RunStatus
-from deerflow.runtime.runs.manager import RunRecord
-from deerflow.runtime.runs.schemas import DisconnectMode
-from deerflow.utils.time import coerce_iso
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_task_runs.projection import once_run_still_scheduled
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.runtime import RunStatus
+from nkyel.runtime.runs.manager import RunRecord
+from nkyel.runtime.runs.schemas import DisconnectMode
+from nkyel.utils.time import coerce_iso
 
 OWNER = "user-1"
 TASK_ID = "task-once"

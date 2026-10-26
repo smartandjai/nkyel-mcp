@@ -5,16 +5,16 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.scheduler.service import ScheduledTaskService
-from deerflow.persistence.base import Base
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.runtime import RunStatus
-from deerflow.runtime.runs.manager import RunRecord
-from deerflow.runtime.runs.schemas import DisconnectMode
-from deerflow.scheduler.host_notes import RUN_ERROR_INTERRUPTED
+from nkyel.persistence.base import Base
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.runtime import RunStatus
+from nkyel.runtime.runs.manager import RunRecord
+from nkyel.runtime.runs.schemas import DisconnectMode
+from nkyel.scheduler.host_notes import RUN_ERROR_INTERRUPTED
 
 
 @asynccontextmanager

@@ -6,7 +6,7 @@ import threading
 
 import pytest
 
-from deerflow.utils.file_io import run_file_io
+from nkyel.utils.file_io import run_file_io
 
 
 @pytest.mark.anyio
@@ -35,7 +35,7 @@ async def test_run_file_io_passes_args_and_kwargs() -> None:
 async def test_await_drained_completes_inner_work_before_cancelling() -> None:
     """Cancellation waits for the inner coroutine: the worker's effect lands
     BEFORE the CancelledError unwinds (the locked-transaction invariant)."""
-    from deerflow.utils.file_io import await_drained
+    from nkyel.utils.file_io import await_drained
 
     started = threading.Event()
     finish = threading.Event()
@@ -61,7 +61,7 @@ async def test_await_drained_completes_inner_work_before_cancelling() -> None:
 
 @pytest.mark.anyio
 async def test_await_drained_passes_through_results_and_errors() -> None:
-    from deerflow.utils.file_io import await_drained
+    from nkyel.utils.file_io import await_drained
 
     assert await await_drained(asyncio.sleep(0, result=42)) == 42
 

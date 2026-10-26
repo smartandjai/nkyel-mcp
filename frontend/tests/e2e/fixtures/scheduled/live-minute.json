@@ -92,10 +92,10 @@
         "additional_kwargs": {
           "hide_from_ui": true,
           "dynamic_context_reminder": true,
-          "deerflow_content_kind": "middleware_injection",
-          "deerflow_producer_kind": "dynamic_context",
+          "nkyel_content_kind": "middleware_injection",
+          "nkyel_producer_kind": "dynamic_context",
           "reminder_date": "2026-10-06, Tuesday",
-          "deerflow_seq": 2
+          "nkyel_seq": 2
         }
       },
       {
@@ -111,7 +111,7 @@
         "additional_kwargs": {
           "run_id": "7415f104-ab14-464e-a59e-8605e5682995",
           "timestamp": "2026-10-06T08:46:45.323716+00:00",
-          "deerflow_seq": 2
+          "nkyel_seq": 2
         },
         "run_id": "7415f104-ab14-464e-a59e-8605e5682995"
       },
@@ -134,7 +134,7 @@
               }
             ]
           },
-          "deerflow_seq": 3
+          "nkyel_seq": 3
         },
         "tool_calls": [
           {
@@ -163,14 +163,14 @@
         "content": "# Release checklist — v0.9 (demo project)\n\n- [x] Freeze the release branch — Maya Chen\n- [x] Update the changelog — Leo Park\n- [x] Run the full test suite — Ines Ortega\n- [ ] Publish the Docker image — Sam Okafor\n- [ ] Post the release notes — Nora Lind\n",
         "name": "read_file",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 4
+          "nkyel_seq": 4
         },
         "tool_call_id": "call_00_4VLO6NshDhEODNvgB3SP9975",
         "status": "success",
@@ -195,7 +195,7 @@
               }
             ]
           },
-          "deerflow_seq": 5
+          "nkyel_seq": 5
         },
         "tool_calls": [
           {
@@ -232,14 +232,14 @@
         "content": "{\"action\": \"create\", \"display\": \"card\", \"task\": {\"id\": \"task-5cf9bfca5851492b880737b83fad3eed\", \"title\": \"发布清单未完成项提醒\", \"status\": \"enabled\", \"schedule_type\": \"interval\", \"schedule_spec\": {\"every_seconds\": 60}, \"timezone\": \"Asia/Shanghai\", \"timezone_source\": \"browser_default\", \"next_run_local\": \"2026-10-06 16:47 (Asia/Shanghai)\", \"active_run_status\": null, \"prompt\": \"读取 /mnt/demo/release-checklist.md，列出所有未完成（未勾选 `- [ ]`）的条目及其负责人。如果全部条目都已完成，则说明清单已全部完成。用中文简洁汇报。\", \"stop_condition\": \"清单中所有条目都已完成（没有未勾选项）\", \"goal_objective\": null, \"max_runs\": 60, \"end_at_local\": null, \"automatic_runs_used\": 0, \"context_mode\": \"fresh_thread_per_run\", \"standing_notes\": []}, \"now_local\": \"2026-10-06 16:46 (Asia/Shanghai)\"}",
         "name": "schedule_task",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 6
+          "nkyel_seq": 6
         },
         "tool_call_id": "call_00_8QeUe5vKtOmbxAzg8kyE8343",
         "status": "success",
@@ -257,7 +257,7 @@
             "tool_call_ids": [],
             "actions": []
           },
-          "deerflow_seq": 7,
+          "nkyel_seq": 7,
           "turn_duration": 9
         },
         "usage_metadata": {
@@ -285,10 +285,10 @@
         "additional_kwargs": {
           "hide_from_ui": true,
           "dynamic_context_reminder": true,
-          "deerflow_content_kind": "middleware_injection",
-          "deerflow_producer_kind": "dynamic_context",
+          "nkyel_content_kind": "middleware_injection",
+          "nkyel_producer_kind": "dynamic_context",
           "reminder_date": "2026-10-06, Tuesday",
-          "deerflow_seq": 2
+          "nkyel_seq": 2
         }
       },
       {
@@ -297,7 +297,7 @@
         "content": "读取 /mnt/demo/release-checklist.md，列出所有未完成（未勾选 `- [ ]`）的条目及其负责人。如果全部条目都已完成，则说明清单已全部完成。用中文简洁汇报。\n\nStop rule from the user: when this is true, report it and call stop_scheduled_task to pause this schedule: 清单中所有条目都已完成（没有未勾选项）",
         "name": "user-input",
         "additional_kwargs": {
-          "deerflow_scheduled_origin": {
+          "nkyel_scheduled_origin": {
             "task_id": "task-5cf9bfca5851492b880737b83fad3eed",
             "task_run_id": "task-run-bd60d5f11fb14c8e8a1e3ddd1b916897",
             "trigger": "scheduled",
@@ -312,7 +312,7 @@
           },
           "run_id": "09f3c472-b98d-4685-8be6-b0a3ea4b27cb",
           "timestamp": "2026-10-06T08:48:52.835680+00:00",
-          "deerflow_seq": 2
+          "nkyel_seq": 2
         },
         "run_id": "09f3c472-b98d-4685-8be6-b0a3ea4b27cb"
       },
@@ -335,7 +335,7 @@
               }
             ]
           },
-          "deerflow_seq": 3
+          "nkyel_seq": 3
         },
         "tool_calls": [
           {
@@ -364,14 +364,14 @@
         "content": "# Release checklist — v0.9 (demo project)\n\n- [x] Freeze the release branch — Maya Chen\n- [x] Update the changelog — Leo Park\n- [x] Run the full test suite — Ines Ortega\n- [x] Publish the Docker image — Sam Okafor\n- [x] Post the release notes — Nora Lind\n",
         "name": "read_file",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 4
+          "nkyel_seq": 4
         },
         "tool_call_id": "call_00_WwXcFkOAjVc6RHGwzXgf0707",
         "status": "success",
@@ -396,7 +396,7 @@
               }
             ]
           },
-          "deerflow_seq": 5
+          "nkyel_seq": 5
         },
         "tool_calls": [
           {
@@ -423,14 +423,14 @@
         "content": "{\"action\": \"stop\", \"stop_requested\": true}",
         "name": "stop_scheduled_task",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 6
+          "nkyel_seq": 6
         },
         "tool_call_id": "call_00_DQX7NhPySEkg0zDhjbhl5909",
         "status": "success",
@@ -448,7 +448,7 @@
             "tool_call_ids": [],
             "actions": []
           },
-          "deerflow_seq": 7,
+          "nkyel_seq": 7,
           "turn_duration": 6
         },
         "usage_metadata": {

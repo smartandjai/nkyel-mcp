@@ -9,8 +9,8 @@ per provider and overlaid on the ``channels.*`` blocks by
 - :class:`SqlChannelRuntimeConfigStore` keeps them in the
   ``channel_runtime_configs`` table of the application database (SQLite or
   PostgreSQL), so every Gateway instance reads the same rows. Each provider's
-  config is stored as ``DEER_FLOW_CREDENTIALS_KEY`` ciphertext
-  (``deerflow.config.credentials_key``); a disconnect is a plaintext tombstone
+  config is stored as ``NKYEL_CREDENTIALS_KEY`` ciphertext
+  (``nkyel.config.credentials_key``); a disconnect is a plaintext tombstone
   with no secret. Every save bumps the provider's ``version``, which the leader
   lease supervisor in ``ChannelService`` polls to apply a save made on a peer.
 - :class:`ChannelRuntimeConfigStore` is the historical JSON file
@@ -36,11 +36,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
 from app.channels.credential_staging import cleanup_stale_credential_staging, credential_staging_prefix
-from deerflow.utils.file_lock import retry_until_locked
+from nkyel.utils.file_lock import retry_until_locked
 
 if TYPE_CHECKING:
-    from deerflow.config.credentials_key import CredentialsCipher
-    from deerflow.persistence.channel_runtime_configs import SqlChannelRuntimeConfigRepository, StoredChannelRuntimeConfig
+    from nkyel.config.credentials_key import CredentialsCipher
+    from nkyel.persistence.channel_runtime_configs import SqlChannelRuntimeConfigRepository, StoredChannelRuntimeConfig
 
 try:
     import fcntl
@@ -86,7 +86,7 @@ def _runtime_config_file_lock(path: Path) -> Iterator[None]:
     """Exclude read-modify-write cycles of this file in other Gateway processes.
 
     The lock is an advisory sidecar next to the store file, so it covers every
-    worker and embedded client that resolves the same ``DEER_FLOW_HOME``. The
+    worker and embedded client that resolves the same ``NKYEL_HOME``. The
     path is normalized first, as in ``extensions_config_file_lock``, so a
     symlinked spelling of the file shares the lock of the file it points to.
     """
@@ -317,7 +317,7 @@ class SqlChannelRuntimeConfigStore:
         encrypts. No file is a no-op; a corrupt file is kept and reported, and
         so is a file with credentials while there is no key to encrypt them.
         """
-        from deerflow.persistence.channel_runtime_configs import CHANNEL_RUNTIME_CONFIG_PROVIDER_LENGTH, StoredChannelRuntimeConfig
+        from nkyel.persistence.channel_runtime_configs import CHANNEL_RUNTIME_CONFIG_PROVIDER_LENGTH, StoredChannelRuntimeConfig
 
         path = self._legacy_path
         if path is None:
@@ -353,7 +353,7 @@ class SqlChannelRuntimeConfigStore:
 
     def _encrypt(self, config: dict[str, Any]) -> str:
         if self._cipher is None:
-            raise ChannelRuntimeConfigEncryptionUnavailable("channel credentials cannot be stored: the DEER_FLOW_CREDENTIALS_KEY credentials key is unavailable")
+            raise ChannelRuntimeConfigEncryptionUnavailable("channel credentials cannot be stored: the NKYEL_CREDENTIALS_KEY credentials key is unavailable")
         return self._cipher.encrypt_text(json.dumps(config, ensure_ascii=False))
 
     def _decode(self, row: StoredChannelRuntimeConfig) -> dict[str, Any] | None:
@@ -362,15 +362,15 @@ class SqlChannelRuntimeConfigStore:
         if row.config_ciphertext is None:
             return None
         if self._cipher is None:
-            self._report(row, "Channel runtime config for %s is stored encrypted but no DEER_FLOW_CREDENTIALS_KEY credentials key is available; treating the provider as not configured")
+            self._report(row, "Channel runtime config for %s is stored encrypted but no NKYEL_CREDENTIALS_KEY credentials key is available; treating the provider as not configured")
             return None
-        from deerflow.config.credentials_key import CredentialsDecryptError
+        from nkyel.config.credentials_key import CredentialsDecryptError
 
         try:
             value = json.loads(self._cipher.decrypt_text(row.config_ciphertext))
         except (CredentialsDecryptError, json.JSONDecodeError):
             self._report(
-                row, "Channel runtime config for %s cannot be decrypted with the configured DEER_FLOW_CREDENTIALS_KEY; treating the provider as not configured until the key that wrote it is restored or its credentials are saved again"
+                row, "Channel runtime config for %s cannot be decrypted with the configured NKYEL_CREDENTIALS_KEY; treating the provider as not configured until the key that wrote it is restored or its credentials are saved again"
             )
             return None
         return dict(value) if isinstance(value, dict) else None
@@ -421,7 +421,7 @@ def _remove_legacy_file(path: Path) -> bool:
 
 def default_runtime_config_path() -> Path:
     """``{base_dir}/channels/runtime-config.json`` (resolves ``base_dir`` through realpath: call off the loop)."""
-    from deerflow.config.paths import get_paths
+    from nkyel.config.paths import get_paths
 
     return Path(get_paths().base_dir) / "channels" / "runtime-config.json"
 
@@ -440,11 +440,11 @@ def resolve_runtime_config_store(app_config: Any, *, cipher: CredentialsCipher |
     backend = getattr(database, "backend", None)
     store_path = Path(path) if path is not None else default_runtime_config_path()
     if backend in ("sqlite", "postgres"):
-        from deerflow.persistence.engine import get_session_factory
+        from nkyel.persistence.engine import get_session_factory
 
         if get_session_factory() is not None:
-            from deerflow.persistence.agents.sql import get_sync_sessionmaker
-            from deerflow.persistence.channel_runtime_configs import SqlChannelRuntimeConfigRepository
+            from nkyel.persistence.agents.sql import get_sync_sessionmaker
+            from nkyel.persistence.channel_runtime_configs import SqlChannelRuntimeConfigRepository
 
             repo = SqlChannelRuntimeConfigRepository(get_sync_sessionmaker(database.app_sync_sqlalchemy_url))
             return SqlChannelRuntimeConfigStore(repo, cipher=cipher, legacy_path=store_path)

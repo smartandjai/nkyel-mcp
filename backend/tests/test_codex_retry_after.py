@@ -1,4 +1,4 @@
-"""Retry pacing for deerflow.models.openai_codex_provider.CodexChatModel.
+"""Retry pacing for nkyel.models.openai_codex_provider.CodexChatModel.
 
 The provider's retry loop used to pace every 429/500/529 on a hard-coded exponential
 schedule, ignoring the server's hint. These tests pin the helper that now decides the
@@ -15,8 +15,8 @@ import httpx
 import pytest
 from langchain_core.messages import HumanMessage
 
-from deerflow.models.openai_codex_provider import _calc_backoff_ms
-from deerflow.utils.retry_after import MAX_RETRY_AFTER_MS
+from nkyel.models.openai_codex_provider import _calc_backoff_ms
+from nkyel.utils.retry_after import MAX_RETRY_AFTER_MS
 
 
 def _status_error(status: int, headers: dict[str, str] | None = None) -> httpx.HTTPStatusError:
@@ -92,7 +92,7 @@ def test_a_zero_hint_means_retry_immediately():
 @pytest.fixture
 def fixed_clock(monkeypatch):
     now = datetime(2026, 1, 1, tzinfo=UTC)
-    monkeypatch.setattr("deerflow.models.openai_codex_provider.time.time", lambda: now.timestamp())
+    monkeypatch.setattr("nkyel.models.openai_codex_provider.time.time", lambda: now.timestamp())
     return now
 
 
@@ -149,12 +149,12 @@ def test_http_dates_are_not_accepted_as_millisecond_hints(fixed_clock):
 def _make_model(**kwargs):
     from unittest.mock import patch
 
-    from deerflow.models.credential_loader import CodexCliCredential
-    from deerflow.models.openai_codex_provider import CodexChatModel
+    from nkyel.models.credential_loader import CodexCliCredential
+    from nkyel.models.openai_codex_provider import CodexChatModel
 
     cred = CodexCliCredential(access_token="tok-test", account_id="acc-test")
     with patch(
-        "deerflow.models.openai_codex_provider.load_codex_cli_credential",
+        "nkyel.models.openai_codex_provider.load_codex_cli_credential",
         return_value=cred,
     ):
         return CodexChatModel(model="gpt-5.4", reasoning_effort="medium", **kwargs)
@@ -164,7 +164,7 @@ def _make_model(**kwargs):
 @pytest.mark.parametrize("mode", ["sync", "async"])
 @pytest.mark.parametrize("status", [429, 500, 529])
 async def test_public_invocation_waits_for_http_date_retry_after(monkeypatch, fixed_clock, mode, status):
-    from deerflow.models import openai_codex_provider as provider
+    from nkyel.models import openai_codex_provider as provider
 
     model = _make_model(retry_max_attempts=2)
     calls = []
@@ -204,7 +204,7 @@ def test_loop_sleeps_for_the_server_hint(monkeypatch):
 
     monkeypatch.setattr(model, "_stream_response", fake_stream)
     monkeypatch.setattr(
-        "deerflow.models.openai_codex_provider.time.sleep",
+        "nkyel.models.openai_codex_provider.time.sleep",
         lambda seconds: sleeps.append(seconds),
     )
 
@@ -224,7 +224,7 @@ def test_loop_uses_local_backoff_without_a_hint(monkeypatch):
 
     monkeypatch.setattr(model, "_stream_response", fake_stream)
     monkeypatch.setattr(
-        "deerflow.models.openai_codex_provider.time.sleep",
+        "nkyel.models.openai_codex_provider.time.sleep",
         lambda seconds: sleeps.append(seconds),
     )
 
@@ -241,7 +241,7 @@ def test_loop_does_not_retry_a_400(monkeypatch):
 
     monkeypatch.setattr(model, "_stream_response", fake_stream)
     monkeypatch.setattr(
-        "deerflow.models.openai_codex_provider.time.sleep",
+        "nkyel.models.openai_codex_provider.time.sleep",
         lambda seconds: sleeps.append(seconds),
     )
 

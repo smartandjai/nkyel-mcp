@@ -1,6 +1,6 @@
 # Conversation Summarization
 
-DeerFlow includes automatic conversation summarization to handle long conversations that approach model token limits. When enabled, the system automatically condenses older messages while preserving recent context.
+nkyel includes automatic conversation summarization to handle long conversations that approach model token limits. When enabled, the system automatically condenses older messages while preserving recent context.
 
 New checkpoints no longer use raw task-result or skill-read transcript content to derive durable context. The capture path consumes bounded structured metadata stamped on the corresponding `ToolMessage.additional_kwargs`; transcript text remains display/model content, not the state-capture protocol.
 
@@ -389,8 +389,8 @@ The middleware intelligently preserves message context:
 
 ### Code Structure
 
-- **Configuration**: `packages/harness/deerflow/config/summarization_config.py`
-- **Integration**: `packages/harness/deerflow/agents/lead_agent/agent.py`
+- **Configuration**: `packages/harness/nkyel/config/summarization_config.py`
+- **Integration**: `packages/harness/nkyel/agents/lead_agent/agent.py`
 - **Middleware**: Uses `langchain.agents.middleware.SummarizationMiddleware`
 
 ### Middleware Order

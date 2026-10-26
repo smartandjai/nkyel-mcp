@@ -16,9 +16,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
-from deerflow.sandbox.read_file_contract import READ_FILE_TRUNCATION_PREFIX, count_file_lines
-from deerflow.sandbox.tools import _truncate_read_file_output
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.read_file_contract import READ_FILE_TRUNCATION_PREFIX, count_file_lines
+from nkyel.sandbox.tools import _truncate_read_file_output
 
 # Four lines by the "\n"-only rule; splitlines() sees eight.
 _CONTENT = "progress 10%\rprogress 100%\npage one\fpage two\nhead\u2028tail\r\nnext\x85line\n"
@@ -34,23 +34,23 @@ def _remote_sandbox(name: str, monkeypatch: pytest.MonkeyPatch, remote_files: di
         return remote_files[path].read_bytes().decode("utf-8")
 
     if name == "e2b":
-        from deerflow.community.e2b_sandbox.e2b_sandbox import E2BSandbox
+        from nkyel.community.e2b_sandbox.e2b_sandbox import E2BSandbox
 
         return E2BSandbox("line-contract", SimpleNamespace(files=SimpleNamespace(read=lambda path, **_kwargs: read_text(path))))
     if name == "boxlite":
-        from deerflow.community.boxlite.box import BoxliteBox
+        from nkyel.community.boxlite.box import BoxliteBox
 
         sandbox = BoxliteBox("line-contract", SimpleNamespace(), run=None)
         monkeypatch.setattr(sandbox, "_exec", lambda *argv: SimpleNamespace(exit_code=0, stdout=read_text(argv[-1]), stderr=""))
         return sandbox
     if name == "tenki":
-        from deerflow.community.tenki.sandbox import TenkiSandbox
+        from nkyel.community.tenki.sandbox import TenkiSandbox
 
         sandbox = TenkiSandbox("line-contract", SimpleNamespace())
         monkeypatch.setattr(sandbox, "_fs_op", lambda op: op(SimpleNamespace(read_text=read_text)))
         return sandbox
     if name == "opensandbox":
-        from deerflow.community.opensandbox.sandbox import OpenSandboxSandbox
+        from nkyel.community.opensandbox.sandbox import OpenSandboxSandbox
 
         sandbox = OpenSandboxSandbox("line-contract", SimpleNamespace(), run_command_opts_cls=SimpleNamespace)
         monkeypatch.setattr(sandbox, "_file_op", lambda operation: operation(SimpleNamespace(read_file=lambda path, **_kwargs: read_text(path))))
@@ -96,6 +96,6 @@ def test_remote_read_continues_at_the_line_a_truncation_marker_names(provider, t
     ["", "\n", "one", "one\n", "one\n\n", "a\rb\n", "a\r\nb", "a\fb\vc\x1cd\x85e\u2028f\u2029g\n", "trailing cr\r"],
 )
 def test_split_file_lines_agrees_with_count_file_lines(content):
-    from deerflow.sandbox.read_file_contract import split_file_lines
+    from nkyel.sandbox.read_file_contract import split_file_lines
 
     assert len(split_file_lines(content)) == count_file_lines(content)

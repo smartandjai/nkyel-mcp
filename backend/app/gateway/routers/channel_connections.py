@@ -22,11 +22,11 @@ from app.channels.runtime_config_store import (
 from app.channels.wechat_qr_login import QRLoginError, WechatQRLogin
 from app.gateway.deps import require_admin_user
 from app.gateway.persistent_writes import run_drained_write
-from deerflow.config.channel_connections_config import ChannelConnectionsConfig
-from deerflow.config.deployment_config import multi_instance_declaration
-from deerflow.persistence.channel_connections import ChannelConnectionRepository
-from deerflow.persistence.engine import get_session_factory
-from deerflow.utils.file_io import await_drained
+from nkyel.config.channel_connections_config import ChannelConnectionsConfig
+from nkyel.config.deployment_config import multi_instance_declaration
+from nkyel.persistence.channel_connections import ChannelConnectionRepository
+from nkyel.persistence.engine import get_session_factory
+from nkyel.utils.file_io import await_drained
 
 router = APIRouter(prefix="/api/channels", tags=["channel-connections"])
 logger = logging.getLogger(__name__)
@@ -178,7 +178,7 @@ def _get_user_id(request: Request) -> str:
 
 
 def _get_app_config():
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     return get_app_config()
 
@@ -231,7 +231,7 @@ def _get_repository(request: Request, config: ChannelConnectionsConfig) -> Chann
     if sf is None:
         raise HTTPException(status_code=503, detail="Channel connection persistence is not available")
 
-    # The lifespan loads the DEER_FLOW_CREDENTIALS_KEY cipher off the event loop.
+    # The lifespan loads the NKYEL_CREDENTIALS_KEY cipher off the event loop.
     repo = ChannelConnectionRepository(sf, cipher=getattr(request.app.state, "credentials_cipher", None))
     request.app.state.channel_connection_repo = repo
     return repo
@@ -385,11 +385,11 @@ async def _create_state(
 
 def _connect_instruction(provider: str, code: str) -> str:
     if provider == "telegram":
-        return f"Send /start {code} to the DeerFlow Telegram bot."
+        return f"Send /start {code} to the nkyel Telegram bot."
     meta = _PROVIDER_META.get(provider)
     if meta is None:
         raise HTTPException(status_code=404, detail="Unknown channel provider")
-    return f"Send /connect {code} to the DeerFlow {meta['display_name']} bot."
+    return f"Send /connect {code} to the nkyel {meta['display_name']} bot."
 
 
 def _connect_url(config: ChannelConnectionsConfig, provider: str, code: str) -> str | None:
@@ -765,7 +765,7 @@ async def _apply_runtime_channel_config(request: Request, config: ChannelConnect
     if not (await _get_runtime_config_store(request)).can_store_credentials:
         raise HTTPException(
             status_code=503,
-            detail="Channel credentials cannot be stored: the credentials encryption key (DEER_FLOW_CREDENTIALS_KEY) is unavailable. Check the Gateway logs, or configure the channel in config.yaml.",
+            detail="Channel credentials cannot be stored: the credentials encryption key (NKYEL_CREDENTIALS_KEY) is unavailable. Check the Gateway logs, or configure the channel in config.yaml.",
         )
     started = await _restart_runtime_channel_if_available(provider, runtime_config)
     if started is False:
@@ -804,7 +804,7 @@ async def _require_wechat_qr_login(request: Request) -> ChannelConnectionsConfig
             status_code=503,
             detail=(
                 "WeChat QR login requires a single Gateway worker. Set GATEWAY_WORKERS=1 (or WEB_CONCURRENCY=1 when using Uvicorn directly), "
-                "run one Gateway instance without deployment.multi_instance / DEER_FLOW_MULTI_INSTANCE, or enter a bot token manually."
+                "run one Gateway instance without deployment.multi_instance / NKYEL_MULTI_INSTANCE, or enter a bot token manually."
             ),
         )
     return config

@@ -1,9 +1,9 @@
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.mcp_tasks_config import McpTasksConfig
-from deerflow.config.reload_boundary import STARTUP_ONLY_FIELDS, STARTUP_ONLY_PREFIX
+from nkyel.config.app_config import AppConfig
+from nkyel.config.mcp_tasks_config import McpTasksConfig
+from nkyel.config.reload_boundary import STARTUP_ONLY_FIELDS, STARTUP_ONLY_PREFIX
 
 
 def test_mcp_task_runtime_is_disabled_by_default_and_bounded():

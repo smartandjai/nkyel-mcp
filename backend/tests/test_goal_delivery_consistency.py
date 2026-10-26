@@ -11,18 +11,18 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.paths import Paths
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.goal import build_goal_state, read_thread_goal, write_thread_goal
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import ConflictError, RunManager
-from deerflow.runtime.runs.schemas import RunStatus
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.tools.builtins.present_file_tool import present_file_tool
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.paths import Paths
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.goal import build_goal_state, read_thread_goal, write_thread_goal
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import ConflictError, RunManager
+from nkyel.runtime.runs.schemas import RunStatus
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.tools.builtins.present_file_tool import present_file_tool
 
 OUTPUT_PATH = "/mnt/user-data/outputs/report.md"
 
@@ -83,8 +83,8 @@ async def _run_goal_delivery(
     paths = Paths(base_dir=tmp_path)
     output_dir = paths.sandbox_outputs_dir(thread_id, user_id=get_effective_user_id())
     output_dir.mkdir(parents=True)
-    monkeypatch.setattr("deerflow.workspace_changes.recorder.get_paths", lambda: paths)
-    monkeypatch.setattr(importlib.import_module("deerflow.tools.builtins.present_file_tool"), "get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.workspace_changes.recorder.get_paths", lambda: paths)
+    monkeypatch.setattr(importlib.import_module("nkyel.tools.builtins.present_file_tool"), "get_paths", lambda: paths)
     monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
     monkeypatch.setenv("LANGSMITH_TRACING", "false")
 

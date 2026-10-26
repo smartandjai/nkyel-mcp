@@ -24,7 +24,7 @@ from app.channels.commands import extract_connect_code, is_known_channel_command
 from app.channels.connection_identity import attach_connection_identity
 from app.channels.message_bus import InboundMessageType, MessageBus, OutboundMessage
 from app.channels.notification_groups import notification_group_display_name, qq_notification_group_openid
-from deerflow.utils.file_io import await_drained
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 TOKEN_URL = "https://bots.qq.com/app/getAppAccessToken"
@@ -39,7 +39,7 @@ MAX_CACHED_MESSAGES = 2048
 INBOUND_BUFFER_SIZE = 64
 START_TIMEOUT = 30.0
 RECONNECT_DELAY = 1.0
-TRUNCATION_MARKER = "\n[Reply truncated; see DeerFlow for the full response.]"
+TRUNCATION_MARKER = "\n[Reply truncated; see nkyel for the full response.]"
 
 
 class QQAPIError(RuntimeError):
@@ -460,7 +460,7 @@ class QQChannel(Channel):
                     status="connected",
                     **upsert_kwargs,
                 )
-                reply = "QQ connected to DeerFlow."
+                reply = "QQ connected to nkyel."
             await self.send(
                 OutboundMessage(
                     channel_name="qq",

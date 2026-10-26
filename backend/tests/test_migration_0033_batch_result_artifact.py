@@ -10,9 +10,9 @@ from alembic import command
 from sqlalchemy.ext.asyncio import create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.subagent_batches.model import SubagentBatchItemRow
+from nkyel.persistence import bootstrap
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.subagent_batches.model import SubagentBatchItemRow
 
 
 @pytest.mark.asyncio

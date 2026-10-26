@@ -35,7 +35,7 @@ from langchain.agents.middleware.types import ModelRequest
 from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, ToolMessage
 
-from deerflow.agents.middlewares.model_content_compatibility_middleware import (
+from nkyel.agents.middlewares.model_content_compatibility_middleware import (
     ModelContentCompatibilityMiddleware,
 )
 
@@ -508,9 +508,9 @@ class TestChainWiring:
     ToolMessages — a subagent thread holds MCP tool results too."""
 
     def test_registered_on_the_lead_agent_chain(self):
-        from deerflow.agents.lead_agent.agent import build_middlewares
-        from deerflow.config.app_config import AppConfig
-        from deerflow.config.sandbox_config import SandboxConfig
+        from nkyel.agents.lead_agent.agent import build_middlewares
+        from nkyel.config.app_config import AppConfig
+        from nkyel.config.sandbox_config import SandboxConfig
 
         middlewares = build_middlewares(
             config={"configurable": {}},
@@ -520,9 +520,9 @@ class TestChainWiring:
         assert ModelContentCompatibilityMiddleware in [type(m) for m in middlewares]
 
     def test_registered_on_the_subagent_runtime_chain(self):
-        from deerflow.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
-        from deerflow.config.app_config import AppConfig
-        from deerflow.config.sandbox_config import SandboxConfig
+        from nkyel.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
+        from nkyel.config.app_config import AppConfig
+        from nkyel.config.sandbox_config import SandboxConfig
 
         middlewares = build_subagent_runtime_middlewares(
             app_config=AppConfig(sandbox=SandboxConfig(use="test")),
@@ -530,8 +530,8 @@ class TestChainWiring:
         assert ModelContentCompatibilityMiddleware in [type(m) for m in middlewares]
 
     def test_registered_on_the_sdk_factory_chain(self):
-        from deerflow.agents.factory import _assemble_from_features
-        from deerflow.agents.features import RuntimeFeatures
+        from nkyel.agents.factory import _assemble_from_features
+        from nkyel.agents.features import RuntimeFeatures
 
         middlewares, _ = _assemble_from_features(RuntimeFeatures())
         assert ModelContentCompatibilityMiddleware in [type(m) for m in middlewares]

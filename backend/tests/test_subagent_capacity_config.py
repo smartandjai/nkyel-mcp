@@ -3,11 +3,11 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.reload_boundary import STARTUP_ONLY_FIELDS, STARTUP_ONLY_PREFIX
-from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.config.subagents_config import SubagentsAppConfig, effective_subagent_concurrency, effective_total_subagents_per_run
+from nkyel.config.app_config import AppConfig
+from nkyel.config.reload_boundary import STARTUP_ONLY_FIELDS, STARTUP_ONLY_PREFIX
+from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.config.subagents_config import SubagentsAppConfig, effective_subagent_concurrency, effective_total_subagents_per_run
 
 
 def test_subagent_runtime_defaults_are_safe_and_bounded() -> None:

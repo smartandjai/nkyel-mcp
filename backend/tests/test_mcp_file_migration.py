@@ -19,9 +19,9 @@ from unittest.mock import patch
 import pytest
 from mcp.types import CallToolResult, ResourceLink, TextContent
 
-from deerflow.config.paths import VIRTUAL_PATH_PREFIX, Paths
-from deerflow.constants import MCP_TMP_SUBDIR
-from deerflow.mcp import tools as mcp_tools
+from nkyel.config.paths import VIRTUAL_PATH_PREFIX, Paths
+from nkyel.constants import MCP_TMP_SUBDIR
+from nkyel.mcp import tools as mcp_tools
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def paths(tmp_path: Path) -> Paths:
 
 
 def _patch_paths(paths: Paths):
-    return patch("deerflow.mcp.tools.get_paths", return_value=paths)
+    return patch("nkyel.mcp.tools.get_paths", return_value=paths)
 
 
 def _workspace_file(paths: Paths, relative_path: str, *, content: bytes = b"data") -> Path:

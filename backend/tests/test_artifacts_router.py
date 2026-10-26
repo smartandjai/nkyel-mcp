@@ -17,8 +17,8 @@ from starlette.responses import FileResponse
 
 import app.gateway.routers.artifacts as artifacts_router
 from app.gateway.internal_auth import INTERNAL_OWNER_USER_ID_HEADER_NAME, INTERNAL_SYSTEM_ROLE
-from deerflow.config.paths import Paths, make_safe_user_id
-from deerflow.sandbox.lease import get_sandbox_lease_manager
+from nkyel.config.paths import Paths, make_safe_user_id
+from nkyel.sandbox.lease import get_sandbox_lease_manager
 
 # Browsers render any XML MIME type as a document, so an XHTML-namespaced
 # script in a plain .xml file runs in the application origin as well.

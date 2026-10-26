@@ -27,9 +27,9 @@ from app.channels.base import ChannelStopTimeout
 from app.channels.leadership import ChannelLeadership
 from app.channels.service import ChannelService
 from app.channels.store import JsonChannelStore
-from deerflow import reflection
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_leases import ChannelLeaseRow, SqlChannelLeaseRepository, db_now
+from nkyel import reflection
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_leases import ChannelLeaseRow, SqlChannelLeaseRepository, db_now
 
 pytestmark = pytest.mark.asyncio
 
@@ -400,7 +400,7 @@ async def test_from_app_config_turns_the_lease_on_from_the_multi_process_signal(
 
     built = []
     monkeypatch.setattr(service_module, "_make_leadership", lambda config, *, owner_id: built.append((config.lease_seconds, owner_id)) or None)
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     config = SimpleNamespace(model_extra={"channels": {"leader_lease": {"enabled": "auto", "lease_seconds": 12}}})
 
     ChannelService.from_app_config(config, multi_process=False)
@@ -413,9 +413,9 @@ async def test_from_app_config_turns_the_lease_on_from_the_multi_process_signal(
 
 
 async def test_an_active_lease_without_a_database_refuses_to_build(monkeypatch):
-    import deerflow.persistence.engine as engine_module
+    import nkyel.persistence.engine as engine_module
     from app.channels.service import _make_leadership
-    from deerflow.config.channel_leader_lease_config import ChannelLeaderLeaseConfig
+    from nkyel.config.channel_leader_lease_config import ChannelLeaderLeaseConfig
 
     monkeypatch.setattr(engine_module, "get_session_factory", lambda: None)
     with pytest.raises(RuntimeError, match="channels.leader_lease is active"):
@@ -504,11 +504,11 @@ async def test_gateway_lifespan_passes_the_gate_signal_and_the_run_worker_id():
         patch("app.gateway.app.multi_process_deployment", return_value=True) as signal,
         # The real configure_logging would raise the root logger to INFO for every later test.
         patch("app.gateway.app.configure_logging"),
-        patch("deerflow.skills.projection.ensure_public_skill_projection"),
+        patch("nkyel.skills.projection.ensure_public_skill_projection"),
         patch("app.gateway.app.auth.close_oidc_service", AsyncMock()),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
         patch("app.channels.service.stop_channel_service", AsyncMock()),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=MagicMock()),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=MagicMock()),
     ):
         async with lifespan(FastAPI()):
             pass
@@ -522,7 +522,7 @@ def test_multi_process_deployment_is_the_gate_signal(monkeypatch):
 
     from app.gateway.deps import multi_process_deployment
 
-    monkeypatch.delenv("DEER_FLOW_MULTI_INSTANCE", raising=False)
+    monkeypatch.delenv("NKYEL_MULTI_INSTANCE", raising=False)
     monkeypatch.delenv("WEB_CONCURRENCY", raising=False)
     monkeypatch.setenv("GATEWAY_WORKERS", "1")
     single = SimpleNamespace(deployment=SimpleNamespace(multi_instance=False))

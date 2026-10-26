@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 import pytest_asyncio
-from deerflow_extension_api import AgentRun, AgentRunError, ExtensionPrincipal
-from deerflow_extension_api.plugins import ActionContext
+from nkyel_extension_api import AgentRun, AgentRunError, ExtensionPrincipal
+from nkyel_extension_api.plugins import ActionContext
 from test_extension_agent_runs import host as _host_fixture
 from test_extension_agent_runs import runtime as _runtime_fixture
 
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
 
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="Workflow worker execution requires POSIX")
 
@@ -143,12 +143,12 @@ class Runs:
 
 @pytest_asyncio.fixture
 async def plugin(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(ROOT / "examples/deerflow-extension-workflows"))
+    monkeypatch.syspath_prepend(str(ROOT / "examples/nkyel-extension-workflows"))
     loaded, diagnostics = await asyncio.to_thread(
         load_extensions,
         [
             ExtensionSpec(
-                use="deerflow_extension_workflows:install",
+                use="nkyel_extension_workflows:install",
                 config={
                     "enabled": True,
                     "storage_path": str(tmp_path / "workflows.sqlite"),
@@ -398,7 +398,7 @@ async def test_service_shutdown_drains_children_and_worker(plugin):
 
 @pytest.mark.asyncio
 async def test_process_lock_prevents_multiple_services_recovering_live_work(plugin):
-    from deerflow_extension_workflows.service import Workflows
+    from nkyel_extension_workflows.service import Workflows
 
     other = Workflows(plugin[2].config)
     with pytest.raises(BlockingIOError):
@@ -408,16 +408,16 @@ async def test_process_lock_prevents_multiple_services_recovering_live_work(plug
 
 @pytest.mark.asyncio
 async def test_disabled_plugin_has_no_service_or_visible_tools(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(ROOT / "examples/deerflow-extension-workflows"))
-    from deerflow.extensions.plugin_tools import build_plugin_tools
+    monkeypatch.syspath_prepend(str(ROOT / "examples/nkyel-extension-workflows"))
+    from nkyel.extensions.plugin_tools import build_plugin_tools
 
-    loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_workflows:install", config={"enabled": False})])
+    loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_workflows:install", config={"enabled": False})])
     assert not diagnostics and not loaded.services and not build_plugin_tools(loaded)
 
 
 @pytest.mark.asyncio
 async def test_operator_configuration_rejects_unsupported_budget_and_limits(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(ROOT / "examples/deerflow-extension-workflows"))
+    monkeypatch.syspath_prepend(str(ROOT / "examples/nkyel-extension-workflows"))
     for extra in (
         {"max_cost_usd": 1},
         {"concurrency": 100},
@@ -427,7 +427,7 @@ async def test_operator_configuration_rejects_unsupported_budget_and_limits(tmp_
         loaded, diagnostics = load_extensions(
             [
                 ExtensionSpec(
-                    use="deerflow_extension_workflows:install",
+                    use="nkyel_extension_workflows:install",
                     config={
                         "enabled": True,
                         "storage_path": str(tmp_path / "runs.sqlite"),
@@ -503,9 +503,9 @@ async def test_startup_marks_unfinished_records_interrupted_without_replay(plugi
 async def test_model_tool_dispatch_uses_stamped_principal_and_handle(plugin):
     from types import SimpleNamespace
 
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
 
-    from deerflow.extensions.plugin_tools import build_plugin_tools
+    from nkyel.extensions.plugin_tools import build_plugin_tools
 
     # Exercise the production model-tool wrapper, not only the action handler.
     class ScopedRuns(Runs):
@@ -722,8 +722,8 @@ async def test_result_anchor_uses_visible_input_after_real_context_rewrite(plugi
     from langchain_core.messages import AIMessage, HumanMessage
 
     from app.gateway.services import normalize_input
-    from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
-    from deerflow.runtime.serialization import serialize_channel_values_for_api
+    from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+    from nkyel.runtime.serialization import serialize_channel_values_for_api
 
     original = plugin[3].get_state
 
@@ -821,7 +821,7 @@ async def test_phase2_definition_versions_are_immutable_and_owner_scoped(plugin)
 async def test_phase2_checkpoint_requires_exact_authenticated_decision_and_dispatches_once(plugin):
     from dataclasses import replace
 
-    from deerflow_extension_api.plugins import ToolContext
+    from nkyel_extension_api.plugins import ToolContext
 
     _, actions, _, runs = plugin
     launched = await launch(
@@ -948,7 +948,7 @@ async def test_phase2_fail_closed_checkpoint_and_restart(plugin, script):
         record = await asyncio.to_thread(service.store.get, "alice", run_id)
         record["status"] = "paused"
         await asyncio.to_thread(service.store.put, "alice", record)
-        from deerflow_extension_workflows.service import Workflows
+        from nkyel_extension_workflows.service import Workflows
 
         replacement = Workflows(service.config)
         await replacement.start(None)
@@ -1025,7 +1025,7 @@ async def test_phase2_inspection_example_reviews_each_stage_and_final_output(plu
             runs.threads[run.thread_id]["values"]["messages"][-1]["content"] = json.dumps({"verdict": "ready"})
 
     monkeypatch.setattr(runs, "answer", answer)
-    script = (ROOT / "examples/deerflow-extension-workflows/examples/inspection.workflow.js").read_text(encoding="utf-8")
+    script = (ROOT / "examples/nkyel-extension-workflows/examples/inspection.workflow.js").read_text(encoding="utf-8")
     launched = await launch(
         plugin, script, args={"complianceAgent": "lead_agent", "ingredientAgent": "lead_agent", "reportAgent": "lead_agent", "reviewerAgent": "lead_agent", "product": "synthetic", "referenceDate": "2026-10-15", "formula": []}
     )

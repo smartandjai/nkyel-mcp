@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from deerflow.agents.memory.backends.deermem.deermem.core.paths import fact_file_path
+from nkyel.agents.memory.backends.deermem.deermem.core.paths import fact_file_path
 
 
 def _legacy_memory(content: str) -> dict:

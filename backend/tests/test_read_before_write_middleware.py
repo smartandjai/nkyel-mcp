@@ -26,12 +26,12 @@ def _make_request(name, args, messages=(), tool_call_id="call-1"):
 
 def _read_marked_message(path, content, tool_call_id="r1"):
     msg = ToolMessage(content=content[:20], tool_call_id=tool_call_id, name="read_file")
-    msg.additional_kwargs["deerflow_read_mark"] = {"path": path, "hash": _sha(content)}
+    msg.additional_kwargs["nkyel_read_mark"] = {"path": path, "hash": _sha(content)}
     return msg
 
 
 def _middleware(files: dict[str, str]):
-    from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+    from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
 
     def reader(_runtime, path):
         normalized = posixpath.normpath(path)
@@ -47,7 +47,7 @@ def _middleware(files: dict[str, str]):
 
 class TestReadCurrentFileContent:
     def test_reads_via_sandbox_with_resolution(self):
-        from deerflow.sandbox import tools as sandbox_tools
+        from nkyel.sandbox import tools as sandbox_tools
 
         sandbox = MagicMock()
         sandbox.read_file.return_value = "hello"
@@ -61,7 +61,7 @@ class TestReadCurrentFileContent:
         sandbox.read_file.assert_called_once_with("/mnt/user-data/outputs/report.md")
 
     def test_propagates_file_not_found(self):
-        from deerflow.sandbox import tools as sandbox_tools
+        from nkyel.sandbox import tools as sandbox_tools
 
         sandbox = MagicMock()
         sandbox.read_file.side_effect = FileNotFoundError()
@@ -80,7 +80,7 @@ class TestReadMarkStamping:
         request = _make_request("read_file", {"description": "d", "path": "/mnt/user-data/outputs/report.md"})
         handler = MagicMock(return_value=ToolMessage(content="v1", tool_call_id="call-1", name="read_file"))
         result = mw.wrap_tool_call(request, handler)
-        mark = result.additional_kwargs["deerflow_read_mark"]
+        mark = result.additional_kwargs["nkyel_read_mark"]
         assert mark == {"path": "/mnt/user-data/outputs/report.md", "hash": _sha("v1")}
 
     def test_ranged_read_stamps_full_file_hash(self):
@@ -91,21 +91,21 @@ class TestReadMarkStamping:
         )
         handler = MagicMock(return_value=ToolMessage(content="line3", tool_call_id="call-1", name="read_file"))
         result = mw.wrap_tool_call(request, handler)
-        assert result.additional_kwargs["deerflow_read_mark"]["hash"] == _sha("line1\nline2\nline3")
+        assert result.additional_kwargs["nkyel_read_mark"]["hash"] == _sha("line1\nline2\nline3")
 
     def test_error_tool_message_gets_no_mark(self):
         mw = _middleware({"/mnt/user-data/outputs/report.md": "v1"})
         request = _make_request("read_file", {"description": "d", "path": "/mnt/user-data/outputs/report.md"})
         handler = MagicMock(return_value=ToolMessage(content="boom", tool_call_id="call-1", name="read_file", status="error"))
         result = mw.wrap_tool_call(request, handler)
-        assert "deerflow_read_mark" not in result.additional_kwargs
+        assert "nkyel_read_mark" not in result.additional_kwargs
 
     def test_reader_failure_means_no_mark(self):
         mw = _middleware({"/mnt/user-data/outputs/report.md": RuntimeError("sandbox down")})
         request = _make_request("read_file", {"description": "d", "path": "/mnt/user-data/outputs/report.md"})
         handler = MagicMock(return_value=ToolMessage(content="v1", tool_call_id="call-1", name="read_file"))
         result = mw.wrap_tool_call(request, handler)
-        assert "deerflow_read_mark" not in result.additional_kwargs
+        assert "nkyel_read_mark" not in result.additional_kwargs
 
     def test_non_file_tools_untouched(self):
         mw = _middleware({})
@@ -213,14 +213,14 @@ class TestWriteGate:
         handler.assert_called_once()
         assert result.status != "error"
 
-    def test_blocked_write_has_deerflow_tool_meta(self):
-        from deerflow.agents.middlewares.tool_result_meta import TOOL_META_KEY
+    def test_blocked_write_has_nkyel_tool_meta(self):
+        from nkyel.agents.middlewares.tool_result_meta import TOOL_META_KEY
 
         mw = _middleware({self.PATH: "v1"})
         request = _make_request("write_file", {"description": "d", "path": self.PATH, "content": "v2"})
         result = mw.wrap_tool_call(request, MagicMock())
         meta = (result.additional_kwargs or {}).get(TOOL_META_KEY)
-        assert meta is not None, "blocked write must carry deerflow_tool_meta"
+        assert meta is not None, "blocked write must carry nkyel_tool_meta"
         assert meta["recoverable_by_model"] is True
 
 
@@ -239,10 +239,10 @@ class TestAsyncPaths:
         result = asyncio.run(mw.awrap_tool_call(request, handler))
         assert result.status == "error"
 
-    def test_async_blocked_write_has_deerflow_tool_meta(self):
+    def test_async_blocked_write_has_nkyel_tool_meta(self):
         import asyncio
 
-        from deerflow.agents.middlewares.tool_result_meta import TOOL_META_KEY
+        from nkyel.agents.middlewares.tool_result_meta import TOOL_META_KEY
 
         mw = _middleware({self.PATH: "v1"})
         request = _make_request("write_file", {"description": "d", "path": self.PATH, "content": "v2"})
@@ -252,7 +252,7 @@ class TestAsyncPaths:
 
         result = asyncio.run(mw.awrap_tool_call(request, handler))
         meta = (result.additional_kwargs or {}).get(TOOL_META_KEY)
-        assert meta is not None, "async blocked write must carry deerflow_tool_meta"
+        assert meta is not None, "async blocked write must carry nkyel_tool_meta"
         assert meta["recoverable_by_model"] is True
 
     def test_async_read_stamps_mark(self):
@@ -265,7 +265,7 @@ class TestAsyncPaths:
             return ToolMessage(content="v1", tool_call_id="call-1", name="read_file")
 
         result = asyncio.run(mw.awrap_tool_call(request, handler))
-        assert result.additional_kwargs["deerflow_read_mark"]["hash"] == _sha("v1")
+        assert result.additional_kwargs["nkyel_read_mark"]["hash"] == _sha("v1")
 
     def test_async_allowed_write_calls_handler(self):
         import asyncio
@@ -282,17 +282,17 @@ class TestAsyncPaths:
 
 
 def _wiring_app_config(**overrides):
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     return AppConfig(sandbox=SandboxConfig(use="test"), **overrides)
 
 
 class TestChainWiring:
     def test_enabled_by_default_in_runtime_chain(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-        from deerflow.agents.middlewares.sandbox_audit_middleware import SandboxAuditMiddleware
-        from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware, build_lead_runtime_middlewares
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.sandbox_audit_middleware import SandboxAuditMiddleware
+        from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware, build_lead_runtime_middlewares
 
         middlewares = build_lead_runtime_middlewares(app_config=_wiring_app_config())
         types = [type(m) for m in middlewares]
@@ -300,17 +300,17 @@ class TestChainWiring:
         assert types.index(SandboxAuditMiddleware) < types.index(ReadBeforeWriteMiddleware) < types.index(ToolErrorHandlingMiddleware)
 
     def test_disabled_removes_middleware(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-        from deerflow.agents.middlewares.tool_error_handling_middleware import build_lead_runtime_middlewares
-        from deerflow.config.read_before_write_config import ReadBeforeWriteConfig
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.tool_error_handling_middleware import build_lead_runtime_middlewares
+        from nkyel.config.read_before_write_config import ReadBeforeWriteConfig
 
         app_config = _wiring_app_config(read_before_write=ReadBeforeWriteConfig(enabled=False))
         middlewares = build_lead_runtime_middlewares(app_config=app_config)
         assert ReadBeforeWriteMiddleware not in [type(m) for m in middlewares]
 
     def test_subagents_get_the_gate_too(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-        from deerflow.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
 
         middlewares = build_subagent_runtime_middlewares(app_config=_wiring_app_config())
         assert ReadBeforeWriteMiddleware in [type(m) for m in middlewares]
@@ -322,7 +322,7 @@ class TestErrorStringSandboxes:
     PATH = "/mnt/user-data/outputs/report.md"
 
     def _error_string_middleware(self, files):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
 
         def reader(_runtime, path):
             normalized = posixpath.normpath(path)
@@ -345,7 +345,7 @@ class TestErrorStringSandboxes:
         request = _make_request("read_file", {"description": "d", "path": self.PATH})
         handler = MagicMock(return_value=ToolMessage(content="v1", tool_call_id="call-1", name="read_file"))
         result = mw.wrap_tool_call(request, handler)
-        assert "deerflow_read_mark" not in result.additional_kwargs
+        assert "nkyel_read_mark" not in result.additional_kwargs
 
     def test_existing_file_still_gated(self):
         mw = self._error_string_middleware({self.PATH: "v1"})
@@ -360,7 +360,7 @@ class TestErrorStringSandboxes:
         read_request = _make_request("read_file", {"description": "d", "path": self.PATH}, tool_call_id="r1")
         read_handler = MagicMock(return_value=ToolMessage(content="v1", tool_call_id="r1", name="read_file"))
         read_result = mw.wrap_tool_call(read_request, read_handler)
-        assert read_result.additional_kwargs["deerflow_read_mark"]["hash"] == _sha("v1")
+        assert read_result.additional_kwargs["nkyel_read_mark"]["hash"] == _sha("v1")
 
         write_request = _make_request("write_file", {"description": "d", "path": self.PATH, "content": "v2"}, [read_result])
         write_handler = MagicMock(return_value=ToolMessage(content="OK", tool_call_id="call-1", name="write_file"))
@@ -434,7 +434,7 @@ class TestSamePathSerialization:
             return await asyncio.gather(read_task, write_task)
 
         read_result, _write_result = asyncio.run(run())
-        mark = read_result.additional_kwargs.get("deerflow_read_mark")
+        mark = read_result.additional_kwargs.get("nkyel_read_mark")
         assert mark is not None
         assert mark["hash"] == _sha(read_result.content)
 
@@ -446,12 +446,12 @@ class TestBlockedPayloadElision:
 
     @staticmethod
     def _config(**overrides):
-        from deerflow.config.read_before_write_config import ReadBeforeWriteConfig
+        from nkyel.config.read_before_write_config import ReadBeforeWriteConfig
 
         return ReadBeforeWriteConfig(**overrides)
 
     def _middleware(self, files=None, **config_overrides):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
 
         files = {self.PATH: "v1"} if files is None else files
 
@@ -482,14 +482,14 @@ class TestBlockedPayloadElision:
         return handler.call_args[0][0]
 
     def test_blocked_result_carries_write_block_marker(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import WRITE_BLOCK_KEY
+        from nkyel.agents.middlewares.read_before_write_middleware import WRITE_BLOCK_KEY
 
         mw = self._middleware()
         _ai, blocked = self._blocked_turn(mw, "write_file", {"description": "d", "path": self.PATH, "content": "v2"})
         assert blocked.additional_kwargs[WRITE_BLOCK_KEY] == {"path": self.PATH, "tool": "write_file"}
 
     def test_allowed_write_result_has_no_marker(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import WRITE_BLOCK_KEY
+        from nkyel.agents.middlewares.read_before_write_middleware import WRITE_BLOCK_KEY
 
         mw = self._middleware()
         messages = [_read_marked_message(self.PATH, "v1")]
@@ -810,7 +810,7 @@ class TestBlockedPayloadElision:
 
     def test_duplicate_ids_in_one_turn_are_never_rewritten(self):
         """Review on #5374: a successful sibling sharing the id of a blocked write must not be rewritten into it."""
-        from deerflow.agents.middlewares.read_before_write_middleware import WRITE_BLOCK_KEY
+        from nkyel.agents.middlewares.read_before_write_middleware import WRITE_BLOCK_KEY
 
         mw = self._middleware()
         turn = AIMessage(
@@ -848,7 +848,7 @@ def test_lock_scope_resolves_overwrite_wrapped_sandbox():
     """Fork-restored state wraps sandbox in Overwrite; lock scope must still resolve it."""
     from langgraph.types import Overwrite
 
-    from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+    from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
 
     req = ToolCallRequest(
         tool_call={"name": "write_file", "args": {}, "id": "tc-1"},
@@ -885,7 +885,7 @@ def test_block_message_line_desc(tool, content, expected_desc):
 @pytest.mark.parametrize("line_count", [401, 403, 404, 500])
 def test_gate_block_on_numeric_line_count_is_recoverable(line_count):
     """Files with 401/403/404/500 lines must not be misclassified as HTTP error codes."""
-    from deerflow.agents.middlewares.tool_result_meta import TOOL_META_KEY
+    from nkyel.agents.middlewares.tool_result_meta import TOOL_META_KEY
 
     PATH = "/mnt/user-data/outputs/report.md"
     # Build a file with exactly `line_count` lines (no trailing newline).
@@ -897,7 +897,7 @@ def test_gate_block_on_numeric_line_count_is_recoverable(line_count):
     )
     assert result.status == "error"
     meta = (result.additional_kwargs or {}).get(TOOL_META_KEY)
-    assert meta is not None, f"gate block on {line_count}-line file must carry deerflow_tool_meta"
+    assert meta is not None, f"gate block on {line_count}-line file must carry nkyel_tool_meta"
     assert meta["recoverable_by_model"] is True, f"{line_count}-line file must not be classified as a fatal auth/server error"
     assert meta["recommended_next_action"] != "stop", f"{line_count}-line gate block must not tell the agent to stop"
 
@@ -917,8 +917,8 @@ class TestStampingGateBugFix:
         ],
     )
     def test_in_band_error_read_does_not_stamp_mark(self, no_content_result):
-        from deerflow.agents.middlewares.read_before_write_middleware import READ_MARK_KEY
-        from deerflow.sandbox import read_file_contract as c
+        from nkyel.agents.middlewares.read_before_write_middleware import READ_MARK_KEY
+        from nkyel.sandbox import read_file_contract as c
 
         result_string = getattr(c, no_content_result)
         mw = _middleware({self.PATH: "a\nb\nc\n"})
@@ -931,8 +931,8 @@ class TestStampingGateBugFix:
 
     def test_in_band_error_read_leaves_gate_closed(self):
         """A write after an in-band-error read must still be blocked."""
-        from deerflow.agents.middlewares.read_before_write_middleware import READ_MARK_KEY
-        from deerflow.sandbox.read_file_contract import READ_FILE_EMPTY_RANGE
+        from nkyel.agents.middlewares.read_before_write_middleware import READ_MARK_KEY
+        from nkyel.sandbox.read_file_contract import READ_FILE_EMPTY_RANGE
 
         mw = _middleware({self.PATH: "a\nb\nc\n"})
         req = _make_request("read_file", {"description": "d", "path": self.PATH})
@@ -966,10 +966,10 @@ class TestStampingGateBugFix:
         """Valid blank ranges satisfy the gate like other successful ranged reads."""
         from types import SimpleNamespace
 
-        from deerflow.agents.middlewares.read_before_write_middleware import READ_MARK_KEY, ReadBeforeWriteMiddleware
-        from deerflow.sandbox import tools as sandbox_tools
-        from deerflow.sandbox.local.local_sandbox import LocalSandbox
-        from deerflow.sandbox.read_file_contract import READ_FILE_EMPTY
+        from nkyel.agents.middlewares.read_before_write_middleware import READ_MARK_KEY, ReadBeforeWriteMiddleware
+        from nkyel.sandbox import tools as sandbox_tools
+        from nkyel.sandbox.local.local_sandbox import LocalSandbox
+        from nkyel.sandbox.read_file_contract import READ_FILE_EMPTY
 
         outputs = tmp_path / "outputs"
         outputs.mkdir()
@@ -1012,8 +1012,8 @@ class TestStampingGateBugFix:
 
     def test_empty_file_read_still_stamps_mark(self):
         """READ_FILE_EMPTY (genuine empty-file read) must still stamp a mark."""
-        from deerflow.agents.middlewares.read_before_write_middleware import READ_MARK_KEY
-        from deerflow.sandbox.read_file_contract import READ_FILE_EMPTY
+        from nkyel.agents.middlewares.read_before_write_middleware import READ_MARK_KEY
+        from nkyel.sandbox.read_file_contract import READ_FILE_EMPTY
 
         mw = _middleware({self.PATH: ""})
         req = _make_request("read_file", {"description": "d", "path": self.PATH})

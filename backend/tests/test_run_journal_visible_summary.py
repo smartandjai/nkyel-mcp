@@ -9,9 +9,9 @@ from langchain_core.outputs import ChatGeneration, LLMResult
 from langchain_openai import ChatOpenAI
 
 from app.scheduler.notification_text import render_notification_text
-from deerflow.persistence.scheduled_task_runs.sql import run_summary
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.persistence.scheduled_task_runs.sql import run_summary
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 ANSWER = "The release checklist is complete."
 

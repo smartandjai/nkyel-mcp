@@ -5,13 +5,13 @@ from unittest.mock import MagicMock
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.runtime import Runtime
 
-from deerflow.agents.human_input import HUMAN_INPUT_RESPONSE_KEY
-from deerflow.agents.middlewares import memory_middleware as memory_middleware_module
-from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-from deerflow.agents.middlewares.pii_redaction_middleware import redact_text
-from deerflow.config.memory_config import MemoryConfig
-from deerflow.config.pii_redaction_config import PiiRedactionConfig
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+from nkyel.agents.human_input import HUMAN_INPUT_RESPONSE_KEY
+from nkyel.agents.middlewares import memory_middleware as memory_middleware_module
+from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+from nkyel.agents.middlewares.pii_redaction_middleware import redact_text
+from nkyel.config.memory_config import MemoryConfig
+from nkyel.config.pii_redaction_config import PiiRedactionConfig
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
 _TOKEN_SECRET = "unit-test-deployment-secret-0123456789"
 
@@ -101,8 +101,8 @@ def test_existing_placeholder_in_later_message_keeps_identity_stable(monkeypatch
 
 
 def _flush_hook_call(monkeypatch, pii_config, messages):
-    import deerflow.agents.memory.summarization_hook as hook_module
-    from deerflow.agents.middlewares.summarization_middleware import SummarizationEvent
+    import nkyel.agents.memory.summarization_hook as hook_module
+    from nkyel.agents.middlewares.summarization_middleware import SummarizationEvent
 
     manager = MagicMock()
     monkeypatch.setattr(hook_module, "get_memory_manager", lambda: manager)

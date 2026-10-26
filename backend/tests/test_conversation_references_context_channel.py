@@ -20,7 +20,7 @@ from pydantic import ValidationError
 
 from app.gateway.authz import AuthContext
 from app.gateway.run_models import MAX_CONVERSATION_REFERENCES, RunCreateRequest
-from deerflow.config.app_config import AppConfig
+from nkyel.config.app_config import AppConfig
 
 
 def test_context_references_are_lifted_into_the_request_and_removed_from_context():
@@ -163,8 +163,8 @@ def test_start_run_grants_through_context_without_forwarding_the_key(monkeypatch
     from test_gateway_services import _make_start_run_persistence_context
 
     from app.gateway import services
-    from deerflow.config.app_config import reset_app_config, set_app_config
-    from deerflow.runtime.user_context import reset_current_user, set_current_user
+    from nkyel.config.app_config import reset_app_config, set_app_config
+    from nkyel.runtime.user_context import reset_current_user, set_current_user
 
     async def exercise():
         request, _, threads = _make_start_run_persistence_context()
@@ -172,7 +172,7 @@ def test_start_run_grants_through_context_without_forwarding_the_key(monkeypatch
         request.state.user = user
         request.state.auth = AuthContext(user, ["runs:create", "runs:read"])
         request.state.auth_source = "session"
-        request.url = "https://deerflow.example/api/threads/current/runs"
+        request.url = "https://nkyel.example/api/threads/current/runs"
         await threads.create("source", user_id="alice")
         captured = []
 
@@ -221,7 +221,7 @@ def test_start_run_grants_through_context_without_forwarding_the_key(monkeypatch
             await services.start_run(changed, "idempotent", request, idempotency_key="ctx-key")
         assert conflict.value.status_code == 409
 
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "tools": [{"name": "read_conversation", "group": "conversation", "use": "deerflow.tools.conversation:read_conversation"}]}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "tools": [{"name": "read_conversation", "group": "conversation", "use": "nkyel.tools.conversation:read_conversation"}]}))
     user_token = set_current_user(SimpleNamespace(id="alice"))
     try:
         asyncio.run(exercise())

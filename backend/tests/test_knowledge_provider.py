@@ -6,9 +6,9 @@ from fastapi import HTTPException
 from langchain_core.messages import HumanMessage
 
 from app.gateway.knowledge_scope_admission import admit_message_knowledge_scope
-from deerflow.extensions import ExtensionRegistry, reset_loaded_extensions, set_loaded_extensions
-from deerflow.knowledge import KnowledgeCapabilities, RetrievalResult
-from deerflow.knowledge.providers import GENERIC_KNOWLEDGE_TOOL, get_knowledge_capabilities, search_provider
+from nkyel.extensions import ExtensionRegistry, reset_loaded_extensions, set_loaded_extensions
+from nkyel.knowledge import KnowledgeCapabilities, RetrievalResult
+from nkyel.knowledge.providers import GENERIC_KNOWLEDGE_TOOL, get_knowledge_capabilities, search_provider
 
 
 @pytest.fixture(autouse=True)
@@ -161,10 +161,10 @@ async def test_permission_denial_never_retries_unconstrained():
 async def test_generic_tool_uses_run_snapshot_and_validates_source_artifact(monkeypatch):
     from langchain_core.messages import ToolMessage
 
-    from deerflow.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, get_loaded_extensions
-    from deerflow.knowledge import KnowledgeSource, RetrievalHit, sources_from_messages, tools
-    from deerflow.knowledge.sources import prune_sources
-    from deerflow.runtime.serialization import serialize_channel_values_for_api
+    from nkyel.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, get_loaded_extensions
+    from nkyel.knowledge import KnowledgeSource, RetrievalHit, sources_from_messages, tools
+    from nkyel.knowledge.sources import prune_sources
+    from nkyel.runtime.serialization import serialize_channel_values_for_api
 
     provider = install_provider({"search", "sources", "dataset_filter"})
     source = KnowledgeSource(provider="test", title="Private manual", excerpt="Actual provider evidence.")
@@ -194,11 +194,11 @@ async def test_generic_tool_uses_run_snapshot_and_validates_source_artifact(monk
 
 @pytest.mark.asyncio
 async def test_generic_tool_keeps_run_config_and_authenticated_identity(monkeypatch):
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.config.tool_config import ToolConfig
-    from deerflow.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, get_loaded_extensions
-    from deerflow.knowledge import tools
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.config.tool_config import ToolConfig
+    from nkyel.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, get_loaded_extensions
+    from nkyel.knowledge import tools
 
     provider = install_provider({"search", "dataset_filter"})
     config = AppConfig(
@@ -221,7 +221,7 @@ async def test_generic_tool_keeps_run_config_and_authenticated_identity(monkeypa
 @pytest.mark.parametrize("request_config", [None, {"configurable": {"agent_name": "researcher"}}, {"context": {"agent_name": "writer"}}])
 async def test_generic_tool_identity_matches_real_gateway_run_config(monkeypatch, assistant_id, request_config):
     from app.gateway.services import build_run_config
-    from deerflow.knowledge import tools
+    from nkyel.knowledge import tools
 
     provider = install_provider({"search", "dataset_filter"})
     monkeypatch.setattr(tools, "get_app_config", provider_config)
@@ -235,7 +235,7 @@ async def test_generic_tool_identity_matches_real_gateway_run_config(monkeypatch
 
 @pytest.mark.asyncio
 async def test_subagent_identity_takes_precedence_over_inherited_parent_name(monkeypatch):
-    from deerflow.knowledge import tools
+    from nkyel.knowledge import tools
 
     provider = install_provider({"search", "dataset_filter"})
     monkeypatch.setattr(tools, "get_app_config", provider_config)
@@ -247,7 +247,7 @@ async def test_subagent_identity_takes_precedence_over_inherited_parent_name(mon
 
 @pytest.mark.asyncio
 async def test_missing_subagent_identity_does_not_fall_back_to_lead_agent(monkeypatch):
-    from deerflow.knowledge import tools
+    from nkyel.knowledge import tools
 
     provider = install_provider({"search", "dataset_filter"})
     monkeypatch.setattr(tools, "get_app_config", provider_config)
@@ -261,7 +261,7 @@ async def test_missing_subagent_identity_does_not_fall_back_to_lead_agent(monkey
 @pytest.mark.asyncio
 async def test_standalone_admission_cannot_forge_knowledge_subagent_identity(monkeypatch):
     from app.gateway.langgraph_auth import _scrub_run_incarnation
-    from deerflow.knowledge import tools
+    from nkyel.knowledge import tools
 
     provider = install_provider({"search", "dataset_filter"})
     monkeypatch.setattr(tools, "get_app_config", provider_config)
@@ -278,7 +278,7 @@ async def test_standalone_admission_overrides_persisted_assistant_child_identity
     from langgraph_sdk import Auth
 
     from app.gateway.langgraph_auth import add_owner_filter
-    from deerflow.knowledge import tools
+    from nkyel.knowledge import tools
 
     provider = install_provider({"search", "dataset_filter"})
     monkeypatch.setattr(tools, "get_app_config", provider_config)
@@ -297,7 +297,7 @@ async def test_standalone_admission_overrides_persisted_assistant_child_identity
 
 @pytest.mark.asyncio
 async def test_disabled_scope_returns_specific_error_before_loading_provider(monkeypatch):
-    from deerflow.knowledge import tools
+    from nkyel.knowledge import tools
 
     provider = install_provider({"search", "dataset_filter"})
 
@@ -314,7 +314,7 @@ async def test_disabled_scope_returns_specific_error_before_loading_provider(mon
 @pytest.mark.asyncio
 @pytest.mark.parametrize("scope", [{"version": 2, "mode": "disabled"}, {"version": 1, "mode": "selected", "dataset_ids": []}])
 async def test_malformed_scope_is_rejected_before_loading_provider(monkeypatch, scope):
-    from deerflow.knowledge import tools
+    from nkyel.knowledge import tools
 
     provider = install_provider({"search", "dataset_filter"})
     monkeypatch.setattr(tools, "get_app_config", lambda: pytest.fail("invalid scope must fail before loading config"))
@@ -332,8 +332,8 @@ async def test_generic_tool_node_injects_scope_and_emits_shared_evidence(monkeyp
     from langgraph.graph import END, START, MessagesState, StateGraph
     from langgraph.prebuilt import ToolNode
 
-    from deerflow.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, get_loaded_extensions
-    from deerflow.knowledge import KnowledgeSource, RetrievalHit, sources_from_messages, tools
+    from nkyel.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, get_loaded_extensions
+    from nkyel.knowledge import KnowledgeSource, RetrievalHit, sources_from_messages, tools
 
     provider = install_provider({"search", "sources", "dataset_filter"})
     source = KnowledgeSource(provider="test", title="Guide", excerpt="Actual private evidence")
@@ -360,7 +360,7 @@ async def test_generic_tool_node_injects_scope_and_emits_shared_evidence(monkeyp
 @pytest.mark.parametrize("mode", ["all", "disabled"])
 def test_lightrag_accepts_only_nonfiltering_scopes(mode):
     config = provider_config()
-    config.get_tool_config = lambda _: SimpleNamespace(use="deerflow.community.lightrag.tools:knowledge_search_tool")
+    config.get_tool_config = lambda _: SimpleNamespace(use="nkyel.community.lightrag.tools:knowledge_search_tool")
     graph_input = {"messages": [HumanMessage(content="q", additional_kwargs={"knowledge_scope": {"version": 1, "mode": mode}})]}
     assert admit_message_knowledge_scope(graph_input, assistant_id="lead_agent", app_config=config, agent_config=None) == {"version": 1, "mode": mode}
 
@@ -369,13 +369,13 @@ def test_lightrag_accepts_only_nonfiltering_scopes(mode):
 async def test_packaged_provider_catalog_scope_and_sources(monkeypatch):
     from pathlib import Path
 
-    from deerflow.extensions import load_extensions
-    from deerflow.extensions.loader import ExtensionSpec
-    from deerflow.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
-    from deerflow.knowledge.providers import resolve_knowledge_provider
+    from nkyel.extensions import load_extensions
+    from nkyel.extensions.loader import ExtensionSpec
+    from nkyel.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
+    from nkyel.knowledge.providers import resolve_knowledge_provider
 
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-knowledge"))
-    loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_knowledge:install")])
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-knowledge"))
+    loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_knowledge:install")])
     assert diagnostics == []
     provider = resolve_knowledge_provider(provider_config("synthetic-example"), extensions=loaded)
     context = KnowledgeRequestContext(user_id="alice", agent_name="lead_agent")
@@ -396,7 +396,7 @@ async def test_packaged_provider_catalog_scope_and_sources(monkeypatch):
 async def test_ragflow_adapter_keeps_selected_documents_allowlist_and_redaction(monkeypatch):
     from test_ragflow_tools import DATASET_ID_1, DATASET_ID_2, FakeRAGFlowClient, _config, _dataset
 
-    from deerflow.community.ragflow import provider as ragflow_provider
+    from nkyel.community.ragflow import provider as ragflow_provider
 
     fake = FakeRAGFlowClient(
         datasets_by_id={DATASET_ID_1: [_dataset(DATASET_ID_1, "Private guide")]},

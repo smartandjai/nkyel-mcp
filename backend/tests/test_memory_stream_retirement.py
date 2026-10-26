@@ -8,9 +8,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from deerflow.runtime import MemoryStreamBridge, RunManager, RunStatus, StreamGap
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.stream_bridge.base import END_SENTINEL, HEARTBEAT_SENTINEL
+from nkyel.runtime import MemoryStreamBridge, RunManager, RunStatus, StreamGap
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.stream_bridge.base import END_SENTINEL, HEARTBEAT_SENTINEL
 
 
 async def _finish(bridge, streams, pending=()):

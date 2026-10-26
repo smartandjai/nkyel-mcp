@@ -13,8 +13,8 @@ from app.channels.manager import ChannelManager
 from app.channels.message_bus import InboundMessage, MessageBus
 from app.channels.store import JsonChannelStore
 from app.gateway.routers import thread_runs
-from deerflow.runtime import DisconnectMode, RunRecord, RunStatus
-from deerflow.runtime.stream_bridge.memory import MemoryStreamBridge
+from nkyel.runtime import DisconnectMode, RunRecord, RunStatus
+from nkyel.runtime.stream_bridge.memory import MemoryStreamBridge
 
 
 @pytest.mark.asyncio

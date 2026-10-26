@@ -24,8 +24,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import (
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import (
     MemoryUpdater,
     _build_consolidation_section,
     _normalize_memory_update_data,

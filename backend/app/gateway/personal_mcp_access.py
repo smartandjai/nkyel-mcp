@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from app.gateway.auth_disabled import AUTH_DISABLED_USER_ID, is_auth_disabled
 from app.gateway.deps import get_local_provider
-from deerflow.mcp.personal_access import set_personal_mcp_admin_checker
+from nkyel.mcp.personal_access import set_personal_mcp_admin_checker
 
 
 async def _is_current_admin(owner: str) -> bool:

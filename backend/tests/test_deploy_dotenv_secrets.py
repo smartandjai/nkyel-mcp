@@ -1,6 +1,6 @@
 """deploy.sh must not shadow secrets the operator wrote to the repo-root .env.
 
-Compose interpolates ``${BETTER_AUTH_SECRET}`` / ``${DEER_FLOW_INTERNAL_AUTH_TOKEN}``
+Compose interpolates ``${BETTER_AUTH_SECRET}`` / ``${NKYEL_INTERNAL_AUTH_TOKEN}``
 from the shell environment first and ``--env-file`` second. deploy.sh only ever
 looked at the shell before generating (or reloading a persisted) secret and
 exporting it, so a value in ``.env`` -- the surface every deployment doc points
@@ -31,13 +31,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BASH = find_script_bash()
 pytestmark = pytest.mark.skipif(BASH is None, reason="repo shell-script tests need Git Bash on Windows")
 
-SECRETS = ("BETTER_AUTH_SECRET", "DEER_FLOW_INTERNAL_AUTH_TOKEN", "DEER_FLOW_CREDENTIALS_KEY")
+SECRETS = ("BETTER_AUTH_SECRET", "NKYEL_INTERNAL_AUTH_TOKEN", "NKYEL_CREDENTIALS_KEY")
 PERSISTED_FILE = {
     "BETTER_AUTH_SECRET": ".better-auth-secret",
-    "DEER_FLOW_INTERNAL_AUTH_TOKEN": ".internal-auth-token",
+    "NKYEL_INTERNAL_AUTH_TOKEN": ".internal-auth-token",
     # Same name the Gateway itself generates under its runtime home, which is
     # this directory's bind mount: one key whichever side created it first.
-    "DEER_FLOW_CREDENTIALS_KEY": ".credentials_key",
+    "NKYEL_CREDENTIALS_KEY": ".credentials_key",
 }
 # A Fernet key ends in one "=" of base64 padding.
 GENERATED = re.compile(r"set:[A-Za-z0-9_\-]{32,}=?")
@@ -62,14 +62,14 @@ case " $* " in
     value=""
     [ -z "${FAKE_COMPOSE_ENVIRONMENT:-}" ] || value="$(sed -n "s/^${key}=//p" "$FAKE_COMPOSE_ENVIRONMENT" | head -n 1)"
     [ -n "$value" ] || value='""'
-    printf 'name: probe\\nservices:\\n  probe:\\n    environment:\\n      DEER_FLOW_PROBE_VALUE: %s\\n    image: scratch\\n' "$value"
+    printf 'name: probe\\nservices:\\n  probe:\\n    environment:\\n      NKYEL_PROBE_VALUE: %s\\n    image: scratch\\n' "$value"
     exit 0
     ;;
 esac
 {
   printf 'BETTER_AUTH_SECRET=%s\\n' "${BETTER_AUTH_SECRET+set:}${BETTER_AUTH_SECRET:-}"
-  printf 'DEER_FLOW_INTERNAL_AUTH_TOKEN=%s\\n' "${DEER_FLOW_INTERNAL_AUTH_TOKEN+set:}${DEER_FLOW_INTERNAL_AUTH_TOKEN:-}"
-  printf 'DEER_FLOW_CREDENTIALS_KEY=%s\\n' "${DEER_FLOW_CREDENTIALS_KEY+set:}${DEER_FLOW_CREDENTIALS_KEY:-}"
+  printf 'NKYEL_INTERNAL_AUTH_TOKEN=%s\\n' "${NKYEL_INTERNAL_AUTH_TOKEN+set:}${NKYEL_INTERNAL_AUTH_TOKEN:-}"
+  printf 'NKYEL_CREDENTIALS_KEY=%s\\n' "${NKYEL_CREDENTIALS_KEY+set:}${NKYEL_CREDENTIALS_KEY:-}"
 } > "$CAPTURE_SECRETS"
 for arg in "$@"; do printf "%s\\n" "$arg"; done > "$CAPTURE_DOCKER_ARGS"
 exit 0
@@ -110,7 +110,7 @@ def _run_deploy_build(
     env = os.environ.copy()
     for key in (*SECRETS, "UV_EXTRAS", "REAL_DOCKER", "FAKE_COMPOSE_ENVIRONMENT", "FAKE_COMPOSE_CONFIG_RC"):
         env.pop(key, None)
-    env["DEER_FLOW_HOME"] = str(tmp_path / "deer-flow-home")
+    env["NKYEL_HOME"] = str(tmp_path / "nkyel-home")
     env["CAPTURE_SECRETS"] = str(capture_secrets)
     env["CAPTURE_DOCKER_ARGS"] = str(capture_args)
     env["CAPTURE_CONFIG_ARGS"] = str(capture_config_args)
@@ -140,7 +140,7 @@ def _run_deploy_build(
     args = capture_args.read_text(encoding="utf-8").splitlines() if capture_args.exists() else []
     config_args = capture_config_args.read_text(encoding="utf-8").splitlines() if capture_config_args.exists() else []
     config_stdin = capture_config_stdin.read_text(encoding="utf-8") if capture_config_stdin.exists() else ""
-    return result, observed, args, config_args, config_stdin, Path(env["DEER_FLOW_HOME"])
+    return result, observed, args, config_args, config_stdin, Path(env["NKYEL_HOME"])
 
 
 def _other(key: str) -> str:
@@ -155,7 +155,7 @@ def test_deploy_asks_compose_to_interpolate_the_secret_like_the_real_project(tmp
     worktree = _worktree(tmp_path)
     (worktree / ".env").write_text("BETTER_AUTH_SECRET=from-dotenv\n", encoding="utf-8")
 
-    _, _, args, config_args, config_stdin, _ = _run_deploy_build(tmp_path, worktree, compose_environment={"BETTER_AUTH_SECRET": "from-dotenv", "DEER_FLOW_INTERNAL_AUTH_TOKEN": "x"})
+    _, _, args, config_args, config_stdin, _ = _run_deploy_build(tmp_path, worktree, compose_environment={"BETTER_AUTH_SECRET": "from-dotenv", "NKYEL_INTERNAL_AUTH_TOKEN": "x"})
 
     assert config_args[:1] == ["compose"]
     assert "config" in config_args
@@ -212,7 +212,7 @@ def test_deploy_prefers_dotenv_secret_over_the_persisted_generated_one(tmp_path,
     """An operator-written .env value wins over the file an earlier run generated."""
     worktree = _worktree(tmp_path)
     (worktree / ".env").write_text(f"{key}=from-dotenv\n", encoding="utf-8")
-    home = tmp_path / "deer-flow-home"
+    home = tmp_path / "nkyel-home"
     home.mkdir()
     (home / PERSISTED_FILE[key]).write_text("from-persisted-file\n", encoding="utf-8")
 
@@ -284,12 +284,12 @@ def test_deploy_stops_when_compose_cannot_interpolate_instead_of_guessing(tmp_pa
 
 
 def _compose_clients() -> list[tuple[str, str]]:
-    """The `docker` CLI plus any standalone binaries named in DEER_FLOW_TEST_COMPOSE_BINARIES."""
+    """The `docker` CLI plus any standalone binaries named in NKYEL_TEST_COMPOSE_BINARIES."""
     clients: list[tuple[str, str]] = []
     docker = shutil.which("docker")
     if docker and _renders_stub_project([docker, "compose"]):
         clients.append(("docker", docker))
-    for binary in filter(None, os.environ.get("DEER_FLOW_TEST_COMPOSE_BINARIES", "").split(os.pathsep)):
+    for binary in filter(None, os.environ.get("NKYEL_TEST_COMPOSE_BINARIES", "").split(os.pathsep)):
         if _renders_stub_project([binary]):
             clients.append((Path(binary).name, binary))
     return clients
@@ -336,12 +336,12 @@ def real_docker(client: str, tmp_path: Path) -> str:
 def _resolved_by(real_docker: str, dotenv: Path, key: str) -> str:
     rendered = subprocess.run(
         [real_docker, "compose", "--env-file", str(dotenv), "-f", "-", "config"],
-        input=f"services:\n  probe:\n    image: scratch\n    environment:\n      DEER_FLOW_PROBE_VALUE: ${{{key}}}\n",
+        input=f"services:\n  probe:\n    image: scratch\n    environment:\n      NKYEL_PROBE_VALUE: ${{{key}}}\n",
         capture_output=True,
         text=True,
         check=True,
     ).stdout
-    return re.search(r"^\s*DEER_FLOW_PROBE_VALUE: (.*)$", rendered, re.M).group(1)
+    return re.search(r"^\s*NKYEL_PROBE_VALUE: (.*)$", rendered, re.M).group(1)
 
 
 @real_compose
@@ -392,20 +392,20 @@ def test_real_compose_empty_shell_export_still_gets_a_generated_secret(tmp_path,
     assert GENERATED.fullmatch(observed[key]), observed[key]
 
 
-# ── DEER_FLOW_CREDENTIALS_KEY specifics ─────────────────────────────────────
+# ── NKYEL_CREDENTIALS_KEY specifics ─────────────────────────────────────
 
 
 def test_deploy_generates_a_valid_fernet_credentials_key(tmp_path):
     """The Gateway refuses a malformed key, so the generated one must parse as Fernet."""
     from cryptography.fernet import Fernet
 
-    from deerflow.config.credentials_key import parse_credentials_keys
+    from nkyel.config.credentials_key import parse_credentials_keys
 
     worktree = _worktree(tmp_path)
 
     _, observed, _, _, _, home = _run_deploy_build(tmp_path, worktree, compose_environment={})
 
-    key = observed["DEER_FLOW_CREDENTIALS_KEY"].removeprefix("set:")
+    key = observed["NKYEL_CREDENTIALS_KEY"].removeprefix("set:")
     Fernet(key)
     assert parse_credentials_keys(key) == [key]
     assert (home / ".credentials_key").read_text(encoding="utf-8").strip() == key
@@ -414,12 +414,12 @@ def test_deploy_generates_a_valid_fernet_credentials_key(tmp_path):
 def test_deploy_reuses_a_key_file_the_gateway_already_generated(tmp_path):
     """A stack first started without deploy.sh already has the Gateway's own key file: keep it."""
     worktree = _worktree(tmp_path)
-    home = tmp_path / "deer-flow-home"
+    home = tmp_path / "nkyel-home"
     home.mkdir()
     (home / ".credentials_key").write_text("gateway-generated-key", encoding="utf-8")
 
     result, observed, _, _, _, _ = _run_deploy_build(tmp_path, worktree, compose_environment={})
 
-    assert observed["DEER_FLOW_CREDENTIALS_KEY"] == "set:gateway-generated-key"
+    assert observed["NKYEL_CREDENTIALS_KEY"] == "set:gateway-generated-key"
     assert (home / ".credentials_key").read_text(encoding="utf-8") == "gateway-generated-key"
-    assert "DEER_FLOW_CREDENTIALS_KEY loaded from" in result.stdout
+    assert "NKYEL_CREDENTIALS_KEY loaded from" in result.stdout

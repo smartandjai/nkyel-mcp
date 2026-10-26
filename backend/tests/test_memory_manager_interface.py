@@ -19,7 +19,7 @@ from unittest import mock
 import pytest
 from pydantic import PrivateAttr
 
-from deerflow.agents.memory import (
+from nkyel.agents.memory import (
     MemoryManager,
     MemoryManagerError,
     MemoryReadError,
@@ -27,8 +27,8 @@ from deerflow.agents.memory import (
     memory_read_failures_are_fatal,
     reset_memory_manager,
 )
-from deerflow.agents.memory.manager import MemoryCallbacks
-from deerflow.config.memory_config import MemoryConfig, get_memory_config, set_memory_config
+from nkyel.agents.memory.manager import MemoryCallbacks
+from nkyel.config.memory_config import MemoryConfig, get_memory_config, set_memory_config
 
 
 class _MinimalBackend(MemoryManager):
@@ -275,8 +275,8 @@ def test_read_failure_capability_uses_requested_backend_config(
 def test_resolved_policy_does_not_scan_or_import_backends(selector):
     """Loaded dotted backends work; unknown ones remain unknown without imports."""
     with (
-        mock.patch("deerflow.agents.memory.manager._scan_backends") as scan,
-        mock.patch("deerflow.agents.memory.manager.importlib.import_module") as import_module,
+        mock.patch("nkyel.agents.memory.manager._scan_backends") as scan,
+        mock.patch("nkyel.agents.memory.manager.importlib.import_module") as import_module,
     ):
         result = memory_read_failures_are_fatal(selector, {}, resolved_only=True)
     assert result is (None if selector.startswith("not_loaded") else False)
@@ -289,7 +289,7 @@ def test_resolved_policy_tracks_current_config_without_caching_boolean(monkeypat
     config = {"owner_user_id": "alice", "failure_policy": {"read": "fail_open"}}
     assert memory_read_failures_are_fatal("openviking", config, resolved_only=True) is None
     assert memory_read_failures_are_fatal("openviking", config) is False
-    with mock.patch("deerflow.agents.memory.manager._scan_backends") as scan:
+    with mock.patch("nkyel.agents.memory.manager._scan_backends") as scan:
         assert memory_read_failures_are_fatal("openviking", config, resolved_only=True) is False
         config["failure_policy"]["read"] = "raise"
         assert memory_read_failures_are_fatal("openviking", config, resolved_only=True) is True

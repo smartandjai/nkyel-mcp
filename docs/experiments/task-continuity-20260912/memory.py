@@ -8,7 +8,7 @@ import re
 from common import PROTOCOL, ROOT, LiveClient, clip, digest, tokens, write_json
 from prepare import history_batches, render_history
 
-SUMMARY = (ROOT / "prompts" / "deerflow-default-summary.txt").read_text()
+SUMMARY = (ROOT / "prompts" / "nkyel-default-summary.txt").read_text()
 NOTES = (ROOT / "prompts" / "notes.txt").read_text()
 
 

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.skills.frontmatter import split_skill_markdown
-from deerflow.skills.validation import ALLOWED_FRONTMATTER_PROPERTIES, _validate_skill_frontmatter
+from nkyel.skills.frontmatter import split_skill_markdown
+from nkyel.skills.validation import ALLOWED_FRONTMATTER_PROPERTIES, _validate_skill_frontmatter
 
 
 def _write_skill(tmp_path: Path, content: str, encoding: str = "utf-8") -> Path:

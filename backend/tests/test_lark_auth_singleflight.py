@@ -28,9 +28,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config import paths as paths_module
-from deerflow.config.paths import Paths
-from deerflow.integrations import lark_cli
+from nkyel.config import paths as paths_module
+from nkyel.config.paths import Paths
+from nkyel.integrations import lark_cli
 
 pytestmark = pytest.mark.filterwarnings("error::pytest.PytestUnhandledThreadExceptionWarning")
 
@@ -40,7 +40,7 @@ def _config(skills_root: Path):
         skills=SimpleNamespace(
             get_skills_path=lambda: skills_root,
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         )
     )
 

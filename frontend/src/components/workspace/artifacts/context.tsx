@@ -40,7 +40,7 @@ const ArtifactsContext = createContext<ArtifactsContextType | undefined>(
   undefined,
 );
 
-const ARTIFACTS_STORAGE_PREFIX = "deerflow:artifacts:v1";
+const ARTIFACTS_STORAGE_PREFIX = "nkyel:artifacts:v1";
 
 type PersistedArtifactsState = {
   artifacts: string[];

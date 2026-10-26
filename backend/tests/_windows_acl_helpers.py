@@ -59,12 +59,12 @@ def _windows_acl_protected(path: Path) -> bool:
 
 def _windows_acl_owner_sid(path: Path) -> str:
     """Return *path*'s object owner as a raw SID (Windows-only)."""
-    cmd = "$acl = Get-Acl -LiteralPath $env:DEER_FLOW_TEST_ACL_PATH; $acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value"
+    cmd = "$acl = Get-Acl -LiteralPath $env:NKYEL_TEST_ACL_PATH; $acl.GetOwner([System.Security.Principal.SecurityIdentifier]).Value"
     out = subprocess.run(
         ["powershell", "-NoProfile", "-Command", cmd],
         capture_output=True,
         text=True,
         check=True,
-        env={**_windows_acl_env(), "DEER_FLOW_TEST_ACL_PATH": str(path)},
+        env={**_windows_acl_env(), "NKYEL_TEST_ACL_PATH": str(path)},
     )
     return out.stdout.strip()

@@ -17,8 +17,8 @@ from app.gateway.routers.mcp import (
     McpServerConfigUpdateRequest,
     McpServerStateUpdateRequest,
 )
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp.lifecycle import _stdio_fingerprints, legacy_token, parse_mcp_lifecycle
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp.lifecycle import _stdio_fingerprints, legacy_token, parse_mcp_lifecycle
 
 
 def _stdio(command: str) -> dict:
@@ -46,7 +46,7 @@ def test_state_disable_and_reenable_advance_the_generation(
     """Raw in-place mutation must not hide the enabled -> disabled transition."""
     cfg = tmp_path / "extensions_config.json"
     _write(cfg, {"A": _stdio("npx")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     baseline = _legacy(cfg, "A")
 
     mcp_router._apply_mcp_server_state_update(McpServerStateUpdateRequest(server_name="A", enabled=False))
@@ -66,7 +66,7 @@ def test_delete_then_identical_readd_advance_the_generation(
     """Delete tombstones the token and an identical re-add must rotate it again."""
     cfg = tmp_path / "extensions_config.json"
     _write(cfg, {"A": _stdio("npx")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     mcp_router._apply_mcp_server_delete("A")
     tombstone = _ledger(cfg).servers["A"]
@@ -107,7 +107,7 @@ def test_bulk_update_rotates_only_the_changed_server_token(
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     monkeypatch.setenv("PE_VAR", "secret-value")
     baseline_a = _legacy(cfg, "A")
 
@@ -138,8 +138,8 @@ async def test_targeted_metadata_update_keeps_token_and_session(
     """A metadata-only targeted update must not rotate the token or the session."""
     import test_mcp_cache_reconciliation as harness
 
-    from deerflow.mcp import session_pool as session_pool_module
-    from deerflow.mcp.session_pool import MCPSessionPool
+    from nkyel.mcp import session_pool as session_pool_module
+    from nkyel.mcp.session_pool import MCPSessionPool
 
     cfg = tmp_path / "extensions_config.json"
     pool = MCPSessionPool()
@@ -186,7 +186,7 @@ def test_skills_writer_preserves_the_lifecycle_ledger(
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     monkeypatch.setattr("app.gateway.routers.skills.reload_extensions_config", lambda *a, **k: None)
 
     skills_router._write_extensions_skill_state(MagicMock(_app_config=None), "demo", False, rebuild_public_projection=False)
@@ -204,11 +204,11 @@ def test_removed_servers_drop_their_stored_oauth_tokens_and_disabled_ones_keep_t
     """A removed server's mcp_oauth_tokens row can never be read again; a disabled one may be re-enabled."""
     from unittest.mock import MagicMock
 
-    from deerflow.mcp.oauth_store import set_mcp_oauth_token_store
+    from nkyel.mcp.oauth_store import set_mcp_oauth_token_store
 
     cfg = tmp_path / "extensions_config.json"
     _write(cfg, {"A": _stdio("npx"), "B": _stdio("uvx")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     store = MagicMock()
     store.forget_unconfigured.return_value = 0
     previous = set_mcp_oauth_token_store(store)

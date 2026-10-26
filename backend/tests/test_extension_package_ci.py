@@ -27,13 +27,13 @@ def _test_step() -> dict:
 
 
 def _tested_packages() -> list[Path]:
-    return sorted(path.parent for path in REPO_ROOT.glob("examples/deerflow-extension-*/tests"))
+    return sorted(path.parent for path in REPO_ROOT.glob("examples/nkyel-extension-*/tests"))
 
 
 @pytest.mark.parametrize("event", ["push", "pull_request"])
 def test_contract_and_example_changes_trigger_the_package_check(event: str) -> None:
     paths = _workflow()["on"][event]["paths"]
-    assert "examples/deerflow-extension-*/**" in paths
+    assert "examples/nkyel-extension-*/**" in paths
     assert "backend/packages/extension-api/**" in paths
 
 
@@ -41,7 +41,7 @@ def test_package_tests_run_against_the_checkout_contract() -> None:
     script = _test_step()["run"]
     lines = [line.strip() for line in script.splitlines()]
 
-    assert "for package in examples/deerflow-extension-*/; do" in lines
+    assert "for package in examples/nkyel-extension-*/; do" in lines
     assert '[ -d "${package}tests" ] || continue' in lines
     install_contract = lines.index("uv pip install -e ../../backend/packages/extension-api")
     install_package = lines.index('uv pip install -e ".[dev]"')

@@ -1,6 +1,6 @@
 """The gateway and the bundled postgres must resolve the same Secret.
 
-`deer-flow.databaseUrlSecret` is read by three consumers — the gateway's
+`nkyel.databaseUrlSecret` is read by three consumers — the gateway's
 `DATABASE_URL`, the postgres StatefulSet's `POSTGRES_PASSWORD`, and
 `postgres-secret.yaml`'s own `metadata.name` — so the precedence chain
 (`postgresql.external.existingSecret` → `postgresql.existingSecret` →
@@ -18,8 +18,8 @@ import pytest
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CHART = REPO_ROOT / "deploy" / "helm" / "deer-flow"
-RELEASE = "deer-flow"
+CHART = REPO_ROOT / "deploy" / "helm" / "nkyel"
+RELEASE = "nkyel"
 
 
 def _render_chart(*settings: str) -> list[dict]:

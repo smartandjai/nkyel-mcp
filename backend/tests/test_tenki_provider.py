@@ -23,9 +23,9 @@ import types
 
 import pytest
 
-from deerflow.community.tenki.provider import _BOOTSTRAP_TIMEOUT, TenkiSandboxProvider, _import_client
-from deerflow.community.tenki.sandbox import TenkiSandbox
-from deerflow.config.app_config import AppConfig
+from nkyel.community.tenki.provider import _BOOTSTRAP_TIMEOUT, TenkiSandboxProvider, _import_client
+from nkyel.community.tenki.sandbox import TenkiSandbox
+from nkyel.config.app_config import AppConfig
 
 # ── Fake Tenki SDK ────────────────────────────────────────────────────
 
@@ -289,12 +289,12 @@ def _stub_config(sandbox_attrs=None):
 def _install(monkeypatch, *, client=None, config_attrs=None):
     """Construct a provider with get_app_config + _import_client stubbed."""
     monkeypatch.setattr(
-        "deerflow.community.tenki.provider.get_app_config",
+        "nkyel.community.tenki.provider.get_app_config",
         lambda: _stub_config(config_attrs),
     )
     if client is not None:
         monkeypatch.setattr(
-            "deerflow.community.tenki.provider._import_client",
+            "nkyel.community.tenki.provider._import_client",
             lambda: lambda **kw: client,
         )
     provider = TenkiSandboxProvider()
@@ -310,16 +310,16 @@ def _no_tenki(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_import_client_missing_raises_actionable(monkeypatch: pytest.MonkeyPatch) -> None:
     _no_tenki(monkeypatch)
-    with pytest.raises(ImportError, match=r"deerflow-harness\[tenki\]"):
+    with pytest.raises(ImportError, match=r"nkyel-harness\[tenki\]"):
         _import_client()
 
 
 def test_acquire_without_tenki_raises_and_shuts_down_cleanly(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("deerflow.community.tenki.provider.get_app_config", lambda: _stub_config())
+    monkeypatch.setattr("nkyel.community.tenki.provider.get_app_config", lambda: _stub_config())
     _no_tenki(monkeypatch)
     provider = TenkiSandboxProvider()
     try:
-        with pytest.raises(ImportError, match=r"deerflow-harness\[tenki\]"):
+        with pytest.raises(ImportError, match=r"nkyel-harness\[tenki\]"):
             provider.acquire("thread-1", user_id="u")
     finally:
         provider.shutdown()
@@ -562,7 +562,7 @@ def test_download_missing_file_raises_oserror() -> None:
 def test_download_cap_counts_bytes_actually_received(monkeypatch) -> None:
     # The cap must not rely on a separate size probe: a file that grows between
     # the probe and the read would slip past it.
-    monkeypatch.setattr("deerflow.community.tenki.sandbox._MAX_DOWNLOAD_SIZE", 100)
+    monkeypatch.setattr("nkyel.community.tenki.sandbox._MAX_DOWNLOAD_SIZE", 100)
     fake = _FakeSandbox()
     box = TenkiSandbox("sb", fake)
     fake.files["/home/tenki/outputs/big.bin"] = b"x" * 500
@@ -574,7 +574,7 @@ def test_download_cap_counts_bytes_actually_received(monkeypatch) -> None:
 def test_download_size_cap_does_not_evict_sandbox(monkeypatch) -> None:
     # Hitting the size cap is a client-side limit, not a dead session — the
     # sandbox must stay live.
-    monkeypatch.setattr("deerflow.community.tenki.sandbox._MAX_DOWNLOAD_SIZE", 100)
+    monkeypatch.setattr("nkyel.community.tenki.sandbox._MAX_DOWNLOAD_SIZE", 100)
     invalidated: list[tuple[str, str]] = []
     fake = _FakeSandbox()
     box = TenkiSandbox("sb", fake, on_terminal_failure=lambda sid, reason: invalidated.append((sid, reason)))
@@ -734,7 +734,7 @@ def test_load_config_rejects_invalid_environment_key(monkeypatch):
     # The config `environment` is merged into every command; a bad key must
     # fail fast at load time, like the per-call env in execute_command, not
     # surface as a confusing SDK error at create/exec time.
-    monkeypatch.setattr("deerflow.community.tenki.provider.get_app_config", lambda: _stub_config({"environment": {"bad-key": "1"}}))
+    monkeypatch.setattr("nkyel.community.tenki.provider.get_app_config", lambda: _stub_config({"environment": {"bad-key": "1"}}))
     with pytest.raises(ValueError, match=r"POSIX"):
         TenkiSandboxProvider()
 
@@ -754,7 +754,7 @@ def test_create_passes_prefixed_name_and_scope(monkeypatch):
     sid = provider.acquire("thread-1", user_id="u1")
     assert sid in provider._sandboxes
     kwargs = client.create_kwargs[0]
-    assert kwargs["name"].startswith("deer-flow-tenki-")
+    assert kwargs["name"].startswith("nkyel-tenki-")
     assert kwargs["workspace_id"] == "ws1"
     # Tenki 1.x has no project layer; passing one is a TypeError against the SDK.
     assert "project_id" not in kwargs
@@ -784,11 +784,11 @@ def test_create_waits_client_side_and_configures_lifetime(monkeypatch):
 def test_create_sticky_from_environment(monkeypatch, tmp_path, value, expected):
     monkeypatch.setenv("TEST_TENKI_STICKY", value)
     config_path = tmp_path / "config.yaml"
-    config_path.write_text("models: []\nsandbox:\n  use: deerflow.community.tenki:TenkiSandboxProvider\n  sticky: $TEST_TENKI_STICKY\n  idle_timeout: 0\n", encoding="utf-8")
+    config_path.write_text("models: []\nsandbox:\n  use: nkyel.community.tenki:TenkiSandboxProvider\n  sticky: $TEST_TENKI_STICKY\n  idle_timeout: 0\n", encoding="utf-8")
     config = AppConfig.from_file(config_path)
     client = _FakeClient()
-    monkeypatch.setattr("deerflow.community.tenki.provider.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.community.tenki.provider._import_client", lambda: lambda **kw: client)
+    monkeypatch.setattr("nkyel.community.tenki.provider.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.community.tenki.provider._import_client", lambda: lambda **kw: client)
     provider = TenkiSandboxProvider()
     try:
         provider.acquire("thread-1", user_id="u1")
@@ -1217,7 +1217,7 @@ def test_stale_project_id_is_ignored_with_a_warning(monkeypatch, caplog):
     lookup, so silently dropping it changes how scope resolves.
     """
     client = _FakeClient()
-    with caplog.at_level(logging.WARNING, logger="deerflow.community.tenki.provider"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.community.tenki.provider"):
         provider = _install(monkeypatch, client=client, config_attrs={"project_id": "proj_legacy"})
     assert "sandbox.project_id is ignored" in caplog.text
     provider.acquire("thread-1", user_id="u1")
@@ -1246,7 +1246,7 @@ def test_create_rejects_project_id_like_the_real_sdk(monkeypatch):
     reason="requires a real Tenki API key (TENKI_API_KEY); network integration test",
 )
 def test_integration_real_sandbox(monkeypatch):
-    monkeypatch.setattr("deerflow.community.tenki.provider.get_app_config", lambda: _stub_config())
+    monkeypatch.setattr("nkyel.community.tenki.provider.get_app_config", lambda: _stub_config())
     provider = TenkiSandboxProvider()
     try:
         sid = provider.acquire("it-thread", user_id="it-user")
@@ -1260,7 +1260,7 @@ def test_integration_real_sandbox(monkeypatch):
 
 
 def test_sandbox_id_matches_shared_identity():
-    from deerflow.sandbox.identity import derive_sandbox_scope_token
+    from nkyel.sandbox.identity import derive_sandbox_scope_token
 
     assert TenkiSandboxProvider._sandbox_id("t-1", "u-1") == derive_sandbox_scope_token(user_id="u-1", thread_id="t-1")
     assert TenkiSandboxProvider._sandbox_id("t-1", "") == derive_sandbox_scope_token(user_id="", thread_id="t-1")

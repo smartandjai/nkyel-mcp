@@ -6,8 +6,8 @@ import asyncio
 
 import pytest
 
-from deerflow.authz.provider import AuthzRequest, Principal
-from deerflow.authz.rbac import RbacAuthorizationProvider
+from nkyel.authz.provider import AuthzRequest, Principal
+from nkyel.authz.rbac import RbacAuthorizationProvider
 
 # --- Helpers ---
 
@@ -167,7 +167,7 @@ class TestResourceMapping:
 
     def test_plugin_management_separates_read_from_write_by_target(self):
         """The built-in provider ignores ``action``, so authority must differ by target."""
-        from deerflow.authz.plugin_targets import MANAGEMENT_READ_PART, MANAGEMENT_WRITE_PART, plugin_management_target
+        from nkyel.authz.plugin_targets import MANAGEMENT_READ_PART, MANAGEMENT_WRITE_PART, plugin_management_target
 
         read_target = plugin_management_target("community.check", MANAGEMENT_READ_PART)
         write_target = plugin_management_target("community.check", MANAGEMENT_WRITE_PART)
@@ -446,6 +446,6 @@ class TestConfigImmutability:
 
 class TestProtocolConformance:
     def test_rbac_is_authorization_provider(self):
-        from deerflow.authz.provider import AuthorizationProvider
+        from nkyel.authz.provider import AuthorizationProvider
 
         assert isinstance(RbacAuthorizationProvider(roles={}), AuthorizationProvider)

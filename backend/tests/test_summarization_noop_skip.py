@@ -11,9 +11,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 
 def _model(output: str = "S"):
@@ -24,8 +24,8 @@ def _model(output: str = "S"):
     return model
 
 
-def _middleware(output: str = "S", **kwargs) -> DeerFlowSummarizationMiddleware:
-    return DeerFlowSummarizationMiddleware(model=_model(output), trigger=("messages", 4), keep=("messages", 2), token_counter=len, **kwargs)
+def _middleware(output: str = "S", **kwargs) -> NkyelSummarizationMiddleware:
+    return NkyelSummarizationMiddleware(model=_model(output), trigger=("messages", 4), keep=("messages", 2), token_counter=len, **kwargs)
 
 
 def _state(summary: str | None = "S", first: str = "u1") -> dict:
@@ -225,7 +225,7 @@ def test_cache_failure_falls_back_to_llm(monkeypatch):
 
     monkeypatch.setattr(mw, "_noop_prompt_cache_lock", cache_lock)
     broken_hash = MagicMock(side_effect=RuntimeError("cache key broken"))
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.hashlib", SimpleNamespace(sha256=broken_hash))
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.hashlib", SimpleNamespace(sha256=broken_hash))
     assert mw.compact_state(_state("S"), _runtime(), force=True).summary_text == "S"
     assert _calls(mw) == 3
     broken_hash.assert_called_once()

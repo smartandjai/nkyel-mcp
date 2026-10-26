@@ -2,7 +2,7 @@
 
 import pytest
 
-from deerflow.subagents.acceptance_checks import check_acceptance_criteria, render_acceptance_section
+from nkyel.subagents.acceptance_checks import check_acceptance_criteria, render_acceptance_section
 
 
 def _check(output: str, command: str = "mvn test", **overrides):

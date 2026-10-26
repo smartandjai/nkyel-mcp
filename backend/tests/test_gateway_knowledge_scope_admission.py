@@ -6,11 +6,11 @@ from langchain_core.messages import AIMessage, HumanMessage
 
 from app.gateway.knowledge_scope_admission import admit_message_knowledge_scope
 from app.gateway.services import strip_internal_context_keys
-from deerflow.config.tool_config import ToolConfig
-from deerflow.knowledge_scope import KNOWLEDGE_SCOPE_KEY, KNOWLEDGE_SCOPE_RUNTIME_KEY
+from nkyel.config.tool_config import ToolConfig
+from nkyel.knowledge_scope import KNOWLEDGE_SCOPE_KEY, KNOWLEDGE_SCOPE_RUNTIME_KEY
 
 
-def _app_config(provider: str = "deerflow.community.ragflow.tools:knowledge_search_tool"):
+def _app_config(provider: str = "nkyel.community.ragflow.tools:knowledge_search_tool"):
     tool_config = ToolConfig(
         name="knowledge_search",
         group="knowledge",
@@ -62,10 +62,10 @@ def test_admission_canonicalizes_custom_agent_human_message() -> None:
 @pytest.mark.parametrize(
     ("assistant_id", "provider", "tool_groups"),
     [
-        (None, "deerflow.community.ragflow.tools:knowledge_search_tool", None),
+        (None, "nkyel.community.ragflow.tools:knowledge_search_tool", None),
         ("agent", "unknown:knowledge_search_tool", None),
-        ("agent", "deerflow.community.ragflow.tools:knowledge_search_tool", []),
-        ("agent", "deerflow.community.ragflow.tools:knowledge_search_tool", ["web"]),
+        ("agent", "nkyel.community.ragflow.tools:knowledge_search_tool", []),
+        ("agent", "nkyel.community.ragflow.tools:knowledge_search_tool", ["web"]),
     ],
 )
 def test_scope_is_rejected_outside_supported_custom_agent(

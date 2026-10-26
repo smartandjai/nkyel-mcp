@@ -5,7 +5,7 @@ import json
 import httpx
 import pytest
 
-from deerflow.capabilities.business import BusinessClient, build_server, connection_config
+from nkyel.capabilities.business import BusinessClient, build_server, connection_config
 
 
 @pytest.mark.asyncio
@@ -131,7 +131,7 @@ async def test_real_mcp_tool_invocation_with_simulated_provider(tmp_path, provid
     script = tmp_path / "business_fixture.py"
     script.write_text(
         """import httpx
-from deerflow.capabilities.business import build_server
+from nkyel.capabilities.business import build_server
 import sys
 original = httpx.AsyncClient
 def handle(request):

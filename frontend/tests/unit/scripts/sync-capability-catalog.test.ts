@@ -14,13 +14,13 @@ import path from "node:path";
 import { expect, it } from "@rstest/core";
 
 it("resolves formatter configuration in checkouts containing spaces and Unicode", () => {
-  const root = mkdtempSync(path.join(tmpdir(), "deerflow 清单 space-"));
+  const root = mkdtempSync(path.join(tmpdir(), "nkyel 清单 space-"));
   try {
     const frontend = path.join(root, "frontend");
     const scripts = path.join(frontend, "scripts");
     const backend = path.join(
       root,
-      "backend/packages/harness/deerflow/capabilities",
+      "backend/packages/harness/nkyel/capabilities",
     );
     const output = path.join(frontend, "src/core/capabilities");
     for (const directory of [scripts, backend, output])

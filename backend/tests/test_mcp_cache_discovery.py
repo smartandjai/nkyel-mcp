@@ -31,17 +31,17 @@ import threading
 import pytest
 from langchain_core.tools import StructuredTool
 
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp import cache as cache_module
-from deerflow.mcp import session_pool as session_pool_module
-from deerflow.mcp.cache import (
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp import cache as cache_module
+from nkyel.mcp import session_pool as session_pool_module
+from nkyel.mcp.cache import (
     _AppliedMcpRevision,
     _binding_matches,
     _ServerToolCacheEntry,
 )
-from deerflow.mcp.client import build_servers_config
-from deerflow.mcp.session_pool import MCPSessionPool, normalized_connection_fingerprint
-from deerflow.mcp.tools import ServerDiscoveryResult
+from nkyel.mcp.client import build_servers_config
+from nkyel.mcp.session_pool import MCPSessionPool, normalized_connection_fingerprint
+from nkyel.mcp.tools import ServerDiscoveryResult
 
 
 def _config(servers: dict[str, dict]) -> ExtensionsConfig:
@@ -279,7 +279,7 @@ def discovery_cache(tmp_path, monkeypatch):
     cache_module._cache_generation = 0
     session_pool_module.reset_session_pool()
     cfg = tmp_path / "extensions_config.json"
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     try:
         yield cfg
     finally:
@@ -346,7 +346,7 @@ class _Discovery:
 
 
 def _install(monkeypatch, discovery: _Discovery) -> _Discovery:
-    monkeypatch.setattr("deerflow.mcp.tools.get_mcp_tools_by_server", discovery)
+    monkeypatch.setattr("nkyel.mcp.tools.get_mcp_tools_by_server", discovery)
     return discovery
 
 
@@ -605,8 +605,8 @@ async def test_unchanged_server_oauth_is_not_refetched(discovery_cache, monkeypa
         oauth_requests.append(set(server_names or ()))
         return {}
 
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", fake_headers)
-    monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", fake_headers)
+    monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
 
     class FakeClient:
         def __init__(self, connections, **kwargs) -> None:
@@ -689,7 +689,7 @@ async def test_claim_time_interceptor_change_rewraps_unchanged_servers(discovery
         return lambda: interceptor
 
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", OfflineClient)
-    monkeypatch.setattr("deerflow.mcp.tools.resolve_variable", resolve_builder)
+    monkeypatch.setattr("nkyel.mcp.tools.resolve_variable", resolve_builder)
     initial_tools = await cache_module.initialize_mcp_tools()
     initial_b = next(tool for tool in initial_tools if tool.name == "B_probe")
 
@@ -790,7 +790,7 @@ async def test_import_failure_after_claim_releases_generation(discovery_cache, m
     real_import = builtins.__import__
 
     def failing_import(name, *args, **kwargs):
-        if name == "deerflow.mcp.tools":
+        if name == "nkyel.mcp.tools":
             raise ImportError("simulated missing adapter module")
         return real_import(name, *args, **kwargs)
 
@@ -811,7 +811,7 @@ def test_lazy_init_failure_does_not_log_resolved_credentials(discovery_cache, mo
     async def boom(*args, **kwargs):
         raise RuntimeError(f"discovery failed for url 'https://alice:{secret}@remote.test/mcp'")
 
-    monkeypatch.setattr("deerflow.mcp.tools.get_mcp_tools_by_server", boom)
+    monkeypatch.setattr("nkyel.mcp.tools.get_mcp_tools_by_server", boom)
 
     with caplog.at_level(logging.DEBUG):
         assert cache_module.get_cached_mcp_tools() == []

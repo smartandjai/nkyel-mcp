@@ -10,7 +10,7 @@ the whole batch and losing the valid facts in the same response.
 import json
 import logging
 
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import _parse_memory_update_response
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import _parse_memory_update_response
 
 _VALID_FACT = {
     "content": "User prefers dark mode",

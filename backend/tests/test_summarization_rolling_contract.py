@@ -10,16 +10,16 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
-from deerflow_extension_api import SystemOperationKind
+from nkyel_extension_api import SystemOperationKind
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, get_buffer_string
 from langchain_core.outputs import ChatGeneration, ChatResult
 from pydantic import Field
 
-from deerflow.agents.middlewares.pii_redaction_middleware import redact_text
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.config.pii_redaction_config import PiiRedactionConfig
-from deerflow.extensions import ExtensionRegistry
+from nkyel.agents.middlewares.pii_redaction_middleware import redact_text
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.config.pii_redaction_config import PiiRedactionConfig
+from nkyel.extensions import ExtensionRegistry
 
 
 class RecordingModel(BaseChatModel):
@@ -76,7 +76,7 @@ def _middleware(model, *, default_counter=False, **kwargs):
     if not default_counter:
         options["token_counter"] = _char_count
     options.update(kwargs)
-    return DeerFlowSummarizationMiddleware(model=model, **options)
+    return NkyelSummarizationMiddleware(model=model, **options)
 
 
 async def _compact(middleware, state, asynchronous, runtime=None):

@@ -8,12 +8,12 @@ from types import SimpleNamespace
 from typing import Any
 
 from app.gateway.utils import constant_time_equals
-from deerflow.config.paths import make_safe_user_id
-from deerflow.runtime.user_context import DEFAULT_USER_ID
+from nkyel.config.paths import make_safe_user_id
+from nkyel.runtime.user_context import DEFAULT_USER_ID
 
-INTERNAL_AUTH_HEADER_NAME = "X-DeerFlow-Internal-Token"
-INTERNAL_OWNER_USER_ID_HEADER_NAME = "X-DeerFlow-Owner-User-Id"
-INTERNAL_AUTH_ENV_VAR = "DEER_FLOW_INTERNAL_AUTH_TOKEN"
+INTERNAL_AUTH_HEADER_NAME = "X-nkyel-Internal-Token"
+INTERNAL_OWNER_USER_ID_HEADER_NAME = "X-nkyel-Owner-User-Id"
+INTERNAL_AUTH_ENV_VAR = "NKYEL_INTERNAL_AUTH_TOKEN"
 INTERNAL_SYSTEM_ROLE = "internal"
 
 
@@ -44,7 +44,7 @@ def get_internal_user(owner_user_id: str | None = None):
     """Return the synthetic user used for trusted internal channel calls.
 
     When *owner_user_id* is provided (extracted from the
-    ``X-DeerFlow-Owner-User-Id`` header), the synthetic user's ``.id``
+    ``X-nkyel-Owner-User-Id`` header), the synthetic user's ``.id``
     carries the actual channel owner instead of ``DEFAULT_USER_ID``.
     This ensures that ``get_effective_user_id()`` and downstream
     filesystem-path resolution (per-user custom skills, memory, thread

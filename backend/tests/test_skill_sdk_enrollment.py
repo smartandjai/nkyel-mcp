@@ -9,11 +9,11 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from deerflow.config.paths import Paths
-from deerflow.persistence.base import Base
-from deerflow.persistence.user.model import UserRow
-from deerflow.skills.mutations.assets import capture_package
-from deerflow.skills.mutations.repository import SkillMutationRepository
+from nkyel.config.paths import Paths
+from nkyel.persistence.base import Base
+from nkyel.persistence.user.model import UserRow
+from nkyel.skills.mutations.assets import capture_package
+from nkyel.skills.mutations.repository import SkillMutationRepository
 
 CONTENT = "---\nname: example\ndescription: SDK enrollment regression\n---\nOriginal body.\n"
 
@@ -32,7 +32,7 @@ def sdk_home(tmp_path):
         json.dumps(
             {
                 "models": [{"name": "test", "use": "langchain_openai:ChatOpenAI", "model": "test", "api_key": "test"}],
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "skills": {"path": str(tmp_path / "skills")},
                 "database": {"backend": "sqlite", "sqlite_dir": str(tmp_path)},
                 "plugins": [],
@@ -42,7 +42,7 @@ def sdk_home(tmp_path):
     )
     extensions = tmp_path / "extensions.json"
     extensions.write_text('{"skills": {}}', encoding="utf-8")
-    engine = create_engine(f"sqlite:///{tmp_path / 'deerflow.db'}")
+    engine = create_engine(f"sqlite:///{tmp_path / 'nkyel.db'}")
     Base.metadata.create_all(engine)
     sessions = sessionmaker(engine, expire_on_commit=False)
     with sessions.begin() as session:
@@ -60,14 +60,14 @@ def run_sdk(fixture, action, *, owner="owner"):
     source = """
 import json, sys
 from types import SimpleNamespace
-from deerflow.client import DeerFlowClient
-from deerflow.runtime.user_context import set_current_user
-from deerflow.skills.mutations import guard
-from deerflow.skills.storage import get_or_new_user_skill_storage
-from deerflow_extension_api import HostCapabilityError
+from nkyel.client import NkyelClient
+from nkyel.runtime.user_context import set_current_user
+from nkyel.skills.mutations import guard
+from nkyel.skills.storage import get_or_new_user_skill_storage
+from nkyel_extension_api import HostCapabilityError
 assert guard._runtime is None
 set_current_user(SimpleNamespace(id=sys.argv[2]))
-client = DeerFlowClient(config_path=sys.argv[1])
+client = NkyelClient(config_path=sys.argv[1])
 storage = get_or_new_user_skill_storage(sys.argv[2], app_config=client._app_config)
 try:
     exec(sys.argv[3])
@@ -78,7 +78,7 @@ else:
 """
     result = subprocess.run(
         [sys.executable, "-c", source, str(config), owner, action],
-        env={**os.environ, "DEER_FLOW_CONFIG_PATH": str(config), "DEER_FLOW_HOME": str(tmp_path / "home"), "DEER_FLOW_EXTENSIONS_CONFIG_PATH": str(tmp_path / "extensions.json")},
+        env={**os.environ, "NKYEL_CONFIG_PATH": str(config), "NKYEL_HOME": str(tmp_path / "home"), "NKYEL_EXTENSIONS_CONFIG_PATH": str(tmp_path / "extensions.json")},
         text=True,
         capture_output=True,
         timeout=30,

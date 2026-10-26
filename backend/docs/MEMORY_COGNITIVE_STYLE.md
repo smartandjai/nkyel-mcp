@@ -60,7 +60,7 @@ When extending the global summary JSON (`user.*` / `history.*`) or the per-agent
 
 | Step | Location |
 |------|----------|
-| 1. Backend normalize | `deerflow/agents/memory/backends/deermem/deermem/core/storage.py` — add keys to `normalize_memory_data()` / fact normalization; update `create_empty_memory()` |
+| 1. Backend normalize | `nkyel/agents/memory/backends/deermem/deermem/core/storage.py` — add keys to `normalize_memory_data()` / fact normalization; update `create_empty_memory()` |
 | 2. Frontend normalize | `frontend/src/core/memory/import-memory.ts` — add section keys and normalize recoverable legacy fact metadata before narrowing to `UserMemory` |
 | 3. Types & API models | `frontend/src/core/memory/types.ts`, `backend/app/gateway/routers/memory.py` (`UserContext` / `HistoryContext`) |
 | 4. Updater prompt | `core/prompts/memory_update.chat.yaml` and `core/prompts/fact_extraction.yaml`; add injection rendering in `core/prompt.py::format_memory_for_injection()`. Fact categories must also be added to `storage.py::CORE_CATEGORIES` |

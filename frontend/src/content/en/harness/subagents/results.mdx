@@ -7,7 +7,7 @@ import { Callout } from "nextra/components";
 
 # Results and Acceptance
 
-A subagent's report is its **self-report**. DeerFlow layers three kinds of checkable evidence on top of it: the runtime status and cap reason, the cross-check of cited tool receipts, and the deterministic check of acceptance criteria. This chapter explains each layer and how the Lead Agent should read them.
+A subagent's report is its **self-report**. nkyel layers three kinds of checkable evidence on top of it: the runtime status and cap reason, the cross-check of cited tool receipts, and the deterministic check of acceptance criteria. This chapter explains each layer and how the Lead Agent should read them.
 
 ## Terminal statuses
 
@@ -42,7 +42,7 @@ A capped report is a **partial result**: the tool calls of the final turn were s
 
 ### How failure is decided
 
-`LLMErrorHandlingMiddleware` converts provider exceptions into an assistant message marked `deerflow_error_fallback`, so the subgraph can end cleanly. The executor checks only the **last** assistant message for that marker: with the marker the run is `failed`, and the error text comes from the message body or `error_detail`; without it, even error-looking prose remains a `completed` result. Checking only the last message is deliberate, because the subagent shares the parent's `thread_id` and older parent markers may linger in history.
+`LLMErrorHandlingMiddleware` converts provider exceptions into an assistant message marked `nkyel_error_fallback`, so the subgraph can end cleanly. The executor checks only the **last** assistant message for that marker: with the marker the run is `failed`, and the error text comes from the message body or `error_detail`; without it, even error-looking prose remains a `completed` result. Checking only the last message is deliberate, because the subagent shares the parent's `thread_id` and older parent markers may linger in history.
 
 ## Report contract and receipt citations
 

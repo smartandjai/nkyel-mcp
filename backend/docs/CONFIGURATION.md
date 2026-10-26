@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This guide explains how to configure DeerFlow for your environment.
+This guide explains how to configure nkyel for your environment.
 
 ## Prompt overlays
 
@@ -126,7 +126,7 @@ See [MCP Server Configuration](MCP_SERVER.md#routing-hints) for the schema,
 example, and soft-vs-hard routing boundary.
 
 Runtime edits to `extensions_config.json` (the MCP and skills APIs, the web UI,
-`DeerFlowClient`, or an editor) are picked up by every Gateway process that reads
+`NkyelClient`, or an editor) are picked up by every Gateway process that reads
 the same file: the process cache revalidates the file's path and content
 signature on each read, so uvicorn workers and multi-instance Pods sharing one
 volume converge without a restart or a per-Pod reload call. A change made through
@@ -149,7 +149,7 @@ These settings also apply to IM channel runs. A `recursion_limit` in an IM
 channel's `session.config` (for all channels, one channel or one user) takes
 precedence. The GitHub channel instead uses `250`, or a higher
 `session.config` value, unless the agent sets `github.recursion_limit`.
-Embedded `DeerFlowClient` runs retain their own defaults and per-call options.
+Embedded `NkyelClient` runs retain their own defaults and per-call options.
 
 ### Models
 
@@ -170,9 +170,9 @@ models:
 - OpenAI (`langchain_openai:ChatOpenAI`)
 - Anthropic (`langchain_anthropic:ChatAnthropic`)
 - DeepSeek (`langchain_deepseek:ChatDeepSeek`)
-- Xiaomi MiMo (`deerflow.models.patched_mimo:PatchedChatMiMo`)
-- Claude Code OAuth (`deerflow.models.claude_provider:ClaudeChatModel`)
-- Codex CLI (`deerflow.models.openai_codex_provider:CodexChatModel`)
+- Xiaomi MiMo (`nkyel.models.patched_mimo:PatchedChatMiMo`)
+- Claude Code OAuth (`nkyel.models.claude_provider:ClaudeChatModel`)
+- Codex CLI (`nkyel.models.openai_codex_provider:CodexChatModel`)
 - Any LangChain-compatible provider
 
 CLI-backed provider examples:
@@ -181,14 +181,14 @@ CLI-backed provider examples:
 models:
   - name: gpt-5.4
     display_name: GPT-5.4 (Codex CLI)
-    use: deerflow.models.openai_codex_provider:CodexChatModel
+    use: nkyel.models.openai_codex_provider:CodexChatModel
     model: gpt-5.4
     supports_thinking: true
     supports_reasoning_effort: true
 
   - name: claude-sonnet-4.6
     display_name: Claude Sonnet 4.6 (Claude Code OAuth)
-    use: deerflow.models.claude_provider:ClaudeChatModel
+    use: nkyel.models.claude_provider:ClaudeChatModel
     model: claude-sonnet-4-6
     max_tokens: 4096
     supports_thinking: true
@@ -199,7 +199,7 @@ models:
 - The Codex Responses endpoint currently rejects `max_tokens` and `max_output_tokens`, so `CodexChatModel` does not expose a request-level token cap
 - `ClaudeChatModel` accepts `CLAUDE_CODE_OAUTH_TOKEN`, `ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR`, `CLAUDE_CODE_CREDENTIALS_PATH`, or plaintext `~/.claude/.credentials.json`
 - A `CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR` handoff is drained on first use and the token is kept for the life of the process, so every `ClaudeChatModel` instance reuses it
-- On macOS, DeerFlow does not probe Keychain automatically. Use `scripts/export_claude_code_oauth.py` to export Claude Code auth explicitly when needed
+- On macOS, nkyel does not probe Keychain automatically. Use `scripts/export_claude_code_oauth.py` to export Claude Code auth explicitly when needed
 
 To use OpenAI's `/v1/responses` endpoint with LangChain, keep using `langchain_openai:ChatOpenAI` and set:
 
@@ -311,7 +311,7 @@ are restricted to request effort parameters (`reasoning_effort`,
 SDK credentials, endpoints or adapter fields. Operator YAML contracts are unchanged.
 
 Provider routing has one backend owner,
-`packages/harness/deerflow/config/managed_model_providers.py`. The admin-only
+`packages/harness/nkyel/config/managed_model_providers.py`. The admin-only
 `GET /api/managed-models/providers` returns IDs, labels and form requirements,
 without maintaining another endpoint map in the frontend. The initial presets
 are:
@@ -429,13 +429,13 @@ in CI. To test a preset manually, securely export `MANAGED_MODEL_TEST_API_KEY`,
 `MANAGED_MODEL_TEST_PROVIDER` and `MANAGED_MODEL_TEST_MODEL`, then run in `backend/`:
 
 ```bash
-DEER_FLOW_RUN_LIVE_TESTS=1 uv run --no-sync pytest tests/test_managed_presets_live.py -q
+NKYEL_RUN_LIVE_TESTS=1 uv run --no-sync pytest tests/test_managed_presets_live.py -q
 ```
 
 These requests may incur provider charges and do not save credentials. Keep the
 existing DeepSeek live suite for the legacy custom endpoint and tool-history path.
 
-**Backup and recovery:** keep the entire `$DEER_FLOW_HOME/managed-models/`
+**Backup and recovery:** keep the entire `$NKYEL_HOME/managed-models/`
 directory on persistent storage, including the matched `catalog.enc` and `key`.
 Take a consistent backup while writes are paused (or through a filesystem
 snapshot); restore the pair together with restrictive filesystem permissions.
@@ -447,7 +447,7 @@ matched backup instead of generating a new key or deleting the encrypted file.
 
 #### MindIE XML tool arguments
 
-The MindIE adapter (`deerflow.models.mindie_provider:MindIEChatModel`) parses XML
+The MindIE adapter (`nkyel.models.mindie_provider:MindIEChatModel`) parses XML
 tool calls before decoding escaped newlines in the remaining reply text. JSON
 objects and arrays keep their original escapes during parsing, so `\n` inside a
 JSON string becomes a newline through JSON decoding and `\\n` retains a literal
@@ -478,13 +478,13 @@ HTTP 400 INVALID_ARGUMENT: function call `<tool>` in the N. content block is
 missing a `thought_signature`.
 ```
 
-Standard `langchain_openai:ChatOpenAI` silently drops `thought_signature` when serialising messages.  Use `deerflow.models.patched_openai:PatchedChatOpenAI` instead — it re-injects the tool-call signatures (sourced from `AIMessage.additional_kwargs["tool_calls"]`) into every outgoing payload:
+Standard `langchain_openai:ChatOpenAI` silently drops `thought_signature` when serialising messages.  Use `nkyel.models.patched_openai:PatchedChatOpenAI` instead — it re-injects the tool-call signatures (sourced from `AIMessage.additional_kwargs["tool_calls"]`) into every outgoing payload:
 
 ```yaml
 models:
   - name: gemini-3.1-pro-preview
     display_name: Gemini 3.1 Pro (Thinking)
-    use: deerflow.models.patched_openai:PatchedChatOpenAI
+    use: nkyel.models.patched_openai:PatchedChatOpenAI
     model: gemini-3.1-pro-preview
     api_key: $GEMINI_API_KEY
     base_url: https://generativelanguage.googleapis.com/v1beta/openai/
@@ -503,7 +503,7 @@ If you copied the previous example, replace its `supports_thinking`, `when_think
 
 **MiMo with thinking via OpenAI-compatible API**:
 
-MiMo returns `reasoning_content` on assistant messages in thinking mode. In multi-turn agent conversations with tool calls, subsequent requests must preserve that historical `reasoning_content` on assistant messages or the MiMo API can return HTTP 400. Standard `langchain_openai:ChatOpenAI` drops this provider-specific field, so use `deerflow.models.patched_mimo:PatchedChatMiMo`:
+MiMo returns `reasoning_content` on assistant messages in thinking mode. In multi-turn agent conversations with tool calls, subsequent requests must preserve that historical `reasoning_content` on assistant messages or the MiMo API can return HTTP 400. Standard `langchain_openai:ChatOpenAI` drops this provider-specific field, so use `nkyel.models.patched_mimo:PatchedChatMiMo`:
 
 For pay-as-you-go API keys (`sk-...`), use `https://api.xiaomimimo.com/v1`. For Token Plan keys (`tp-...`), use the regional Token Plan Base URL shown in the MiMo console, such as `https://token-plan-cn.xiaomimimo.com/v1`. MiMo documents these key types as separate and non-interchangeable.
 
@@ -513,7 +513,7 @@ For pay-as-you-go API keys (`sk-...`), use `https://api.xiaomimimo.com/v1`. For 
 models:
   - name: mimo-v2.5-pro
     display_name: MiMo V2.5 Pro
-    use: deerflow.models.patched_mimo:PatchedChatMiMo
+    use: nkyel.models.patched_mimo:PatchedChatMiMo
     model: mimo-v2.5-pro
     api_key: $MIMO_API_KEY
     base_url: https://api.xiaomimimo.com/v1
@@ -535,7 +535,7 @@ models:
 ### RAGFlow Knowledge Retrieval
 
 RAGFlow integration is disabled by default. It adds one read-only Agent tool,
-`knowledge_search`. DeerFlow does not persist a copy of dataset or document
+`knowledge_search`. nkyel does not persist a copy of dataset or document
 metadata; RAGFlow is the sole source of truth. The configured API key is
 tenant-scoped. An optional operator-controlled `datasets` list restricts every
 Agent on this deployment to the same dataset-ID allowlist; omitting it searches
@@ -549,7 +549,7 @@ tool_groups:
 tools:
   - name: knowledge_search
     group: knowledge
-    use: deerflow.community.ragflow.tools:knowledge_search_tool
+    use: nkyel.community.ragflow.tools:knowledge_search_tool
     base_url: http://localhost:9380
     api_key: $RAGFLOW_API_KEY
     datasets:
@@ -566,7 +566,7 @@ tools:
 
 The tool is opt-in through the normal `tools:` list. `datasets` is optional but,
 when present, must contain at least one ID. If
-it contains RAGFlow dataset IDs selected by the deployment operator, DeerFlow
+it contains RAGFlow dataset IDs selected by the deployment operator, nkyel
 does not validate their existence while loading configuration; on each search
 it verifies them with ID-filtered requests. If `datasets` is omitted, each
 search paginates through the tenant-visible dataset catalog. Both paths resolve
@@ -575,7 +575,7 @@ an empty dataset that has no embedding-model metadata is also skipped with a
 server warning. The remaining datasets are grouped by the exact embedding-model
 identifier and each group is sent to RAGFlow with a non-empty `dataset_ids`
 list. At most four groups are retrieved concurrently. Because raw similarity
-scores from different embedding spaces are not globally comparable, DeerFlow
+scores from different embedding spaces are not globally comparable, nkyel
 preserves each group's RAGFlow ranking, interleaves equal rank positions, omits
 score labels when more than one group is searched, and applies `page_size` as a
 single global chunk limit. If any searchable group fails, the whole tool call
@@ -592,9 +592,9 @@ container or Pod, not the host machine.
 
 This integration is retrieval-only. Dataset creation, uploads, parsing, and
 deletion remain in RAGFlow and are not exposed as Agent tools, workspace pages,
-or DeerFlow APIs. The authenticated `/api/knowledge/retrieval-catalog` routes
+or nkyel APIs. The authenticated `/api/knowledge/retrieval-catalog` routes
 exist only to populate the custom-agent chat selector. The provider-neutral
-`knowledge_base` block only gates DeerFlow's knowledge capability and selector;
+`knowledge_base` block only gates nkyel's knowledge capability and selector;
 configure the RAGFlow connection and retrieval defaults on the
 `tools[].name: knowledge_search` entry shown above:
 
@@ -617,11 +617,11 @@ entry, so different knowledge providers can use their own settings.
 LightRAG integration is disabled by default. It is an alternative provider for
 the same read-only `knowledge_search` tool: an operator picks RAGFlow or
 LightRAG by which entry appears in the `tools:` list — the two entries share
-one name, and on duplicate names DeerFlow keeps the **first** configured
+one name, and on duplicate names nkyel keeps the **first** configured
 entry, so configure exactly one. Requires LightRAG v1.4.9 or newer: v1.4.8
 introduced the data-retrieval endpoint but returned a pre-envelope response
 shape, and the `status`/`data` envelope plus the citation fields consumed
-here shipped in v1.4.9. DeerFlow does not persist any index
+here shipped in v1.4.9. nkyel does not persist any index
 metadata; LightRAG stays the sole source of truth, and the deployment's
 single indexed workspace is always searched.
 
@@ -632,7 +632,7 @@ tool_groups:
 tools:
   - name: knowledge_search
     group: knowledge
-    use: deerflow.community.lightrag.tools:knowledge_search_tool
+    use: nkyel.community.lightrag.tools:knowledge_search_tool
     base_url: http://localhost:9621
     api_key: $LIGHTRAG_API_KEY
     mode: mix
@@ -645,7 +645,7 @@ tools:
 
 The tool is opt-in through the normal `tools:` list. Retrieval uses LightRAG's
 `POST /query/data` endpoint, which performs no LLM generation and returns
-structured entities, relationships, chunks, and references; DeerFlow keeps the
+structured entities, relationships, chunks, and references; nkyel keeps the
 chunks — the document text the selected mode already ranked as relevant — and
 formats them as citation-numbered text, dropping the graph objects to stay
 compact and keep the citation shape shared with the RAGFlow provider. `mode`
@@ -670,7 +670,7 @@ Kubernetes it must be reachable from the Gateway container or Pod.
 Internal identifiers (chunk IDs and the response-local reference IDs) are
 never exposed to the Agent; citations use the operator-readable `file_path`.
 This integration is retrieval-only. Document insertion, indexing, and graph
-mutation remain in LightRAG and are not exposed as Agent tools or DeerFlow
+mutation remain in LightRAG and are not exposed as Agent tools or nkyel
 APIs.
 
 ### Tool Groups
@@ -723,7 +723,7 @@ Notes:
 - **Upgrade note:** before upgrading a deployment with `GATEWAY_WORKERS > 1` and `scheduler.enabled: true`, either run the scheduler on exactly one Gateway worker or enable `scheduler.multi_instance: true` with shared Postgres, `run_ownership.heartbeat_enabled: true`, and `run_events.backend: db`. The startup gate now rejects the unsafe combination instead of allowing it to start silently.
 - **Upgrade note:** in multi-instance mode, `max_concurrent_runs` is cluster-wide rather than per Pod and counts `launching`/`running` occurrences. Waiting `queued` rows remain outside the execution cap; capacity does not multiply with the replica count.
 - **Upgrade note:** `scheduler.multi_instance` and its related scheduler, ownership, and run-event settings are startup-only. Restart all Gateway Pods together after changing them; a ConfigMap update without a coordinated restart leaves the running service on its previous mode.
-- Multi-worker deployments (`GATEWAY_WORKERS > 1`) and declared multi-instance deployments (`deployment.multi_instance: true` / `DEER_FLOW_MULTI_INSTANCE=1`, see [Deployment topology](#deployment-topology-multi-instance)) must use the Postgres database backend, enable run ownership heartbeats, set `run_events.backend: db`, and use the Redis stream bridge. SQLite silently ignores row-level locks, while memory and JSONL run-event stores are process-local and cannot enforce singleton delivery receipts across workers; startup rejects these combinations. The process-local agentic browser tool group is incompatible with multiple Gateway workers; keep the Gateway to one worker process while `browser_navigate` is enabled — `GATEWAY_WORKERS=1`, plus `WEB_CONCURRENCY` unset or `1` on launches that pass uvicorn no worker count (`backend/Dockerfile`, `scripts/serve.sh`), where uvicorn takes the process count from it. Browser control also requires the backend `browser` extra (`cd backend && uv sync --extra browser && uv run playwright install chromium`); startup detects enabled browser config and fails fast when Playwright is missing, and `/api/features` reports `browser_control.enabled=false` until the runtime is available.
+- Multi-worker deployments (`GATEWAY_WORKERS > 1`) and declared multi-instance deployments (`deployment.multi_instance: true` / `NKYEL_MULTI_INSTANCE=1`, see [Deployment topology](#deployment-topology-multi-instance)) must use the Postgres database backend, enable run ownership heartbeats, set `run_events.backend: db`, and use the Redis stream bridge. SQLite silently ignores row-level locks, while memory and JSONL run-event stores are process-local and cannot enforce singleton delivery receipts across workers; startup rejects these combinations. The process-local agentic browser tool group is incompatible with multiple Gateway workers; keep the Gateway to one worker process while `browser_navigate` is enabled — `GATEWAY_WORKERS=1`, plus `WEB_CONCURRENCY` unset or `1` on launches that pass uvicorn no worker count (`backend/Dockerfile`, `scripts/serve.sh`), where uvicorn takes the process count from it. Browser control also requires the backend `browser` extra (`cd backend && uv sync --extra browser && uv run playwright install chromium`); startup detects enabled browser config and fails fast when Playwright is missing, and `/api/features` reports `browser_control.enabled=false` until the runtime is available.
 - The MVP supports thread reuse and fresh-thread-per-run execution modes.
 - Create/update accept optional `assistant_id` (`lead_agent` by default, or an existing custom agent for the task owner).
 - Create/update accept `once`, `cron`, and `interval`. Interval uses `schedule_spec.every_seconds` (UTC `now + N`, no missed-beat catch-up). N is at least `min_once_delay_seconds` (default 60) and at most 30 days.
@@ -735,7 +735,7 @@ Notes:
   - **Events:** `run_completed`, `run_failed`, `run_unmet` (goal missed), `task_paused` (automatic pause after three missed goals), `task_stopped` (paused by the agent because its stop condition was met) and `task_finished` (all `max_runs` done or `end_at` reached).
   - **One message per occurrence:** when one occurrence produces several events, only the first of `task_stopped` > `task_paused` > `task_finished` > `run_failed` > `run_unmet` > `run_completed` is sent, and that message still says how the last run went ("The last run failed." / "didn't meet the goal"). A one-time task sends only its run's outcome, never a separate `task_finished`.
   - **Transactional:** notices are queued by the finalization observer in the same database transaction that records the outcome and are deduplicated per occurrence (or per end time for a task that ends between runs), so an occurrence finalized by crash or lease recovery notifies exactly once. Plain manual "run now" trials and interrupted runs stay silent; a trial that pauses or finishes the task still sends that notice. Occurrences that end without a finished run (launch error, queue timeout, interrupted by a restart) stay silent.
-  - **Text:** the task title, what happened, a one-line result (the same run summary the tasks page shows, redacted, only when the agent replied) and "Open DeerFlow → Scheduled tasks for details." Notices carry no task, run or thread IDs, no timestamps and no links: most deployments run on localhost or a LAN, where a link would be dead on the phone that receives it.
+  - **Text:** the task title, what happened, a one-line result (the same run summary the tasks page shows, redacted, only when the agent replied) and "Open nkyel → Scheduled tasks for details." Notices carry no task, run or thread IDs, no timestamps and no links: most deployments run on localhost or a LAN, where a link would be dead on the phone that receives it.
   - **Language:** the owner's web UI language (the `locale` user preference, which the web app keeps in sync), else `channel_connections.notification_locale` (`en-US` or `zh-CN`, default `en-US`; startup-scoped). Auth-disabled installs always use the config value.
   - **Delivery:** channel/transport outages park rows without consuming the retry budget, for up to about a day; platform rejections exhaust ~15 minutes of counted retries then settle `failed`. The worker re-checks the binding right before sending: a target the owner has disconnected since enqueue is dropped as `failed`, never pushed.
 
@@ -760,15 +760,15 @@ deployment:
 Notes:
 
 - `GATEWAY_WORKERS` / `WEB_CONCURRENCY` only count the uvicorn workers of one process tree. A Kubernetes Deployment with `replicas > 1` runs one worker per Pod, so every Pod reports a single worker and the multi-worker startup gate stays inert — while each Pod's startup orphan reconciliation still writes the other Pods' lease-less runs off as crashed on every rolling update.
-- Set `multi_instance: true` (or export `DEER_FLOW_MULTI_INSTANCE=1`, which lets deploy tooling such as a Helm chart set it from its replica count) on every instance that shares one database. Startup then enforces the same prerequisites as `GATEWAY_WORKERS > 1`: `database.backend: postgres`, `run_events.backend: db`, `run_ownership.heartbeat_enabled: true`, and a Redis stream bridge (`stream_bridge.type: redis` or `DEER_FLOW_STREAM_BRIDGE_REDIS_URL`). It refuses an explicit `sandbox.ownership.type: memory`, process-local browser tools, and `scheduler.enabled: true` without `scheduler.multi_instance: true`.
-- `DEER_FLOW_MULTI_INSTANCE` treats blank, `0`, `false`, `no` and `off` as "not declared"; any other value declares a multi-instance deployment, so a typo fails closed.
+- Set `multi_instance: true` (or export `NKYEL_MULTI_INSTANCE=1`, which lets deploy tooling such as a Helm chart set it from its replica count) on every instance that shares one database. Startup then enforces the same prerequisites as `GATEWAY_WORKERS > 1`: `database.backend: postgres`, `run_events.backend: db`, `run_ownership.heartbeat_enabled: true`, and a Redis stream bridge (`stream_bridge.type: redis` or `NKYEL_STREAM_BRIDGE_REDIS_URL`). It refuses an explicit `sandbox.ownership.type: memory`, process-local browser tools, and `scheduler.enabled: true` without `scheduler.multi_instance: true`.
+- `NKYEL_MULTI_INSTANCE` treats blank, `0`, `false`, `no` and `off` as "not declared"; any other value declares a multi-instance deployment, so a typo fails closed.
 - `GET /health/ready` pings the Redis stream bridge on every probe and answers 503 (`stream_bridge: unreachable`) while Redis is down, so the orchestrator drains that instance instead of routing it runs it cannot publish or stream; the memory bridge reports `not_configured`. When `sandbox.provisioner_url` is set, the body also carries the provisioner's `/health` verdict (`provisioner: ok|unreachable`), which never changes the status code because every instance shares one provisioner. That probe follows the sandbox clients' proxy policy: loopback, private, link-local and cluster-local provisioner addresses bypass `HTTP_PROXY`, external hosts keep the environment's proxy settings.
 - `stream_bridge.producer_lease_recovery_enabled` is a restart-required activation gate for recovering a terminal Redis stream whose producer died before publishing END. Keep it `false` during the binary rollout: upgraded writers already publish producer markers, while old writers do not. After every old Gateway has stopped and its runs have drained, set it to `true` on every instance and restart them together. Enabling it while an old worker may still finalize a run can make a new consumer mistake that untracked legacy producer for completed history.
 - The declaration also drives the `agent_storage.backend: file` divergence warning, the inbound webhook dedupe warning, the `auth.local.throttle_storage: memory` warning, and the WeChat QR-login guard, which otherwise only look at the worker count.
 - Login lockouts are shared through the database: `auth.local.throttle_storage` (startup-only) defaults to `auto`, which keeps the per-IP failed-login counters for `POST /api/v1/auth/login/local` in the `login_throttle` table whenever `database.backend` is `sqlite` or `postgres`, so every instance enforces one `max_login_attempts` limit per client IP and a lockout on one instance holds on all of them. `memory` keeps the historical per-process counter (N instances give an attacker N × `max_login_attempts` guesses; a declared multi-instance deployment logs a warning), and `db` forces the table (it falls back to memory with a warning when the database backend is `memory`, and refuses to start when the configured database's engine is unavailable; `auto` falls back with a warning in that case). `max_login_attempts` and `lockout_seconds` stay live-read.
 - IM chat-to-thread bindings are shared through the database too: with `database.backend: sqlite` or `postgres` the `ChannelManager` keeps the `channel_name:chat_id[:topic_id]` → thread mapping of unbound IM conversations in the `channel_thread_bindings` table (migration `0038_channel_thread_bindings`), so a conversation created on one instance continues on the same thread when its next message lands on another. On the first start after upgrading, an existing `{base_dir}/channels/store.json` is imported once — only into an empty table, with `INSERT … ON CONFLICT DO NOTHING` so concurrently starting instances cannot duplicate a binding — and renamed `store.json.migrated`; a populated table leaves the file untouched. `memory` keeps the per-process JSON file.
 - With the default DeerMem backend, the declaration also warns when the derived SQLite retrieval index sits inside the shared `storage_path` (the default `{storage_path}/.retrieval`). Set `memory.backend_config.retrieval_index_path` to an instance-local directory (relative values resolve against `storage_path`): SQLite WAL is unsupported on network filesystems, and the index is rebuilt from the Markdown facts at startup and re-synced per user scope after a peer writes. DeerMem's extraction watermark lives in the shared `storage_path` too (`users/{user}/agents/{agent}/.metadata/watermarks.json`), so a thread whose next turn lands on another instance, or on a restarted one, does not send already-extracted turns to the memory LLM again.
-- A declared multi-instance deployment that enables a feature storing credentials (`channel_connections.enabled: true`, or an enabled MCP server whose `oauth.grant_type` is `refresh_token`) also needs one shared `DEER_FLOW_CREDENTIALS_KEY`; see [Credentials encryption key](#credentials-encryption-key-deer_flow_credentials_key).
+- A declared multi-instance deployment that enables a feature storing credentials (`channel_connections.enabled: true`, or an enabled MCP server whose `oauth.grant_type` is `refresh_token`) also needs one shared `NKYEL_CREDENTIALS_KEY`; see [Credentials encryption key](#credentials-encryption-key-nkyel_credentials_key).
 - IM channels: the gate refuses `channels.leader_lease.enabled: false` while a provider other than GitHub is enabled (under `channels.*`, or connectable from the web UI through `channel_connections.<provider>.enabled`), because every instance would otherwise open the platform connection with the same bot credentials. With `auto` (the default) or `true` the instances share each provider's connection through the `channel_leases` table; see [IM channel leader lease](#im-channel-leader-lease-channelsleader_lease).
 - Restart-required: the gate runs once at startup. Restart all Gateway instances together after changing it.
 
@@ -776,12 +776,12 @@ Notes:
 
 `scripts/dev_multi_instance.sh` (also `make dev-multi`, `make dev-multi-check`, `make dev-multi-down`) runs this topology on one machine, so cross-instance behavior can be checked without a cluster:
 
-- Throwaway `postgres:17-alpine` and `redis:7-alpine` containers (`deerflow-mi-postgres`, `deerflow-mi-redis`) on `127.0.0.1:55432` and `127.0.0.1:56379`, Gateway A on `127.0.0.1:8001` and Gateway B on `127.0.0.1:8011` (8002 stays free for the provisioner). When nginx is installed, `http://localhost:2027` round-robins `/api` over both Gateways, names the Gateway that answered in an `X-DeerFlow-Upstream` response header, and forwards `/` to a frontend on port 3000 if you start one. Ports, container names and images are overridable; see `--help`.
-- The generated `config.yaml` is your own `config.yaml` (otherwise `config.example.yaml`; `DEERFLOW_MI_BASE_CONFIG` picks another file) plus `deployment.multi_instance: true`, `database.backend: postgres`, `run_events.backend: db`, `run_ownership.heartbeat_enabled: true` and `stream_bridge.type: redis`. Settings the startup gate refuses are changed and reported: process-local browser tools are removed and an enabled scheduler gets `scheduler.multi_instance: true`. Enabled IM providers under both `channels.*` and the UI-connectable `channel_connections.*` are disabled so the harness never connects your bots unasked; `DEERFLOW_MI_KEEP_CHANNELS=1` keeps them, and the leader lease then gives each platform connection to one Gateway. The `channels.leader_lease` block and connection metadata stay unchanged.
+- Throwaway `postgres:17-alpine` and `redis:7-alpine` containers (`nkyel-mi-postgres`, `nkyel-mi-redis`) on `127.0.0.1:55432` and `127.0.0.1:56379`, Gateway A on `127.0.0.1:8001` and Gateway B on `127.0.0.1:8011` (8002 stays free for the provisioner). When nginx is installed, `http://localhost:2027` round-robins `/api` over both Gateways, names the Gateway that answered in an `X-nkyel-Upstream` response header, and forwards `/` to a frontend on port 3000 if you start one. Ports, container names and images are overridable; see `--help`.
+- The generated `config.yaml` is your own `config.yaml` (otherwise `config.example.yaml`; `NKYEL_MI_BASE_CONFIG` picks another file) plus `deployment.multi_instance: true`, `database.backend: postgres`, `run_events.backend: db`, `run_ownership.heartbeat_enabled: true` and `stream_bridge.type: redis`. Settings the startup gate refuses are changed and reported: process-local browser tools are removed and an enabled scheduler gets `scheduler.multi_instance: true`. Enabled IM providers under both `channels.*` and the UI-connectable `channel_connections.*` are disabled so the harness never connects your bots unasked; `NKYEL_MI_KEEP_CHANNELS=1` keeps them, and the leader lease then gives each platform connection to one Gateway. The `channels.leader_lease` block and connection metadata stay unchanged.
 - Everything the pair writes stays in the harness, never in your own deployment: any `checkpointer` section is removed (it would win over `database` for checkpoints and the Store), an explicit `sandbox.ownership` and a Redis `database.checkpoint_cache` point at the harness Redis (ownership timing settings are kept), a DeerMem `storage_path` (either spelling) and `blob_storage.backend_config.root` are dropped so their data lands in the harness home, and a local AIO sandbox gets a `container_prefix` derived from the state dir, so the harness never adopts or reaps sandbox containers it did not start. A non-DeerMem memory backend is used as configured, and the harness says so.
-- Both processes share one `DEER_FLOW_HOME`, one copy of `extensions_config.json` (MCP and skill edits never reach your own file), and generated `AUTH_JWT_SECRET`, `DEER_FLOW_INTERNAL_AUTH_TOKEN` and `DEER_FLOW_CREDENTIALS_KEY` values. Each process keeps its own DeerMem `retrieval_index_path`, which the shared config reads from `$DEERFLOW_MI_RETRIEVAL_INDEX_PATH`.
+- Both processes share one `NKYEL_HOME`, one copy of `extensions_config.json` (MCP and skill edits never reach your own file), and generated `AUTH_JWT_SECRET`, `NKYEL_INTERNAL_AUTH_TOKEN` and `NKYEL_CREDENTIALS_KEY` values. Each process keeps its own DeerMem `retrieval_index_path`, which the shared config reads from `$NKYEL_MI_RETRIEVAL_INDEX_PATH`.
 - Gateway B starts only after A answers `/health`. Alembic migrations are serialized by an advisory lock, but the LangGraph checkpointer and store `setup()` that runs next is not, so two cold starts against an empty database could race.
-- State lives in `.deer-flow/multi-instance/` (gitignored). `down` stops the Gateways and nginx, removes the containers together with their anonymous data volumes and deletes everything there except `logs/`. Each container is labelled with the state dir that created it, and only that state dir removes it: a harness started from another checkout or `DEERFLOW_MI_STATE_DIR` refuses to start rather than remove them (give it its own `DEERFLOW_MI_*_CONTAINER` names and ports). If `up` fails partway, everything it already started is torn down. Do not run `make dev` or `make stop` alongside the harness: both reclaim port 8001 and this checkout's Gateway processes.
+- State lives in `.nkyel/multi-instance/` (gitignored). `down` stops the Gateways and nginx, removes the containers together with their anonymous data volumes and deletes everything there except `logs/`. Each container is labelled with the state dir that created it, and only that state dir removes it: a harness started from another checkout or `NKYEL_MI_STATE_DIR` refuses to start rather than remove them (give it its own `NKYEL_MI_*_CONTAINER` names and ports). If `up` fails partway, everything it already started is torn down. Do not run `make dev` or `make stop` alongside the harness: both reclaim port 8001 and this checkout's Gateway processes.
 
 ```bash
 scripts/dev_multi_instance.sh up             # containers, config, Gateway A, then B, then nginx
@@ -791,7 +791,7 @@ scripts/dev_multi_instance.sh logs a -f
 scripts/dev_multi_instance.sh down
 ```
 
-`check` signs in as a throwaway account it creates on first use (on a fresh database it becomes the first admin, which the skill toggle needs; the credentials are in `.deer-flow/multi-instance/check-user.json`) and verifies that:
+`check` signs in as a throwaway account it creates on first use (on a fresh database it becomes the first admin, which the skill toggle needs; the credentials are in `.nkyel/multi-instance/check-user.json`) and verifies that:
 
 - `GET /health/ready` reports `ready` and `stream_bridge: ok` on both Gateways;
 - B accepts a session issued by A, and both accept the shared internal token while refusing a wrong one;
@@ -806,7 +806,7 @@ These still need a manual pass:
 - cancel a run on B from A: it takes effect within about one heartbeat (~10 s; a lower `run_ownership.lease_seconds` makes the boundary easier to observe);
 - change an MCP filesystem server's args on A: B's local-bash allowlist follows;
 - edit a skill on A: B's system-prompt skills section changes within 30 s;
-- with `DEERFLOW_MI_KEEP_CHANNELS=1` and test bots configured: only one Gateway connects each platform (`GET /api/channels/` reports the same `leader` on both, Telegram logs no `409`, Discord answers once), `stop <leader> --kill` hands each provider to the other Gateway within `lease_seconds + grace_seconds` plus one renewal interval (50 s with the defaults), a plain `stop <leader>` hands them over on the other Gateway's next tick, and credentials saved or a disconnect made with `POST` / `DELETE /api/channels/{provider}/runtime-config` on the non-holder reach the holder within one renewal interval.
+- with `NKYEL_MI_KEEP_CHANNELS=1` and test bots configured: only one Gateway connects each platform (`GET /api/channels/` reports the same `leader` on both, Telegram logs no `409`, Discord answers once), `stop <leader> --kill` hands each provider to the other Gateway within `lease_seconds + grace_seconds` plus one renewal interval (50 s with the defaults), a plain `stop <leader>` hands them over on the other Gateway's next tick, and credentials saved or a disconnect made with `POST` / `DELETE /api/channels/{provider}/runtime-config` on the non-holder reach the holder within one renewal interval.
 
 ### IM channel leader lease (`channels.leader_lease`)
 
@@ -820,33 +820,33 @@ channels:
 
 Every IM channel except GitHub connects outbound to its platform (Telegram long polling, Discord / Slack / Feishu / DingTalk WebSockets). With more than one Gateway instance each one would open that connection with the same bot credentials: Telegram rejects the second poller with `409 Conflict`, Discord delivers every message to every session so the user is answered twice, and the per-process `ChannelManager` state (the `/model` cache, GitHub follow-up buffers) diverges. The leader lease arbitrates this: the `channel_leases` table (migration `0042_channel_leases`) holds one row per provider, and only the instance holding a provider's row opens that provider's platform connection. The `ChannelManager`, the message bus and GitHub webhooks keep running on every instance.
 
-- `enabled: auto` (default) follows the multi-process signal: on with `GATEWAY_WORKERS` / `WEB_CONCURRENCY > 1`, `deployment.multi_instance: true` or `DEER_FLOW_MULTI_INSTANCE=1`, off on a single instance, which then never writes lease rows and behaves as before. `true` always turns it on and needs `database.backend: sqlite` or `postgres` (a single instance with `memory` and an arbitrated channel enabled refuses to start); `false` never does, and the multi-process startup gate refuses `false` while an IM channel other than GitHub is enabled.
+- `enabled: auto` (default) follows the multi-process signal: on with `GATEWAY_WORKERS` / `WEB_CONCURRENCY > 1`, `deployment.multi_instance: true` or `NKYEL_MULTI_INSTANCE=1`, off on a single instance, which then never writes lease rows and behaves as before. `true` always turns it on and needs `database.backend: sqlite` or `postgres` (a single instance with `memory` and an arbitrated channel enabled refuses to start); `false` never does, and the multi-process startup gate refuses `false` while an IM channel other than GitHub is enabled.
 - `lease_seconds` (≥ 3, default 30) is how long a held lease stays valid without renewal; the holder renews every `lease_seconds // 3` seconds. `grace_seconds` (≥ 0, default 10) is the extra time after expiry before a peer may take the lease, absorbing a slow renewal. Worst-case failover after a crash is `lease_seconds + grace_seconds` plus one renewal interval; a cleanly stopped holder releases its leases, so a peer takes over on its next tick.
 - Ownership is decided against the **database clock** inside each SQL statement (an expired lease changes hands only once it has been expired for `grace_seconds`, and every acquisition bumps a fencing `epoch`), so clock skew between hosts cannot hand a provider to two instances. The holder fails closed on its own monotonic clock: when a renewal is rejected, or cannot be confirmed for long enough that the next renewal would come too late, it stops the transport first — at least `grace_seconds` before a peer is allowed to connect.
 - Every instance tries to take every free lease of a provider it has enabled, so providers spread across instances by whoever starts first. A holder whose transport fails to start keeps the lease and retries with backoff (up to 5 minutes); a transport that cannot be stopped within its bounded teardown keeps its lease until it expires rather than invite a second connection.
 - `GET /api/channels/` reports, per arbitrated provider, `leader` (the holder's instance id, the RunManager worker id `hostname:uuid`) and `leader_here`, and `running` reflects the holder's transport on every instance, so `GET /api/channels/providers` and `POST /api/channels/{provider}/connect` behave the same wherever the load balancer sends them. `POST /api/channels/{name}/restart` on a non-holder answers `success: false` and names the holder. Scheduled-task IM notifications are claimed only by the holder of their provider.
-- Runtime channel configuration crosses instances: `POST` / `DELETE /api/channels/{provider}/runtime-config` writes the provider's row in the shared `channel_runtime_configs` table (migration `0044_channel_runtime_configs`, encrypted with [`DEER_FLOW_CREDENTIALS_KEY`](#credentials-encryption-key-deer_flow_credentials_key)) and bumps its `version`. Every instance compares those versions on each renewal tick, so credentials saved or a disconnect made on any instance reach the holder within one renewal interval: it restarts the transport with the new credentials (or starts it, if a start on the old ones had failed), or stops it and releases the lease. A save served by a non-holder answers before the holder has tried the credentials; a failed restart shows as `running: false` and retries with the usual backoff. An instance taking a lease over reads the provider's current config, a disconnect included, before connecting.
+- Runtime channel configuration crosses instances: `POST` / `DELETE /api/channels/{provider}/runtime-config` writes the provider's row in the shared `channel_runtime_configs` table (migration `0044_channel_runtime_configs`, encrypted with [`NKYEL_CREDENTIALS_KEY`](#credentials-encryption-key-nkyel_credentials_key)) and bumps its `version`. Every instance compares those versions on each renewal tick, so credentials saved or a disconnect made on any instance reach the holder within one renewal interval: it restarts the transport with the new credentials (or starts it, if a start on the old ones had failed), or stops it and releases the lease. A save served by a non-holder answers before the holder has tried the credentials; a failed restart shows as `running: false` and retries with the usual backoff. An instance taking a lease over reads the provider's current config, a disconnect included, before connecting.
 - The block is validated on every topology: an unknown key, a non-mapping value, `enabled` outside `auto | true | false`, `lease_seconds < 3` or `grace_seconds < 0` stop startup with the dotted path in the message.
 - Restart-required (`channels.leader_lease` in the reload-boundary registry): the gate evaluates it once and `ChannelService` captures it at construction. Change it on every instance and restart them together.
 - Known limits: a leader change loses the IM replies in flight on the old holder. The runs themselves continue on the Gateway executing them (channel runs are created with `on_disconnect: continue`) and their thread state is persisted, so the answer stays readable in the web UI, but the transport-local state that would deliver it (a Telegram placeholder message, a Feishu running card, a DingTalk replier) is gone with the old holder; a run executing on the instance that died is recovered as an error like any run of a dead worker.
 - A provider redelivery that reaches an instance after the 10-minute inbound dedupe window, or while the shared dedupe store is unavailable, does not run the turn again: IM run requests carry an `Idempotency-Key` derived from the message, so the Gateway returns the run it already admitted. First messages racing on two instances converge on one thread. See [Duplicate and late deliveries](IM_CHANNEL_CONNECTIONS.md#duplicate-and-late-deliveries).
 
-### Credentials encryption key (`DEER_FLOW_CREDENTIALS_KEY`)
+### Credentials encryption key (`NKYEL_CREDENTIALS_KEY`)
 
-DeerFlow encrypts credentials it stores at rest (today: per-connection IM channel credentials in the `channel_credentials` table, the IM bot credentials an admin enters in the web UI, in `channel_runtime_configs`, and the rotating tokens of MCP servers using the OAuth `refresh_token` grant, in `mcp_oauth_tokens` — see [MCP_SERVER.md](MCP_SERVER.md#refresh-token-rotation-across-restarts-and-replicas)) with a deployment key read **only** from the environment — there is no `config.yaml` key, and it is never derived from `AUTH_JWT_SECRET`.
+nkyel encrypts credentials it stores at rest (today: per-connection IM channel credentials in the `channel_credentials` table, the IM bot credentials an admin enters in the web UI, in `channel_runtime_configs`, and the rotating tokens of MCP servers using the OAuth `refresh_token` grant, in `mcp_oauth_tokens` — see [MCP_SERVER.md](MCP_SERVER.md#refresh-token-rotation-across-restarts-and-replicas)) with a deployment key read **only** from the environment — there is no `config.yaml` key, and it is never derived from `AUTH_JWT_SECRET`.
 
 ```bash
 # Generate a key (urlsafe base64 of 32 random bytes, a Fernet key):
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-export DEER_FLOW_CREDENTIALS_KEY=<key>
+export NKYEL_CREDENTIALS_KEY=<key>
 ```
 
 - **Rotation:** the value may be a comma-separated list. The first key encrypts new values; every listed key decrypts. Prepend the new key (`new,old`), restart, and keep the old key listed until the values it encrypted have been rewritten. Stored values carry a `fernet:v2:` prefix; `fernet:v1:` values written by earlier builds stay readable under the same key.
-- **Single instance:** when the variable is unset or blank, the Gateway generates `{DEER_FLOW_HOME}/.credentials_key` (mode `0600`) on first use and reuses it. The file is created exclusively, so uvicorn workers sharing the runtime home converge on one key. It is only created when a feature that stores credentials is enabled.
-- **Multi-instance:** instances that do not share a runtime home would each generate their own file and could not decrypt what their peers stored. Startup therefore refuses a declared multi-instance deployment (`deployment.multi_instance: true` / `DEER_FLOW_MULTI_INSTANCE=1`) that enables `channel_connections`, or an MCP server with a `refresh_token` OAuth block, without the variable. Personal MCP OAuth connections are saved at runtime, after that check, so set the variable whenever multi-instance users may get one. Multiple workers of one process tree (`GATEWAY_WORKERS > 1` without the declaration) share the file and are not refused. Deployments that store no credentials keep booting without a key.
+- **Single instance:** when the variable is unset or blank, the Gateway generates `{NKYEL_HOME}/.credentials_key` (mode `0600`) on first use and reuses it. The file is created exclusively, so uvicorn workers sharing the runtime home converge on one key. It is only created when a feature that stores credentials is enabled.
+- **Multi-instance:** instances that do not share a runtime home would each generate their own file and could not decrypt what their peers stored. Startup therefore refuses a declared multi-instance deployment (`deployment.multi_instance: true` / `NKYEL_MULTI_INSTANCE=1`) that enables `channel_connections`, or an MCP server with a `refresh_token` OAuth block, without the variable. Personal MCP OAuth connections are saved at runtime, after that check, so set the variable whenever multi-instance users may get one. Multiple workers of one process tree (`GATEWAY_WORKERS > 1` without the declaration) share the file and are not refused. Deployments that store no credentials keep booting without a key.
 - **Malformed keys** (wrong length, standard rather than urlsafe base64, any bad entry in the list) stop startup with an error that never repeats the key material.
 - **Backup:** losing the key makes every stored credential unreadable. Unreadable values are treated as missing (logged), never as a crash — Slack, for example, falls back to the deployment bot token, and a bot configured from the web UI reads as not configured until its credentials are saved again. If no key can be loaded at all (an unreadable key file), saving bot credentials from the web UI answers `503` instead of storing them in plaintext.
-- **Deployment tooling:** the Helm chart generates the key into its app Secret and preserves it across upgrades; `make up` (`scripts/deploy.sh`) honors a shell or `.env` value and otherwise generates and persists `$DEER_FLOW_HOME/.credentials_key` — the same file the Gateway would generate, so whichever side created it first wins.
+- **Deployment tooling:** the Helm chart generates the key into its app Secret and preserves it across upgrades; `make up` (`scripts/deploy.sh`) honors a shell or `.env` value and otherwise generates and persists `$NKYEL_HOME/.credentials_key` — the same file the Gateway would generate, so whichever side created it first wins.
 - The persisted `.jwt_secret` (used when `AUTH_JWT_SECRET` is unset) is created the same exclusive way, so replicas cold-starting on a shared volume no longer keep different session-signing secrets.
 
 ### Agent Storage
@@ -869,11 +869,11 @@ Migrating an existing install from `file` to `db`:
 
 Run from the repository root using the backend's `uv` environment. The importer
 depends on the installed workspace packages; using a system `python` without
-an activated backend environment can fail with `ModuleNotFoundError: deerflow`.
+an activated backend environment can fail with `ModuleNotFoundError: nkyel`.
 Complete the [backend installation](../../CONTRIBUTING.md#option-2-local-development)
 first, including the `postgres` extra when applicable. Use the same exported
 configuration and runtime selectors as the running Gateway, such as
-`DEER_FLOW_CONFIG_PATH` and `DEER_FLOW_HOME`. `--project backend` selects the
+`NKYEL_CONFIG_PATH` and `NKYEL_HOME`. `--project backend` selects the
 environment without changing the working directory, so relative paths keep
 their meaning; `--no-sync` preserves installed extras.
 
@@ -896,7 +896,7 @@ Configure specific tools available to the agent:
 tools:
   - name: web_search
     group: web
-    use: deerflow.community.tavily.tools:web_search_tool
+    use: nkyel.community.tavily.tools:web_search_tool
     max_results: 5
     include_domains:             # Optional: limit search sources to these domains
       - docs.python.org
@@ -907,7 +907,7 @@ tools:
 
 For Tavily, `include_domains` and `exclude_domains` are deployment-only options
 read from the `web_search` tool entry and passed directly to `TavilyClient.search`.
-For a non-empty `include_domains`, DeerFlow also sends `include_domains_mode: filter`
+For a non-empty `include_domains`, nkyel also sends `include_domains_mode: filter`
 so Tavily restricts results to those domains rather than merely boosting them.
 Either list may be configured independently. Omitted options are not added to the SDK
 call; explicit empty lists are forwarded as `[]`, meaning no inclusion restriction
@@ -925,7 +925,7 @@ Jina's `web_fetch` keeps one attempt by default. Configure retries on its existi
 tools:
   - name: web_fetch
     group: web
-    use: deerflow.community.jina_ai.tools:web_fetch_tool
+    use: nkyel.community.jina_ai.tools:web_fetch_tool
     timeout: 10
     max_retries: 2              # Additional attempts; default 0 (disabled)
     retry_budget_seconds: 30   # Total request + backoff budget; default 30
@@ -1096,12 +1096,12 @@ Each Serper tool can override the environment independently in `config.yaml`:
 tools:
   - name: web_search
     group: web
-    use: deerflow.community.serper.tools:web_search_tool
+    use: nkyel.community.serper.tools:web_search_tool
     base_url: https://proxy.example/api
     api_key: $SEARCH_PROVIDER_API_KEY
   - name: image_search
     group: web
-    use: deerflow.community.serper.tools:image_search_tool
+    use: nkyel.community.serper.tools:image_search_tool
     base_url: https://images.example/api
     api_key: $IMAGE_PROVIDER_API_KEY
 ```
@@ -1141,7 +1141,7 @@ When neither is set, the SDK default `https://api.exa.ai` is used.
 tools:
   - name: web_search
     group: web
-    use: deerflow.community.exa.tools:web_search_tool
+    use: nkyel.community.exa.tools:web_search_tool
     base_url: https://exa-compatible.example
     api_key: $EXA_COMPATIBLE_API_KEY
 ```
@@ -1163,7 +1163,7 @@ the tool entry sets `network_isolation_confirmed: true`.
 tools:
   - name: web_search
     group: web
-    use: deerflow.community.serper.tools:web_search_tool
+    use: nkyel.community.serper.tools:web_search_tool
     max_results: 5
     include_domains: [example.com, bücher.de]
     exclude_domains: [ads.example.com]
@@ -1226,7 +1226,7 @@ retrieval behavior. No paid API calls are needed for the regression suite.
 Browserless, Crawl4AI, Firecrawl, and fastCRW perform navigation, redirects,
 DNS resolution, and subresource loading in the backend's own network namespace.
 Checking the submitted URL in the Gateway cannot constrain these later requests.
-For `web_fetch`, and Browserless `web_capture`, DeerFlow therefore refuses to
+For `web_fetch`, and Browserless `web_capture`, nkyel therefore refuses to
 delegate to a private, loopback, or otherwise unverifiable backend by default.
 HTTP(S) backend endpoints resolving only to public addresses do not require an
 isolation acknowledgement.
@@ -1261,7 +1261,7 @@ policy is in place:
 tools:
   - name: web_capture
     group: web
-    use: deerflow.community.browserless.tools:web_capture_tool
+    use: nkyel.community.browserless.tools:web_capture_tool
     base_url: http://localhost:3032
     # token: $BROWSERLESS_TOKEN
     network_isolation_confirmed: true  # Only after isolating Browserless egress
@@ -1324,7 +1324,7 @@ Enable the read-only Gateway tool through the existing tools list:
 tools:
   - name: read_conversation
     group: conversation
-    use: deerflow.tools.conversation:read_conversation
+    use: nkyel.tools.conversation:read_conversation
 ```
 
 It is off by default. A run must explicitly submit `conversation_references`
@@ -1346,26 +1346,26 @@ externalized to `.tool-results`. To allow larger pages, raise
 
 ### Sandbox
 
-DeerFlow supports multiple sandbox execution modes. Configure your preferred mode in `config.yaml`:
+nkyel supports multiple sandbox execution modes. Configure your preferred mode in `config.yaml`:
 
 **Local Execution** (runs sandbox code directly on the host machine):
 ```yaml
 sandbox:
-   use: deerflow.sandbox.local:LocalSandboxProvider # Local execution
+   use: nkyel.sandbox.local:LocalSandboxProvider # Local execution
    allow_host_bash: false # default; host bash is disabled unless explicitly re-enabled
 ```
 
 **Docker Execution** (runs sandbox code in isolated Docker containers):
 ```yaml
 sandbox:
-   use: deerflow.community.aio_sandbox:AioSandboxProvider # Docker-based sandbox
+   use: nkyel.community.aio_sandbox:AioSandboxProvider # Docker-based sandbox
    prewarm: true # optional: overlap likely sandbox work with the first model call
    prewarm_max_concurrent: 1 # pending or ready-but-unused prewarms per process/provider
 ```
 
 For AIO images on the supported semver line (`1.9.3` through the recommended
 `1.11.0` image), `sandbox.bash_command_timeout` is enforced server-side through
-the `hard_timeout` API when the image exposes it. DeerFlow's legacy frozen
+the `hard_timeout` API when the image exposes it. nkyel's legacy frozen
 `all-in-one-sandbox:latest` image predates that API, so only the host-side
 request is bounded there. On supported semver AIO images, `list_dir` uses a 60
 second server-side hard timeout with a 65 second no-retry host envelope; the
@@ -1374,9 +1374,9 @@ ambiguous commands are never replayed, and a partial `list_dir` result is never
 returned as a complete listing.
 
 Explicit AIO shell/bash session creation is a separate control-plane
-operation. DeerFlow bounds those create requests to 5 seconds with SDK
+operation. nkyel bounds those create requests to 5 seconds with SDK
 retries disabled. If a response cannot prove whether creation committed,
-DeerFlow does not replay the create or execute on that session id. The
+nkyel does not replay the create or execute on that session id. The
 affected creation plane is quarantined, bounded best-effort session cleanup
 is attempted, and the container is recycled instead of being returned to the
 warm pool. Session-level cleanup does not clear that quarantine because a
@@ -1384,7 +1384,7 @@ timed-out create may commit after cleanup has already returned.
 
 `prewarm` is disabled by default and applies only to asynchronous AIO runs with
 an unconditional outer execution-lease cleanup: the Gateway/embedded run worker
-and native subagent executor. Direct `create_deerflow_agent(...).ainvoke()` and
+and native subagent executor. Direct `create_nkyel_agent(...).ainvoke()` and
 `.astream()` calls retain ordinary lazy acquisition even when this setting is on.
 For likely sandbox turns (for example, code fences or explicit shell commands),
 startup can overlap the first model call. Authorization is checked before
@@ -1401,7 +1401,7 @@ which must drain startup and release the owner even if no sandbox ID was publish
 
 `prewarm_max_concurrent` is a positive integer, default `1`. It bounds pending
 and ready-but-unused prewarms for each provider instance in a process. When
-full, DeerFlow skips speculation without queuing or delaying foreground tools.
+full, nkyel skips speculation without queuing or delaying foreground tools.
 The limit is not a total-container cap or a deployment-wide quota; multiple
 Gateway processes have separate budgets. Other providers and synchronous
 embedded calls keep their existing acquisition behavior. Restart after changing
@@ -1411,7 +1411,7 @@ to measure first-tool wait, unused speculation, and resource pressure on your ho
 **BoxLite micro-VM Sandbox** (runs sandbox code in daemonless OCI micro-VMs):
 ```yaml
 sandbox:
-   use: deerflow.community.boxlite:BoxliteProvider
+   use: nkyel.community.boxlite:BoxliteProvider
    image: python:3.12-slim
    memory_mib: 1024                 # optional per-box memory cap
    cpus: 2                          # optional per-box vCPUs
@@ -1424,7 +1424,7 @@ sandbox:
 Install the optional runtime before selecting this provider:
 
 ```bash
-pip install "deerflow-harness[boxlite]"
+pip install "nkyel-harness[boxlite]"
 ```
 
 BoxLite boxes are named from the effective `(user_id, thread_id)` scope and are
@@ -1440,20 +1440,20 @@ This mode runs each sandbox in an isolated Kubernetes Pod on your **host machine
 
 ```yaml
 sandbox:
-   use: deerflow.community.aio_sandbox:AioSandboxProvider
+   use: nkyel.community.aio_sandbox:AioSandboxProvider
    provisioner_url: http://provisioner:8002
 ```
 
-When using Docker development (`make docker-start`), DeerFlow starts the `provisioner` service only if this provisioner mode is configured. In local or plain Docker sandbox modes, `provisioner` is skipped.
+When using Docker development (`make docker-start`), nkyel starts the `provisioner` service only if this provisioner mode is configured. In local or plain Docker sandbox modes, `provisioner` is skipped.
 
 Remote/provisioner backends default to explicit file synchronization because
-DeerFlow cannot infer whether their `/mnt/user-data` mount points reference the
+nkyel cannot infer whether their `/mnt/user-data` mount points reference the
 same storage as the Gateway. When the deployment guarantees that both sides use
 the same thread user-data directories, opt out of that extra transfer:
 
 ```yaml
 sandbox:
-  use: deerflow.community.aio_sandbox:AioSandboxProvider
+  use: nkyel.community.aio_sandbox:AioSandboxProvider
   provisioner_url: http://provisioner:8002
   thread_data_mounts: true
 ```
@@ -1471,7 +1471,7 @@ See [Provisioner Setup Guide](../../docker/provisioner/README.md) for detailed c
 
 ```yaml
 sandbox:
-   use: deerflow.community.e2b_sandbox:E2BSandboxProvider
+   use: nkyel.community.e2b_sandbox:E2BSandboxProvider
    api_key: $E2B_API_KEY            # required; or set the E2B_API_KEY env var
    template: code-interpreter-v1     # e2b sandbox template id
    # domain: e2b.dev                # optional; for self-hosted e2b deployments
@@ -1496,14 +1496,14 @@ sandbox:
      OPENAI_API_KEY: $OPENAI_API_KEY
 ```
 
-`e2b-code-interpreter` is bundled as a core dependency of `deerflow-harness`,
+`e2b-code-interpreter` is bundled as a core dependency of `nkyel-harness`,
 so no extra install step is needed; just supply your API key and switch the
 provider in `config.yaml`.
 
 Notes specific to `E2BSandboxProvider`:
 
-- Each DeerFlow thread is bound to its E2B sandbox via metadata
-  (`deer_flow_user`, `deer_flow_thread`, `deer_flow_skills_root`). Startup and
+- Each nkyel thread is bound to its E2B sandbox via metadata
+  (`nkyel_user`, `nkyel_thread`, `nkyel_skills_root`). Startup and
   periodic reconciliation probe every bounded candidate, adopt one healthy
   canonical sandbox, and reap duplicates after a grace period. A sandbox whose
   skills root differs from the provider's startup snapshot is never adopted and
@@ -1537,7 +1537,7 @@ Notes specific to `E2BSandboxProvider`:
 
 ```yaml
 sandbox:
-   use: deerflow.community.opensandbox:OpenSandboxProvider
+   use: nkyel.community.opensandbox:OpenSandboxProvider
    image: python:3.11
    api_key: $OPEN_SANDBOX_API_KEY     # optional when the SDK env var is set
    domain: localhost:8080             # OPEN_SANDBOX_DOMAIN fallback
@@ -1556,7 +1556,7 @@ sandbox:
 Install the optional SDK before selecting this provider:
 
 ```bash
-pip install "deerflow-harness[opensandbox]"
+pip install "nkyel-harness[opensandbox]"
 ```
 
 The provider creates a sandbox per effective user/thread scope and parks it in
@@ -1579,39 +1579,39 @@ Choose between local execution or Docker-based isolation:
 **Option 1: Local Sandbox** (default, simpler setup):
 ```yaml
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
   allow_host_bash: false
 ```
 
-`allow_host_bash` is intentionally `false` by default. DeerFlow's local sandbox is a host-side convenience mode, not a secure shell isolation boundary. If you need `bash`, prefer `AioSandboxProvider`. Only set `allow_host_bash: true` for fully trusted single-user local workflows.
+`allow_host_bash` is intentionally `false` by default. nkyel's local sandbox is a host-side convenience mode, not a secure shell isolation boundary. If you need `bash`, prefer `AioSandboxProvider`. Only set `allow_host_bash: true` for fully trusted single-user local workflows.
 
-When `LocalSandboxProvider` runs under `make up`, it runs inside the `deer-flow-gateway` container. In that mode, `sandbox.mounts[].host_path` is resolved from the gateway container's filesystem, not from your Docker host. If you need a local-sandbox custom mount in production Docker, bind the host directory into the gateway service first, then use the in-container path in `config.yaml`:
+When `LocalSandboxProvider` runs under `make up`, it runs inside the `nkyel-gateway` container. In that mode, `sandbox.mounts[].host_path` is resolved from the gateway container's filesystem, not from your Docker host. If you need a local-sandbox custom mount in production Docker, bind the host directory into the gateway service first, then use the in-container path in `config.yaml`:
 
 ```yaml
 # docker/docker-compose.yaml or an override file
 services:
   gateway:
     volumes:
-      - ${DEER_FLOW_REPO_ROOT}/.deer-flow/knowledge:/app/.deer-flow/knowledge:ro
+      - ${NKYEL_REPO_ROOT}/.nkyel/knowledge:/app/.nkyel/knowledge:ro
 ```
 
 ```yaml
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
   mounts:
-    - host_path: /app/.deer-flow/knowledge
+    - host_path: /app/.nkyel/knowledge
       container_path: /mnt/knowledge
       read_only: true
 ```
 
-If the configured `host_path` is not visible to the gateway process, DeerFlow logs an error and ignores that mount.
+If the configured `host_path` is not visible to the gateway process, nkyel logs an error and ignores that mount.
 
 **Option 2: Docker Sandbox** (isolated, more secure):
 ```yaml
 sandbox:
-  use: deerflow.community.aio_sandbox:AioSandboxProvider
+  use: nkyel.community.aio_sandbox:AioSandboxProvider
   port: 8080
-  container_prefix: deer-flow-sandbox
+  container_prefix: nkyel-sandbox
 
   # Optional: Additional mounts
   mounts:
@@ -1620,7 +1620,7 @@ sandbox:
       read_only: false
 ```
 
-When you configure `sandbox.mounts`, DeerFlow exposes those `container_path` values in the agent prompt so the agent can discover and operate on mounted directories directly instead of assuming everything must live under `/mnt/user-data`. See [Skills and sandbox paths](#skills-and-sandbox-paths) for Windows, WSL, and Docker path examples.
+When you configure `sandbox.mounts`, nkyel exposes those `container_path` values in the agent prompt so the agent can discover and operate on mounted directories directly instead of assuming everything must live under `/mnt/user-data`. See [Skills and sandbox paths](#skills-and-sandbox-paths) for Windows, WSL, and Docker path examples.
 
 Trailing slashes in `container_path` values are normalized when the config is loaded (`/mnt/reports/` behaves like `/mnt/reports`) — this applies to both `sandbox.mounts[].container_path` and `skills.container_path` — and the container root `/` or an empty value is rejected; mount a specific directory instead.
 
@@ -1630,7 +1630,7 @@ Local Docker AIO sandboxes can opt into an outbound policy:
 
 ```yaml
 sandbox:
-  use: deerflow.community.aio_sandbox:AioSandboxProvider
+  use: nkyel.community.aio_sandbox:AioSandboxProvider
   network:
     mode: allowlist
     allow_domains:
@@ -1647,7 +1647,7 @@ traffic. `allowlist` uses the same bridge and a trusted sidecar that supports
 HTTP and HTTPS CONNECT only. Exact domains and leading wildcards such as
 `*.pythonhosted.org` are accepted; URLs, ports, and a catch-all `*` are
 rejected. Traffic that ignores proxy environment variables still has no route
-out of the internal bridge. DeerFlow also sets the upstream AIO image's
+out of the internal bridge. nkyel also sets the upstream AIO image's
 `PROXY_SERVER`/`PROXY_EXCLUDE` variables so its Chromium service uses the same
 policy sidecar; standard upper/lower-case HTTP, HTTPS, and ALL proxy variables
 cover shell and package-manager clients.
@@ -1675,7 +1675,7 @@ require strict origin-level HTTPS isolation should use `isolated` mode or an
 operator-managed TLS-inspecting egress gateway.
 
 With `approval: prompt`, a denied public domain becomes a Human Input card with
-**Deny**, **Allow temporarily**, and **Allow for this sandbox** choices. DeerFlow
+**Deny**, **Allow temporarily**, and **Allow for this sandbox** choices. nkyel
 does not replay the failed command after approval because it may already have
 performed local side effects; the agent must retry it explicitly. Non-interactive
 runs auto-deny without opening a card or waiting for input. The sidecar rejects
@@ -1687,7 +1687,7 @@ restricted modes.
 
 Restricted modes currently require the local Docker backend and Docker Engine
 28 or newer. They fail closed on Apple Container, provisioner mode, and older
-engines. DeerFlow applies Engine 28's isolated bridge gateway mode to both IPv4
+engines. nkyel applies Engine 28's isolated bridge gateway mode to both IPv4
 and IPv6 so the sandbox cannot reach services bound to either host-side bridge
 address. The sandbox, sidecar, internal network, and egress network carry a
 digest of the effective policy, proxy source, and image reference; startup and
@@ -1697,12 +1697,12 @@ mode also carry stable identity and mode labels. After a Gateway restart,
 changing between `open` and a restricted mode is therefore reported as an
 incompatible persisted sandbox and replaced only after the normal ownership,
 orphan-grace, and teardown fences. Unlabelled open containers from older
-DeerFlow versions are recognized when they use the configured image and retain
+nkyel versions are recognized when they use the configured image and retain
 their published API port. Docker Desktop is detected
 from the daemon, not the Gateway process, so Docker-outside-of-Docker deployments
 handle its synthetic DNS range correctly. The policy sidecar publishes only its
 fixed sandbox-API relay back to the Gateway; the sandbox API itself is not
-published. DeerFlow generates a separate relay token for each sandbox, requires
+published. nkyel generates a separate relay token for each sandbox, requires
 it on every new relay connection, reconstructs it from Docker during discovery,
 and injects it only into Gateway control-plane clients. The token is excluded
 from `SandboxInfo` serialization, representations, and command logs.
@@ -1711,23 +1711,23 @@ require supply-chain pinning.
 
 #### Sandbox container network exposure and hardening
 
-The sandbox HTTP API (`/v1/shell/*` and friends) has no authentication: anyone who can reach a published sandbox port can execute arbitrary commands in that sandbox. For bare-metal Docker sandbox runs that use localhost, DeerFlow binds the sandbox port to `127.0.0.1` so it is not exposed on other host interfaces. For Docker-outside-of-Docker deployments that connect through `host.docker.internal`, the port is bound to the address that hostname actually resolves to — the daemon's `host-gateway-ip` mapping (customizable, possibly IPv6) — so the published port and the address the gateway connects to always match, and the port is no longer published on external network interfaces (previously it was bound to `0.0.0.0`). On Docker Desktop, resolving `host.docker.internal` yields an internal VM gateway address that the host OS cannot bind; because Docker Desktop forwards `host.docker.internal` to host loopback, DeerFlow defaults to `127.0.0.1` for `host.docker.internal` on Desktop daemons. Custom non-loopback sandbox hosts continue to bind their resolved address. If resolution fails, the Docker default bridge gateway (via `docker network inspect bridge`, falling back to `172.17.0.1`) is used as a best-effort bind and a warning is logged. Set `DEER_FLOW_SANDBOX_BIND_HOST` explicitly if your deployment needs a different bind address; setting it to `0.0.0.0` restores the legacy broad bind, which re-exposes the unauthenticated exec API on every interface and should be paired with an external firewall.
+The sandbox HTTP API (`/v1/shell/*` and friends) has no authentication: anyone who can reach a published sandbox port can execute arbitrary commands in that sandbox. For bare-metal Docker sandbox runs that use localhost, nkyel binds the sandbox port to `127.0.0.1` so it is not exposed on other host interfaces. For Docker-outside-of-Docker deployments that connect through `host.docker.internal`, the port is bound to the address that hostname actually resolves to — the daemon's `host-gateway-ip` mapping (customizable, possibly IPv6) — so the published port and the address the gateway connects to always match, and the port is no longer published on external network interfaces (previously it was bound to `0.0.0.0`). On Docker Desktop, resolving `host.docker.internal` yields an internal VM gateway address that the host OS cannot bind; because Docker Desktop forwards `host.docker.internal` to host loopback, nkyel defaults to `127.0.0.1` for `host.docker.internal` on Desktop daemons. Custom non-loopback sandbox hosts continue to bind their resolved address. If resolution fails, the Docker default bridge gateway (via `docker network inspect bridge`, falling back to `172.17.0.1`) is used as a best-effort bind and a warning is logged. Set `NKYEL_SANDBOX_BIND_HOST` explicitly if your deployment needs a different bind address; setting it to `0.0.0.0` restores the legacy broad bind, which re-exposes the unauthenticated exec API on every interface and should be paired with an external firewall.
 
-Local Docker sandbox containers are also hardened by default: all Linux capabilities are dropped (`--cap-drop=ALL`) except a five-capability compatibility allowlist — `CHOWN`, `FOWNER`, `SETUID`, `SETGID`, and `DAC_OVERRIDE` — while privilege escalation across exec stays blocked with `no-new-privileges` and CPU/memory/PID resources are bounded. `CHOWN`/`SETUID`/`SETGID` support the runtime user handoff and `DAC_OVERRIDE` supports the root nginx master's writes to gem-owned logs. `FOWNER` is specifically required by the newer AIO 1.11.x startup path (regression-tested against the recommended 1.11.0 image), which runs `chmod /run/user/1000` after capabilities are dropped. Images that do not perform that `chmod` do not need `FOWNER`; DeerFlow deliberately does not guess a smaller set from mutable tags, digests, or arbitrary custom images, so the default compatibility allowlist remains version-agnostic.
+Local Docker sandbox containers are also hardened by default: all Linux capabilities are dropped (`--cap-drop=ALL`) except a five-capability compatibility allowlist — `CHOWN`, `FOWNER`, `SETUID`, `SETGID`, and `DAC_OVERRIDE` — while privilege escalation across exec stays blocked with `no-new-privileges` and CPU/memory/PID resources are bounded. `CHOWN`/`SETUID`/`SETGID` support the runtime user handoff and `DAC_OVERRIDE` supports the root nginx master's writes to gem-owned logs. `FOWNER` is specifically required by the newer AIO 1.11.x startup path (regression-tested against the recommended 1.11.0 image), which runs `chmod /run/user/1000` after capabilities are dropped. Images that do not perform that `chmod` do not need `FOWNER`; nkyel deliberately does not guess a smaller set from mutable tags, digests, or arbitrary custom images, so the default compatibility allowlist remains version-agnostic.
 
-A custom image that is already fully initialized as a non-root user and needs none of those compatibility capabilities should set `DEER_FLOW_SANDBOX_IMAGE_STARTUP_CAPS=0` to drop the whole set. This is an all-or-nothing opt-out, not a per-capability selector: an older or custom root-initialized image that does not need `FOWNER` may still require `CHOWN`, `SETUID`, `SETGID`, or `DAC_OVERRIDE` and should therefore leave the compatibility set enabled. Retained capabilities remain available for the container's lifetime and can let sandboxed code change ownership or mode on accessible bind-mounted paths, impersonate mounted-file UIDs/GIDs, or bypass discretionary access checks. `no-new-privileges` does **not** mitigate that existing-capability risk — it only blocks gaining new privileges across exec. One hardening knob is relaxed by default: the shipped AIO image runs with `seccomp=unconfined` because its Chromium browser does not start under Docker's default seccomp profile (syscall filtering is disabled — see the two seccomp variables below to change that). The following environment variables (set them in the gateway process, e.g. via `.env` loaded by docker-compose, or the gateway service `environment:`) tune or disable each knob:
+A custom image that is already fully initialized as a non-root user and needs none of those compatibility capabilities should set `NKYEL_SANDBOX_IMAGE_STARTUP_CAPS=0` to drop the whole set. This is an all-or-nothing opt-out, not a per-capability selector: an older or custom root-initialized image that does not need `FOWNER` may still require `CHOWN`, `SETUID`, `SETGID`, or `DAC_OVERRIDE` and should therefore leave the compatibility set enabled. Retained capabilities remain available for the container's lifetime and can let sandboxed code change ownership or mode on accessible bind-mounted paths, impersonate mounted-file UIDs/GIDs, or bypass discretionary access checks. `no-new-privileges` does **not** mitigate that existing-capability risk — it only blocks gaining new privileges across exec. One hardening knob is relaxed by default: the shipped AIO image runs with `seccomp=unconfined` because its Chromium browser does not start under Docker's default seccomp profile (syscall filtering is disabled — see the two seccomp variables below to change that). The following environment variables (set them in the gateway process, e.g. via `.env` loaded by docker-compose, or the gateway service `environment:`) tune or disable each knob:
 
 | Environment variable | Default | Purpose |
 | --- | --- | --- |
-| `DEER_FLOW_SANDBOX_BIND_HOST` | loopback (localhost or Docker Desktop with `host.docker.internal`) / host-gateway-ip / bridge gateway | Host interface for the sandbox `-p` publish. Must be an IP literal (bare or bracketed IPv6) or a hostname, which is resolved to an address first — Docker publish specs do not accept hostnames. `0.0.0.0` restores the legacy broad bind (risky). |
-| `DEER_FLOW_SANDBOX_SECCOMP_UNCONFINED` | on | The shipped AIO image's Chromium browser does not start under Docker's default seccomp profile (see the upstream agent-infra sandbox FAQ), so `seccomp=unconfined` remains the default. Set to `0` to run with the built-in profile — passed explicitly as `seccomp=builtin`, so a daemon configured with a different default cannot weaken the opt-out — and only for images verified to start and pass browser checks with it. |
-| `DEER_FLOW_SANDBOX_IMAGE_STARTUP_CAPS` | on | Keeps the five-capability compatibility set (`CHOWN`/`FOWNER`/`SETUID`/`SETGID`/`DAC_OVERRIDE`). `FOWNER` specifically covers the newer AIO 1.11.x startup `chmod /run/user/1000` path (tested with 1.11.0); images without that step do not need `FOWNER`, but DeerFlow does not infer per-image capability subsets from tags/digests/custom images. Set to `0` only for images that need none of the five — the switch drops the entire set. |
-| `DEER_FLOW_SANDBOX_SECCOMP_PROFILE` | unset | Path to a custom seccomp profile (e.g. a restricted, Chromium-compatible one built from Docker's default plus the namespace syscalls Chromium needs). Takes precedence over the unconfined default. |
-| `DEER_FLOW_SANDBOX_MEMORY` | `2g` | `--memory` limit per sandbox container. `0`/`none` disables the limit. |
-| `DEER_FLOW_SANDBOX_CPUS` | `2` | `--cpus` limit per sandbox container. `0`/`none` disables the limit. |
-| `DEER_FLOW_SANDBOX_PIDS_LIMIT` | `512` | `--pids-limit` per sandbox container (fork-bomb guard). `0`/`none` disables the limit. |
-| `DEER_FLOW_SANDBOX_CONTAINER_USER` | unset (image default) | Passed through as `--user` (e.g. `1000:1000`). The default AIO image's user is upstream-controlled, so DeerFlow does not force one; set this only if you know your image's runtime user. |
-| `DEER_FLOW_SANDBOX_NETWORK` | unset (daemon default network) | Legacy `open`-mode escape hatch passed through as `--network`. Prefer `sandbox.network` for managed isolation. `host`, `container:<name>`, and `none` are rejected at startup. Restricted modes ignore this variable and use their own per-sandbox internal network. |
+| `NKYEL_SANDBOX_BIND_HOST` | loopback (localhost or Docker Desktop with `host.docker.internal`) / host-gateway-ip / bridge gateway | Host interface for the sandbox `-p` publish. Must be an IP literal (bare or bracketed IPv6) or a hostname, which is resolved to an address first — Docker publish specs do not accept hostnames. `0.0.0.0` restores the legacy broad bind (risky). |
+| `NKYEL_SANDBOX_SECCOMP_UNCONFINED` | on | The shipped AIO image's Chromium browser does not start under Docker's default seccomp profile (see the upstream agent-infra sandbox FAQ), so `seccomp=unconfined` remains the default. Set to `0` to run with the built-in profile — passed explicitly as `seccomp=builtin`, so a daemon configured with a different default cannot weaken the opt-out — and only for images verified to start and pass browser checks with it. |
+| `NKYEL_SANDBOX_IMAGE_STARTUP_CAPS` | on | Keeps the five-capability compatibility set (`CHOWN`/`FOWNER`/`SETUID`/`SETGID`/`DAC_OVERRIDE`). `FOWNER` specifically covers the newer AIO 1.11.x startup `chmod /run/user/1000` path (tested with 1.11.0); images without that step do not need `FOWNER`, but nkyel does not infer per-image capability subsets from tags/digests/custom images. Set to `0` only for images that need none of the five — the switch drops the entire set. |
+| `NKYEL_SANDBOX_SECCOMP_PROFILE` | unset | Path to a custom seccomp profile (e.g. a restricted, Chromium-compatible one built from Docker's default plus the namespace syscalls Chromium needs). Takes precedence over the unconfined default. |
+| `NKYEL_SANDBOX_MEMORY` | `2g` | `--memory` limit per sandbox container. `0`/`none` disables the limit. |
+| `NKYEL_SANDBOX_CPUS` | `2` | `--cpus` limit per sandbox container. `0`/`none` disables the limit. |
+| `NKYEL_SANDBOX_PIDS_LIMIT` | `512` | `--pids-limit` per sandbox container (fork-bomb guard). `0`/`none` disables the limit. |
+| `NKYEL_SANDBOX_CONTAINER_USER` | unset (image default) | Passed through as `--user` (e.g. `1000:1000`). The default AIO image's user is upstream-controlled, so nkyel does not force one; set this only if you know your image's runtime user. |
+| `NKYEL_SANDBOX_NETWORK` | unset (daemon default network) | Legacy `open`-mode escape hatch passed through as `--network`. Prefer `sandbox.network` for managed isolation. `host`, `container:<name>`, and `none` are rejected at startup. Restricted modes ignore this variable and use their own per-sandbox internal network. |
 
 These hardening flags are Docker-only; Apple Container (`container` runtime) keeps its previous, unhardened invocation and therefore supports only `network.mode: open`. On macOS, an `open` Gateway normally prefers Apple Container, but it keeps using Docker while the configured sandbox prefix has managed Docker sandboxes so startup reconciliation can safely replace resources left by a restricted-mode deployment before the runtime changes.
 
@@ -1742,13 +1742,13 @@ continue to use the normal environment proxy configuration.
 Each concurrently running native subagent uses one persistent AIO shell session.
 The semver AIO images from `1.9.3` through `1.11.0` default
 `MAX_SHELL_SESSIONS` to 10 and evict the oldest idle session when an eleventh is
-created. If `subagent_runtime.max_running` is greater than nine, DeerFlow sets
+created. If `subagent_runtime.max_running` is greater than nine, nkyel sets
 the container limit to `max_running + 1`; the extra slot leaves room for the lead
 agent's shell. This applies to both locally created containers and provisioner
 Pods. Lower concurrency keeps the image's own default unchanged.
 
 The separate `bash.exec` API uses its own `AIO_BASH_MAX_SESSIONS` pool rather
-than `MAX_SHELL_SESSIONS`. DeerFlow nevertheless creates and closes an explicit
+than `MAX_SHELL_SESSIONS`. nkyel nevertheless creates and closes an explicit
 transient bash session around every env-bearing command, so request-scoped
 secrets and completed command sessions are not retained.
 
@@ -1756,7 +1756,7 @@ You may set `sandbox.environment.MAX_SHELL_SESSIONS` explicitly. It must be a
 positive integer at least as large as `subagent_runtime.max_running + 1`, or the
 provider fails at startup with the conflicting values. The setting is applied
 when a sandbox is created. Persisted local containers and provisioner Pods report
-their effective value; DeerFlow replaces one whose capacity is below the current
+their effective value; nkyel replaces one whose capacity is below the current
 requirement instead of reusing it. Reuse checks also apply when no explicit
 override is needed for new containers: a previously configured lower limit must
 still fit the current concurrency. The Gateway waits for existing ownership and
@@ -1771,7 +1771,7 @@ an error and does not authorize replacement.
 
 ### Building a Custom AIO Sandbox Image
 
-`AioSandboxProvider` talks to the sandbox container through the `agent-sandbox` SDK. The Dockerfile for the default `enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest` image is not part of this repository; DeerFlow treats that image as an upstream AIO sandbox runtime.
+`AioSandboxProvider` talks to the sandbox container through the `agent-sandbox` SDK. The Dockerfile for the default `enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest` image is not part of this repository; nkyel treats that image as an upstream AIO sandbox runtime.
 
 For persistent system or language dependencies, extend the published image and keep its startup command intact:
 
@@ -1779,7 +1779,7 @@ For persistent system or language dependencies, extend the published image and k
 FROM enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest
 
 USER root
-# Example user dependency; not required by DeerFlow itself.
+# Example user dependency; not required by nkyel itself.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends graphviz \
     && rm -rf /var/lib/apt/lists/*
@@ -1794,17 +1794,17 @@ Use the custom image in local Docker or Apple Container mode with `sandbox.image
 
 ```yaml
 sandbox:
-  use: deerflow.community.aio_sandbox:AioSandboxProvider
+  use: nkyel.community.aio_sandbox:AioSandboxProvider
   image: your-registry/your-aio-sandbox:tag
 ```
 
 In provisioner mode, sandbox Pods are created by the provisioner service, so configure the provisioner `SANDBOX_IMAGE` environment variable instead of `sandbox.image`. See the [Provisioner Setup Guide](../../docker/provisioner/README.md#custom-sandbox-image).
 
-If you rebuild the runtime from scratch instead of extending the published image, it must expose the same HTTP API used by `agent-sandbox`. DeerFlow currently depends on:
+If you rebuild the runtime from scratch instead of extending the published image, it must expose the same HTTP API used by `agent-sandbox`. nkyel currently depends on:
 
 - `sandbox.get_context()`, including `home_dir`
 - `shell.exec_command(...)`
-- `bash.exec(...)` — only exercised for per-command environment injection (skills that declare `required-secrets`). The `/v1/bash/*` routes exist since upstream all-in-one-sandbox `1.9.3`; on older images (including a `latest` tag still frozen on the `1.0.0.x` line) DeerFlow fails fast with an actionable error instead of surfacing the raw 404. Pin `sandbox.image` to `1.9.3` or newer (e.g. `1.11.0`) and recreate the sandbox container to use `required-secrets` with the AIO sandbox.
+- `bash.exec(...)` — only exercised for per-command environment injection (skills that declare `required-secrets`). The `/v1/bash/*` routes exist since upstream all-in-one-sandbox `1.9.3`; on older images (including a `latest` tag still frozen on the `1.0.0.x` line) nkyel fails fast with an actionable error instead of surfacing the raw 404. Pin `sandbox.image` to `1.9.3` or newer (e.g. `1.11.0`) and recreate the sandbox container to use `required-secrets` with the AIO sandbox.
 - `file.read_file(...)`
 - `file.write_file(...)`, including base64 writes for binary content
 - streamed `file.download_file(...)`
@@ -1815,9 +1815,9 @@ If you rebuild the runtime from scratch instead of extending the published image
 Custom images must also keep these compatibility constraints:
 
 - The container should listen on the configured sandbox port, `8080` by default.
-- `/mnt/user-data` must remain writable because DeerFlow mounts thread workspace, uploads, and outputs there.
-- `home_dir` comes from the sandbox context endpoint; do not assume DeerFlow hardcodes it.
-- Shell command handling must remain compatible with serialized `exec_command` calls. DeerFlow serializes shell access on the host side to avoid corrupting the sandbox's persistent shell session.
+- `/mnt/user-data` must remain writable because nkyel mounts thread workspace, uploads, and outputs there.
+- `home_dir` comes from the sandbox context endpoint; do not assume nkyel hardcodes it.
+- Shell command handling must remain compatible with serialized `exec_command` calls. nkyel serializes shell access on the host side to avoid corrupting the sandbox's persistent shell session.
 
 ### Skills
 
@@ -1839,28 +1839,28 @@ Choose paths from the filesystem of the process that reads them:
 | Setting | Meaning |
 | --- | --- |
 | `skills.path` | Source directory read by the Gateway, containing `public/` and any legacy `custom/` skills. It is not the path the agent uses. |
-| `skills.container_path` | Agent-facing skills root, normally `/mnt/skills`. DeerFlow prepares the enabled skill views beneath this root; do not add a second `sandbox.mounts` entry for skills. |
+| `skills.container_path` | Agent-facing skills root, normally `/mnt/skills`. nkyel prepares the enabled skill views beneath this root; do not add a second `sandbox.mounts` entry for skills. |
 | `sandbox.mounts[].host_path` | Existing absolute source directory. With `LocalSandboxProvider`, it must be visible to the Gateway process. With local AIO Docker, it must be available to the Docker daemon creating the sandbox. |
 | `sandbox.mounts[].container_path` | Absolute POSIX path used by agent tools, such as `/mnt/shared`, on every host OS. Local mode maps it to the source; AIO Docker bind-mounts the source there. |
 
-Skills source resolution is: explicit `skills.path`, then `DEER_FLOW_SKILLS_PATH`,
-then `<project-root>/skills`. The project root is `DEER_FLOW_PROJECT_ROOT` when
+Skills source resolution is: explicit `skills.path`, then `NKYEL_SKILLS_PATH`,
+then `<project-root>/skills`. The project root is `NKYEL_PROJECT_ROOT` when
 set, otherwise the Gateway process's working directory. Relative skill source
 paths use that root, **not the directory containing `config.yaml`**. If the default
 directory is absent, a source checkout also tries its repository `skills/`
 directory. Use an absolute path to remove ambiguity; `~` is not expanded in
 these path fields. Changing `skills.path` does not relocate per-user custom
-skills, which live under `DEER_FLOW_HOME/users/<user-id>/skills/custom/`.
+skills, which live under `NKYEL_HOME/users/<user-id>/skills/custom/`.
 
 For a Gateway running directly on the machine with `LocalSandboxProvider`,
 adapt the two source paths in this example to your platform:
 
 ```yaml
 skills:
-  path: /home/alice/deer-flow/skills
+  path: /home/alice/nkyel/skills
   container_path: /mnt/skills
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
   mounts:
     - host_path: /home/alice/data
       container_path: /mnt/shared
@@ -1869,10 +1869,10 @@ sandbox:
 
 | Gateway environment | Example `skills.path` | Example `sandbox.mounts[].host_path` |
 | --- | --- | --- |
-| Linux | `/home/alice/deer-flow/skills` | `/home/alice/data` |
-| macOS | `/Users/alice/deer-flow/skills` | `/Users/alice/data` |
-| Native Windows Python (including when launched from Git Bash) | `'D:/deer-flow/skills'` | `'D:/data'` |
-| Linux Python inside WSL, using files on Windows drive D | `/mnt/d/deer-flow/skills` | `/mnt/d/data` |
+| Linux | `/home/alice/nkyel/skills` | `/home/alice/data` |
+| macOS | `/Users/alice/nkyel/skills` | `/Users/alice/data` |
+| Native Windows Python (including when launched from Git Bash) | `'D:/nkyel/skills'` | `'D:/data'` |
+| Linux Python inside WSL, using files on Windows drive D | `/mnt/d/nkyel/skills` | `/mnt/d/data` |
 
 Keep both `container_path` values unchanged. For example, an agent reads
 `/mnt/shared/report.csv`; native Windows resolves that to `D:/data/report.csv`,
@@ -1884,10 +1884,10 @@ These are path examples; the [local development prerequisites](../../README.md#o
 still apply, including the documented WSL limitations of the startup scripts.
 
 **Gateway in Docker:** both bundled Compose files mount the repository's
-`skills/` at `/app/skills` and set `DEER_FLOW_PROJECT_ROOT=/app`. Leave
+`skills/` at `/app/skills` and set `NKYEL_PROJECT_ROOT=/app`. Leave
 `skills.path` unset, or use `/app/skills`. To use another host skills directory,
 replace that Gateway volume's source and keep its container destination consistent
-with `skills.path`; a host path such as `D:/deer-flow/skills` is not a path inside
+with `skills.path`; a host path such as `D:/nkyel/skills` is not a path inside
 the Linux Gateway container.
 
 For local-sandbox custom directories, use the two-step [Gateway bind mount
@@ -1902,7 +1902,7 @@ mount examples do not configure Kubernetes PVCs or remote sandbox storage.
 For the AIO provider (including the Kubernetes provisioner) and E2B,
 `skills.container_path` is captured when the provider starts and must be one
 canonical absolute, non-root POSIX path. Do not use redundant separators,
-`.`/`..`, or a path that contains or sits below DeerFlow's reserved mounts
+`.`/`..`, or a path that contains or sits below nkyel's reserved mounts
 (`/mnt/user-data`, `/mnt/acp-workspace`, or `/mnt/integrations/lark-cli`).
 Restart the Gateway after changing it so sandbox identities and mounts use the
 same root. E2B also records the root in remote metadata and refuses to adopt a
@@ -1957,11 +1957,11 @@ The default GitHub API rate limits are quite restrictive. For frequent project r
 
 **Configuration Steps**:
 1. Uncomment the `GITHUB_TOKEN` line in the `.env` file and add your personal access token
-2. Restart the DeerFlow service to apply changes
+2. Restart the nkyel service to apply changes
 
 ## Environment Variables
 
-DeerFlow supports environment variable substitution using the `$` prefix:
+nkyel supports environment variable substitution using the `$` prefix:
 
 ```yaml
 models:
@@ -1987,17 +1987,17 @@ models:
 - `UNBROWSE_API_KEY` - [Unbrowse](https://unbrowse.ai) key for `web_fetch`
 - `YDC_API_KEY` - You.com Search API key for `web_search` (optional: without it the provider uses You.com's keyless free-tier endpoint)
 - `BROWSERLESS_TOKEN` - Browserless token for `web_fetch` (Browserless provider) and `web_capture`, sent as the `token` query parameter (required by Browserless Cloud and by a self-hosted instance started with `TOKEN`)
-- `DEER_FLOW_PROJECT_ROOT` - Project root for relative runtime paths
-- `DEER_FLOW_CONFIG_PATH` - Custom config file path
-- `DEER_FLOW_EXTENSIONS_CONFIG_PATH` - Custom extensions config file path
-- `DEER_FLOW_HOME` - Runtime state directory (defaults to `.deer-flow` under the project root)
-- `DEER_FLOW_CREDENTIALS_KEY` - At-rest encryption key(s) for stored credentials; comma-separate to rotate. See [Credentials encryption key](#credentials-encryption-key-deer_flow_credentials_key)
-- `DEER_FLOW_SKILLS_PATH` - Skills directory when `skills.path` is omitted
+- `NKYEL_PROJECT_ROOT` - Project root for relative runtime paths
+- `NKYEL_CONFIG_PATH` - Custom config file path
+- `NKYEL_EXTENSIONS_CONFIG_PATH` - Custom extensions config file path
+- `NKYEL_HOME` - Runtime state directory (defaults to `.nkyel` under the project root)
+- `NKYEL_CREDENTIALS_KEY` - At-rest encryption key(s) for stored credentials; comma-separate to rotate. See [Credentials encryption key](#credentials-encryption-key-nkyel_credentials_key)
+- `NKYEL_SKILLS_PATH` - Skills directory when `skills.path` is omitted
 - `GATEWAY_ENABLE_DOCS` - Set to `false` to disable Swagger UI (`/docs`), ReDoc (`/redoc`), and OpenAPI schema (`/openapi.json`) endpoints (default: `true`)
 
 ## Backend dotenv selection
 
-Set `DEER_FLOW_ENV_FILE` in the backend process environment **before startup**
+Set `NKYEL_ENV_FILE` in the backend process environment **before startup**
 to load one explicit UTF-8 dotenv file instead of default dotenv discovery.
 Use an absolute path for launches from unrelated directories. Relative paths
 are resolved against the backend process working directory, not the YAML file,
@@ -2013,11 +2013,11 @@ Explicit selection also raises when `PYTHON_DOTENV_DISABLED` is `1`, `true`,
 to resolve the conflict. Without a selector, python-dotenv's normal disable
 behavior is unchanged. Restart after changing the selector or file contents.
 
-`DEER_FLOW_CONFIG_PATH` continues to select YAML independently. For example,
+`NKYEL_CONFIG_PATH` continues to select YAML independently. For example,
 from `backend/`:
 
 ```bash
-DEER_FLOW_ENV_FILE=/srv/deer-flow/stage.env DEER_FLOW_CONFIG_PATH=/srv/deer-flow/stage.yaml make gateway
+NKYEL_ENV_FILE=/srv/nkyel/stage.env NKYEL_CONFIG_PATH=/srv/nkyel/stage.yaml make gateway
 ```
 
 This option covers backend Python startup (including auth and `debug.py`). It
@@ -2030,12 +2030,12 @@ must be configured separately; selecting a dotenv file does not provide them.
 
 ## Production Compose env files
 
-Set `DEER_FLOW_COMPOSE_ENV_FILE` in the launcher environment to select a
+Set `NKYEL_COMPOSE_ENV_FILE` in the launcher environment to select a
 production dotenv file for `make up`, `make down`, and direct
 `./scripts/deploy.sh build|start|down` calls:
 
 ```bash
-DEER_FLOW_COMPOSE_ENV_FILE=/srv/deer-flow/stage.env make up
+NKYEL_COMPOSE_ENV_FILE=/srv/nkyel/stage.env make up
 ```
 
 Relative paths are resolved from the checkout root. The production launcher
@@ -2051,14 +2051,14 @@ For direct Compose calls, use an absolute path and provide both selectors:
 variables.
 
 ```bash
-DEER_FLOW_COMPOSE_ENV_FILE=/srv/deer-flow/stage.env \
-  docker compose --env-file /srv/deer-flow/stage.env \
+NKYEL_COMPOSE_ENV_FILE=/srv/nkyel/stage.env \
+  docker compose --env-file /srv/nkyel/stage.env \
   -f docker/docker-compose.yaml config
 ```
 
 Existing shell variables retain Compose's precedence. Export
-`DEER_FLOW_CONFIG_PATH`, `DEER_FLOW_EXTENSIONS_CONFIG_PATH`, and
-`DEER_FLOW_HOME` independently when choosing different configuration and state
+`NKYEL_CONFIG_PATH`, `NKYEL_EXTENSIONS_CONFIG_PATH`, and
+`NKYEL_HOME` independently when choosing different configuration and state
 locations. This is a production Docker file-selection option. `make start` uses
 the local
 `serve.sh --prod` launcher, and `make docker-*` uses Docker development; those
@@ -2066,33 +2066,33 @@ commands keep their repo-root `.env` handling.
 `frontend/.env`, project/container names, database separation, and tenant
 isolation are not changed. Stop an existing stack before switching its profile.
 Keep credential-bearing profiles outside the checkout or in local Git exclusions.
-`DEER_FLOW_ENV_FILE` remains the separate backend Python dotenv selector.
+`NKYEL_ENV_FILE` remains the separate backend Python dotenv selector.
 
 ## Configuration Location
 
-The configuration file should be placed in the **project root directory** (`deer-flow/config.yaml`). Set `DEER_FLOW_PROJECT_ROOT` when the process may start from another working directory, or set `DEER_FLOW_CONFIG_PATH` to point at a specific file.
+The configuration file should be placed in the **project root directory** (`nkyel/config.yaml`). Set `NKYEL_PROJECT_ROOT` when the process may start from another working directory, or set `NKYEL_CONFIG_PATH` to point at a specific file.
 
 ## Configuration Priority
 
-DeerFlow searches for configuration in this order:
+nkyel searches for configuration in this order:
 
 1. Path specified in code via `config_path` argument
-2. Path from `DEER_FLOW_CONFIG_PATH` environment variable
-3. `config.yaml` under `DEER_FLOW_PROJECT_ROOT`, or under the current working directory when `DEER_FLOW_PROJECT_ROOT` is unset
+2. Path from `NKYEL_CONFIG_PATH` environment variable
+3. `config.yaml` under `NKYEL_PROJECT_ROOT`, or under the current working directory when `NKYEL_PROJECT_ROOT` is unset
 4. Legacy backend/repository-root locations for monorepo compatibility
 
 ## Security Notes
 ### Sandbox Isolation and the Docker Socket (DooD)
 
-DeerFlow executes agent-generated shell/code through a configurable sandbox
+nkyel executes agent-generated shell/code through a configurable sandbox
 (`sandbox.use` in `config.yaml`). The isolation guarantees differ by mode, and
 one mode requires mounting the host Docker socket. Understand the trade-offs
 before exposing an instance to untrusted input.
 
 | Mode | `config.yaml` | Host Docker socket | Isolation |
 |------|---------------|--------------------|-----------|
-| `local` (default) | `deerflow.sandbox.local:LocalSandboxProvider` | Not mounted | Commands run **inside the gateway container** on its filesystem. Not a strong boundary — `allow_host_bash` is `false` by default and should stay off for untrusted workloads. |
-| `aio` (pure DooD) | `deerflow.community.aio_sandbox:AioSandboxProvider` (no `provisioner_url`) | **Mounted** (opt-in overlay) | Sandbox containers are started via the host Docker daemon. |
+| `local` (default) | `nkyel.sandbox.local:LocalSandboxProvider` | Not mounted | Commands run **inside the gateway container** on its filesystem. Not a strong boundary — `allow_host_bash` is `false` by default and should stay off for untrusted workloads. |
+| `aio` (pure DooD) | `nkyel.community.aio_sandbox:AioSandboxProvider` (no `provisioner_url`) | **Mounted** (opt-in overlay) | Sandbox containers are started via the host Docker daemon. |
 | `provisioner` (Kubernetes) | `AioSandboxProvider` + `provisioner_url` | Not mounted | Sandbox pods are created through the provisioner's K8s API over HTTP. Strongest isolation. |
 
 #### The Docker socket is host root
@@ -2100,7 +2100,7 @@ before exposing an instance to untrusted input.
 Mounting `/var/run/docker.sock` into a container grants that container
 **root-equivalent control of the host**: anything able to reach the socket can
 start a new container that bind-mounts the host filesystem and escape. This
-matters for DeerFlow because the gateway executes model-generated commands, so a
+matters for nkyel because the gateway executes model-generated commands, so a
 prompt injection or any in-container code-execution primitive could pivot to the
 host through the socket.
 
@@ -2123,7 +2123,7 @@ To keep this off the default attack surface:
 
 ### CLI Credential Mounts (Claude Code / Codex / MiniMax Code)
 
-DeerFlow can reuse your Claude Code / Codex CLI subscription login as a model
+nkyel can reuse your Claude Code / Codex CLI subscription login as a model
 provider (`ClaudeChatModel`, the Codex provider) or for ACP agents that run the
 CLI in-container. The Compose stack used to bind-mount the **entire** `~/.claude`
 and `~/.codex` directories (read-only) into the gateway container in **every**
@@ -2142,7 +2142,7 @@ with the least exposure that fits your setup:
 
 The Gateway credential loader checks environment variables **before** the
 default credential files, so the env-token paths need no bind mount at all. ACP
-adapters authenticate independently of DeerFlow via their own documented env —
+adapters authenticate independently of nkyel via their own documented env —
 for example the common `claude-code-acp` adapter starts as
 `ANTHROPIC_API_KEY=… claude-code-acp` and honors `CLAUDE_CONFIG_DIR` to redirect
 its config directory, so it needs no `~/.claude` mount at all. Prefer the
@@ -2155,7 +2155,7 @@ Gateway runs, install it with `npm install --global @minimax-ai/code`, run
 `mcode login`, and configure `acp_agents.mcode` with `command: mcode` and
 `args: ["acp"]`. The executable and its authenticated runtime must be available
 inside the Gateway environment; a host-only installation is not visible to a
-Docker container. DeerFlow forwards enabled MCP servers to the MCode session.
+Docker container. nkyel forwards enabled MCP servers to the MCode session.
 Leave `auto_approve_permissions` disabled for untrusted tasks, and enable it
 only when the agent is expected to edit files or run commands for a trusted
 task.
@@ -2163,7 +2163,7 @@ task.
 
 ## Best Practices
 
-1. **Place `config.yaml` in project root** - Set `DEER_FLOW_PROJECT_ROOT` if the runtime starts elsewhere
+1. **Place `config.yaml` in project root** - Set `NKYEL_PROJECT_ROOT` if the runtime starts elsewhere
 2. **Never commit `config.yaml`** - It's already in `.gitignore`
 3. **Use environment variables for secrets** - Don't hardcode API keys
 4. **Keep `config.example.yaml` updated** - Document all new options
@@ -2173,18 +2173,18 @@ task.
 ## Troubleshooting
 
 ### "Config file not found"
-- Ensure `config.yaml` exists in the **project root** directory (`deer-flow/config.yaml`)
-- If the runtime starts outside the project root, set `DEER_FLOW_PROJECT_ROOT`
-- Alternatively, set `DEER_FLOW_CONFIG_PATH` environment variable to custom location
+- Ensure `config.yaml` exists in the **project root** directory (`nkyel/config.yaml`)
+- If the runtime starts outside the project root, set `NKYEL_PROJECT_ROOT`
+- Alternatively, set `NKYEL_CONFIG_PATH` environment variable to custom location
 
 ### "Invalid API key"
 - Verify environment variables are set correctly
 - Check that `$` prefix is used for env var references
 
 ### "Skills not loading"
-- Check that `deer-flow/skills/` directory exists
+- Check that `nkyel/skills/` directory exists
 - Verify skills have valid `SKILL.md` files
-- Check `skills.path` or `DEER_FLOW_SKILLS_PATH` if using a custom path
+- Check `skills.path` or `NKYEL_SKILLS_PATH` if using a custom path
 
 ### "Docker sandbox fails to start"
 - Ensure Docker is running

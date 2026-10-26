@@ -8,7 +8,7 @@ from support.postgres import asyncpg_test_url
 @pytest.mark.parametrize("scheme", ["postgres", "postgresql", "postgresql+asyncpg"])
 @pytest.mark.parametrize("sslmode", [None, "disable", "allow", "prefer", "require", "verify-ca", "verify-full"])
 def test_asyncpg_test_url_preserves_tls_credentials_and_other_options(scheme, sslmode):
-    uri = f"{scheme}://user:p%40ss%2Fword@localhost:5432/deerflow_test?target_session_attrs=read-write&channel_binding=prefer"
+    uri = f"{scheme}://user:p%40ss%2Fword@localhost:5432/nkyel_test?target_session_attrs=read-write&channel_binding=prefer"
     if sslmode is not None:
         uri += f"&sslmode={sslmode}"
     url = make_url(asyncpg_test_url(uri))

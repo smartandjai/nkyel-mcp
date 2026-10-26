@@ -48,7 +48,7 @@ PROVISIONER_VALUES = [
 ]
 
 
-def _sandbox_config(value: str | None, provider: str = "deerflow.community.aio_sandbox:AioSandboxProvider") -> str:
+def _sandbox_config(value: str | None, provider: str = "nkyel.community.aio_sandbox:AioSandboxProvider") -> str:
     config = f"sandbox:\n  use: {provider}\n"
     return config if value is None else config + f"  provisioner_url: {value}\n"
 
@@ -74,7 +74,7 @@ set -eu
 SCRIPT_DIR={shlex.quote(str(REPO_ROOT / "scripts"))}
 REPO_ROOT={shlex.quote(str(REPO_ROOT))}
 PROJECT_ROOT={shlex.quote(str(tmp_path))}
-DEER_FLOW_CONFIG_PATH={shlex.quote(str(config_path))}
+NKYEL_CONFIG_PATH={shlex.quote(str(config_path))}
 {match.group()}
 detect_sandbox_mode
 """
@@ -111,8 +111,8 @@ def test_provisioner_helper_scalar_detection(value, expected, tmp_path):
     "config",
     [
         None,
-        _sandbox_config("null", "deerflow.sandbox.local:LocalSandboxProvider"),
-        _sandbox_config("http://provisioner:8002", "deerflow.sandbox.local:LocalSandboxProvider"),
+        _sandbox_config("null", "nkyel.sandbox.local:LocalSandboxProvider"),
+        _sandbox_config("http://provisioner:8002", "nkyel.sandbox.local:LocalSandboxProvider"),
         _sandbox_config("http://provisioner:8002", "custom:UnknownProvider"),
     ],
 )
@@ -150,7 +150,7 @@ def test_provisioner_start_selects_services_and_overlay(script_name, value, expe
         (checkout / filename).write_text("# synthetic, no credentials\n", encoding="utf-8")
     extensions = checkout / "extensions_config.json"
     extensions.write_text("{}\n", encoding="utf-8")
-    config = _sandbox_config(value, "deerflow.sandbox.local:LocalSandboxProvider") if expected == "local" else _sandbox_config(value)
+    config = _sandbox_config(value, "nkyel.sandbox.local:LocalSandboxProvider") if expected == "local" else _sandbox_config(value)
     root_config = checkout / "config.yaml"
     selected_config = checkout / "selected config.yaml"
     # Dev must keep using PROJECT_ROOT/config.yaml; prod must honor its selector.
@@ -184,12 +184,12 @@ openssl() { return 97; }
     env.update(
         BASH_ENV=str(shell_env),
         CAPTURE_COMPOSE_ARGS=str(capture),
-        DEER_FLOW_HOME=str(tmp_path / "runtime"),
-        DEER_FLOW_CONFIG_PATH=str(selected_config),
-        DEER_FLOW_EXTENSIONS_CONFIG_PATH=str(extensions),
+        NKYEL_HOME=str(tmp_path / "runtime"),
+        NKYEL_CONFIG_PATH=str(selected_config),
+        NKYEL_EXTENSIONS_CONFIG_PATH=str(extensions),
         BETTER_AUTH_SECRET="synthetic-test-secret",
-        DEER_FLOW_INTERNAL_AUTH_TOKEN="synthetic-test-token",
-        DEER_FLOW_CREDENTIALS_KEY="synthetic-test-key",
+        NKYEL_INTERNAL_AUTH_TOKEN="synthetic-test-token",
+        NKYEL_CREDENTIALS_KEY="synthetic-test-key",
         UV_EXTRAS="redis",
     )
     result = subprocess.run([BASH_EXECUTABLE, str(checkout / "scripts" / script_name), "start"], cwd=tmp_path, env=env, capture_output=True, text=True, encoding="utf-8", timeout=15)
@@ -245,7 +245,7 @@ def test_detect_mode_local_provider():
     """Local sandbox provider should map to local mode."""
     config = """
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
 """.strip()
 
     assert _detect_mode_with_config(config) == "local"
@@ -255,7 +255,7 @@ def test_detect_mode_aio_without_provisioner_url():
     """AIO sandbox without provisioner_url should map to aio mode."""
     config = """
 sandbox:
-  use: deerflow.community.aio_sandbox:AioSandboxProvider
+  use: nkyel.community.aio_sandbox:AioSandboxProvider
 """.strip()
 
     assert _detect_mode_with_config(config) == "aio"
@@ -265,7 +265,7 @@ def test_detect_mode_provisioner_with_url():
     """AIO sandbox with provisioner_url should map to provisioner mode."""
     config = """
 sandbox:
-  use: deerflow.community.aio_sandbox:AioSandboxProvider
+  use: nkyel.community.aio_sandbox:AioSandboxProvider
   provisioner_url: http://provisioner:8002
 """.strip()
 
@@ -276,7 +276,7 @@ def test_detect_mode_ignores_commented_provisioner_url():
     """Commented provisioner_url should not activate provisioner mode."""
     config = """
 sandbox:
-  use: deerflow.community.aio_sandbox:AioSandboxProvider
+  use: nkyel.community.aio_sandbox:AioSandboxProvider
   # provisioner_url: http://provisioner:8002
 """.strip()
 
@@ -331,7 +331,7 @@ require_compose_version() {{ :; }}
 
 
 @pytest.mark.parametrize("docker_command", ["logs --gateway", "stop", "restart"])
-def test_compose_commands_set_deer_flow_root_before_compose(docker_command):
+def test_compose_commands_set_nkyel_root_before_compose(docker_command):
     """Read-only compose commands should resolve mounts from the repository root."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_root = Path(tmpdir)
@@ -340,8 +340,8 @@ def test_compose_commands_set_deer_flow_root_before_compose(docker_command):
             tmp_root,
             f"""
 COMPOSE_CMD=capture_compose
-capture_compose() {{ test "${{DEER_FLOW_ROOT:-}}" = "$PROJECT_ROOT"; }}
-unset DEER_FLOW_ROOT
+capture_compose() {{ test "${{NKYEL_ROOT:-}}" = "$PROJECT_ROOT"; }}
+unset NKYEL_ROOT
 {docker_command}
 """,
         )
@@ -474,7 +474,7 @@ docker-compose() {{
   # Real wrapper ops (down/logs/...) must hit this binary, not `docker compose`.
   printf '%s\n' "$*" > '{marker}'
 }}
-unset DEER_FLOW_ROOT
+unset NKYEL_ROOT
 stop
 """
         result = subprocess.run(
@@ -517,8 +517,8 @@ require_compose_version
 def test_logs_prod_targets_production_stack(args):
     """`logs --prod` must tail the stack deploy.sh started, not the dev project.
 
-    `make up` runs scripts/deploy.sh (project `deer-flow`, docker-compose.yaml)
-    while the dev default is project `deer-flow-dev`, so `make docker-logs`
+    `make up` runs scripts/deploy.sh (project `nkyel`, docker-compose.yaml)
+    while the dev default is project `nkyel-dev`, so `make docker-logs`
     after `make up` printed nothing (#5529). The production entry point must
     target the same project and interpolate the same .env.
 
@@ -541,27 +541,27 @@ docker() {{
     return 0
   fi
   if [ "$1" = compose ]; then
-    printf '%s\\n' "$*" "DEER_FLOW_HOME=${{DEER_FLOW_HOME:-unset}}" > '{marker}'
+    printf '%s\\n' "$*" "NKYEL_HOME=${{NKYEL_HOME:-unset}}" > '{marker}'
     return 0
   fi
   command docker "$@"
 }}
-unset DEER_FLOW_ROOT DEER_FLOW_HOME DEER_FLOW_CONFIG_PATH
-unset DEER_FLOW_EXTENSIONS_CONFIG_PATH DEER_FLOW_REPO_ROOT
-unset BETTER_AUTH_SECRET DEER_FLOW_INTERNAL_AUTH_TOKEN
+unset NKYEL_ROOT NKYEL_HOME NKYEL_CONFIG_PATH
+unset NKYEL_EXTENSIONS_CONFIG_PATH NKYEL_REPO_ROOT
+unset BETTER_AUTH_SECRET NKYEL_INTERNAL_AUTH_TOKEN
 {args}
 """
         subprocess.check_call([BASH_EXECUTABLE, "-lc", command])
 
         recorded = marker.read_text(encoding="utf-8")
-        assert "-p deer-flow " in recorded, recorded
+        assert "-p nkyel " in recorded, recorded
         assert "-f docker-compose.yaml" in recorded, recorded
         assert "--env-file ../.env" in recorded, recorded
         assert "logs" in recorded, recorded
         # deploy.sh exports interpolation defaults before every compose call;
         # `logs --prod` must too, or the volume specs fail to parse.
-        assert "DEER_FLOW_HOME=" in recorded, recorded
-        assert "DEER_FLOW_HOME=unset" not in recorded, recorded
+        assert "NKYEL_HOME=" in recorded, recorded
+        assert "NKYEL_HOME=unset" not in recorded, recorded
 
 
 def test_logs_without_dev_containers_hints_at_prod_logs():
@@ -576,7 +576,7 @@ PROJECT_ROOT='{tmp_root}'
 DOCKER_DIR='{tmp_root}'
 require_compose_version() {{ :; }}
 COMPOSE_CMD=true
-unset DEER_FLOW_ROOT
+unset NKYEL_ROOT
 logs
 """
         result = subprocess.run(
@@ -597,7 +597,7 @@ def test_aio_dood_socket_preflight_allows_windows_when_docker_reachable():
         _seed_compose_file(tmp_root)
         _seed_env_examples(tmp_root)
         (tmp_root / "config.yaml").write_text(
-            "sandbox:\n  use: deerflow.community.aio_sandbox:AioSandboxProvider\n",
+            "sandbox:\n  use: nkyel.community.aio_sandbox:AioSandboxProvider\n",
             encoding="utf-8",
         )
         command = f"""
@@ -612,7 +612,7 @@ docker() {{
   fi
   return 0
 }}
-DEER_FLOW_DOCKER_SOCKET='/var/run/docker.sock'
+NKYEL_DOCKER_SOCKET='/var/run/docker.sock'
 COMPOSE_CMD=echo
 start
 """
@@ -634,7 +634,7 @@ def test_aio_dood_socket_preflight_rejects_missing_socket_on_posix():
         _seed_compose_file(tmp_root)
         _seed_env_examples(tmp_root)
         (tmp_root / "config.yaml").write_text(
-            "sandbox:\n  use: deerflow.community.aio_sandbox:AioSandboxProvider\n",
+            "sandbox:\n  use: nkyel.community.aio_sandbox:AioSandboxProvider\n",
             encoding="utf-8",
         )
         command = f"""
@@ -643,7 +643,7 @@ PROJECT_ROOT='{tmp_root}'
 DOCKER_DIR='{tmp_root}'
 require_compose_version() {{ :; }}
 uname() {{ echo 'Linux'; }}
-DEER_FLOW_DOCKER_SOCKET='/nonexistent/docker.sock'
+NKYEL_DOCKER_SOCKET='/nonexistent/docker.sock'
 COMPOSE_CMD=echo
 start
 """
@@ -661,9 +661,9 @@ start
 @pytest.mark.parametrize(
     ("sandbox_provider", "expected_profile"),
     [
-        ("deerflow.sandbox.local:LocalSandboxProvider", False),
+        ("nkyel.sandbox.local:LocalSandboxProvider", False),
         (
-            "deerflow.community.aio_sandbox:AioSandboxProvider\n  provisioner_url: http://provisioner:8002",
+            "nkyel.community.aio_sandbox:AioSandboxProvider\n  provisioner_url: http://provisioner:8002",
             True,
         ),
     ],
@@ -719,7 +719,7 @@ def test_aio_dood_socket_preflight_rejects_missing_custom_socket_on_windows():
         _seed_compose_file(tmp_root)
         _seed_env_examples(tmp_root)
         (tmp_root / "config.yaml").write_text(
-            "sandbox:\n  use: deerflow.community.aio_sandbox:AioSandboxProvider\n",
+            "sandbox:\n  use: nkyel.community.aio_sandbox:AioSandboxProvider\n",
             encoding="utf-8",
         )
         command = f"""
@@ -734,7 +734,7 @@ docker() {{
   fi
   return 0
 }}
-DEER_FLOW_DOCKER_SOCKET='/nonexistent/docker.sock'
+NKYEL_DOCKER_SOCKET='/nonexistent/docker.sock'
 COMPOSE_CMD=echo
 start
 """
@@ -760,7 +760,7 @@ def test_aio_dood_socket_preflight_rejects_windows_when_docker_unreachable():
         _seed_compose_file(tmp_root)
         _seed_env_examples(tmp_root)
         (tmp_root / "config.yaml").write_text(
-            "sandbox:\n  use: deerflow.community.aio_sandbox:AioSandboxProvider\n",
+            "sandbox:\n  use: nkyel.community.aio_sandbox:AioSandboxProvider\n",
             encoding="utf-8",
         )
         command = f"""
@@ -775,7 +775,7 @@ docker() {{
   fi
   return 0
 }}
-DEER_FLOW_DOCKER_SOCKET='/var/run/docker.sock'
+NKYEL_DOCKER_SOCKET='/var/run/docker.sock'
 COMPOSE_CMD=echo
 start
 """
@@ -796,7 +796,7 @@ def _setup_deploy_worktree(tmp_path: Path) -> Path:
     shutil.copytree(REPO_ROOT / "docker", worktree / "docker")
     (worktree / "backend").mkdir()
     (worktree / "config.yaml").write_text(
-        "sandbox:\n  use: deerflow.community.aio_sandbox:AioSandboxProvider\n",
+        "sandbox:\n  use: nkyel.community.aio_sandbox:AioSandboxProvider\n",
         encoding="utf-8",
     )
     (worktree / "extensions_config.json").write_text("{}\n", encoding="utf-8")
@@ -823,10 +823,10 @@ def test_aio_deploy_socket_preflight_allows_windows_when_docker_reachable(tmp_pa
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["BASH_ENV"] = str(bash_env)
-    env["DEER_FLOW_DOCKER_SOCKET"] = "/var/run/docker.sock"
+    env["NKYEL_DOCKER_SOCKET"] = "/var/run/docker.sock"
     env["BETTER_AUTH_SECRET"] = "test-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-token"
-    env["DEER_FLOW_CREDENTIALS_KEY"] = "test-credentials-key"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-token"
+    env["NKYEL_CREDENTIALS_KEY"] = "test-credentials-key"
     env["UV_EXTRAS"] = "redis"
 
     result = subprocess.run(
@@ -849,10 +849,10 @@ def test_aio_deploy_socket_preflight_rejects_missing_socket_on_posix(tmp_path):
 
     env = os.environ.copy()
     env["BASH_ENV"] = str(bash_env)
-    env["DEER_FLOW_DOCKER_SOCKET"] = "/nonexistent/docker.sock"
+    env["NKYEL_DOCKER_SOCKET"] = "/nonexistent/docker.sock"
     env["BETTER_AUTH_SECRET"] = "test-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-token"
-    env["DEER_FLOW_CREDENTIALS_KEY"] = "test-credentials-key"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-token"
+    env["NKYEL_CREDENTIALS_KEY"] = "test-credentials-key"
     env["UV_EXTRAS"] = "redis"
 
     result = subprocess.run(
@@ -885,10 +885,10 @@ def test_aio_deploy_socket_preflight_rejects_missing_custom_socket_on_windows(tm
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["BASH_ENV"] = str(bash_env)
-    env["DEER_FLOW_DOCKER_SOCKET"] = "/nonexistent/docker.sock"
+    env["NKYEL_DOCKER_SOCKET"] = "/nonexistent/docker.sock"
     env["BETTER_AUTH_SECRET"] = "test-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-token"
-    env["DEER_FLOW_CREDENTIALS_KEY"] = "test-credentials-key"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-token"
+    env["NKYEL_CREDENTIALS_KEY"] = "test-credentials-key"
     env["UV_EXTRAS"] = "redis"
 
     result = subprocess.run(
@@ -922,10 +922,10 @@ def test_aio_deploy_socket_preflight_rejects_windows_when_docker_unreachable(tmp
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["BASH_ENV"] = str(bash_env)
-    env["DEER_FLOW_DOCKER_SOCKET"] = "/var/run/docker.sock"
+    env["NKYEL_DOCKER_SOCKET"] = "/var/run/docker.sock"
     env["BETTER_AUTH_SECRET"] = "test-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-token"
-    env["DEER_FLOW_CREDENTIALS_KEY"] = "test-credentials-key"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-token"
+    env["NKYEL_CREDENTIALS_KEY"] = "test-credentials-key"
     env["UV_EXTRAS"] = "redis"
 
     result = subprocess.run(
@@ -948,7 +948,7 @@ def test_aio_deploy_socket_unsets_default_on_windows(tmp_path):
     capture_socket_env = tmp_path / "docker_socket_env.txt"
     docker = bin_dir / "docker"
     docker.write_text(
-        f'#!/usr/bin/env sh\nif [ "$1" = "info" ]; then exit 0; fi\nprintf "%s" "$DEER_FLOW_DOCKER_SOCKET" > "{capture_socket_env}"\nexit 0\n',
+        f'#!/usr/bin/env sh\nif [ "$1" = "info" ]; then exit 0; fi\nprintf "%s" "$NKYEL_DOCKER_SOCKET" > "{capture_socket_env}"\nexit 0\n',
         encoding="utf-8",
     )
     docker.chmod(0o755)
@@ -959,10 +959,10 @@ def test_aio_deploy_socket_unsets_default_on_windows(tmp_path):
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["BASH_ENV"] = str(bash_env)
-    env["DEER_FLOW_DOCKER_SOCKET"] = "/var/run/docker.sock"
+    env["NKYEL_DOCKER_SOCKET"] = "/var/run/docker.sock"
     env["BETTER_AUTH_SECRET"] = "test-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-token"
-    env["DEER_FLOW_CREDENTIALS_KEY"] = "test-credentials-key"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-token"
+    env["NKYEL_CREDENTIALS_KEY"] = "test-credentials-key"
     env["UV_EXTRAS"] = "redis"
 
     result = subprocess.run(
@@ -985,7 +985,7 @@ def test_aio_deploy_socket_preserves_unset_default_on_windows(tmp_path):
     capture_socket_env = tmp_path / "docker_socket_env.txt"
     docker = bin_dir / "docker"
     docker.write_text(
-        f'#!/usr/bin/env sh\nif [ "$1" = "info" ]; then exit 0; fi\nprintf "%s" "$DEER_FLOW_DOCKER_SOCKET" > "{capture_socket_env}"\nexit 0\n',
+        f'#!/usr/bin/env sh\nif [ "$1" = "info" ]; then exit 0; fi\nprintf "%s" "$NKYEL_DOCKER_SOCKET" > "{capture_socket_env}"\nexit 0\n',
         encoding="utf-8",
     )
     docker.chmod(0o755)
@@ -996,10 +996,10 @@ def test_aio_deploy_socket_preserves_unset_default_on_windows(tmp_path):
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["BASH_ENV"] = str(bash_env)
-    env.pop("DEER_FLOW_DOCKER_SOCKET", None)
+    env.pop("NKYEL_DOCKER_SOCKET", None)
     env["BETTER_AUTH_SECRET"] = "test-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-token"
-    env["DEER_FLOW_CREDENTIALS_KEY"] = "test-credentials-key"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-token"
+    env["NKYEL_CREDENTIALS_KEY"] = "test-credentials-key"
     env["UV_EXTRAS"] = "redis"
 
     result = subprocess.run(
@@ -1015,14 +1015,14 @@ def test_aio_deploy_socket_preserves_unset_default_on_windows(tmp_path):
 
 
 def test_aio_deploy_socket_preserves_custom_socket_on_windows(tmp_path):
-    """deploy.sh preserves and exports custom DEER_FLOW_DOCKER_SOCKET on Windows."""
+    """deploy.sh preserves and exports custom NKYEL_DOCKER_SOCKET on Windows."""
     worktree = _setup_deploy_worktree(tmp_path)
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     capture_socket_env = tmp_path / "docker_socket_env.txt"
     docker = bin_dir / "docker"
     docker.write_text(
-        f'#!/usr/bin/env sh\nif [ "$1" = "info" ]; then exit 0; fi\nprintf "%s" "$DEER_FLOW_DOCKER_SOCKET" > "{capture_socket_env}"\nexit 0\n',
+        f'#!/usr/bin/env sh\nif [ "$1" = "info" ]; then exit 0; fi\nprintf "%s" "$NKYEL_DOCKER_SOCKET" > "{capture_socket_env}"\nexit 0\n',
         encoding="utf-8",
     )
     docker.chmod(0o755)
@@ -1036,10 +1036,10 @@ def test_aio_deploy_socket_preserves_custom_socket_on_windows(tmp_path):
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["BASH_ENV"] = str(bash_env)
-    env["DEER_FLOW_DOCKER_SOCKET"] = "/custom/docker.sock"
+    env["NKYEL_DOCKER_SOCKET"] = "/custom/docker.sock"
     env["BETTER_AUTH_SECRET"] = "test-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-token"
-    env["DEER_FLOW_CREDENTIALS_KEY"] = "test-credentials-key"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-token"
+    env["NKYEL_CREDENTIALS_KEY"] = "test-credentials-key"
     env["UV_EXTRAS"] = "redis"
 
     result = subprocess.run(
@@ -1055,15 +1055,15 @@ def test_aio_deploy_socket_preserves_custom_socket_on_windows(tmp_path):
 
 
 def test_aio_deploy_socket_reads_from_dotenv(tmp_path):
-    """deploy.sh resolves DEER_FLOW_DOCKER_SOCKET from .env when unset in shell environment."""
+    """deploy.sh resolves NKYEL_DOCKER_SOCKET from .env when unset in shell environment."""
     worktree = _setup_deploy_worktree(tmp_path)
-    (worktree / ".env").write_text("DEER_FLOW_DOCKER_SOCKET=/var/run/docker.sock\n", encoding="utf-8")
+    (worktree / ".env").write_text("NKYEL_DOCKER_SOCKET=/var/run/docker.sock\n", encoding="utf-8")
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     capture_socket_env = tmp_path / "docker_socket_env.txt"
     docker = bin_dir / "docker"
     docker.write_text(
-        f'#!/usr/bin/env sh\nif [ "$1" = "info" ]; then exit 0; fi\nprintf "%s" "$DEER_FLOW_DOCKER_SOCKET" > "{capture_socket_env}"\nexit 0\n',
+        f'#!/usr/bin/env sh\nif [ "$1" = "info" ]; then exit 0; fi\nprintf "%s" "$NKYEL_DOCKER_SOCKET" > "{capture_socket_env}"\nexit 0\n',
         encoding="utf-8",
     )
     docker.chmod(0o755)
@@ -1074,10 +1074,10 @@ def test_aio_deploy_socket_reads_from_dotenv(tmp_path):
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["BASH_ENV"] = str(bash_env)
-    env.pop("DEER_FLOW_DOCKER_SOCKET", None)
+    env.pop("NKYEL_DOCKER_SOCKET", None)
     env["BETTER_AUTH_SECRET"] = "test-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-token"
-    env["DEER_FLOW_CREDENTIALS_KEY"] = "test-credentials-key"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-token"
+    env["NKYEL_CREDENTIALS_KEY"] = "test-credentials-key"
     env["UV_EXTRAS"] = "redis"
 
     result = subprocess.run(

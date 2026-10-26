@@ -126,7 +126,7 @@ for (const source of ["default", "custom-toolbar", "custom-sidebar"]) {
         "access-control-allow-credentials": "true",
         "access-control-allow-methods": "GET, POST, OPTIONS",
         "access-control-allow-headers":
-          "content-type, x-deerflow-plugin-viewer, x-csrf-token",
+          "content-type, x-nkyel-plugin-viewer, x-csrf-token",
       };
       if (route.request().method() === "OPTIONS") {
         await route.fulfill({ status: 204, headers: cors });
@@ -489,7 +489,7 @@ for (const locale of ["en-US", "zh-CN"]) {
       page.getByRole("link", {
         name: zh ? "查看安装说明" : "Installation guide",
       }),
-    ).toHaveAttribute("href", /deerflow-extension-weknora#readme$/);
+    ).toHaveAttribute("href", /nkyel-extension-weknora#readme$/);
     await page
       .getByRole("button", {
         name: zh ? "全部扩展" : "All extensions",
@@ -519,7 +519,7 @@ for (const locale of ["en-US", "zh-CN"]) {
       page.getByRole("link", {
         name: zh ? "查看安装说明" : "Installation guide",
       }),
-    ).toHaveAttribute("href", /deerflow-extension-knowledge#readme$/);
+    ).toHaveAttribute("href", /nkyel-extension-knowledge#readme$/);
     await page
       .getByRole("button", {
         name: zh ? "全部扩展" : "All extensions",
@@ -545,7 +545,7 @@ for (const locale of ["en-US", "zh-CN"]) {
       page.getByRole("link", {
         name: zh ? "查看安装说明" : "Installation guide",
       }),
-    ).toHaveAttribute("href", /deerflow-extension-workflows#readme$/);
+    ).toHaveAttribute("href", /nkyel-extension-workflows#readme$/);
     await page
       .getByRole("button", {
         name: zh ? "全部扩展" : "All extensions",
@@ -582,7 +582,7 @@ for (const locale of ["en-US", "zh-CN"]) {
       page.getByRole("link", {
         name: zh ? "查看安装说明" : "Installation guide",
       }),
-    ).toHaveAttribute("href", /deerflow-extension-agent-teams#readme$/);
+    ).toHaveAttribute("href", /nkyel-extension-agent-teams#readme$/);
     await page
       .getByRole("button", {
         name: zh ? "全部扩展" : "All extensions",
@@ -593,7 +593,7 @@ for (const locale of ["en-US", "zh-CN"]) {
       .getByPlaceholder(
         zh ? "按名称或用途搜索扩展" : "Search extensions by name or purpose",
       )
-      .fill("deerflow-extension-retrieval");
+      .fill("nkyel-extension-retrieval");
     await expect(page.getByRole("article")).toHaveCount(1);
     await page
       .getByRole("button", {
@@ -611,7 +611,7 @@ for (const locale of ["en-US", "zh-CN"]) {
       page.getByRole("link", {
         name: zh ? "查看安装说明" : "Installation guide",
       }),
-    ).toHaveAttribute("href", /deerflow-extension-retrieval#readme$/);
+    ).toHaveAttribute("href", /nkyel-extension-retrieval#readme$/);
     await page
       .getByRole("button", {
         name: zh ? "全部扩展" : "All extensions",
@@ -634,7 +634,7 @@ for (const locale of ["en-US", "zh-CN"]) {
       page.getByRole("link", {
         name: zh ? "查看安装说明" : "Installation guide",
       }),
-    ).toHaveAttribute("href", /deerflow-extension-jev-screening#readme$/);
+    ).toHaveAttribute("href", /nkyel-extension-jev-screening#readme$/);
     await page
       .getByRole("button", {
         name: zh ? "全部扩展" : "All extensions",
@@ -707,5 +707,5 @@ test("catalog remains discoverable when runtime discovery fails", async ({
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Installation guide" }),
-  ).toHaveAttribute("href", /deerflow-extension-knowledge#readme$/);
+  ).toHaveAttribute("href", /nkyel-extension-knowledge#readme$/);
 });

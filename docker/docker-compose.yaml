@@ -1,4 +1,4 @@
-# DeerFlow Production Environment
+# nkyel Production Environment
 # Usage: make up
 #
 # Requires Docker Compose >= 2.24. ../.env and ../frontend/.env are gitignored,
@@ -15,16 +15,16 @@
 #   - provisioner: (optional) Sandbox provisioner for Kubernetes mode
 #
 # Key environment variables (set via environment/.env or scripts/deploy.sh):
-#   DEER_FLOW_PROJECT_ROOT           — project root for relative runtime paths
-#   DEER_FLOW_HOME                   — runtime data dir, default .deer-flow under $DEER_FLOW_PROJECT_ROOT (or cwd)
-#   DEER_FLOW_CONFIG_PATH            — path to config.yaml
-#   DEER_FLOW_EXTENSIONS_CONFIG_PATH — path to extensions_config.json
-#   DEER_FLOW_SKILLS_PATH            — skills dir, default $DEER_FLOW_PROJECT_ROOT/skills
-#   DEER_FLOW_DOCKER_SOCKET          — Docker socket path for aio/DooD mode, default /var/run/docker.sock (used only by the opt-in docker-compose.dood.yaml overlay)
-#   DEER_FLOW_REPO_ROOT              — repo root (used for skills host path in DooD)
+#   NKYEL_PROJECT_ROOT           — project root for relative runtime paths
+#   NKYEL_HOME                   — runtime data dir, default .nkyel under $NKYEL_PROJECT_ROOT (or cwd)
+#   NKYEL_CONFIG_PATH            — path to config.yaml
+#   NKYEL_EXTENSIONS_CONFIG_PATH — path to extensions_config.json
+#   NKYEL_SKILLS_PATH            — skills dir, default $NKYEL_PROJECT_ROOT/skills
+#   NKYEL_DOCKER_SOCKET          — Docker socket path for aio/DooD mode, default /var/run/docker.sock (used only by the opt-in docker-compose.dood.yaml overlay)
+#   NKYEL_REPO_ROOT              — repo root (used for skills host path in DooD)
 #   BETTER_AUTH_SECRET               — required for frontend auth/session security
-#   DEER_FLOW_INTERNAL_AUTH_TOKEN    — shared internal Gateway auth token for multi-worker IM channels
-#   DEER_FLOW_CREDENTIALS_KEY        — at-rest Fernet key for stored credentials (deploy.sh persists it as $DEER_FLOW_HOME/.credentials_key)
+#   NKYEL_INTERNAL_AUTH_TOKEN    — shared internal Gateway auth token for multi-worker IM channels
+#   NKYEL_CREDENTIALS_KEY        — at-rest Fernet key for stored credentials (deploy.sh persists it as $NKYEL_HOME/.credentials_key)
 #
 # LangSmith tracing is disabled by default (LANGSMITH_TRACING=false).
 # Set LANGSMITH_TRACING=true and LANGSMITH_API_KEY in .env to enable it.
@@ -35,7 +35,7 @@ services:
   # ── Redis Stream Bridge ────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: deer-flow-redis
+    container_name: nkyel-redis
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
@@ -45,14 +45,14 @@ services:
       timeout: 3s
       retries: 10
     networks:
-      - deer-flow
+      - nkyel
     restart: unless-stopped
 
   # ── Reverse Proxy ──────────────────────────────────────────────────────────
   nginx:
     image: nginx:alpine
-    container_name: deer-flow-nginx
-    # Loopback-only by default: DeerFlow's agent can execute commands, so the
+    container_name: nkyel-nginx
+    # Loopback-only by default: nkyel's agent can execute commands, so the
     # documented default deployment is a local trusted environment. A bare
     # "${PORT}:2026" would bind 0.0.0.0 instead, which does not match that.
     # Set BIND_HOST=0.0.0.0 only behind your own TLS/auth front door, and
@@ -81,7 +81,7 @@ services:
       gateway:
         condition: service_healthy
     networks:
-      - deer-flow
+      - nkyel
     restart: unless-stopped
 
   # ── Frontend: Next.js Production ───────────────────────────────────────────
@@ -93,15 +93,15 @@ services:
       args:
         PNPM_STORE_PATH: ${PNPM_STORE_PATH:-/root/.local/share/pnpm/store}
         NPM_REGISTRY: ${NPM_REGISTRY:-}
-    container_name: deer-flow-frontend
+    container_name: nkyel-frontend
     environment:
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - DEER_FLOW_INTERNAL_GATEWAY_BASE_URL=http://gateway:8001
+      - NKYEL_INTERNAL_GATEWAY_BASE_URL=http://gateway:8001
     env_file:
       - path: ../frontend/.env
         required: false
     networks:
-      - deer-flow
+      - nkyel
     restart: unless-stopped
 
   # ── Gateway API ────────────────────────────────────────────────────────────
@@ -116,7 +116,7 @@ services:
         UV_EXTRAS: ${UV_EXTRAS:-}
         NPM_REGISTRY: ${NPM_REGISTRY:-}
         LARK_CLI_NPM_VERSION: ${LARK_CLI_NPM_VERSION:-1.0.65}
-    container_name: deer-flow-gateway
+    container_name: nkyel-gateway
     # Gateway hosts the agent runtime (RunManager + StreamBridge) in process.
     # Default to a single worker: GATEWAY_WORKERS > 1 is supported only with
     # Postgres (database.backend: postgres, run_events.backend: db,
@@ -145,13 +145,13 @@ services:
     # as a side effect of waiting.
     init: true
     volumes:
-      - ${DEER_FLOW_CONFIG_PATH}:/app/backend/config.yaml:ro
+      - ${NKYEL_CONFIG_PATH}:/app/backend/config.yaml:ro
       # Writable on purpose: the Gateway edits this file at runtime (MCP
       # enable/disable, PUT/PATCH /api/mcp/config, skill updates). config.yaml
       # above stays read-only because no API writes it.
-      - ${DEER_FLOW_EXTENSIONS_CONFIG_PATH}:/app/backend/extensions_config.json
+      - ${NKYEL_EXTENSIONS_CONFIG_PATH}:/app/backend/extensions_config.json
       - ../skills:/app/skills:ro
-      - ${DEER_FLOW_HOME}:/app/backend/.deer-flow
+      - ${NKYEL_HOME}:/app/backend/.nkyel
       # DooD: the host Docker socket is NOT mounted by default. It is added only
       # for aio (pure-DooD) sandbox mode via the opt-in docker-compose.dood.yaml
       # overlay (appended by scripts/deploy.sh). See backend/docs/CONFIGURATION.md
@@ -166,20 +166,20 @@ services:
     working_dir: /app
     environment:
       - CI=true
-      - DEER_FLOW_PROJECT_ROOT=/app
-      - DEER_FLOW_HOME=/app/backend/.deer-flow
-      - DEER_FLOW_CONFIG_PATH=/app/backend/config.yaml
-      - DEER_FLOW_EXTENSIONS_CONFIG_PATH=/app/backend/extensions_config.json
-      - DEER_FLOW_STREAM_BRIDGE_REDIS_URL=${DEER_FLOW_STREAM_BRIDGE_REDIS_URL:-redis://redis:6379/0}
-      - DEER_FLOW_CHANNELS_LANGGRAPH_URL=${DEER_FLOW_CHANNELS_LANGGRAPH_URL:-http://gateway:8001/api}
-      - DEER_FLOW_CHANNELS_GATEWAY_URL=${DEER_FLOW_CHANNELS_GATEWAY_URL:-http://gateway:8001}
-      - DEER_FLOW_INTERNAL_AUTH_TOKEN=${DEER_FLOW_INTERNAL_AUTH_TOKEN}
+      - NKYEL_PROJECT_ROOT=/app
+      - NKYEL_HOME=/app/backend/.nkyel
+      - NKYEL_CONFIG_PATH=/app/backend/config.yaml
+      - NKYEL_EXTENSIONS_CONFIG_PATH=/app/backend/extensions_config.json
+      - NKYEL_STREAM_BRIDGE_REDIS_URL=${NKYEL_STREAM_BRIDGE_REDIS_URL:-redis://redis:6379/0}
+      - NKYEL_CHANNELS_LANGGRAPH_URL=${NKYEL_CHANNELS_LANGGRAPH_URL:-http://gateway:8001/api}
+      - NKYEL_CHANNELS_GATEWAY_URL=${NKYEL_CHANNELS_GATEWAY_URL:-http://gateway:8001}
+      - NKYEL_INTERNAL_AUTH_TOKEN=${NKYEL_INTERNAL_AUTH_TOKEN}
       # At-rest key for stored credentials (scripts/deploy.sh resolves or generates it).
       # Empty falls back to .credentials_key in the runtime home mounted above.
-      - DEER_FLOW_CREDENTIALS_KEY=${DEER_FLOW_CREDENTIALS_KEY:-}
+      - NKYEL_CREDENTIALS_KEY=${NKYEL_CREDENTIALS_KEY:-}
       # DooD path/network translation
-      - DEER_FLOW_HOST_BASE_DIR=${DEER_FLOW_HOME}
-      - DEER_FLOW_SANDBOX_HOST=host.docker.internal
+      - NKYEL_HOST_BASE_DIR=${NKYEL_HOME}
+      - NKYEL_SANDBOX_HOST=host.docker.internal
       # The login lockout counts failures per client IP, but every browser
       # request reaches the Gateway from nginx. Trust nginx's X-Real-IP (it
       # overwrites the header on every Gateway route) so one client's wrong
@@ -193,7 +193,7 @@ services:
       - NO_PROXY=${NO_PROXY:-}${NO_PROXY:+,}localhost,127.0.0.1,::1,gateway,frontend,nginx,provisioner,openviking,host.docker.internal
       - no_proxy=${no_proxy:-}${no_proxy:+,}localhost,127.0.0.1,::1,gateway,frontend,nginx,provisioner,openviking,host.docker.internal
     env_file:
-      - path: ${DEER_FLOW_COMPOSE_ENV_FILE:-../.env}
+      - path: ${NKYEL_COMPOSE_ENV_FILE:-../.env}
         required: false
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -211,7 +211,7 @@ services:
       retries: 30
       start_period: 20s
     networks:
-      - deer-flow
+      - nkyel
     restart: unless-stopped
 
   # ── Sandbox Provisioner (optional, Kubernetes mode) ────────────────────────
@@ -222,14 +222,14 @@ services:
       args:
         APT_MIRROR: ${APT_MIRROR:-}
         PIP_INDEX_URL: ${PIP_INDEX_URL:-}
-    container_name: deer-flow-provisioner
+    container_name: nkyel-provisioner
     volumes:
       - ~/.kube/config:/root/.kube/config:ro
     environment:
-      - K8S_NAMESPACE=deer-flow
+      - K8S_NAMESPACE=nkyel
       - SANDBOX_IMAGE=enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest
       # Optional lark-cli init image (Pattern A). Empty ⇒ legacy runtime mount.
-      # Set to a published tag (e.g. deer-flow/lark-cli-init:v1.0.65) to provision
+      # Set to a published tag (e.g. nkyel/lark-cli-init:v1.0.65) to provision
       # the sandbox lark-cli runtime via an init container + emptyDir.
       - LARK_CLI_INIT_IMAGE=${LARK_CLI_INIT_IMAGE:-}
       # Optional lark-cli broker image (Pattern B, issue #4338). When set, the
@@ -237,18 +237,18 @@ services:
       # plaintext config/data are never mounted into the sandbox. Supersedes
       # LARK_CLI_INIT_IMAGE when both are set. Empty ⇒ broker off.
       - LARK_CLI_BROKER_IMAGE=${LARK_CLI_BROKER_IMAGE:-}
-      - THREADS_HOST_PATH=${DEER_FLOW_HOME}/threads
-      - DEER_FLOW_HOST_BASE_DIR=${DEER_FLOW_HOME}
+      - THREADS_HOST_PATH=${NKYEL_HOME}/threads
+      - NKYEL_HOST_BASE_DIR=${NKYEL_HOME}
       - KUBECONFIG_PATH=/root/.kube/config
       - NODE_HOST=host.docker.internal
       - K8S_API_SERVER=https://host.docker.internal:26443
     env_file:
-      - path: ${DEER_FLOW_COMPOSE_ENV_FILE:-../.env}
+      - path: ${NKYEL_COMPOSE_ENV_FILE:-../.env}
         required: false
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - deer-flow
+      - nkyel
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
@@ -259,5 +259,5 @@ volumes:
   redis-data:
 
 networks:
-  deer-flow:
+  nkyel:
     driver: bridge

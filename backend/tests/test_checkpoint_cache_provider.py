@@ -2,11 +2,11 @@
 
 import pytest
 
-from deerflow.config.app_config import AppConfig, set_app_config
-from deerflow.runtime.checkpoint_mode import freeze_checkpoint_channel_mode
-from deerflow.runtime.checkpointer.async_provider import make_checkpointer
-from deerflow.runtime.checkpointer.cached_saver import CachedHistorySaver
-from deerflow.runtime.checkpointer.provider import checkpointer_context, reset_checkpointer
+from nkyel.config.app_config import AppConfig, set_app_config
+from nkyel.runtime.checkpoint_mode import freeze_checkpoint_channel_mode
+from nkyel.runtime.checkpointer.async_provider import make_checkpointer
+from nkyel.runtime.checkpointer.cached_saver import CachedHistorySaver
+from nkyel.runtime.checkpointer.provider import checkpointer_context, reset_checkpointer
 
 
 # AppConfig requires the sandbox section (no default); the rest of the config
@@ -17,7 +17,7 @@ def _app_config(mode: str, cache: dict | None = None) -> AppConfig:
         database["checkpoint_cache"] = cache
     return AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local.provider:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local.provider:LocalSandboxProvider"},
             "database": database,
         }
     )

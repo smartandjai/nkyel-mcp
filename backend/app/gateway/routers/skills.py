@@ -21,15 +21,15 @@ from app.gateway.authz import (
 from app.gateway.deps import get_config, get_optional_user_from_request, require_admin_user
 from app.gateway.path_utils import resolve_thread_virtual_path
 from app.gateway.skill_export import ExportClientDisconnected, SkillExportManifestResponse, SkillExportResponse, export_http_error, run_export_work
-from deerflow.agents.lead_agent.prompt import (
+from nkyel.agents.lead_agent.prompt import (
     SkillCacheResetPublishError,
     clear_skills_system_prompt_cache,
     publish_skills_cache_reset,
     refresh_skills_system_prompt_cache_async,
     refresh_user_skills_system_prompt_cache_async,
 )
-from deerflow.config.app_config import AppConfig
-from deerflow.config.extensions_config import (
+from nkyel.config.app_config import AppConfig
+from nkyel.config.extensions_config import (
     ExtensionsConfig,
     atomic_write_extensions_config,
     extensions_config_file_lock,
@@ -40,23 +40,23 @@ from deerflow.config.extensions_config import (
     set_raw_skill_enabled,
     validate_raw_extensions_config,
 )
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.skills import Skill
-from deerflow.skills.diagnostics import SkillLoadDiagnostic
-from deerflow.skills.export import SkillExportError, build_skill_export, export_manifest
-from deerflow.skills.installer import SkillAlreadyExistsError, SkillSecurityScanError
-from deerflow.skills.security_scanner import scan_skill_content
-from deerflow.skills.security_static_scanner import (
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.skills import Skill
+from nkyel.skills.diagnostics import SkillLoadDiagnostic
+from nkyel.skills.export import SkillExportError, build_skill_export, export_manifest
+from nkyel.skills.installer import SkillAlreadyExistsError, SkillSecurityScanError
+from nkyel.skills.security_scanner import scan_skill_content
+from nkyel.skills.security_static_scanner import (
     StaticFinding,
     StaticScanBlockedError,
     StaticScannerError,
     enforce_static_scan,
 )
-from deerflow.skills.storage import SkillStorage, get_or_new_user_skill_storage
-from deerflow.skills.types import SKILL_MD_FILE, SkillCategory
-from deerflow.utils.atomic_write import cleanup_failed_atomic_write
-from deerflow.utils.file_io import await_drained
-from deerflow.utils.thread_id import ThreadId
+from nkyel.skills.storage import SkillStorage, get_or_new_user_skill_storage
+from nkyel.skills.types import SKILL_MD_FILE, SkillCategory
+from nkyel.utils.atomic_write import cleanup_failed_atomic_write
+from nkyel.utils.file_io import await_drained
+from nkyel.utils.thread_id import ThreadId
 
 logger = logging.getLogger(__name__)
 
@@ -358,7 +358,7 @@ def _copy_uploaded_skill_archive(source: BinaryIO) -> Path:
     """
     destination: Path | None = None
     try:
-        with tempfile.NamedTemporaryFile(prefix="deerflow-skill-", suffix=".skill", delete=False) as target:
+        with tempfile.NamedTemporaryFile(prefix="nkyel-skill-", suffix=".skill", delete=False) as target:
             destination = Path(target.name)
             total = 0
             while chunk := source.read(_UPLOAD_COPY_CHUNK_BYTES):
@@ -934,7 +934,7 @@ async def rollback_custom_skill(skill_name: str, body: SkillRollbackRequest, req
         await asyncio.to_thread(storage.validate_skill_markdown_content, skill_name, target_content)
         static_findings = await _scan_static_skill_markdown_or_raise(skill_name, target_content, app_config=config)
         scan = await scan_skill_content(target_content, executable=False, location=f"{skill_name}/{SKILL_MD_FILE}", app_config=config, static_findings=static_findings)
-        from deerflow.skills.mutations.guard import read_optional_text
+        from nkyel.skills.mutations.guard import read_optional_text
 
         def _read_current_content() -> str | None:
             # Called off-loop, inside the mutation critical section for writes.
@@ -1060,8 +1060,8 @@ def _write_extensions_skill_state(
     """
     from contextlib import nullcontext
 
-    from deerflow.skills.projection import skill_projection_mutation
-    from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+    from nkyel.skills.projection import skill_projection_mutation
+    from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
     removal_names = (skill_name,) if not enabled else ()
     projection_update = skill_projection_mutation(storage, "public", remove_names=removal_names) if rebuild_public_projection and isinstance(storage, LocalSkillStorage) else nullcontext()
@@ -1070,7 +1070,7 @@ def _write_extensions_skill_state(
         config_path = ExtensionsConfig.default_config_path()
         logger.info(f"No existing extensions config found. Creating new config at: {config_path}")
 
-    from deerflow.skills.mutations.guard import managed_global_state_write
+    from nkyel.skills.mutations.guard import managed_global_state_write
 
     with managed_global_state_write(storage, skill_name), projection_update:
         with extensions_config_write_lock, extensions_config_file_lock(config_path):
@@ -1134,7 +1134,7 @@ async def update_skill(skill_name: str, body: SkillUpdateRequest, request: Reque
                 )
             else:
                 # CUSTOM / LEGACY: write per-user state
-                from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+                from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
                 if isinstance(storage, UserScopedSkillStorage):
                     await asyncio.to_thread(storage.set_skill_enabled_state, skill_name, body.enabled)

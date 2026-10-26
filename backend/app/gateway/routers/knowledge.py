@@ -13,11 +13,11 @@ from pydantic import ValidationError
 from app.gateway.authz import require_permission
 from app.gateway.deps import get_config
 from app.gateway.knowledge_scope_admission import assistant_supports_knowledge_scope
-from deerflow.config.agents_config import load_agent_config
-from deerflow.config.app_config import AppConfig
-from deerflow.knowledge import KnowledgeRequestContext, RetrievalCatalogPage
-from deerflow.knowledge.providers import get_knowledge_capabilities, resolve_knowledge_provider
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.config.agents_config import load_agent_config
+from nkyel.config.app_config import AppConfig
+from nkyel.knowledge import KnowledgeRequestContext, RetrievalCatalogPage
+from nkyel.knowledge.providers import get_knowledge_capabilities, resolve_knowledge_provider
+from nkyel.runtime.user_context import get_effective_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])

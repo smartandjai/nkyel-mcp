@@ -7,13 +7,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 from langchain_core.messages import ToolMessage
 
-from deerflow.agents.middlewares.sandbox_audit_middleware import (
+from nkyel.agents.middlewares.sandbox_audit_middleware import (
     _HIGH_RISK_PATTERNS,
     SandboxAuditMiddleware,
     _classify_command,
     _split_compound_command,
 )
-from deerflow.sandbox.tools import _BASH_EXIT_MARKER_TAIL_RE
+from nkyel.sandbox.tools import _BASH_EXIT_MARKER_TAIL_RE
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -827,7 +827,7 @@ class TestSandboxAuditMiddlewareWrapToolCall:
 class TestMediumRiskWarningPreservesEvidence:
     """The warning is appended to a result that ToolErrorHandling has already
     stamped; the subagent then reads the exit status from a trailing marker
-    and ``deerflow_tool_meta``. Neither may be lost to the warning."""
+    and ``nkyel_tool_meta``. Neither may be lost to the warning."""
 
     def setup_method(self):
         self.mw = SandboxAuditMiddleware()
@@ -869,7 +869,7 @@ class TestMediumRiskWarningPreservesEvidence:
 
     def test_exit_marker_regex_covers_the_truncation_tail_shapes(self):
         """Every tail shape truncation keeps last is one the warning is inserted before."""
-        from deerflow.agents.middlewares.sandbox_audit_middleware import _EXIT_MARKER_TAIL_RE
+        from nkyel.agents.middlewares.sandbox_audit_middleware import _EXIT_MARKER_TAIL_RE
 
         for content in ("out\nExit Code: 1", "out\nExit Code: -9 \n", "out\nCommand exited with code 3", "Command exited with code 3"):
             ours = _EXIT_MARKER_TAIL_RE.search(content)
@@ -891,10 +891,10 @@ class TestMediumRiskWarningPreservesEvidence:
             name="bash",
             id="tool-msg-1",
             artifact={"k": "v"},
-            additional_kwargs={"deerflow_tool_meta": meta},
+            additional_kwargs={"nkyel_tool_meta": meta},
         )
         result = self._call(inner)
-        assert result.additional_kwargs == {"deerflow_tool_meta": meta}
+        assert result.additional_kwargs == {"nkyel_tool_meta": meta}
         assert result.artifact == {"k": "v"}
         assert result.id == "tool-msg-1"
         assert result.tool_call_id == "call-123"
@@ -903,18 +903,18 @@ class TestMediumRiskWarningPreservesEvidence:
     def test_list_content_gets_warning_block_and_keeps_meta(self):
         blocks = [{"type": "text", "text": "ok\nExit Code: 1"}]
         meta = {"status": "success"}
-        inner = ToolMessage(content=blocks, tool_call_id="call-123", name="bash", additional_kwargs={"deerflow_tool_meta": meta})
+        inner = ToolMessage(content=blocks, tool_call_id="call-123", name="bash", additional_kwargs={"nkyel_tool_meta": meta})
         result = self._call(inner)
         assert isinstance(result.content, list)
         assert result.content[:-1] == blocks
         assert result.content[-1]["type"] == "text"
         assert "warning" in result.content[-1]["text"].lower()
         assert inner.content == blocks  # the handler's message is not mutated
-        assert result.additional_kwargs == {"deerflow_tool_meta": meta}
+        assert result.additional_kwargs == {"nkyel_tool_meta": meta}
 
     @pytest.mark.anyio
     async def test_async_path_keeps_marker_and_meta(self):
-        inner = ToolMessage(content="12 passed\nExit Code: 1", tool_call_id="call-123", name="bash", additional_kwargs={"deerflow_tool_meta": {"status": "success"}})
+        inner = ToolMessage(content="12 passed\nExit Code: 1", tool_call_id="call-123", name="bash", additional_kwargs={"nkyel_tool_meta": {"status": "success"}})
 
         async def handler(_request):
             return inner
@@ -922,7 +922,7 @@ class TestMediumRiskWarningPreservesEvidence:
         with patch.object(self.mw, "_write_audit"):
             result = await self.mw.awrap_tool_call(_make_request("sudo pytest -q"), handler)
         assert result.content.endswith("\nExit Code: 1")
-        assert result.additional_kwargs == {"deerflow_tool_meta": {"status": "success"}}
+        assert result.additional_kwargs == {"nkyel_tool_meta": {"status": "success"}}
 
 
 # ---------------------------------------------------------------------------
@@ -1181,6 +1181,6 @@ class TestBenchmarkSummary:
 
 def test_fork_bomb_pattern_matches_static_scan_gate():
     """The runtime gate and the pre-LLM static scan must agree on the fork-bomb shape."""
-    from deerflow.skills.skillscan.orchestrator import _FORK_BOMB_PATTERN
+    from nkyel.skills.skillscan.orchestrator import _FORK_BOMB_PATTERN
 
     assert any(pattern.pattern == _FORK_BOMB_PATTERN for pattern in _HIGH_RISK_PATTERNS)

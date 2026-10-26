@@ -14,10 +14,10 @@ import pytest
 def staging(tmp_path, monkeypatch):
     from app.channels.message_bus import MessageBus
     from app.channels.wechat import WechatChannel, _encrypt_aes_128_ecb
-    from deerflow.config.paths import Paths
+    from nkyel.config.paths import Paths
 
     paths = Paths(tmp_path / "uploads")
-    monkeypatch.setattr("deerflow.uploads.manager.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.uploads.manager.get_paths", lambda: paths)
     channel = WechatChannel(bus=MessageBus(), config={"bot_token": "test", "state_dir": str(tmp_path / "wechat")})
     key = b"1234567890abcdef"
     channel._download_cdn_bytes = AsyncMock(return_value=_encrypt_aes_128_ecb(b"attachment", key))
@@ -51,7 +51,7 @@ async def test_ingestion_failure_releases_owned_staging(staging, monkeypatch, fa
         msg.files[0]["filename"] = ".."
     else:
         target = "ensure_uploads_dir" if failure == "prepare" else "write_upload_file_no_symlink"
-        monkeypatch.setattr(f"deerflow.uploads.manager.{target}", Mock(side_effect=OSError("upload failed")))
+        monkeypatch.setattr(f"nkyel.uploads.manager.{target}", Mock(side_effect=OSError("upload failed")))
     if failure == "prepare":
         with pytest.raises(OSError, match="upload failed"):
             await _ingest_inbound_files("thread", msg, user_id="owner")
@@ -234,7 +234,7 @@ async def test_cleanup_failure_preserves_primary_error_and_releases_other_files(
     assert len(paths) == 2
     cleanup = msg.files[0][INBOUND_FILE_CLEANUP_KEY]
     msg.files[0][INBOUND_FILE_CLEANUP_KEY] = Mock(side_effect=OSError("cleanup failed"))
-    monkeypatch.setattr("deerflow.uploads.manager.ensure_uploads_dir", Mock(side_effect=OSError("prepare failed")))
+    monkeypatch.setattr("nkyel.uploads.manager.ensure_uploads_dir", Mock(side_effect=OSError("prepare failed")))
     monkeypatch.setattr("app.channels.message_bus.logger.warning", Mock(side_effect=RuntimeError("logging failed")))
     try:
         with pytest.raises(OSError, match="prepare failed"):

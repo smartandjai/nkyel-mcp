@@ -14,9 +14,9 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, get_bu
 from langchain_core.outputs import ChatGeneration, ChatResult
 from pydantic import Field
 
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware, SummaryGenerationError
-from deerflow.config.task_continuity_config import TaskContinuityConfig
-from deerflow.extensions import ExtensionRegistry
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware, SummaryGenerationError
+from nkyel.config.task_continuity_config import TaskContinuityConfig
+from nkyel.extensions import ExtensionRegistry
 
 _RAW_BUDGET = 1200
 _OLD_MEMORY = "PREVIOUS_DURABLE_MEMORY: preserve the user's release requirements. " + "Already verified context. " * 8
@@ -115,7 +115,7 @@ def _raw_sections(prompt: str) -> list[tuple[str, str]]:
 
 
 def _middleware(model, *, raw_budget=_RAW_BUDGET, **kwargs):
-    return DeerFlowSummarizationMiddleware(
+    return NkyelSummarizationMiddleware(
         model=model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -163,7 +163,7 @@ async def test_every_selected_source_reaches_bounded_summary_input(case, previou
 
 
 async def _assert_failed_compaction_is_atomic(monkeypatch, model, *, asynchronous, manual, previous_summary=_OLD_MEMORY, raw_budget=_RAW_BUDGET):
-    from deerflow.agents.task_continuity import archive
+    from nkyel.agents.task_continuity import archive
 
     state, _, _ = _history("many-turns")
     state.update(summary_text=previous_summary, task_history={"existing": "untouched"})

@@ -5,9 +5,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config.paths import Paths
+from nkyel.config.paths import Paths
 
-present_file_tool_module = importlib.import_module("deerflow.tools.builtins.present_file_tool")
+present_file_tool_module = importlib.import_module("nkyel.tools.builtins.present_file_tool")
 
 
 def _make_runtime(outputs_path: str) -> SimpleNamespace:

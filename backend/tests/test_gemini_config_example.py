@@ -7,10 +7,10 @@ import httpx
 import pytest
 import yaml
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.models.factory import create_chat_model
+from nkyel.config.app_config import AppConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.models.factory import create_chat_model
 
 
 @pytest.mark.parametrize("thinking_enabled,effort", [(True, None), (True, "medium"), (True, "high"), (False, "minimal")])
@@ -20,7 +20,7 @@ def test_gemini_example_request(thinking_enabled, effort):
     lines = block[block.index("  # - name:") :].splitlines()
     settings = yaml.safe_load("\n".join(line.removeprefix("  # ") for line in lines))[0]
     settings["api_key"] = "test-key"
-    config = AppConfig(models=[ModelConfig(**settings)], sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+    config = AppConfig(models=[ModelConfig(**settings)], sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
     requests = []
 
     def respond(request):

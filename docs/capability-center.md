@@ -1,6 +1,6 @@
 # Capability Center integration contract
 
-Capability Center is a discovery and configuration layer over DeerFlow's existing
+Capability Center is a discovery and configuration layer over nkyel's existing
 MCP, Lark CLI, and skill services. It uses the existing administrator/user roles.
 Agent selections configure the tools and skills assembled for a run; they are not
 an authorization boundary. Customer-specific authorization can remain in the
@@ -16,11 +16,11 @@ deferred to a separate proposal and PR.
 
 | Concern | Owner |
 | --- | --- |
-| Catalog and localized metadata | `backend/packages/harness/deerflow/capabilities/builtin.json` |
-| Validated manifest schema | `deerflow.capabilities.catalog.PluginManifest` |
+| Catalog and localized metadata | `backend/packages/harness/nkyel/capabilities/builtin.json` |
+| Validated manifest schema | `nkyel.capabilities.catalog.PluginManifest` |
 | Installation/status adapters | `backend/app/gateway/capabilities.py` |
 | Catalog and safe discovery HTTP API | `backend/app/gateway/routers/capabilities.py` |
-| Personal MCP settings, secrets, enable/delete | `/api/mcp/personal/config` and `.deer-flow/users/<user_id>/integrations/mcp.json` |
+| Personal MCP settings, secrets, enable/delete | `/api/mcp/personal/config` and `.nkyel/users/<user_id>/integrations/mcp.json` |
 | Deployment MCP settings and cache reload | Administrator-only `/api/mcp/config` and `extensions_config.json` |
 | Lark installation and personal account authorization | Existing `/api/integrations/lark` services |
 | Skill archives, enable state, user storage | Existing `/api/skills` services |
@@ -48,13 +48,13 @@ HubSpot needs `crm.objects.companies.read` for company queries and
 `crm.objects.contacts.write` for contact creation. A read-only token can be used
 when only company lookup is needed; the provider rejects unauthorized writes.
 Notifications do not read chats, documents, or calendars and do not configure
-DeerFlow's incoming IM channels. Existing manually configured CLI connections
+nkyel's incoming IM channels. Existing manually configured CLI connections
 are not rewritten when the catalog entry changes.
 
 Configuration saves credentials without sending a message or creating a CRM
 record. Connections created under **My plugins** are personal: credentials,
 enabled state and edits belong to the signed-in user, including administrators.
-They are stored under `.deer-flow/users/<user_id>/integrations/mcp.json` and
+They are stored under `.nkyel/users/<user_id>/integrations/mcp.json` and
 remain masked in the editor. Existing deployment connections in
 `extensions_config.json` stay shared and are not copied to any personal account.
 The page separates **Platform provided** (deployment setup guides and shared MCP
@@ -67,11 +67,11 @@ Edit, toggle and delete personal entries using the existing MCP controls.
 An Agent selects these connections through **Plugins and skills**, just like
 other MCP servers. New tool selection applies on the next run.
 
-`deerflow.capabilities.business` implements fixed HTTPS provider endpoints,
+`nkyel.capabilities.business` implements fixed HTTPS provider endpoints,
 bounded responses and timeouts, no redirect following or automatic write retries,
 and validates the robot's `errcode` even on HTTP 200. Errors omit provider bodies
 and credential-bearing URLs. Tool schemas never include credentials. An exact
-`sys.executable -I -m deerflow.capabilities.business <provider>` launcher with
+`sys.executable -I -m nkyel.capabilities.business <provider>` launcher with
 only the provider's known credential environment keys is accepted by the MCP
 API; arbitrary interpreter paths/modules/flags/environment remain rejected.
 The isolated interpreter ignores the working directory and Python environment
@@ -231,7 +231,7 @@ accepts `scope=user` or `scope=all` (deployment plus the caller's connections).
 The default API scope remains deployment for existing integrations.
 
 Personal files use the existing atomic file writer and cross-process lock. Keep
-`DEER_FLOW_HOME` on persistent storage; multiple Gateway workers must share it.
+`NKYEL_HOME` on persistent storage; multiple Gateway workers must share it.
 Personal values are literal and cannot read deployment environment variables.
 A missing personal connection never falls back to a same-named shared one.
 Personal tools are discovered per run, outside the process-wide platform cache.

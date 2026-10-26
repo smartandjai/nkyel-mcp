@@ -15,7 +15,7 @@ import sys
 from types import ModuleType, SimpleNamespace
 
 import pytest
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY,
     EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY,
     EXTENSION_PRINCIPAL_RESOLVER_KEY,
@@ -23,11 +23,11 @@ from deerflow_extension_api import (
     arequire_plugin_management,
     require_plugin_management,
 )
-from deerflow_extension_api.plugins import BackendAction, PluginContribution
+from nkyel_extension_api.plugins import BackendAction, PluginContribution
 
 from app.gateway import authz as gateway_authz
 from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
-from deerflow.authz.plugin_authz import (
+from nkyel.authz.plugin_authz import (
     PluginAuthorizationError,
     aenforce_plugin_action,
     aenforce_plugin_management,
@@ -36,18 +36,18 @@ from deerflow.authz.plugin_authz import (
     enforce_plugin_action,
     enforce_plugin_management,
 )
-from deerflow.authz.plugin_targets import (
+from nkyel.authz.plugin_targets import (
     MANAGEMENT_READ_PART,
     MANAGEMENT_WRITE_PART,
     plugin_management_target,
 )
-from deerflow.authz.provider import AuthzDecision, AuthzReason, AuthzRequest, Principal
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.authz.provider import AuthzDecision, AuthzReason, AuthzRequest, Principal
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.extensions.registry import ExtensionRegistry
 
-RBAC = "deerflow.authz.rbac:RbacAuthorizationProvider"
+RBAC = "nkyel.authz.rbac:RbacAuthorizationProvider"
 NAMESPACE = "community.check"
 READ_TARGET = plugin_management_target(NAMESPACE, MANAGEMENT_READ_PART)
 WRITE_TARGET = plugin_management_target(NAMESPACE, MANAGEMENT_WRITE_PART)
@@ -133,7 +133,7 @@ def _principal(role: str = "user") -> Principal:
 
 def _use_provider(monkeypatch: pytest.MonkeyPatch, provider: object) -> None:
     """Serve *provider* from every resolution path the decision layer can take."""
-    import deerflow.authz.plugin_authz as plugin_authz
+    import nkyel.authz.plugin_authz as plugin_authz
 
     monkeypatch.setattr(plugin_authz, "resolve_authorization_provider", lambda config: provider)
     monkeypatch.setattr(plugin_authz, "resolve_authorization_provider_spec", lambda config: object())
@@ -576,7 +576,7 @@ def _plugin_extensions(*, namespace: str = NAMESPACE) -> object:
 def host_app(monkeypatch: pytest.MonkeyPatch):
     """A real ``create_app()`` with a stub config and our own plugin snapshot."""
     import app.gateway.app as app_module
-    from deerflow.extensions import reset_loaded_extensions, reset_runtime_diagnostics
+    from nkyel.extensions import reset_loaded_extensions, reset_runtime_diagnostics
 
     reset_app_config()
     gateway_authz._plugin_provider_cache.clear()
@@ -655,8 +655,8 @@ def test_installed_resolver_denies_when_the_config_cannot_be_read(host_app, monk
     def broken_config():
         raise RuntimeError("config is being rewritten")
 
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", broken_config)
-    monkeypatch.setattr("deerflow.config.get_app_config", broken_config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", broken_config)
+    monkeypatch.setattr("nkyel.config.get_app_config", broken_config)
 
     resolver = getattr(host_app.state, EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY)
 
@@ -667,7 +667,7 @@ def test_installed_resolver_allows_when_no_config_exists(host_app, monkeypatch):
     """A host that never had a config has no policy to apply: no gate.
 
     Same rule the route-scoped gates use (``_get_route_authorization_config``,
-    ``deerflow.authz.sandbox_authz.safe_app_config``): authorization can only be
+    ``nkyel.authz.sandbox_authz.safe_app_config``): authorization can only be
     enabled through config, so a ``config.yaml``-less host (CI runner, direct
     call, a host that mounts only the plugins router) keeps today's behavior.
     """
@@ -675,8 +675,8 @@ def test_installed_resolver_allows_when_no_config_exists(host_app, monkeypatch):
     def absent_config():
         raise FileNotFoundError("`config.yaml` file not found")
 
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", absent_config)
-    monkeypatch.setattr("deerflow.config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.get_app_config", absent_config)
 
     resolver = getattr(host_app.state, EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY)
 
@@ -696,8 +696,8 @@ def test_installed_resolver_applies_the_running_policy_when_the_config_disappear
     def absent_config():
         raise FileNotFoundError("`config.yaml` file not found")
 
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", absent_config)
-    monkeypatch.setattr("deerflow.config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.get_app_config", absent_config)
 
     resolver = getattr(host_app.state, EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY)
 
@@ -712,8 +712,8 @@ async def test_installed_async_resolver_denies_when_the_config_disappears(host_a
     def absent_config():
         raise FileNotFoundError("`config.yaml` file not found")
 
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", absent_config)
-    monkeypatch.setattr("deerflow.config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.get_app_config", absent_config)
 
     with pytest.raises(PermissionError):
         await arequire_plugin_management(_plain_request(app=host_app), NAMESPACE, scope="read")
@@ -726,8 +726,8 @@ def test_installed_resolver_stays_noop_when_the_lost_config_had_authorization_of
     def absent_config():
         raise FileNotFoundError("`config.yaml` file not found")
 
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", absent_config)
-    monkeypatch.setattr("deerflow.config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.get_app_config", absent_config)
 
     resolver = getattr(host_app.state, EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY)
 

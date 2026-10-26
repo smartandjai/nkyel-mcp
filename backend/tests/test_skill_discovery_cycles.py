@@ -5,17 +5,17 @@ from pathlib import Path
 import pytest
 from support.symlinks import symlink_or_skip
 
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.config.paths import Paths
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.config.paths import Paths
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 
 @pytest.fixture(params=[(kind, category) for kind in ("local", "user") for category in ("public", "custom", "integrations", "legacy")])
 def storage_and_root(request, tmp_path, monkeypatch):
     kind, category = request.param
     host = tmp_path / "skills"
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path / "data"))
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path / "data"))
     monkeypatch.setattr(ExtensionsConfig, "from_file", lambda: ExtensionsConfig())
     if kind == "local":
         storage = LocalSkillStorage(host_path=str(host))

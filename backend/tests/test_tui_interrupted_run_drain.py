@@ -19,10 +19,10 @@ import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
-from deerflow.client import StreamEvent
-from deerflow.tui.app import DeerFlowTUI
-from deerflow.tui.cli import LaunchPlan
-from deerflow.tui.session import Session
+from nkyel.client import StreamEvent
+from nkyel.tui.app import NkyelTUI
+from nkyel.tui.cli import LaunchPlan
+from nkyel.tui.session import Session
 
 STILL_STOPPING = "The interrupted run is still stopping on this thread"
 
@@ -112,7 +112,7 @@ async def _interrupt_old_run_in_its_tool_step(app, pilot, client) -> None:
 @pytest.mark.asyncio
 async def test_send_waits_for_the_interrupted_run_before_reusing_its_thread():
     client = _GraphClient()
-    app = DeerFlowTUI(Session(client=client, writer=None), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client, writer=None), LaunchPlan(mode="tui", thread_id="thread-a"))
     async with app.run_test() as pilot:
         try:
             await pilot.pause()
@@ -139,7 +139,7 @@ async def test_send_waits_for_the_interrupted_run_before_reusing_its_thread():
 @pytest.mark.asyncio
 async def test_a_stopping_run_does_not_block_another_thread():
     client = _GraphClient()
-    app = DeerFlowTUI(Session(client=client, writer=None), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client, writer=None), LaunchPlan(mode="tui", thread_id="thread-a"))
     async with app.run_test() as pilot:
         try:
             await pilot.pause()
@@ -166,7 +166,7 @@ async def test_an_interrupt_before_the_worker_starts_does_not_block_the_thread(m
     # A run interrupted before its worker thread runs never touches the
     # backend and must not hold its thread.
     client = _GraphClient()
-    app = DeerFlowTUI(Session(client=client, writer=None), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client, writer=None), LaunchPlan(mode="tui", thread_id="thread-a"))
     async with app.run_test() as pilot:
         await pilot.pause()
         original_start = app._start_run_thread
@@ -204,7 +204,7 @@ async def test_a_completed_run_still_saving_its_title_does_not_block_the_next_se
             yield from super().stream(message, thread_id=thread_id, **kwargs)
 
     client, writer = _TitledClient(), _BlockingTitleWriter()
-    app = DeerFlowTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
     async with app.run_test() as pilot:
         try:
             await pilot.pause()

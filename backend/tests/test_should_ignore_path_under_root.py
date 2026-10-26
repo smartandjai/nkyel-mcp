@@ -13,7 +13,7 @@ the real provider ``list_dir``/``glob``/``grep`` for every provider live in
 
 from __future__ import annotations
 
-from deerflow.sandbox.search import should_ignore_path, should_ignore_path_under_root
+from nkyel.sandbox.search import should_ignore_path, should_ignore_path_under_root
 
 
 def test_ignored_root_keeps_its_contents() -> None:

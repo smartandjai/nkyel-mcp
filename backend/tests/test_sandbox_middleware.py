@@ -14,21 +14,21 @@ from langgraph.prebuilt.tool_node import ToolCallRequest
 from langgraph.runtime import Runtime
 from langgraph.types import Command, Overwrite
 
-from deerflow.agents.thread_state import ThreadState
-from deerflow.sandbox.exceptions import SandboxAuthorizationError, SandboxRuntimeError
-from deerflow.sandbox.lease import (
+from nkyel.agents.thread_state import ThreadState
+from nkyel.sandbox.exceptions import SandboxAuthorizationError, SandboxRuntimeError
+from nkyel.sandbox.lease import (
     ensure_sandbox_lease_owner,
     get_sandbox_lease_manager,
     register_sandbox_prewarm_cleanup,
     release_sandbox_execution_lease,
     release_sandbox_execution_lease_async,
 )
-from deerflow.sandbox.middleware import SandboxMiddleware, SandboxMiddlewareState
-from deerflow.sandbox.prewarm import should_prewarm_sandbox
-from deerflow.sandbox.sandbox import Sandbox
-from deerflow.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
-from deerflow.sandbox.search import GrepMatch
-from deerflow.sandbox.tools import ensure_sandbox_initialized, ensure_sandbox_initialized_async, ls_tool
+from nkyel.sandbox.middleware import SandboxMiddleware, SandboxMiddlewareState
+from nkyel.sandbox.prewarm import should_prewarm_sandbox
+from nkyel.sandbox.sandbox import Sandbox
+from nkyel.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
+from nkyel.sandbox.search import GrepMatch
+from nkyel.sandbox.tools import ensure_sandbox_initialized, ensure_sandbox_initialized_async, ls_tool
 
 
 class _SyncProvider(SandboxProvider):
@@ -191,7 +191,7 @@ class _DelayedAsyncProvider(_AsyncOnlyProvider):
 
 
 def _aio_prewarm_config() -> SimpleNamespace:
-    return SimpleNamespace(sandbox=SimpleNamespace(prewarm=True, use="deerflow.community.aio_sandbox:AioSandboxProvider"))
+    return SimpleNamespace(sandbox=SimpleNamespace(prewarm=True, use="nkyel.community.aio_sandbox:AioSandboxProvider"))
 
 
 def test_sandbox_middleware_state_matches_thread_state_sandbox_field() -> None:
@@ -338,7 +338,7 @@ def test_explicit_skill_policy_does_not_reuse_checkpointed_sandbox_after_auth_de
         lambda *_args, **_kwargs: object(),
     )
     monkeypatch.setattr(
-        "deerflow.sandbox.middleware.authorize_sandbox_execution",
+        "nkyel.sandbox.middleware.authorize_sandbox_execution",
         lambda **_kwargs: (_ for _ in ()).throw(SandboxAuthorizationError("denied")),
     )
     set_sandbox_provider(provider)
@@ -467,7 +467,7 @@ async def test_default_lazy_tool_acquisition_uses_async_provider() -> None:
 @pytest.mark.anyio
 async def test_prewarm_overlaps_model_call_and_is_claimed_by_first_tool(monkeypatch: pytest.MonkeyPatch) -> None:
     provider = _DelayedAsyncProvider()
-    monkeypatch.setattr("deerflow.sandbox.prewarm.get_app_config", _aio_prewarm_config)
+    monkeypatch.setattr("nkyel.sandbox.prewarm.get_app_config", _aio_prewarm_config)
     set_sandbox_provider(provider)
     context = {"thread_id": "thread-prewarm", "user_id": "owner-prewarm"}
     ensure_sandbox_lease_owner(context)
@@ -504,7 +504,7 @@ async def test_prewarm_overlaps_model_call_and_is_claimed_by_first_tool(monkeypa
 @pytest.mark.anyio
 async def test_unused_prewarm_is_released_after_run(monkeypatch: pytest.MonkeyPatch) -> None:
     provider = _AsyncOnlyProvider()
-    monkeypatch.setattr("deerflow.sandbox.prewarm.get_app_config", _aio_prewarm_config)
+    monkeypatch.setattr("nkyel.sandbox.prewarm.get_app_config", _aio_prewarm_config)
     set_sandbox_provider(provider)
     runtime = Runtime(context={"thread_id": "thread-unused", "user_id": "owner-unused"})
     ensure_sandbox_lease_owner(runtime.context)
@@ -512,7 +512,7 @@ async def test_unused_prewarm_is_released_after_run(monkeypatch: pytest.MonkeyPa
         register_sandbox_prewarm_cleanup(runtime.context)
         middleware = SandboxMiddleware()
         await middleware.abefore_model({"messages": [HumanMessage(content="Traceback (most recent call last):")]}, runtime)
-        await runtime.context["__deerflow_sandbox_prewarm"].task
+        await runtime.context["__nkyel_sandbox_prewarm"].task
         await middleware.aafter_agent({}, runtime)
         assert provider.released_ids == ["async-sandbox"]
     finally:
@@ -533,7 +533,7 @@ async def test_unused_prewarm_is_released_after_run(monkeypatch: pytest.MonkeyPa
 @pytest.mark.anyio
 async def test_prewarm_skips_messages_without_structured_signal(monkeypatch: pytest.MonkeyPatch, content: str) -> None:
     provider = _AsyncOnlyProvider()
-    monkeypatch.setattr("deerflow.sandbox.prewarm.get_app_config", _aio_prewarm_config)
+    monkeypatch.setattr("nkyel.sandbox.prewarm.get_app_config", _aio_prewarm_config)
     set_sandbox_provider(provider)
     runtime = Runtime(context={"thread_id": "thread-no-prewarm"})
     ensure_sandbox_lease_owner(runtime.context)
@@ -549,7 +549,7 @@ async def test_prewarm_skips_messages_without_structured_signal(monkeypatch: pyt
 
 
 def test_sandbox_config_prewarm_defaults_disabled_and_accepts_true() -> None:
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     assert SandboxConfig(use="test").prewarm is False
     assert SandboxConfig(use="test", prewarm=True).prewarm is True

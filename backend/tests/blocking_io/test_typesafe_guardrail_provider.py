@@ -9,7 +9,7 @@ green even if the async path were rewritten to use a synchronous client.
 Teeth: ``test_sync_evaluate_on_the_loop_trips_the_gate`` runs the provider's
 *sync* path against the same server from inside the loop. Blockbuster raises
 ``BlockingError`` there because the blocking socket calls happen with a
-``deerflow`` frame on the stack. That is exactly the failure a regression
+``nkyel`` frame on the stack. That is exactly the failure a regression
 (``aevaluate`` delegating to ``evaluate``) would produce, so the green test
 above cannot pass vacuously.
 
@@ -27,8 +27,8 @@ from collections.abc import AsyncIterator
 import pytest
 from blockbuster import BlockingError
 
-from deerflow.guardrails.provider import GuardrailRequest
-from deerflow.guardrails.typesafe import TypeSafeGuardrailProvider
+from nkyel.guardrails.provider import GuardrailRequest
+from nkyel.guardrails.typesafe import TypeSafeGuardrailProvider
 
 pytestmark = pytest.mark.asyncio
 

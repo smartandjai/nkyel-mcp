@@ -11,11 +11,11 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, messages_from_dict, messages_to_dict
 from langchain_openai.chat_models.base import _convert_dict_to_message
 
-from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
-from deerflow.agents.memory.backends.deermem.deermem.core.message_processing import filter_messages_for_memory as filter_deermem
-from deerflow.agents.memory.backends.mem0.client import Mem0Client
-from deerflow.agents.memory.backends.mem0.mem0_manager import Mem0Manager
-from deerflow.agents.memory.backends.mem0.message_filtering import filter_messages_for_memory as filter_mem0
+from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
+from nkyel.agents.memory.backends.deermem.deermem.core.message_processing import filter_messages_for_memory as filter_deermem
+from nkyel.agents.memory.backends.mem0.client import Mem0Client
+from nkyel.agents.memory.backends.mem0.mem0_manager import Mem0Manager
+from nkyel.agents.memory.backends.mem0.message_filtering import filter_messages_for_memory as filter_mem0
 
 _ATTEMPT_TEXT = "I will save the nightly production deployment preference."
 _USER_TEXT = "Inspect the deployment settings before changing anything."

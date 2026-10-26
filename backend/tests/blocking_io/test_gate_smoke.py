@@ -24,8 +24,8 @@ from support.detectors.blocking_io_runtime import detect_blocking_io_strict
 pytestmark = pytest.mark.asyncio
 
 
-async def test_gate_catches_unoffloaded_blocking_io_in_deerflow_module(tmp_path: Path) -> None:
-    from deerflow.runtime.store._sqlite_utils import ensure_sqlite_parent_dir
+async def test_gate_catches_unoffloaded_blocking_io_in_nkyel_module(tmp_path: Path) -> None:
+    from nkyel.runtime.store._sqlite_utils import ensure_sqlite_parent_dir
 
     db_file = tmp_path / "subdir" / "store.db"
 
@@ -36,7 +36,7 @@ async def test_gate_catches_unoffloaded_blocking_io_in_deerflow_module(tmp_path:
 async def test_gate_catches_hostname_resolution_on_the_loop() -> None:
     # Blockbuster's default rules miss module-level socket.getaddrinfo; the
     # project rule must catch a synchronous SSRF-guard lookup on the loop.
-    from deerflow.community.url_safety import resolve_host_addresses
+    from nkyel.community.url_safety import resolve_host_addresses
 
     with pytest.raises(BlockingError):
         resolve_host_addresses("127.1")
@@ -55,7 +55,7 @@ async def test_gate_restores_blockbuster_patches_after_exceptions() -> None:
 @pytest.mark.allow_blocking_io
 async def test_allow_blocking_io_marker_opts_out_of_gate(tmp_path: Path) -> None:
     """Verify the @pytest.mark.allow_blocking_io opt-out actually disables the gate."""
-    from deerflow.runtime.store._sqlite_utils import ensure_sqlite_parent_dir
+    from nkyel.runtime.store._sqlite_utils import ensure_sqlite_parent_dir
 
     db_file = tmp_path / "subdir" / "store.db"
 

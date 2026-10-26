@@ -6,9 +6,9 @@ import pytest_asyncio
 from fastapi import HTTPException
 
 from app.scheduler.service import ScheduledTaskService
-from deerflow.runtime import ConflictError, RunStatus
-from deerflow.runtime.runs.manager import RunRecord
-from deerflow.runtime.runs.schemas import DisconnectMode
+from nkyel.runtime import ConflictError, RunStatus
+from nkyel.runtime.runs.manager import RunRecord
+from nkyel.runtime.runs.schemas import DisconnectMode
 
 
 class DummyTaskRepo:
@@ -1312,12 +1312,12 @@ class DummyConnectionRepo:
 async def outbox(tmp_path):
     from types import SimpleNamespace
 
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.persistence.notification_deliveries import NotificationDeliveryRepository
-    from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-    from deerflow.persistence.user.model import UserRow
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.notification_deliveries import NotificationDeliveryRepository
+    from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+    from nkyel.persistence.user.model import UserRow
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'notices.db'}", sqlite_dir=str(tmp_path))
     sf = get_session_factory()
@@ -1333,7 +1333,7 @@ async def outbox(tmp_path):
 
 
 async def _bind(env, provider="wecom", target="wecom-user", *, status="connected"):
-    from deerflow.persistence.channel_connections.model import ChannelConnectionRow
+    from nkyel.persistence.channel_connections.model import ChannelConnectionRow
 
     async with env.sf() as session:
         session.add(ChannelConnectionRow(id=f"binding-{provider}-{target}", owner_user_id=NOTICE_OWNER, provider=provider, status=status, external_account_id=target))
@@ -1343,7 +1343,7 @@ async def _bind(env, provider="wecom", target="wecom-user", *, status="connected
 async def _set_locale(env, value):
     from sqlalchemy import delete
 
-    from deerflow.persistence.user.model import UserPreferenceRow
+    from nkyel.persistence.user.model import UserPreferenceRow
 
     async with env.sf() as session:
         await session.execute(delete(UserPreferenceRow).where(UserPreferenceRow.user_id == NOTICE_OWNER, UserPreferenceRow.key == "locale"))
@@ -1374,8 +1374,8 @@ async def _task(env, task_id="task-a", *, origin_thread_id=None, once=False, **e
 
 
 async def _occurrence(env, task_id="task-a", suffix="1", *, trigger="scheduled", stop=False, reply="Report is ready", durable_status="running"):
-    from deerflow.persistence.run.model import RunRow
-    from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+    from nkyel.persistence.run.model import RunRow
+    from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
 
     occurrence_id, run_id = f"task-run-{task_id}-{suffix}", f"run-{task_id}-{suffix}"
     await env.runs.create(run_record_id=occurrence_id, task_id=task_id, thread_id=f"thread-{task_id}-{suffix}", scheduled_for=NOTICE_NOW, trigger=trigger, status="running")
@@ -1405,7 +1405,7 @@ async def _complete(env, occurrence_id, run_id, *, task_id="task-a", status="suc
 async def _notices(env):
     from sqlalchemy import select
 
-    from deerflow.persistence.notification_deliveries import NotificationDeliveryRow
+    from nkyel.persistence.notification_deliveries import NotificationDeliveryRow
 
     async with env.sf() as session:
         rows = (await session.execute(select(NotificationDeliveryRow).order_by(NotificationDeliveryRow.created_at, NotificationDeliveryRow.id))).scalars()
@@ -1416,7 +1416,7 @@ async def _deliver_all(env, *, default_locale="en-US"):
     """Send every queued notice through the real worker with a fake WeCom channel; return the texts."""
     from app.channels.base import Channel as BaseChannel
     from app.scheduler.notification_delivery import NotificationDeliveryWorker
-    from deerflow.persistence.run import RunRepository
+    from nkyel.persistence.run import RunRepository
 
     sent = []
 
@@ -1459,7 +1459,7 @@ async def test_only_push_capable_connected_providers_get_outbox_rows(outbox):
 
 @pytest.mark.asyncio
 async def test_selected_group_notice_is_additional_and_deduplicated(outbox):
-    from deerflow.persistence.channel_connections.model import ChannelConnectionRow
+    from nkyel.persistence.channel_connections.model import ChannelConnectionRow
 
     await _task(outbox, notification_group_connection_id="selected-group")
     await _bind(outbox, "feishu", "ou_feishu")
@@ -1487,8 +1487,8 @@ async def test_selected_group_still_enqueues_if_binding_was_removed(outbox, revo
     from sqlalchemy import select
 
     from app.scheduler.notification_delivery import NotificationDeliveryWorker
-    from deerflow.persistence.channel_connections.model import ChannelConnectionRow
-    from deerflow.persistence.notification_deliveries import NotificationDeliveryRow
+    from nkyel.persistence.channel_connections.model import ChannelConnectionRow
+    from nkyel.persistence.notification_deliveries import NotificationDeliveryRow
 
     await _task(outbox, notification_group_connection_id="selected-group")
     if revoked_binding:
@@ -1512,7 +1512,7 @@ async def test_selected_group_still_enqueues_if_binding_was_removed(outbox, revo
 
 @pytest.mark.asyncio
 async def test_group_binding_without_task_selection_keeps_personal_notice_only(outbox):
-    from deerflow.persistence.channel_connections.model import ChannelConnectionRow
+    from nkyel.persistence.channel_connections.model import ChannelConnectionRow
 
     await _task(outbox)
     async with outbox.sf() as session:
@@ -1550,7 +1550,7 @@ async def test_auto_pause_sends_one_merged_notice(outbox):
         "Scheduled task “Check the release checklist”",
         "Paused after 3 runs in a row missed the goal: it needs your input.",
         "Result: Two items are still open",
-        "Open DeerFlow → Scheduled tasks for details.",
+        "Open nkyel → Scheduled tasks for details.",
     ]
 
 
@@ -1638,7 +1638,7 @@ async def test_idle_finish_dedupe_key_is_deterministic_for_page_tasks(outbox):
     key = notices[0]["task_run_id"]
     assert key.startswith("idle:") and len(key) <= 64
     from app.scheduler.service import _idle_notice_key
-    from deerflow.utils.time import coerce_iso
+    from nkyel.utils.time import coerce_iso
 
     assert key == _idle_notice_key("task-a", f"end:{coerce_iso(NOTICE_NOW + timedelta(hours=1))}")
     (text,) = await _deliver_all(outbox)
@@ -1656,7 +1656,7 @@ async def test_locale_from_preference_then_config_fallback(outbox):
         await _complete(outbox, occurrence_id, run_id, task_id=task_id)
     assert [row["payload"]["locale"] for row in await _notices(outbox)] == ["zh-CN", None, None, None]
     texts = await _deliver_all(outbox, default_locale="en-US")
-    assert [text.splitlines()[-1] for text in texts] == ["在 DeerFlow 的定时任务页查看详情。"] + ["Open DeerFlow → Scheduled tasks for details."] * 3
+    assert [text.splitlines()[-1] for text in texts] == ["在 nkyel 的定时任务页查看详情。"] + ["Open nkyel → Scheduled tasks for details."] * 3
 
 
 @pytest.mark.asyncio
@@ -1666,7 +1666,7 @@ async def test_locale_without_preference_follows_notification_locale(outbox):
     occurrence_id, run_id = await _occurrence(outbox, reply="Done")
     await _complete(outbox, occurrence_id, run_id)
     (text,) = await _deliver_all(outbox, default_locale="zh-CN")
-    assert text.splitlines() == ["定时任务“Check the release checklist”", "完成了一次运行。", "结果：Done", "在 DeerFlow 的定时任务页查看详情。"]
+    assert text.splitlines() == ["定时任务“Check the release checklist”", "完成了一次运行。", "结果：Done", "在 nkyel 的定时任务页查看详情。"]
 
 
 @pytest.mark.asyncio

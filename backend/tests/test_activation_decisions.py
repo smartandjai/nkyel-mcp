@@ -1,6 +1,6 @@
 """ActivationDecisions — the typed async decision carrier (construction hardening).
 
-The carrier's contract (see ``deerflow/authz/activation_decisions.py``):
+The carrier's contract (see ``nkyel/authz/activation_decisions.py``):
 a covered name returns the batched decision; a MISS resolves per the
 provider-error policy with a loud WARNING and never touches a provider —
 ``None`` remains the sync-chain signal where the synchronous authorize() is
@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 
-from deerflow.authz.activation_decisions import ActivationDecisions
+from nkyel.authz.activation_decisions import ActivationDecisions
 
 
 def test_covered_name_returns_batched_decision():
@@ -24,7 +24,7 @@ def test_covered_name_returns_batched_decision():
 def test_miss_fails_closed_with_loud_log(caplog):
     decisions = ActivationDecisions({}, fail_closed=True)
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.authz.activation_decisions"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.authz.activation_decisions"):
         assert decisions.decision_for("uncovered") is False
 
     assert any("uncovered" in record.message and "denied" in record.message for record in caplog.records)
@@ -33,7 +33,7 @@ def test_miss_fails_closed_with_loud_log(caplog):
 def test_miss_fails_open_with_loud_log(caplog):
     decisions = ActivationDecisions({}, fail_closed=False)
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.authz.activation_decisions"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.authz.activation_decisions"):
         assert decisions.decision_for("uncovered") is True
 
     assert any("uncovered" in record.message and "allowed" in record.message for record in caplog.records)

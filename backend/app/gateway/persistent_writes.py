@@ -10,7 +10,7 @@ import asyncio
 import logging
 from collections.abc import Callable
 
-from deerflow.utils.file_io import await_drained
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 

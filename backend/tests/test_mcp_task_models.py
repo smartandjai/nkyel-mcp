@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import pytest
 
-from deerflow.mcp.tasks import (
+from nkyel.mcp.tasks import (
     McpTaskDriverRegistry,
     TaskReference,
     TaskSnapshot,

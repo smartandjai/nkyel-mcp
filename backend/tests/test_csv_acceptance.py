@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from deerflow.subagents import acceptance_checks as checks
+from nkyel.subagents import acceptance_checks as checks
 
 
 @pytest.fixture
@@ -134,9 +134,9 @@ def test_malformed_header_respects_parser_deadline(check_csv, monkeypatch, parse
 
 
 def test_revoked_access_prevents_metadata(check_csv, monkeypatch):
-    from deerflow.sandbox.exceptions import SandboxError
+    from nkyel.sandbox.exceptions import SandboxError
 
-    monkeypatch.setattr("deerflow.authz.sandbox_authz.authorize_sandbox_execution", Mock(side_effect=SandboxError("denied")))
+    monkeypatch.setattr("nkyel.authz.sandbox_authz.authorize_sandbox_execution", Mock(side_effect=SandboxError("denied")))
     probe = Mock(side_effect=AssertionError("must authorize first"))
     assert check_csv(b"id,name\n", size_prober=probe)["leaves"][0]["checked"] is False
     probe.assert_not_called()
@@ -176,7 +176,7 @@ def test_remote_transport_checks_deadline_and_completion(monkeypatch, tmp_path):
     payload = "JSON\n" + base64.b64encode(b"id,name\n\n000").decode() + "\nEND\n"
     sandbox = Mock()
     sandbox.execute_command.return_value = payload
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
 
     def check():
         return checks.check_acceptance_criteria(
@@ -214,10 +214,10 @@ def test_directory_is_unverified(check_csv, tmp_path):
 
 
 def test_local_read_rechecks_authorization(check_csv, monkeypatch):
-    from deerflow.sandbox.exceptions import SandboxError
+    from nkyel.sandbox.exceptions import SandboxError
 
     authorize = Mock(side_effect=[None, SandboxError("revoked")])
-    monkeypatch.setattr("deerflow.authz.sandbox_authz.authorize_sandbox_execution", authorize)
+    monkeypatch.setattr("nkyel.authz.sandbox_authz.authorize_sandbox_execution", authorize)
     assert check_csv(b"id,name\n")["leaves"][0]["checked"] is False
     assert authorize.call_count == 2
 
@@ -255,7 +255,7 @@ def test_remote_csv_uses_real_bounded_transport(tmp_path, monkeypatch, content, 
         def read_file(self, *args, **kwargs):
             pytest.fail("CSV acceptance must not fall back to unbounded reads")
 
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: ShellSandbox())
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: ShellSandbox())
     verdict = checks.check_acceptance_criteria(
         [f"file:report.csv csv-columns:{json.dumps(columns)}"],
         runtime=SimpleNamespace(state=None),
@@ -289,7 +289,7 @@ def test_remote_read_latency_does_not_consume_parser_deadline(monkeypatch, tmp_p
         return "JSON\n" + base64.b64encode(b"id,name\n\n000").decode() + "\nEND\n"
 
     sandbox.execute_command.side_effect = delayed_read
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
     reader = checks.csv.reader
 
     def delayed_parse(*args, **kwargs):

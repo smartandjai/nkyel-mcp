@@ -13,14 +13,14 @@ from jwt.algorithms import RSAAlgorithm
 from app.gateway.auth.models import User
 from app.gateway.auth.oidc import OIDCError, OIDCIdentity, OIDCMetadata, OIDCService, OIDCValidationError
 from app.gateway.auth.user_provisioning import get_or_provision_oidc_user
-from deerflow.config.auth_config import OIDCProviderConfig
+from nkyel.config.auth_config import OIDCProviderConfig
 
 
 def _provider_config(**overrides):
     return OIDCProviderConfig(
         display_name="Test SSO",
         issuer="https://issuer.example.com",
-        client_id="deer-flow",
+        client_id="nkyel",
         **overrides,
     )
 
@@ -61,7 +61,7 @@ async def test_oidc_authorization_url_preserves_endpoint_query(endpoint_query, w
     try:
         url = service.build_authorization_url(
             metadata=metadata,
-            client_id="deer-flow",
+            client_id="nkyel",
             redirect_uri="https://app.example.com/api/auth/callback/test",
             scopes=["openid", "email"],
             state="state+with&reserved=characters",
@@ -75,7 +75,7 @@ async def test_oidc_authorization_url_preserves_endpoint_query(endpoint_query, w
     expected = parse_qs(endpoint_query.lstrip("?"), keep_blank_values=True)
     expected.update(
         response_type=["code"],
-        client_id=["deer-flow"],
+        client_id=["nkyel"],
         redirect_uri=["https://app.example.com/api/auth/callback/test"],
         scope=["openid email"],
         state=["state+with&reserved=characters"],
@@ -95,7 +95,7 @@ async def test_oidc_login_redirect_preserves_configured_endpoint_query(monkeypat
     import httpx
     from fastapi import FastAPI
 
-    import deerflow.config.app_config as app_config_module
+    import nkyel.config.app_config as app_config_module
     from app.gateway.auth import oidc_state
     from app.gateway.auth.config import AuthConfig
     from app.gateway.routers import auth as auth_router
@@ -239,10 +239,10 @@ async def test_oidc_validate_id_token_refreshes_jwks_once_on_kid_miss(monkeypatc
     monkeypatch.setattr("app.gateway.auth.oidc.jwt.get_unverified_header", lambda token: {"kid": "new-kid", "alg": "RS256"})
     monkeypatch.setattr(
         "app.gateway.auth.oidc.jwt.decode",
-        lambda *args, **kwargs: {"iss": metadata.issuer, "sub": "subject", "aud": "deer-flow", "exp": 9999999999},
+        lambda *args, **kwargs: {"iss": metadata.issuer, "sub": "subject", "aud": "nkyel", "exp": 9999999999},
     )
 
-    claims = await service.validate_id_token(metadata, "deer-flow", "id-token")
+    claims = await service.validate_id_token(metadata, "nkyel", "id-token")
 
     assert claims["sub"] == "subject"
     assert load_calls == [False, True]
@@ -276,7 +276,7 @@ async def test_oidc_validate_id_token_rejects_hmac_algorithms(monkeypatch):
     monkeypatch.setattr("app.gateway.auth.oidc.jwt.decode", decode)
 
     with pytest.raises(OIDCValidationError, match="unsupported algorithm"):
-        await service.validate_id_token(metadata, "deer-flow", "id-token")
+        await service.validate_id_token(metadata, "nkyel", "id-token")
 
     await service.close()
 
@@ -365,7 +365,7 @@ async def test_oidc_authenticate_callback_treats_string_false_email_verified_as_
     identity = await service.authenticate_callback(
         provider_id="keycloak",
         metadata=metadata,
-        client_id="deer-flow",
+        client_id="nkyel",
         client_secret=None,
         code="code",
         redirect_uri="https://app.example.com/callback",
@@ -525,7 +525,7 @@ def test_oidc_callback_rejects_non_ascii_state_as_mismatch(monkeypatch):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    import deerflow.config.app_config as app_config_module
+    import nkyel.config.app_config as app_config_module
     from app.gateway.auth.config import AuthConfig, get_auth_config, set_auth_config
     from app.gateway.auth.oidc_state import OIDCStatePayload, _sign_state_payload
     from app.gateway.routers import auth as auth_router
@@ -569,7 +569,7 @@ def _service_with_signing_key() -> tuple[OIDCService, object]:
 def _id_token(private_key, nonce: str) -> str:
     now = int(time.time())
     return jwt.encode(
-        {"iss": "https://issuer.example.com", "aud": "deer-flow", "sub": "s1", "exp": now + 300, "iat": now, "nonce": nonce},
+        {"iss": "https://issuer.example.com", "aud": "nkyel", "sub": "s1", "exp": now + 300, "iat": now, "nonce": nonce},
         private_key,
         algorithm="RS256",
         headers={"kid": "k1"},
@@ -585,7 +585,7 @@ async def test_id_token_nonce_mismatch_with_non_ascii_is_rejected_not_a_type_err
     service, private_key = _service_with_signing_key()
 
     with pytest.raises(OIDCValidationError, match="nonce does not match"):
-        await service.validate_id_token(metadata=_metadata(), client_id="deer-flow", id_token=_id_token(private_key, "nònce-é"), nonce="expected")
+        await service.validate_id_token(metadata=_metadata(), client_id="nkyel", id_token=_id_token(private_key, "nònce-é"), nonce="expected")
 
 
 @pytest.mark.asyncio
@@ -593,7 +593,7 @@ async def test_id_token_nonce_match_with_non_ascii_is_accepted():
     """A matching non-ASCII nonce keeps its bytes: equality survives the comparison."""
     service, private_key = _service_with_signing_key()
 
-    claims = await service.validate_id_token(metadata=_metadata(), client_id="deer-flow", id_token=_id_token(private_key, "nònce-é"), nonce="nònce-é")
+    claims = await service.validate_id_token(metadata=_metadata(), client_id="nkyel", id_token=_id_token(private_key, "nònce-é"), nonce="nònce-é")
 
     assert claims["nonce"] == "nònce-é"
 
@@ -607,7 +607,7 @@ async def test_id_token_nonce_claim_of_non_string_type_is_rejected_not_an_attrib
     service, private_key = _service_with_signing_key()
 
     with pytest.raises(OIDCValidationError, match="nonce claim is not a string"):
-        await service.validate_id_token(metadata=_metadata(), client_id="deer-flow", id_token=_id_token(private_key, 12345), nonce="expected")
+        await service.validate_id_token(metadata=_metadata(), client_id="nkyel", id_token=_id_token(private_key, 12345), nonce="expected")
 
 
 # ── Malformed provider bodies ─────────────────────────────────────────────
@@ -648,7 +648,7 @@ def _signed_provider() -> tuple[str, dict]:
     private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     now = int(time.time())
     id_token = jwt.encode(
-        {"iss": _ISSUER, "aud": "deer-flow", "sub": "s1", "exp": now + 300, "iat": now, "email": "user@example.com", "email_verified": True},
+        {"iss": _ISSUER, "aud": "nkyel", "sub": "s1", "exp": now + 300, "iat": now, "email": "user@example.com", "email_verified": True},
         private_key,
         algorithm="RS256",
         headers={"kid": "k1"},
@@ -721,7 +721,7 @@ async def test_oidc_exchange_code_wraps_malformed_token_response(body):
     service = _service_answering({"/token": body})
     try:
         with pytest.raises(OIDCError, match="^Token response is not"):
-            await service.exchange_code(_metadata(), "deer-flow", "secret", "code", "https://app.example.com/callback")
+            await service.exchange_code(_metadata(), "nkyel", "secret", "code", "https://app.example.com/callback")
     finally:
         await service.close()
 
@@ -743,7 +743,7 @@ async def test_oidc_signing_key_lookup_skips_non_object_jwks_entries():
     id_token, jwks = _signed_provider()
     service = _service_answering({"/jwks": {"keys": ["junk", 42, *jwks["keys"]]}})
     try:
-        claims = await service.validate_id_token(_metadata(), "deer-flow", id_token)
+        claims = await service.validate_id_token(_metadata(), "nkyel", id_token)
     finally:
         await service.close()
 
@@ -757,7 +757,7 @@ async def test_oidc_validate_id_token_rejects_malformed_token_header(id_token):
     service = _service_answering({"/jwks": jwks})
     try:
         with pytest.raises(OIDCValidationError, match="^ID token is malformed"):
-            await service.validate_id_token(_metadata(), "deer-flow", id_token)
+            await service.validate_id_token(_metadata(), "nkyel", id_token)
     finally:
         await service.close()
 
@@ -770,7 +770,7 @@ async def test_oidc_callback_falls_back_to_id_token_when_userinfo_body_is_malfor
     service = _service_answering({"/token": {"id_token": id_token, "access_token": "access"}, "/jwks": jwks, "/userinfo": body})
     metadata = OIDCMetadata(**_DISCOVERY)
     try:
-        identity = await service.authenticate_callback("keycloak", metadata, "deer-flow", "secret", "code", "https://app.example.com/callback")
+        identity = await service.authenticate_callback("keycloak", metadata, "nkyel", "secret", "code", "https://app.example.com/callback")
     finally:
         await service.close()
 
@@ -784,7 +784,7 @@ def _oidc_router_client(monkeypatch, service: OIDCService):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    import deerflow.config.app_config as app_config_module
+    import nkyel.config.app_config as app_config_module
     from app.gateway.auth import oidc_state
     from app.gateway.auth.config import AuthConfig
     from app.gateway.routers import auth as auth_router

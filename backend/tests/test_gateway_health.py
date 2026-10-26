@@ -27,8 +27,8 @@ from app.gateway.health import (
     resolve_checkpointer_config,
     resolve_provisioner_url,
 )
-from deerflow.config.checkpointer_config import CheckpointerConfig
-from deerflow.runtime import MemoryStreamBridge
+from nkyel.config.checkpointer_config import CheckpointerConfig
+from nkyel.runtime import MemoryStreamBridge
 
 
 class _FakeConnection:
@@ -324,7 +324,7 @@ async def test_probe_checkpointer_postgres_without_psycopg_is_unreachable(monkey
     result = await _probe_checkpointer_backend(
         CheckpointerConfig(
             type="postgres",
-            connection_string="postgresql://user:pass@localhost:5432/deerflow",
+            connection_string="postgresql://user:pass@localhost:5432/nkyel",
         )
     )
 
@@ -334,7 +334,7 @@ async def test_probe_checkpointer_postgres_without_psycopg_is_unreachable(monkey
 def test_resolve_checkpointer_config_passes_through_resolution(monkeypatch):
     resolved = CheckpointerConfig(type="memory")
     monkeypatch.setattr(
-        "deerflow.runtime.checkpointer.provider._resolve_checkpointer_config",
+        "nkyel.runtime.checkpointer.provider._resolve_checkpointer_config",
         lambda app_config: resolved,
     )
 
@@ -348,7 +348,7 @@ def test_resolve_checkpointer_config_failure_fails_closed(monkeypatch):
         raise RuntimeError("broken checkpointer config")
 
     monkeypatch.setattr(
-        "deerflow.runtime.checkpointer.provider._resolve_checkpointer_config",
+        "nkyel.runtime.checkpointer.provider._resolve_checkpointer_config",
         _raise,
     )
 
@@ -404,7 +404,7 @@ async def test_sqlite_probe_drains_connection_close_across_repeated_cancellation
     monkeypatch.setattr(aiosqlite, "connect", fake_connect)
 
     await _assert_probe_close_is_drained(
-        health_module._probe_sqlite_backend("/tmp/deerflow-health-probe.db"),
+        health_module._probe_sqlite_backend("/tmp/nkyel-health-probe.db"),
         connection,
         "SQLite",
     )
@@ -443,7 +443,7 @@ async def test_postgres_probe_drains_connection_close_across_repeated_cancellati
 
     await _assert_probe_close_is_drained(
         health_module._probe_postgres_backend(
-            "postgresql://user:pass@localhost:5432/deerflow",
+            "postgresql://user:pass@localhost:5432/nkyel",
             "",
         ),
         connection,
@@ -788,7 +788,7 @@ def test_health_ready_route_reports_every_dependency(monkeypatch):
     assert response.status_code == 200
     assert response.json() == {
         "status": "ready",
-        "service": "deer-flow-gateway",
+        "service": "nkyel-gateway",
         "database": PROBE_OK,
         "checkpointer": PROBE_NOT_CONFIGURED,
         "stream_bridge": PROBE_OK,
@@ -834,4 +834,4 @@ def test_health_liveness_route_stays_200_while_readiness_is_degraded(monkeypatch
     assert client.get("/health/ready").status_code == 503
     live = client.get("/health")
     assert live.status_code == 200
-    assert live.json() == {"status": "healthy", "service": "deer-flow-gateway"}
+    assert live.json() == {"status": "healthy", "service": "nkyel-gateway"}

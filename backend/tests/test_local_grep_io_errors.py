@@ -11,16 +11,16 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
-from deerflow.sandbox.search import find_grep_matches
-from deerflow.sandbox.tools import grep_tool
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.search import find_grep_matches
+from nkyel.sandbox.tools import grep_tool
 
 
 @pytest.fixture
 def mounted_search(tmp_path, monkeypatch):
-    from deerflow.config import paths as paths_module
-    from deerflow.config.sandbox_config import SandboxConfig, VolumeMountConfig
-    from deerflow.sandbox.local.local_sandbox_provider import LocalSandboxProvider
+    from nkyel.config import paths as paths_module
+    from nkyel.config.sandbox_config import SandboxConfig, VolumeMountConfig
+    from nkyel.sandbox.local.local_sandbox_provider import LocalSandboxProvider
 
     monkeypatch.setattr(paths_module, "_paths", paths_module.Paths(tmp_path / "runtime"))
     source = tmp_path / "private-host-mount"
@@ -28,13 +28,13 @@ def mounted_search(tmp_path, monkeypatch):
     target = source / "secret.txt"
     target.write_bytes(b"needle\n")
     config = SimpleNamespace(
-        skills=SimpleNamespace(container_path="/mnt/skills", get_skills_path=lambda: tmp_path / "skills", use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage"),
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider", mounts=[VolumeMountConfig(host_path=str(source), container_path="/mnt/mounts/data")]),
+        skills=SimpleNamespace(container_path="/mnt/skills", get_skills_path=lambda: tmp_path / "skills", use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider", mounts=[VolumeMountConfig(host_path=str(source), container_path="/mnt/mounts/data")]),
     )
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
     provider = LocalSandboxProvider()
     sandbox = provider.get(provider.acquire(None))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda _: sandbox)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda _: sandbox)
     runtime = SimpleNamespace(state={"sandbox": {"sandbox_id": "local"}, "thread_data": {}}, context={"thread_id": "mounted-search"})
 
     def invoke(single=False):
@@ -60,7 +60,7 @@ def test_grep_custom_mount_errors_use_virtual_paths(mounted_search, monkeypatch,
         return iter(())
 
     if stage == "scan":
-        monkeypatch.setattr("deerflow.sandbox.search.os.walk", fail_walk)
+        monkeypatch.setattr("nkyel.sandbox.search.os.walk", fail_walk)
     else:
         monkeypatch.setattr(Path, "open", fail_open)
     expected = "/mnt/mounts/data" + ("" if stage == "scan" else "/secret.txt")
@@ -102,7 +102,7 @@ def test_grep_custom_mount_preserves_oserror_details(mounted_search, monkeypatch
     def fail_search(*args, **kwargs):
         raise error
 
-    monkeypatch.setattr("deerflow.sandbox.local.local_sandbox.find_grep_matches", fail_search)
+    monkeypatch.setattr("nkyel.sandbox.local.local_sandbox.find_grep_matches", fail_search)
     with pytest.raises(OSError) as caught:
         sandbox.grep("/mnt/mounts/data", "needle")
     assert type(caught.value) is type(error)
@@ -141,7 +141,7 @@ def search_file(tmp_path, monkeypatch):
         },
         context={"thread_id": "search-io"},
     )
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda _: LocalSandbox(id="local"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda _: LocalSandbox(id="local"))
 
     def invoke(*, single=False, pattern="needle", **kwargs):
         path = "/mnt/user-data/workspace/target.txt" if single else "/mnt/user-data/workspace"
@@ -276,7 +276,7 @@ def test_grep_skips_disappearing_directory_scan(search_file, monkeypatch, error_
             onerror(OSError(error_number, "directory changed during scan", str(root / "gone")))
         yield from original_walk(root)
 
-    monkeypatch.setattr("deerflow.sandbox.search.os.walk", failed_walk)
+    monkeypatch.setattr("nkyel.sandbox.search.os.walk", failed_walk)
     assert "Found 1 matches" in invoke()
 
 
@@ -290,7 +290,7 @@ def test_grep_reports_directory_scan_failure(search_file, monkeypatch, error_num
             onerror(OSError(error_number, "directory scan failed", str(root / "blocked")))
         yield from original_walk(root)
 
-    monkeypatch.setattr("deerflow.sandbox.search.os.walk", failed_walk)
+    monkeypatch.setattr("nkyel.sandbox.search.os.walk", failed_walk)
     result = invoke()
     assert result.startswith("Error:"), result
     assert "/mnt/user-data/workspace/blocked" in result

@@ -7,8 +7,8 @@ import pytest
 from langgraph.checkpoint.base import BaseCheckpointSaver, CheckpointTuple, empty_checkpoint
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
-from deerflow.runtime.checkpointer.cached_saver import CachedHistorySaver
+from nkyel.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
+from nkyel.runtime.checkpointer.cached_saver import CachedHistorySaver
 
 PREFIX = "ckpt-hist:v1:testdb"
 

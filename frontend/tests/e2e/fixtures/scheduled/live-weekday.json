@@ -70,10 +70,10 @@
         "additional_kwargs": {
           "hide_from_ui": true,
           "dynamic_context_reminder": true,
-          "deerflow_content_kind": "middleware_injection",
-          "deerflow_producer_kind": "dynamic_context",
+          "nkyel_content_kind": "middleware_injection",
+          "nkyel_producer_kind": "dynamic_context",
           "reminder_date": "2026-10-06, Tuesday",
-          "deerflow_seq": 2
+          "nkyel_seq": 2
         }
       },
       {
@@ -89,7 +89,7 @@
         "additional_kwargs": {
           "run_id": "6335e106-7499-47b2-8be6-e8af0fe0ddb5",
           "timestamp": "2026-10-06T08:42:51.264422+00:00",
-          "deerflow_seq": 2
+          "nkyel_seq": 2
         },
         "run_id": "6335e106-7499-47b2-8be6-e8af0fe0ddb5"
       },
@@ -112,7 +112,7 @@
               }
             ]
           },
-          "deerflow_seq": 3
+          "nkyel_seq": 3
         },
         "tool_calls": [
           {
@@ -141,14 +141,14 @@
         "content": "# Release checklist — v0.9 (demo project)\n\n- [x] Freeze the release branch — Maya Chen\n- [x] Update the changelog — Leo Park\n- [x] Run the full test suite — Ines Ortega\n- [ ] Publish the Docker image — Sam Okafor\n- [ ] Post the release notes — Nora Lind\n",
         "name": "read_file",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 4
+          "nkyel_seq": 4
         },
         "tool_call_id": "call_00_uX0G0QBAbIjIghgeDshv4551",
         "status": "success",
@@ -173,7 +173,7 @@
               }
             ]
           },
-          "deerflow_seq": 5
+          "nkyel_seq": 5
         },
         "tool_calls": [
           {
@@ -209,14 +209,14 @@
         "content": "{\"action\": \"create\", \"display\": \"card\", \"task\": {\"id\": \"task-f3a00a4dd1574021b6cacfa875fd1bdd\", \"title\": \"工作日发布清单未完成项提醒\", \"status\": \"enabled\", \"schedule_type\": \"cron\", \"schedule_spec\": {\"cron\": \"0 9 * * 1-5\"}, \"timezone\": \"Asia/Shanghai\", \"timezone_source\": \"browser_default\", \"next_run_local\": \"2026-10-07 09:00 (Asia/Shanghai)\", \"active_run_status\": null, \"prompt\": \"读取 /mnt/demo/release-checklist.md，找出所有未勾选（- [ ]）的条目，列出每一条的内容及其负责人（条目末尾破折号后的名字）。如果全部条目都已勾选，则无需提醒，直接说明清单已全部完成。\", \"stop_condition\": \"/mnt/demo/release-checklist.md 里的条目全部勾选完成\", \"goal_objective\": null, \"max_runs\": null, \"end_at_local\": null, \"automatic_runs_used\": 0, \"context_mode\": \"fresh_thread_per_run\", \"standing_notes\": []}, \"now_local\": \"2026-10-06 16:44 (Asia/Shanghai)\"}",
         "name": "schedule_task",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 6
+          "nkyel_seq": 6
         },
         "tool_call_id": "call_00_cvCTdYPQLhaxyDiblqCx6603",
         "status": "success",
@@ -234,7 +234,7 @@
             "tool_call_ids": [],
             "actions": []
           },
-          "deerflow_seq": 7,
+          "nkyel_seq": 7,
           "turn_duration": 72
         },
         "usage_metadata": {
@@ -261,7 +261,7 @@
         "additional_kwargs": {
           "run_id": "5df8a2ad-bcc7-4fd1-ab58-7ef2282c352e",
           "timestamp": "2026-10-06T08:44:32.482685+00:00",
-          "deerflow_seq": 11
+          "nkyel_seq": 11
         },
         "run_id": "5df8a2ad-bcc7-4fd1-ab58-7ef2282c352e"
       },
@@ -284,7 +284,7 @@
               }
             ]
           },
-          "deerflow_seq": 12
+          "nkyel_seq": 12
         },
         "tool_calls": [
           {
@@ -314,14 +314,14 @@
         "content": "{\"action\": \"trial\", \"display\": \"card\", \"task\": {\"id\": \"task-f3a00a4dd1574021b6cacfa875fd1bdd\", \"title\": \"工作日发布清单未完成项提醒\", \"status\": \"enabled\", \"schedule_type\": \"cron\", \"schedule_spec\": {\"cron\": \"0 9 * * 1-5\"}, \"timezone\": \"Asia/Shanghai\", \"next_run_local\": \"2026-10-07 09:00 (Asia/Shanghai)\", \"active_run_status\": \"running\", \"prompt\": \"读取 /mnt/demo/release-checklist.md，找出所有未勾选（- [ ]）的条目，列出每一条的内容及其负责人（条目末尾破折号后的名字）。如果全部条目都已勾选，则无需提醒，直接说明清单已全部完成。\", \"stop_condition\": \"/mnt/demo/release-checklist.md 里的条目全部勾选完成\", \"goal_objective\": null, \"max_runs\": null, \"end_at_local\": null, \"automatic_runs_used\": 0, \"context_mode\": \"fresh_thread_per_run\", \"standing_notes\": []}, \"trial\": {\"outcome\": \"launched\", \"existing\": false, \"thread_id\": \"e0a4c9eb-80aa-44b1-b4f1-d8e44df07749\"}}",
         "name": "schedule_task",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 13
+          "nkyel_seq": 13
         },
         "tool_call_id": "call_00_aeUocAUvJayNH84uhlqu2182",
         "status": "success",
@@ -339,7 +339,7 @@
             "tool_call_ids": [],
             "actions": []
           },
-          "deerflow_seq": 16,
+          "nkyel_seq": 16,
           "turn_duration": 6
         },
         "usage_metadata": {
@@ -366,7 +366,7 @@
         "additional_kwargs": {
           "run_id": "7577c377-50d0-482f-9049-e4503874c7ff",
           "timestamp": "2026-10-06T08:45:08.111337+00:00",
-          "deerflow_seq": 20
+          "nkyel_seq": 20
         },
         "run_id": "7577c377-50d0-482f-9049-e4503874c7ff"
       },
@@ -389,7 +389,7 @@
               }
             ]
           },
-          "deerflow_seq": 21
+          "nkyel_seq": 21
         },
         "tool_calls": [
           {
@@ -422,14 +422,14 @@
         "content": "{\"action\": \"update\", \"display\": \"card\", \"task\": {\"id\": \"task-f3a00a4dd1574021b6cacfa875fd1bdd\", \"title\": \"工作日发布清单未完成项提醒\", \"status\": \"enabled\", \"schedule_type\": \"cron\", \"schedule_spec\": {\"cron\": \"0 10 * * *\"}, \"timezone\": \"Asia/Shanghai\", \"timezone_source\": \"saved\", \"next_run_local\": \"2026-10-07 10:00 (Asia/Shanghai)\", \"active_run_status\": null, \"prompt\": \"读取 /mnt/demo/release-checklist.md，找出所有未勾选（- [ ]）的条目，列出每一条的内容及其负责人（条目末尾破折号后的名字）。如果全部条目都已勾选，则无需提醒，直接说明清单已全部完成。\", \"stop_condition\": \"/mnt/demo/release-checklist.md 里的条目全部勾选完成\", \"goal_objective\": null, \"max_runs\": null, \"end_at_local\": null, \"automatic_runs_used\": 0, \"context_mode\": \"fresh_thread_per_run\", \"standing_notes\": []}, \"now_local\": \"2026-10-06 16:45 (Asia/Shanghai)\"}",
         "name": "schedule_task",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 22
+          "nkyel_seq": 22
         },
         "tool_call_id": "call_00_BDRj7RGp1ffoDb33n9WS1049",
         "status": "success",
@@ -447,7 +447,7 @@
             "tool_call_ids": [],
             "actions": []
           },
-          "deerflow_seq": 23,
+          "nkyel_seq": 23,
           "turn_duration": 6
         },
         "usage_metadata": {
@@ -474,7 +474,7 @@
         "additional_kwargs": {
           "run_id": "8139336c-390b-4761-9237-b995d6aa6f07",
           "timestamp": "2026-10-06T08:45:45.606512+00:00",
-          "deerflow_seq": 27
+          "nkyel_seq": 27
         },
         "run_id": "8139336c-390b-4761-9237-b995d6aa6f07"
       },
@@ -497,7 +497,7 @@
               }
             ]
           },
-          "deerflow_seq": 28
+          "nkyel_seq": 28
         },
         "tool_calls": [
           {
@@ -527,14 +527,14 @@
         "content": "{\"action\": \"pause\", \"display\": \"card\", \"task\": {\"id\": \"task-f3a00a4dd1574021b6cacfa875fd1bdd\", \"title\": \"工作日发布清单未完成项提醒\", \"status\": \"paused\", \"schedule_type\": \"cron\", \"schedule_spec\": {\"cron\": \"0 10 * * *\"}, \"timezone\": \"Asia/Shanghai\", \"next_run_local\": null, \"active_run_status\": null, \"prompt\": \"读取 /mnt/demo/release-checklist.md，找出所有未勾选（- [ ]）的条目，列出每一条的内容及其负责人（条目末尾破折号后的名字）。如果全部条目都已勾选，则无需提醒，直接说明清单已全部完成。\", \"stop_condition\": \"/mnt/demo/release-checklist.md 里的条目全部勾选完成\", \"goal_objective\": null, \"max_runs\": null, \"end_at_local\": null, \"automatic_runs_used\": 0, \"context_mode\": \"fresh_thread_per_run\", \"standing_notes\": []}}",
         "name": "schedule_task",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 29
+          "nkyel_seq": 29
         },
         "tool_call_id": "call_00_nKRxcb5mvRjajRwvslfR8814",
         "status": "success",
@@ -552,7 +552,7 @@
             "tool_call_ids": [],
             "actions": []
           },
-          "deerflow_seq": 30,
+          "nkyel_seq": 30,
           "turn_duration": 6
         },
         "usage_metadata": {
@@ -579,7 +579,7 @@
         "additional_kwargs": {
           "run_id": "66c8eafc-1919-4981-93c8-8d81365e9826",
           "timestamp": "2026-10-06T08:46:03.662141+00:00",
-          "deerflow_seq": 34
+          "nkyel_seq": 34
         },
         "run_id": "66c8eafc-1919-4981-93c8-8d81365e9826"
       },
@@ -602,7 +602,7 @@
               }
             ]
           },
-          "deerflow_seq": 35
+          "nkyel_seq": 35
         },
         "tool_calls": [
           {
@@ -632,14 +632,14 @@
         "content": "{\"action\": \"resume\", \"display\": \"card\", \"task\": {\"id\": \"task-f3a00a4dd1574021b6cacfa875fd1bdd\", \"title\": \"工作日发布清单未完成项提醒\", \"status\": \"enabled\", \"schedule_type\": \"cron\", \"schedule_spec\": {\"cron\": \"0 10 * * *\"}, \"timezone\": \"Asia/Shanghai\", \"next_run_local\": \"2026-10-07 10:00 (Asia/Shanghai)\", \"active_run_status\": null, \"prompt\": \"读取 /mnt/demo/release-checklist.md，找出所有未勾选（- [ ]）的条目，列出每一条的内容及其负责人（条目末尾破折号后的名字）。如果全部条目都已勾选，则无需提醒，直接说明清单已全部完成。\", \"stop_condition\": \"/mnt/demo/release-checklist.md 里的条目全部勾选完成\", \"goal_objective\": null, \"max_runs\": null, \"end_at_local\": null, \"automatic_runs_used\": 0, \"context_mode\": \"fresh_thread_per_run\", \"standing_notes\": []}}",
         "name": "schedule_task",
         "additional_kwargs": {
-          "deerflow_tool_meta": {
+          "nkyel_tool_meta": {
             "status": "success",
             "error_type": null,
             "recoverable_by_model": true,
             "recommended_next_action": "continue",
             "source": "content_analysis"
           },
-          "deerflow_seq": 36
+          "nkyel_seq": 36
         },
         "tool_call_id": "call_00_pXpry20SYJS34UGDgJ6C5519",
         "status": "success",
@@ -657,7 +657,7 @@
             "tool_call_ids": [],
             "actions": []
           },
-          "deerflow_seq": 37,
+          "nkyel_seq": 37,
           "turn_duration": 6
         },
         "usage_metadata": {

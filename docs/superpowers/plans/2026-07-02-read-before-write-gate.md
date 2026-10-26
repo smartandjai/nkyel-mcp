@@ -4,7 +4,7 @@
 
 **Goal:** Deterministically block `write_file` (append / overwrite-existing) and `str_replace` unless the agent has read the file's *current* version, fixing issue #3857's output-layer duplicate-append failure.
 
-**Architecture:** A new `ReadBeforeWriteMiddleware` intercepts file tools via `wrap_tool_call`/`awrap_tool_call`. On a successful `read_file` it stamps `sha256(full file content)` into the returned `ToolMessage.additional_kwargs["deerflow_read_mark"]`. Before a gated write it re-hashes the file and requires the newest mark for that path in `state["messages"]` to match. Marks live on messages, so summarization deleting the read result automatically invalidates the mark (the issue's "mark tied to context presence" requirement) — no reserved region needed. Writes never refresh marks, so consecutive modifications force a re-read.
+**Architecture:** A new `ReadBeforeWriteMiddleware` intercepts file tools via `wrap_tool_call`/`awrap_tool_call`. On a successful `read_file` it stamps `sha256(full file content)` into the returned `ToolMessage.additional_kwargs["nkyel_read_mark"]`. Before a gated write it re-hashes the file and requires the newest mark for that path in `state["messages"]` to match. Marks live on messages, so summarization deleting the read result automatically invalidates the mark (the issue's "mark tied to context presence" requirement) — no reserved region needed. Writes never refresh marks, so consecutive modifications force a re-read.
 
 **Tech Stack:** Python 3.12, LangChain `AgentMiddleware`, LangGraph `ToolCallRequest`, pytest.
 
@@ -23,11 +23,11 @@
 ### Task 1: Extract `read_current_file_content` helper in sandbox tools
 
 **Files:**
-- Modify: `backend/packages/harness/deerflow/sandbox/tools.py` (read_file_tool at ~1666; place helper right above `@tool("read_file", ...)`)
+- Modify: `backend/packages/harness/nkyel/sandbox/tools.py` (read_file_tool at ~1666; place helper right above `@tool("read_file", ...)`)
 - Test: `backend/tests/test_read_before_write_middleware.py` (new file, helper test only in this task)
 
 **Interfaces:**
-- Produces: `deerflow.sandbox.tools.read_current_file_content(runtime, path: str) -> str` — full current content using `read_file`'s path-resolution rules; raises `FileNotFoundError` when missing, propagates other errors.
+- Produces: `nkyel.sandbox.tools.read_current_file_content(runtime, path: str) -> str` — full current content using `read_file`'s path-resolution rules; raises `FileNotFoundError` when missing, propagates other errors.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -39,7 +39,7 @@ from unittest.mock import MagicMock, patch
 
 class TestReadCurrentFileContent:
     def test_reads_via_sandbox_with_resolution(self):
-        from deerflow.sandbox import tools as sandbox_tools
+        from nkyel.sandbox import tools as sandbox_tools
 
         sandbox = MagicMock()
         sandbox.read_file.return_value = "hello"
@@ -55,7 +55,7 @@ class TestReadCurrentFileContent:
     def test_propagates_file_not_found(self):
         import pytest
 
-        from deerflow.sandbox import tools as sandbox_tools
+        from nkyel.sandbox import tools as sandbox_tools
 
         sandbox = MagicMock()
         sandbox.read_file.side_effect = FileNotFoundError()
@@ -121,7 +121,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/packages/harness/deerflow/sandbox/tools.py backend/tests/test_read_before_write_middleware.py
+git add backend/packages/harness/nkyel/sandbox/tools.py backend/tests/test_read_before_write_middleware.py
 git commit -m "refactor(sandbox): extract read_current_file_content helper (#3857)"
 ```
 
@@ -130,12 +130,12 @@ git commit -m "refactor(sandbox): extract read_current_file_content helper (#385
 ### Task 2: `ReadBeforeWriteMiddleware` — mark stamping + sync write gate
 
 **Files:**
-- Create: `backend/packages/harness/deerflow/agents/middlewares/read_before_write_middleware.py`
+- Create: `backend/packages/harness/nkyel/agents/middlewares/read_before_write_middleware.py`
 - Test: `backend/tests/test_read_before_write_middleware.py`
 
 **Interfaces:**
 - Consumes: `read_current_file_content(runtime, path)` from Task 1.
-- Produces: `ReadBeforeWriteMiddleware(content_reader=None)` with `wrap_tool_call`; module constants `READ_MARK_KEY = "deerflow_read_mark"`. `content_reader: Callable[[Any, str], str]` defaults to `read_current_file_content` (injectable for tests).
+- Produces: `ReadBeforeWriteMiddleware(content_reader=None)` with `wrap_tool_call`; module constants `READ_MARK_KEY = "nkyel_read_mark"`. `content_reader: Callable[[Any, str], str]` defaults to `read_current_file_content` (injectable for tests).
 
 - [ ] **Step 1: Write failing tests**
 
@@ -163,12 +163,12 @@ def _make_request(name, args, messages=()):
 
 def _read_marked_message(path, content, tool_call_id="r1"):
     msg = ToolMessage(content=content[:20], tool_call_id=tool_call_id, name="read_file")
-    msg.additional_kwargs["deerflow_read_mark"] = {"path": path, "hash": _sha(content)}
+    msg.additional_kwargs["nkyel_read_mark"] = {"path": path, "hash": _sha(content)}
     return msg
 
 
 def _middleware(files: dict[str, str]):
-    from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+    from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
 
     def reader(_runtime, path):
         import posixpath
@@ -190,7 +190,7 @@ class TestReadMarkStamping:
         request = _make_request("read_file", {"description": "d", "path": "/mnt/user-data/outputs/report.md"})
         handler = MagicMock(return_value=ToolMessage(content="v1", tool_call_id="call-1", name="read_file"))
         result = mw.wrap_tool_call(request, handler)
-        mark = result.additional_kwargs["deerflow_read_mark"]
+        mark = result.additional_kwargs["nkyel_read_mark"]
         assert mark == {"path": "/mnt/user-data/outputs/report.md", "hash": _sha("v1")}
 
     def test_ranged_read_stamps_full_file_hash(self):
@@ -201,21 +201,21 @@ class TestReadMarkStamping:
         )
         handler = MagicMock(return_value=ToolMessage(content="line3", tool_call_id="call-1", name="read_file"))
         result = mw.wrap_tool_call(request, handler)
-        assert result.additional_kwargs["deerflow_read_mark"]["hash"] == _sha("line1\nline2\nline3")
+        assert result.additional_kwargs["nkyel_read_mark"]["hash"] == _sha("line1\nline2\nline3")
 
     def test_error_tool_message_gets_no_mark(self):
         mw = _middleware({"/mnt/user-data/outputs/report.md": "v1"})
         request = _make_request("read_file", {"description": "d", "path": "/mnt/user-data/outputs/report.md"})
         handler = MagicMock(return_value=ToolMessage(content="boom", tool_call_id="call-1", name="read_file", status="error"))
         result = mw.wrap_tool_call(request, handler)
-        assert "deerflow_read_mark" not in result.additional_kwargs
+        assert "nkyel_read_mark" not in result.additional_kwargs
 
     def test_reader_failure_means_no_mark(self):
         mw = _middleware({"/mnt/user-data/outputs/report.md": RuntimeError("sandbox down")})
         request = _make_request("read_file", {"description": "d", "path": "/mnt/user-data/outputs/report.md"})
         handler = MagicMock(return_value=ToolMessage(content="v1", tool_call_id="call-1", name="read_file"))
         result = mw.wrap_tool_call(request, handler)
-        assert "deerflow_read_mark" not in result.additional_kwargs
+        assert "nkyel_read_mark" not in result.additional_kwargs
 
     def test_non_file_tools_untouched(self):
         mw = _middleware({})
@@ -331,7 +331,7 @@ Expected: FAIL — `ModuleNotFoundError: ... read_before_write_middleware`
 
 - [ ] **Step 3: Implement the middleware (sync paths)**
 
-Create `backend/packages/harness/deerflow/agents/middlewares/read_before_write_middleware.py`:
+Create `backend/packages/harness/nkyel/agents/middlewares/read_before_write_middleware.py`:
 
 ```python
 """Deterministic read-before-write gate for file-modifying tools (issue #3857).
@@ -366,11 +366,11 @@ from langchain_core.messages import ToolMessage
 from langgraph.prebuilt.tool_node import ToolCallRequest
 from langgraph.types import Command
 
-from deerflow.sandbox.tools import read_current_file_content
+from nkyel.sandbox.tools import read_current_file_content
 
 logger = logging.getLogger(__name__)
 
-READ_MARK_KEY = "deerflow_read_mark"
+READ_MARK_KEY = "nkyel_read_mark"
 
 _READ_TOOLS = frozenset({"read_file"})
 _GATED_WRITE_TOOLS = frozenset({"write_file", "str_replace"})
@@ -520,7 +520,7 @@ Expected: PASS (all TestReadMarkStamping + TestWriteGate)
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/packages/harness/deerflow/agents/middlewares/read_before_write_middleware.py backend/tests/test_read_before_write_middleware.py
+git add backend/packages/harness/nkyel/agents/middlewares/read_before_write_middleware.py backend/tests/test_read_before_write_middleware.py
 git commit -m "feat(middlewares): read-before-write version gate for file tools (#3857)"
 ```
 
@@ -562,7 +562,7 @@ class TestAsyncPaths:
             return ToolMessage(content="v1", tool_call_id="call-1", name="read_file")
 
         result = asyncio.run(mw.awrap_tool_call(request, handler))
-        assert result.additional_kwargs["deerflow_read_mark"]["hash"] == _sha("v1")
+        assert result.additional_kwargs["nkyel_read_mark"]["hash"] == _sha("v1")
 
     def test_async_allowed_write_calls_handler(self):
         import asyncio
@@ -595,9 +595,9 @@ git commit -m "test(middlewares): pin async read-before-write gate paths (#3857)
 ### Task 4: Config + chain wiring
 
 **Files:**
-- Create: `backend/packages/harness/deerflow/config/read_before_write_config.py`
-- Modify: `backend/packages/harness/deerflow/config/app_config.py` (imports at top; field after `loop_detection` at ~line 133)
-- Modify: `backend/packages/harness/deerflow/agents/middlewares/tool_error_handling_middleware.py:192-197` (tail layer)
+- Create: `backend/packages/harness/nkyel/config/read_before_write_config.py`
+- Modify: `backend/packages/harness/nkyel/config/app_config.py` (imports at top; field after `loop_detection` at ~line 133)
+- Modify: `backend/packages/harness/nkyel/agents/middlewares/tool_error_handling_middleware.py:192-197` (tail layer)
 - Modify: `config.example.yaml` (bump `config_version` — 16 → 17 as landed; new section near `loop_detection:` at ~line 836)
 - Modify: `backend/tests/test_tool_error_handling_middleware.py:178-218` (chain-order pin test)
 - Test: `backend/tests/test_read_before_write_middleware.py`
@@ -612,39 +612,39 @@ Append to `backend/tests/test_read_before_write_middleware.py`:
 ```python
 class TestChainWiring:
     def test_enabled_by_default_in_runtime_chain(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-        from deerflow.agents.middlewares.sandbox_audit_middleware import SandboxAuditMiddleware
-        from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware, build_lead_runtime_middlewares
-        from deerflow.config.app_config import AppConfig
-        from deerflow.config.sandbox_config import SandboxConfig
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.sandbox_audit_middleware import SandboxAuditMiddleware
+        from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware, build_lead_runtime_middlewares
+        from nkyel.config.app_config import AppConfig
+        from nkyel.config.sandbox_config import SandboxConfig
 
-        app_config = AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local.local_sandbox_provider:LocalSandboxProvider"))
+        app_config = AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local.local_sandbox_provider:LocalSandboxProvider"))
         middlewares = build_lead_runtime_middlewares(app_config=app_config)
         types = [type(m) for m in middlewares]
         assert ReadBeforeWriteMiddleware in types
         assert types.index(SandboxAuditMiddleware) < types.index(ReadBeforeWriteMiddleware) < types.index(ToolErrorHandlingMiddleware)
 
     def test_disabled_removes_middleware(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-        from deerflow.agents.middlewares.tool_error_handling_middleware import build_lead_runtime_middlewares
-        from deerflow.config.app_config import AppConfig
-        from deerflow.config.read_before_write_config import ReadBeforeWriteConfig
-        from deerflow.config.sandbox_config import SandboxConfig
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.tool_error_handling_middleware import build_lead_runtime_middlewares
+        from nkyel.config.app_config import AppConfig
+        from nkyel.config.read_before_write_config import ReadBeforeWriteConfig
+        from nkyel.config.sandbox_config import SandboxConfig
 
         app_config = AppConfig(
-            sandbox=SandboxConfig(use="deerflow.sandbox.local.local_sandbox_provider:LocalSandboxProvider"),
+            sandbox=SandboxConfig(use="nkyel.sandbox.local.local_sandbox_provider:LocalSandboxProvider"),
             read_before_write=ReadBeforeWriteConfig(enabled=False),
         )
         middlewares = build_lead_runtime_middlewares(app_config=app_config)
         assert ReadBeforeWriteMiddleware not in [type(m) for m in middlewares]
 
     def test_subagents_get_the_gate_too(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-        from deerflow.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
-        from deerflow.config.app_config import AppConfig
-        from deerflow.config.sandbox_config import SandboxConfig
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
+        from nkyel.config.app_config import AppConfig
+        from nkyel.config.sandbox_config import SandboxConfig
 
-        app_config = AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local.local_sandbox_provider:LocalSandboxProvider"))
+        app_config = AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local.local_sandbox_provider:LocalSandboxProvider"))
         middlewares = build_subagent_runtime_middlewares(app_config=app_config)
         assert ReadBeforeWriteMiddleware in [type(m) for m in middlewares]
 ```
@@ -658,7 +658,7 @@ Expected: FAIL — no `read_before_write_config` module / middleware missing fro
 
 - [ ] **Step 3: Implement config + wiring**
 
-`backend/packages/harness/deerflow/config/read_before_write_config.py`:
+`backend/packages/harness/nkyel/config/read_before_write_config.py`:
 
 ```python
 """Configuration for the read-before-write file gate middleware (issue #3857)."""
@@ -684,7 +684,7 @@ class ReadBeforeWriteConfig(BaseModel):
 `app_config.py` — add import + field (place after `loop_detection`):
 
 ```python
-from deerflow.config.read_before_write_config import ReadBeforeWriteConfig
+from nkyel.config.read_before_write_config import ReadBeforeWriteConfig
 ...
     read_before_write: ReadBeforeWriteConfig = Field(default_factory=ReadBeforeWriteConfig, description="Read-before-write file gate middleware configuration")
 ```
@@ -695,7 +695,7 @@ from deerflow.config.read_before_write_config import ReadBeforeWriteConfig
     tail.append(SandboxAuditMiddleware())
 
     if app_config.read_before_write.enabled:
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
 
         tail.append(ReadBeforeWriteMiddleware())
 
@@ -716,7 +716,7 @@ read_before_write:
 `tests/test_tool_error_handling_middleware.py::test_build_lead_runtime_middlewares_chain_order_matches_agents_md` — add to imports and `expected_order` between `SandboxAuditMiddleware` and `ToolErrorHandlingMiddleware`:
 
 ```python
-    from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+    from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
     ...
         ("SandboxAuditMiddleware", SandboxAuditMiddleware),
         ("ReadBeforeWriteMiddleware", ReadBeforeWriteMiddleware),
@@ -731,7 +731,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/packages/harness/deerflow/config/read_before_write_config.py backend/packages/harness/deerflow/config/app_config.py backend/packages/harness/deerflow/agents/middlewares/tool_error_handling_middleware.py config.example.yaml backend/tests/test_tool_error_handling_middleware.py backend/tests/test_read_before_write_middleware.py
+git add backend/packages/harness/nkyel/config/read_before_write_config.py backend/packages/harness/nkyel/config/app_config.py backend/packages/harness/nkyel/agents/middlewares/tool_error_handling_middleware.py config.example.yaml backend/tests/test_tool_error_handling_middleware.py backend/tests/test_read_before_write_middleware.py
 git commit -m "feat(config): wire ReadBeforeWriteMiddleware into runtime chain, default on (#3857)"
 ```
 
@@ -740,7 +740,7 @@ git commit -m "feat(config): wire ReadBeforeWriteMiddleware into runtime chain, 
 ### Task 5: Tool docstrings, docs, full verification
 
 **Files:**
-- Modify: `backend/packages/harness/deerflow/sandbox/tools.py` (`write_file_tool` docstring ~1765; `str_replace_tool` docstring ~1859)
+- Modify: `backend/packages/harness/nkyel/sandbox/tools.py` (`write_file_tool` docstring ~1765; `str_replace_tool` docstring ~1859)
 - Modify: `backend/AGENTS.md` ("Middleware Chain" → Shared runtime base list at ~line 202; "Sandbox Tools" bullet list)
 - Modify: `docs/superpowers/specs/2026-07-02-read-before-write-gate-design.md` only if implementation deviated
 
@@ -781,6 +781,6 @@ Expected: format clean, lint clean, full suite PASS
 - [ ] **Step 4: Commit**
 
 ```bash
-git add backend/packages/harness/deerflow/sandbox/tools.py backend/AGENTS.md
+git add backend/packages/harness/nkyel/sandbox/tools.py backend/AGENTS.md
 git commit -m "docs(sandbox): document read-before-write gate in tool docstrings and AGENTS.md (#3857)"
 ```

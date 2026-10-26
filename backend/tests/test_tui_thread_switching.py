@@ -5,11 +5,11 @@ import threading
 
 import pytest
 
-from deerflow.client import StreamEvent
-from deerflow.tui.app import DeerFlowTUI, SelectScreen
-from deerflow.tui.cli import LaunchPlan
-from deerflow.tui.session import Session
-from deerflow.tui.view_state import AssistantDelta, RunEnded, RunStarted
+from nkyel.client import StreamEvent
+from nkyel.tui.app import NkyelTUI, SelectScreen
+from nkyel.tui.cli import LaunchPlan
+from nkyel.tui.session import Session
+from nkyel.tui.view_state import AssistantDelta, RunEnded, RunStarted
 
 
 class _ControlledClient:
@@ -47,7 +47,7 @@ async def _settle(pilot, predicate):
 @pytest.mark.asyncio
 async def test_interrupt_then_resume_discards_old_thread_delivery(monkeypatch):
     client = _ControlledClient()
-    app = DeerFlowTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
     ready = threading.Event()
     deliver = threading.Event()
     delivered = threading.Event()
@@ -93,7 +93,7 @@ async def test_interrupt_then_resume_discards_old_thread_delivery(monkeypatch):
 @pytest.mark.parametrize("command", ["/resume thread-b", "/resume", "/threads", "/switch"])
 async def test_active_run_rejects_thread_switch_commands(command):
     client = _ControlledClient()
-    app = DeerFlowTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
     async with app.run_test() as pilot:
         try:
             await pilot.pause()
@@ -129,7 +129,7 @@ async def test_active_run_rejects_thread_switch_commands(command):
 @pytest.mark.asyncio
 async def test_picker_callback_rechecks_run_state_before_switching():
     client = _ControlledClient()
-    app = DeerFlowTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app._open_thread_switcher()
@@ -149,7 +149,7 @@ async def test_picker_callback_rechecks_run_state_before_switching():
 async def test_invalid_resume_shows_error_and_keeps_app_usable(ref):
     client = _ControlledClient()
     client.release.set()
-    app = DeerFlowTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app.query_one("#composer").value = f"/resume {ref}"
@@ -168,7 +168,7 @@ async def test_invalid_resume_shows_error_and_keeps_app_usable(ref):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("ref", ["Other thread", "thread-b", "new-valid-id"])
 async def test_idle_resume_preserves_title_id_and_new_namespace_resolution(ref):
-    app = DeerFlowTUI(Session(client=_ControlledClient()), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=_ControlledClient()), LaunchPlan(mode="tui", thread_id="thread-a"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app.query_one("#composer").value = f"/resume {ref}"

@@ -11,7 +11,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
-from deerflow.models.claude_provider import ClaudeChatModel
+from nkyel.models.claude_provider import ClaudeChatModel
 
 
 @pytest.mark.parametrize("attempt", [1, 2])

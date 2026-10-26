@@ -5,12 +5,12 @@ from datetime import UTC, datetime
 import pytest
 from sqlalchemy import func, select
 
-from deerflow.persistence.notification_deliveries import NotificationDeliveryRepository, NotificationDeliveryRow
+from nkyel.persistence.notification_deliveries import NotificationDeliveryRepository, NotificationDeliveryRow
 
 
 @pytest.fixture
 async def delivery_repo(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'notifications.db'}", sqlite_dir=str(tmp_path))
     try:
@@ -78,10 +78,10 @@ async def test_one_occurrence_can_commit_unmet_and_pause_notices_together(delive
 async def test_observer_notice_commits_and_rolls_back_with_complete_run(delivery_repo):
     """The finalization observer stages the v2 notice inside complete_run's transaction."""
     from app.scheduler.service import ScheduledTaskService
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository
-    from deerflow.persistence.channel_connections.model import ChannelConnectionRow
-    from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository
+    from nkyel.persistence.channel_connections.model import ChannelConnectionRow
+    from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
 
     sf = delivery_repo.session_factory
     tasks, runs = ScheduledTaskRepository(sf), ScheduledTaskRunRepository(sf)

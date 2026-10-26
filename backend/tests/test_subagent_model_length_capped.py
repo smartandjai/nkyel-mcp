@@ -9,21 +9,21 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from langchain_core.tools import StructuredTool
 
-from deerflow.config.app_config import AppConfig
-from deerflow.subagents.config import SubagentConfig
-from deerflow.subagents.status_contract import format_subagent_result_message
+from nkyel.config.app_config import AppConfig
+from nkyel.subagents.config import SubagentConfig
+from nkyel.subagents.status_contract import format_subagent_result_message
 
 
 @pytest.fixture
 def executor_module(monkeypatch, tmp_path):
     # conftest installs an executor stub. Load the production module separately
     # so the real subagent middleware chain runs.
-    path = Path(__file__).parents[1] / "packages/harness/deerflow/subagents/executor.py"
+    path = Path(__file__).parents[1] / "packages/harness/nkyel/subagents/executor.py"
     spec = importlib.util.spec_from_file_location("_model_length_capped_executor", path)
     module = importlib.util.module_from_spec(spec)
     monkeypatch.setitem(sys.modules, spec.name, module)
     spec.loader.exec_module(module)
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     yield module
     module._shutdown_isolated_subagent_loop()
 
@@ -39,7 +39,7 @@ def _executor(executor_module, monkeypatch, responses, tools):
     app_config = AppConfig.model_validate(
         {
             "models": [{"name": "offline", "use": "langchain_openai:ChatOpenAI", "model": "offline"}],
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "summarization": {"enabled": False},
         }
     )

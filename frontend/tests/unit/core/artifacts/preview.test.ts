@@ -250,10 +250,10 @@ test("injects scroll restoration at the start of the HTML head", () => {
     '<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="script-src \'none\'"></head><body><main>content</main></body></html>';
 
   expect(appendHtmlPreviewScrollRestoration(html, ARTIFACT_PATH)).toContain(
-    "<script data-deerflow-artifact-scroll-restoration>",
+    "<script data-nkyel-artifact-scroll-restoration>",
   );
   expect(appendHtmlPreviewScrollRestoration(html, ARTIFACT_PATH)).toContain(
-    "<head><script data-deerflow-artifact-scroll-restoration>",
+    "<head><script data-nkyel-artifact-scroll-restoration>",
   );
 });
 
@@ -264,7 +264,7 @@ test("does not duplicate HTML scroll restoration script", () => {
 
   expect(
     appendHtmlPreviewScrollRestoration(html).match(
-      /data-deerflow-artifact-scroll-restoration/g,
+      /data-nkyel-artifact-scroll-restoration/g,
     ),
   ).toHaveLength(1);
 });

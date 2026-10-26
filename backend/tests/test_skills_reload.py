@@ -14,8 +14,8 @@ from fastapi.testclient import TestClient
 from app.gateway.auth.models import User
 from app.gateway.deps import get_config
 from app.gateway.routers import skills as skills_router
-from deerflow.agents.lead_agent import prompt as prompt_module
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.agents.lead_agent import prompt as prompt_module
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
 _SUCCESS_RESPONSE = {
     "success": True,
@@ -26,7 +26,7 @@ _SUCCESS_RESPONSE = {
 
 def _make_app(*, system_role: str) -> FastAPI:
     config = SimpleNamespace(
-        skills=SimpleNamespace(get_skills_path=lambda: "/tmp/skills", container_path="/mnt/skills", use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage"),
+        skills=SimpleNamespace(get_skills_path=lambda: "/tmp/skills", container_path="/mnt/skills", use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage"),
         skill_evolution=SimpleNamespace(enabled=True, moderation_model_name=None),
     )
     app = make_authed_test_app(
@@ -161,7 +161,7 @@ def test_reload_invalidates_all_user_caches_and_rescans_external_changes(monkeyp
     config = SimpleNamespace(
         skills=SimpleNamespace(
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
             get_skills_path=lambda: tmp_path,
         ),
         skill_evolution=SimpleNamespace(enabled=False),
@@ -205,7 +205,7 @@ def test_reload_does_not_allow_inflight_user_scan_to_repopulate_stale_cache(monk
     config = SimpleNamespace(
         skills=SimpleNamespace(
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
             get_skills_path=lambda: tmp_path,
         ),
         skill_evolution=SimpleNamespace(enabled=False),

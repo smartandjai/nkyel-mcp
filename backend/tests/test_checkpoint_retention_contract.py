@@ -47,8 +47,8 @@ from app.gateway.checkpoint_lineage import (
     CheckpointLineageError,
     find_checkpoint_before_message,
 )
-from deerflow.agents.thread_state import merge_message_writes
-from deerflow.runtime.runs.worker import persist_run_durations
+from nkyel.agents.thread_state import merge_message_writes
+from nkyel.runtime.runs.worker import persist_run_durations
 
 
 class FullState(TypedDict):
@@ -356,7 +356,7 @@ def _report(name: str, data: dict[str, Any], backend: str) -> None:
     """Append one scenario result to the optional JSON report file, keyed by
     the parameterized backend so one multi-backend pytest invocation keeps one
     entry per backend instead of overwriting a single shared key."""
-    path = os.environ.get("DEERFLOW_RETENTION_REPORT")
+    path = os.environ.get("NKYEL_RETENTION_REPORT")
     if not path:
         return
     report: dict[str, Any] = {}
@@ -587,7 +587,7 @@ def test_report_keeps_one_entry_per_backend(tmp_path: Any, monkeypatch: Any) -> 
     """The report must retain one entry per parameterized backend: memory and
     SQLite results coexist in the same file instead of overwriting a shared
     key (which silently discarded the memory baseline)."""
-    monkeypatch.setenv("DEERFLOW_RETENTION_REPORT", str(tmp_path / "report.json"))
+    monkeypatch.setenv("NKYEL_RETENTION_REPORT", str(tmp_path / "report.json"))
     _report("growth_baseline", {"checkpoint_rows": 7}, "memory")
     _report("growth_baseline", {"checkpoint_rows": 9}, "sqlite")
     with open(tmp_path / "report.json", encoding="utf-8") as handle:

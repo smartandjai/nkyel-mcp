@@ -11,11 +11,11 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
 from app.gateway.authz import AuthContext
 from app.gateway.routers import mcp_tasks
-from deerflow.mcp.tasks import POLLABLE_TASK_STATUSES, TaskStatus
-from deerflow.persistence.mcp_tasks import McpTaskRepository
-from deerflow.persistence.mcp_tasks.model import McpTaskRow
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
-from deerflow.persistence.thread_meta.sql import ThreadMetaRepository
+from nkyel.mcp.tasks import POLLABLE_TASK_STATUSES, TaskStatus
+from nkyel.persistence.mcp_tasks import McpTaskRepository
+from nkyel.persistence.mcp_tasks.model import McpTaskRow
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.persistence.thread_meta.sql import ThreadMetaRepository
 
 URL = "/api/threads/thread-1/mcp-tasks"
 NOW = datetime(2026, 10, 1, tzinfo=UTC)

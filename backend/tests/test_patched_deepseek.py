@@ -1,4 +1,4 @@
-"""Tests for deerflow.models.patched_deepseek.PatchedChatDeepSeek.
+"""Tests for nkyel.models.patched_deepseek.PatchedChatDeepSeek.
 
 Covers:
 - LangChain serialization protocol: is_lc_serializable, lc_secrets, to_json
@@ -15,7 +15,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 
 
 def _make_model(**kwargs):
-    from deerflow.models.patched_deepseek import PatchedChatDeepSeek
+    from nkyel.models.patched_deepseek import PatchedChatDeepSeek
 
     return PatchedChatDeepSeek(
         model="deepseek-v4-pro",
@@ -30,7 +30,7 @@ def _make_model(**kwargs):
 
 
 def test_is_lc_serializable_returns_true():
-    from deerflow.models.patched_deepseek import PatchedChatDeepSeek
+    from nkyel.models.patched_deepseek import PatchedChatDeepSeek
 
     assert PatchedChatDeepSeek.is_lc_serializable() is True
 
@@ -324,7 +324,7 @@ def test_legacy_fallback_assistant_is_removed_before_deepseek_replay():
     model = _make_model(extra_body={"thinking": {"type": "enabled"}})
     fallback = AIMessage(
         content="temporary provider error",
-        additional_kwargs={"deerflow_error_fallback": True},
+        additional_kwargs={"nkyel_error_fallback": True},
     )
     human = HumanMessage(content="retry")
     base_payload = {

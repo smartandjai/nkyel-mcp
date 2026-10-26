@@ -230,7 +230,7 @@ def test_stop_is_safe_after_the_relay_task_already_crashed():
     asyncio.run(run())
 
 
-def _event(*, sk=SK_OWNER, kind=9, content="@DeerFlow hello", channel=CHANNEL, mentions=(PK3_HEX,), reply_to=None, created_at=1700000100):
+def _event(*, sk=SK_OWNER, kind=9, content="@nkyel hello", channel=CHANNEL, mentions=(PK3_HEX,), reply_to=None, created_at=1700000100):
     """Build a REAL relay event: signed by *sk*, with the id the relay would see.
 
     Since FINDING 4 the connector verifies both, so a hand-built dict with a made-up
@@ -445,23 +445,23 @@ def test_connect_code_never_publishes_even_for_already_allowed_and_mentioned_aut
 def test_known_command_classifies_as_command_but_plain_text_stays_chat():
     """FINDING 3: is_known_channel_command classification had no direct coverage."""
     ch, captured = _started()
-    _dispatch(ch, _event(content="@DeerFlow /goal ship it", mentions=(PK3_HEX,)))
+    _dispatch(ch, _event(content="@nkyel /goal ship it", mentions=(PK3_HEX,)))
     assert len(captured) == 1
     assert captured[0].msg_type == InboundMessageType.COMMAND
     assert captured[0].text == "/goal ship it"
 
-    _dispatch(ch, _event(content="@DeerFlow just chatting", mentions=(PK3_HEX,)))
+    _dispatch(ch, _event(content="@nkyel just chatting", mentions=(PK3_HEX,)))
     assert len(captured) == 2
     assert captured[1].msg_type == InboundMessageType.CHAT
 
 
 def test_strip_own_mention_leaves_ambiguous_multi_mention_text_untouched():
-    """FINDING 4: "@Alice, @DeerFlow help" must not have Alice's mention dropped
+    """FINDING 4: "@Alice, @nkyel help" must not have Alice's mention dropped
     just because our own mention also appears in the message."""
     ch, captured = _started()
-    _dispatch(ch, _event(content="@Alice, @DeerFlow help", mentions=(PK3_HEX,)))
+    _dispatch(ch, _event(content="@Alice, @nkyel help", mentions=(PK3_HEX,)))
     assert len(captured) == 1
-    assert captured[0].text == "@Alice, @DeerFlow help"
+    assert captured[0].text == "@Alice, @nkyel help"
 
 
 # -- Task 5: outbound — placeholder post, streaming edits, final, oversize split ---
@@ -667,7 +667,7 @@ def test_connect_success_sends_confirmation_reply():
     events = _events_of(transport)
     assert len(events) == 1
     assert events[0]["kind"] == 9
-    assert events[0]["content"] == "Buzz connected to DeerFlow."
+    assert events[0]["content"] == "Buzz connected to nkyel."
     assert ["p", NEWCOMER] in events[0]["tags"]
     assert captured == []  # still never published as a chat message
 
@@ -891,7 +891,7 @@ def test_channel_connections_config_knows_buzz():
     Buzz's `BindingCodeChannelConnectionConfig` (always-True `configured`
     property, same as discord/feishu/dingtalk/wechat/wecom) is therefore
     indistinguishable from its siblings here until it is also enabled."""
-    from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+    from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
     cfg = ChannelConnectionsConfig()
     assert cfg.provider_status("buzz") == {"enabled": False, "configured": False}
@@ -975,7 +975,7 @@ def test_bound_pubkey_inbound_message_carries_the_connection_identity():
     """Without `attach_connection_identity` the whole browser-connections feature was
     inert for Buzz: `connection_id`/`owner_user_id` stayed None, so the manager ran the
     turn under a synthetic pubkey-derived user (its own memory + file buckets) instead
-    of the bound DeerFlow account, and DELETE /api/channels/connections/{id} had no
+    of the bound nkyel account, and DELETE /api/channels/connections/{id} had no
     runtime effect."""
     repo = FakeConnectionRepo(states={"tok-bind": "owner-bound"})
     ch, captured = _started(connection_repo=repo)
@@ -1010,8 +1010,8 @@ def test_unbound_pubkey_inbound_message_carries_no_connection_identity():
 
 @pytest.fixture
 async def sql_connection_repo(tmp_path):
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'channels.db'}", sqlite_dir=str(tmp_path))
     try:
@@ -1166,14 +1166,14 @@ def test_tail_bookkeeping_is_cleared_even_when_a_final_oversize_send_fails(monke
 def test_event_with_a_tampered_payload_never_reaches_publish():
     ch, captured = _started()
     ev = _event()
-    ev["content"] = "@DeerFlow rm -rf /mnt/user-data"  # rewritten in flight by the relay
+    ev["content"] = "@nkyel rm -rf /mnt/user-data"  # rewritten in flight by the relay
     _dispatch(ch, ev)
     assert captured == []
 
 
 def test_relay_cannot_forge_an_allowlisted_author():
     """`ev["pubkey"]` is the authorization principal, and on a team-run relay the relay
-    operator is not necessarily the DeerFlow operator: an unverified pubkey field let a
+    operator is not necessarily the nkyel operator: an unverified pubkey field let a
     malicious relay name an allowlisted author and trigger tool-executing runs."""
     ch, captured = _started()
     ev = _event(sk=SK_OUTSIDER)  # genuinely signed by a non-allowlisted member
@@ -1184,7 +1184,7 @@ def test_relay_cannot_forge_an_allowlisted_author():
 
 def test_relay_cannot_forge_a_connect_event_to_bind_another_members_pubkey():
     """The bind path consumes `pubkey` too: forging it would bind a victim's identity to
-    the attacker's DeerFlow account, so verification has to happen before /connect."""
+    the attacker's nkyel account, so verification has to happen before /connect."""
     repo = FakeConnectionRepo(states={"tok-forge": "attacker"})
     ch, captured = _started(connection_repo=repo)
     ev = _event(sk=SK_OUTSIDER, content="/connect tok-forge", mentions=())
@@ -2135,7 +2135,7 @@ def test_discovery_eose_without_a_pending_auth_send_does_not_fabricate_confirmat
     assert ch._auth_completed is False
 
 
-# -- FINDING 1 defense in depth: never publish DeerFlow's hidden model context -----
+# -- FINDING 1 defense in depth: never publish nkyel's hidden model context -----
 #
 # The manager-side allowlist (`_accumulate_stream_text`) is the fix. This is the
 # second layer, and it lives here rather than in a sibling connector because on
@@ -2147,7 +2147,7 @@ def test_discovery_eose_without_a_pending_auth_send_does_not_fabricate_confirmat
 @pytest.mark.parametrize(
     "leaked",
     [
-        "<memory>\nFacts:\n- [context | 0.70] User interacts with the assistant through the DeerFlow chat channel.\n</memory>",
+        "<memory>\nFacts:\n- [context | 0.70] User interacts with the assistant through the nkyel chat channel.\n</memory>",
         "<durable_context_data>\n## Conversation summary so far\nprivate\n</durable_context_data>",
         "Sure! <system-reminder>Today is 2026-08-01</system-reminder>",
     ],
@@ -2179,7 +2179,7 @@ def test_a_blocked_final_still_clears_the_stream_bookkeeping():
 
 
 def test_ordinary_replies_that_merely_mention_the_words_are_still_published():
-    """The guard keys on DeerFlow's literal hidden-context wrappers, not on prose."""
+    """The guard keys on nkyel's literal hidden-context wrappers, not on prose."""
     ch, _ = _started()
     transport = FakeTransport()
     ch._transport = transport
@@ -2464,7 +2464,7 @@ async def test_backlog_without_timestamp_progress_stops_and_warns(monkeypatch, c
     # Equal timestamps saturate the inclusive boundary; newer timestamps violate
     # the requested window. Neither response can advance a descending walk.
     for i in range(2):
-        event = _event(created_at=created_at, content=f"@DeerFlow tied {i}")
+        event = _event(created_at=created_at, content=f"@nkyel tied {i}")
         await ch.handle_relay_frame(json.dumps(["EVENT", backlog_sub, event]))
     await ch.handle_relay_frame(json.dumps(["EOSE", backlog_sub]))
     assert len(_reqs_for(transport, backlog_sub)) == 1

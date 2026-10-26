@@ -210,7 +210,7 @@ describe("updateAgent", () => {
 
 describe("agent portability", () => {
   const agentPackage = {
-    format: "deerflow.custom-agent" as const,
+    format: "nkyel.custom-agent" as const,
     version: 1 as const,
     agent: {
       name: "research-lead",
@@ -274,7 +274,7 @@ describe("agent portability", () => {
         {
           type: "literal_error",
           loc: ["body", "format"],
-          msg: "Input should be 'deerflow.custom-agent'",
+          msg: "Input should be 'nkyel.custom-agent'",
           input: "old-format",
         },
         {
@@ -285,7 +285,7 @@ describe("agent portability", () => {
         },
       ],
       message:
-        "Input should be 'deerflow.custom-agent'; Extra inputs are not permitted",
+        "Input should be 'nkyel.custom-agent'; Extra inputs are not permitted",
     },
   ])(
     "surfaces package validation messages: $message",

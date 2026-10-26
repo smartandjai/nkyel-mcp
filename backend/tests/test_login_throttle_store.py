@@ -29,8 +29,8 @@ from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence.base import Base
-from deerflow.persistence.login_throttle import (
+from nkyel.persistence.base import Base
+from nkyel.persistence.login_throttle import (
     MAX_TRACKED_IPS,
     STALE_COUNTER_SECONDS,
     LoginThrottleRecord,
@@ -39,7 +39,7 @@ from deerflow.persistence.login_throttle import (
     MemoryLoginThrottleStore,
     SqlLoginThrottleStore,
 )
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 pytestmark = pytest.mark.asyncio
 
@@ -781,7 +781,7 @@ async def test_check_fails_closed_when_the_compare_and_set_keeps_missing(tmp_pat
     """Sustained contention exhausts the bounded retries: report the last snapshot under the live policy, write nothing."""
     import logging
 
-    from deerflow.persistence.login_throttle.sql import CHECK_CAS_ATTEMPTS
+    from nkyel.persistence.login_throttle.sql import CHECK_CAS_ATTEMPTS
 
     engine_a, engine_b = await _two_replicas(tmp_path / "exhaust.db")
     try:
@@ -794,7 +794,7 @@ async def test_check_fails_closed_when_the_compare_and_set_keeps_missing(tmp_pat
             await replica_b.record_failure(ip, max_attempts=5, lockout_seconds=1.0, now=T0 + 0.5)
 
         replica_a, state = _racing_store(engine_a, peer_failure, every_time=True)
-        with caplog.at_level(logging.DEBUG, logger="deerflow.persistence.login_throttle.sql"):
+        with caplog.at_level(logging.DEBUG, logger="nkyel.persistence.login_throttle.sql"):
             remaining = await replica_a.check(ip, policy=_policy(5, 60.0), now=T0 + 0.5)
         assert remaining == pytest.approx(59.5)  # locked snapshot under the live 60s policy: fail closed
         # One probe read before the policy is resolved, then one read per compare-and-set attempt.

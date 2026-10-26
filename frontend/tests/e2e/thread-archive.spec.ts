@@ -14,7 +14,7 @@ test("archive keeps the open conversation, supports undo and restores from the a
         thread_id: CHAT,
         title: "Finished report",
         updated_at: "2026-07-04T10:00:00Z",
-        metadata: { deerflow_pinned: true },
+        metadata: { nkyel_pinned: true },
       },
       {
         thread_id: OTHER,
@@ -116,7 +116,7 @@ test("active list includes legacy chats beyond a full page of archived chats", a
         updated_at: new Date(
           Date.UTC(2026, 7, 1) - index * 60000,
         ).toISOString(),
-        metadata: { deerflow_archived: true },
+        metadata: { nkyel_archived: true },
       })),
       {
         thread_id: CHAT,
@@ -150,7 +150,7 @@ for (const customAgent of [false, true]) {
           thread_id: CHAT,
           title: "Archived report",
           metadata: {
-            deerflow_archived: true,
+            nkyel_archived: true,
             ...(customAgent ? { agent_name: "researcher" } : {}),
           },
         },

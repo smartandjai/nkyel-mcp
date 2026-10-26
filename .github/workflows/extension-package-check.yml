@@ -4,20 +4,20 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'examples/deerflow-extension-*/**'
+      - 'examples/nkyel-extension-*/**'
       - 'scripts/check_extension.py'
       - 'backend/packages/extension-api/**'
-      - 'backend/packages/harness/deerflow/extensions/**'
+      - 'backend/packages/harness/nkyel/extensions/**'
       - 'backend/pyproject.toml'
       - 'backend/uv.lock'
       - '.github/workflows/extension-package-check.yml'
   push:
     branches: [main, "*-dev"]
     paths:
-      - 'examples/deerflow-extension-*/**'
+      - 'examples/nkyel-extension-*/**'
       - 'scripts/check_extension.py'
       - 'backend/packages/extension-api/**'
-      - 'backend/packages/harness/deerflow/extensions/**'
+      - 'backend/packages/harness/nkyel/extensions/**'
       - 'backend/pyproject.toml'
       - 'backend/uv.lock'
       - '.github/workflows/extension-package-check.yml'
@@ -48,7 +48,7 @@ jobs:
       - name: Build and check all bundled extension packages
         shell: bash
         run: |
-          for package in examples/deerflow-extension-*/; do
+          for package in examples/nkyel-extension-*/; do
             echo "::group::Check ${package%/}"
             uv run --project backend --no-sync python scripts/check_extension.py "$package"
             echo "::endgroup::"
@@ -58,7 +58,7 @@ jobs:
       - name: Test bundled extension packages that ship tests
         shell: bash
         run: |
-          for package in examples/deerflow-extension-*/; do
+          for package in examples/nkyel-extension-*/; do
             [ -d "${package}tests" ] || continue
             echo "::group::Test ${package%/}"
             (

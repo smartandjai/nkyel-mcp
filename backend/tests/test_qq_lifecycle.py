@@ -318,7 +318,7 @@ async def test_cancelled_stop_drains_http_client_cleanup():
 async def test_service_registers_starts_and_disposes_qq(tmp_path, monkeypatch):
     from app.channels import service as service_module
     from app.channels.store import JsonChannelStore
-    from deerflow.config.app_config import AppConfig
+    from nkyel.config.app_config import AppConfig
 
     store = JsonChannelStore(tmp_path / "channels.json")
     config = {
@@ -326,7 +326,7 @@ async def test_service_registers_starts_and_disposes_qq(tmp_path, monkeypatch):
         "client_secret": "fixture-secret",
         "enabled": True,
     }
-    app_config = AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}})
+    app_config = AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}})
     repository = object()
     service = service_module.ChannelService({"qq": config}, connection_repo=repository, app_config=app_config, store=store)
 

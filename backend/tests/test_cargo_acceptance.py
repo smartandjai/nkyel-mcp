@@ -14,9 +14,9 @@ from langchain_core.tools import StructuredTool
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
-from deerflow.subagents.acceptance_checks import check_acceptance_criteria, render_acceptance_section, render_acceptance_segment
+from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.subagents.acceptance_checks import check_acceptance_criteria, render_acceptance_section, render_acceptance_segment
 
 # Each parametrization compiles the fixture from a cold target directory, and a
 # loaded CI runner can spend far longer than the compile itself on toolchain
@@ -113,7 +113,7 @@ def test_empty_target_handling_does_not_bypass_execution_provenance(overrides):
 @pytest.fixture
 def executor_module(monkeypatch):
     # conftest preloads an executor stub; harvest from the production module.
-    path = Path(__file__).parents[1] / "packages/harness/deerflow/subagents/executor.py"
+    path = Path(__file__).parents[1] / "packages/harness/nkyel/subagents/executor.py"
     spec = importlib.util.spec_from_file_location("_cargo_evidence_executor", path)
     module = importlib.util.module_from_spec(spec)
     monkeypatch.setitem(sys.modules, spec.name, module)
@@ -149,7 +149,7 @@ async def test_native_cargo_output_reaches_parent_acceptance_through_tool_node(t
     (tmp_path / "Cargo.toml").write_text('[package]\nname = "acceptance_fixture"\nversion = "0.1.0"\nedition = "2021"\n', encoding="utf-8")
     (tmp_path / "src/lib.rs").write_text(source, encoding="utf-8")
     sandbox = LocalSandbox("cargo-evidence", path_mappings=[PathMapping("/mnt/user-data/workspace", str(tmp_path))], environment={"CARGO_TERM_COLOR": "never"})
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: sandbox if sandbox_id == sandbox.id else None))
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: sandbox if sandbox_id == sandbox.id else None))
     outputs = []
 
     async def bash(command: str) -> str:

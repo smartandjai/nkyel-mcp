@@ -2,7 +2,7 @@
 
 import pytest
 
-from deerflow.scheduler.stop_rule import MAX_STOP_CONDITION_CHARS, STOP_RULE_NO_TOOL_PREFIX, STOP_RULE_PREFIX, launch_prompt, normalize_stop_condition
+from nkyel.scheduler.stop_rule import MAX_STOP_CONDITION_CHARS, STOP_RULE_NO_TOOL_PREFIX, STOP_RULE_PREFIX, launch_prompt, normalize_stop_condition
 
 
 def test_prefixes_are_pinned():

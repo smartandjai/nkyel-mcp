@@ -8,8 +8,8 @@ from fastapi import HTTPException
 from langchain_core.messages import BaseMessage, HumanMessage
 from pydantic import ValidationError
 
-from deerflow.knowledge.providers import RAGFLOW_KNOWLEDGE_TOOL, get_knowledge_capabilities, validate_scope_capabilities
-from deerflow.knowledge_scope import (
+from nkyel.knowledge.providers import RAGFLOW_KNOWLEDGE_TOOL, get_knowledge_capabilities, validate_scope_capabilities
+from nkyel.knowledge_scope import (
     KNOWLEDGE_SCOPE_KEY,
     canonicalize_knowledge_scope,
     execution_scope,

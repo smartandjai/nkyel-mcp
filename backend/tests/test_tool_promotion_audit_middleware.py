@@ -7,9 +7,9 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 
-from deerflow.agents.middlewares.tool_promotion_audit_middleware import DeferredToolPromotionAuditMiddleware
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.agents.middlewares.tool_promotion_audit_middleware import DeferredToolPromotionAuditMiddleware
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 
 class _Recorder:

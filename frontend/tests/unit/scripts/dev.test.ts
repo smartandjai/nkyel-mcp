@@ -4,18 +4,18 @@ import { getDevBundler, getNextDevArgs } from "../../../scripts/dev.mjs";
 
 describe("frontend dev launcher", () => {
   test("allows an explicit bundler override on every platform", () => {
-    expect(getDevBundler("win32", { DEER_FLOW_DEV_BUNDLER: "turbo" })).toBe(
+    expect(getDevBundler("win32", { NKYEL_DEV_BUNDLER: "turbo" })).toBe(
       "turbo",
     );
     expect(
-      getNextDevArgs("linux", [], { DEER_FLOW_DEV_BUNDLER: "webpack" }),
+      getNextDevArgs("linux", [], { NKYEL_DEV_BUNDLER: "webpack" }),
     ).toEqual(["dev", "--webpack"]);
   });
 
   test("rejects an unsupported bundler override", () => {
     expect(() =>
-      getDevBundler("linux", { DEER_FLOW_DEV_BUNDLER: "invalid" }),
-    ).toThrow('DEER_FLOW_DEV_BUNDLER must be either "turbo" or "webpack"');
+      getDevBundler("linux", { NKYEL_DEV_BUNDLER: "invalid" }),
+    ).toThrow('NKYEL_DEV_BUNDLER must be either "turbo" or "webpack"');
   });
 
   test("passes through extra Next.js arguments", () => {

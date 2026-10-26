@@ -1,16 +1,16 @@
-"""Tests for deerflow.tracing.metadata.build_langfuse_trace_metadata."""
+"""Tests for nkyel.tracing.metadata.build_langfuse_trace_metadata."""
 
 from __future__ import annotations
 
 import pytest
 
-from deerflow.trace_context import request_trace_context
-from deerflow.tracing import metadata as tracing_metadata
+from nkyel.trace_context import request_trace_context
+from nkyel.tracing import metadata as tracing_metadata
 
 
 @pytest.fixture(autouse=True)
 def _clear_tracing_env(monkeypatch):
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     for name in (
         "LANGFUSE_TRACING",
@@ -138,7 +138,7 @@ def test_thread_id_none_still_produces_metadata(monkeypatch):
     assert result["langfuse_user_id"] == "u-1"
 
 
-def test_deerflow_trace_id_comes_from_current_trace_context(monkeypatch):
+def test_nkyel_trace_id_comes_from_current_trace_context(monkeypatch):
     _enable_langfuse(monkeypatch)
 
     with request_trace_context("gateway-trace-1"):
@@ -147,17 +147,17 @@ def test_deerflow_trace_id_comes_from_current_trace_context(monkeypatch):
             user_id="user-42",
         )
 
-    assert result["deerflow_trace_id"] == "gateway-trace-1"
+    assert result["nkyel_trace_id"] == "gateway-trace-1"
 
 
-def test_deerflow_trace_id_explicit_argument_wins(monkeypatch):
+def test_nkyel_trace_id_explicit_argument_wins(monkeypatch):
     _enable_langfuse(monkeypatch)
 
     with request_trace_context("ambient-trace"):
         result = tracing_metadata.build_langfuse_trace_metadata(
             thread_id="thread-abc",
             user_id="user-42",
-            deerflow_trace_id="explicit-trace",
+            nkyel_trace_id="explicit-trace",
         )
 
-    assert result["deerflow_trace_id"] == "explicit-trace"
+    assert result["nkyel_trace_id"] == "explicit-trace"

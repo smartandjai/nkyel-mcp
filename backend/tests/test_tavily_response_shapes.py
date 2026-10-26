@@ -14,7 +14,7 @@ import httpx
 import pytest
 from tavily import AsyncTavilyClient
 
-_LOGGER_NAME = "deerflow.community.tavily.tools"
+_LOGGER_NAME = "nkyel.community.tavily.tools"
 _FORMAT_ERROR = "Tavily returned an unexpected response format"
 _SEARCH_QUERY = "docs search"
 _FETCH_URL = "https://example.com/docs"
@@ -22,7 +22,7 @@ _FETCH_URL = "https://example.com/docs"
 
 @pytest.fixture(autouse=True)
 def app_config(monkeypatch):
-    from deerflow.community.tavily import tools
+    from nkyel.community.tavily import tools
 
     config = SimpleNamespace(get_tool_config=lambda _: None)
     monkeypatch.setattr(tools, "get_app_config", lambda: config)
@@ -40,7 +40,7 @@ def _transport(payload, status_code=200):
 
 
 async def _invoke(monkeypatch, tool, arguments, payload, status_code=200):
-    from deerflow.community.tavily import tools
+    from nkyel.community.tavily import tools
 
     transport, requests = _transport(payload, status_code)
     http_client = httpx.AsyncClient(transport=transport, base_url="https://api.tavily.test")
@@ -54,20 +54,20 @@ async def _invoke(monkeypatch, tool, arguments, payload, status_code=200):
 
 
 async def _invoke_search(monkeypatch, payload, status_code=200):
-    from deerflow.community.tavily.tools import web_search_tool
+    from nkyel.community.tavily.tools import web_search_tool
 
     return await _invoke(monkeypatch, web_search_tool, {"query": _SEARCH_QUERY}, payload, status_code)
 
 
 async def _invoke_fetch(monkeypatch, payload, status_code=200):
-    from deerflow.community.tavily.tools import web_fetch_tool
+    from nkyel.community.tavily.tools import web_fetch_tool
 
     return await _invoke(monkeypatch, web_fetch_tool, {"url": _FETCH_URL}, payload, status_code)
 
 
 async def _invoke_with_stubbed_client(monkeypatch, tool_name, method, payload, arguments):
     """Exercise a top-level shape the real SDK cannot return (it indexes the parsed body)."""
-    from deerflow.community.tavily import tools
+    from nkyel.community.tavily import tools
 
     client = MagicMock(spec=AsyncTavilyClient)
     setattr(client, method, AsyncMock(return_value=payload))

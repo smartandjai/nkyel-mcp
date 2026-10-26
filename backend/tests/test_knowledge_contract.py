@@ -7,13 +7,13 @@ import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 from pydantic import ValidationError
 
-from deerflow.knowledge import KnowledgeSource, RetrievalHit, RetrievalResult, format_result, sources_from_messages
+from nkyel.knowledge import KnowledgeSource, RetrievalHit, RetrievalResult, format_result, sources_from_messages
 
 
 @pytest.mark.parametrize("length", [256, 257])
 def test_catalog_and_scope_share_opaque_id_length_limit(length):
-    from deerflow.knowledge import RetrievalCatalogItem
-    from deerflow.knowledge_scope import canonicalize_knowledge_scope
+    from nkyel.knowledge import RetrievalCatalogItem
+    from nkyel.knowledge_scope import canonicalize_knowledge_scope
 
     dataset_id = "界" * length
     document_id = "😀" * length
@@ -35,7 +35,7 @@ def test_catalog_and_scope_share_opaque_id_length_limit(length):
 def test_source_schema_matches_cross_component_contract():
     from jsonschema import Draft202012Validator
 
-    from deerflow.knowledge.sources import ARTIFACT_VERSION
+    from nkyel.knowledge.sources import ARTIFACT_VERSION
 
     schema = json.loads((Path(__file__).parents[2] / "contracts/knowledge_sources.v1.json").read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
@@ -98,8 +98,8 @@ def test_large_results_match_the_bounded_source_readers() -> None:
 
 
 def test_provider_adapters_share_contract_without_inventing_pages() -> None:
-    from deerflow.community.lightrag.formatting import normalize_retrieval_result as light
-    from deerflow.community.ragflow.formatting import normalize_retrieval_result as rag
+    from nkyel.community.lightrag.formatting import normalize_retrieval_result as light
+    from nkyel.community.ragflow.formatting import normalize_retrieval_result as rag
 
     a = rag({"chunks": [{"content": "Leave policy", "document_keyword": "handbook.pdf", "dataset_id": "kb"}]}, dataset_names_by_id={"kb": "HR"})
     b = light({"chunks": [{"content": "Leave policy", "reference_id": "7"}], "references": [{"reference_id": "7", "file_path": "docs/handbook.pdf"}]})
@@ -117,7 +117,7 @@ def test_provider_adapters_share_contract_without_inventing_pages() -> None:
 async def test_real_tool_message_carries_redacted_evidence(monkeypatch, provider) -> None:
     from importlib import import_module
 
-    tools = import_module(f"deerflow.community.{provider}.tools")
+    tools = import_module(f"nkyel.community.{provider}.tools")
     config = import_module(f"test_{provider}_tools")
     result = {"chunks": [{"content": f"Evidence with {provider}-secret", "document_keyword": "guide.pdf", "file_path": "docs/guide.md", "dataset_id": config.DATASET_ID_1 if provider == "ragflow" else "unused"}]}
     if provider == "ragflow":
@@ -142,7 +142,7 @@ async def test_real_tool_message_carries_redacted_evidence(monkeypatch, provider
 
 
 def test_forwarding_only_includes_reported_sources() -> None:
-    from deerflow.tools.builtins.task_tool import _task_result_command
+    from nkyel.tools.builtins.task_tool import _task_result_command
 
     source = KnowledgeSource(provider="demo", title="Guide", excerpt="real evidence")
     content, artifact = format_result(RetrievalResult(hits=[RetrievalHit(content=source.excerpt, source=source)]))
@@ -165,8 +165,8 @@ def test_gateway_drops_caller_forged_source_artifacts() -> None:
 
 
 def test_global_budget_prunes_hidden_evidence_and_orphan_citations() -> None:
-    from deerflow.agents.middlewares.tool_output_budget_middleware import _patch_tool_message
-    from deerflow.config.tool_output_config import ToolOutputConfig
+    from nkyel.agents.middlewares.tool_output_budget_middleware import _patch_tool_message
+    from nkyel.config.tool_output_config import ToolOutputConfig
 
     source = KnowledgeSource(provider="demo", title="Guide", excerpt="x" * 500)
     content, artifact = format_result(RetrievalResult(hits=[RetrievalHit(content=source.excerpt, source=source)]))
@@ -178,8 +178,8 @@ def test_global_budget_prunes_hidden_evidence_and_orphan_citations() -> None:
 
 
 def test_mixed_delegation_preserves_both_source_contracts() -> None:
-    from deerflow.knowledge.sources import prune_sources, strip_source_artifact
-    from deerflow.tools.builtins.task_tool import _task_result_command
+    from nkyel.knowledge.sources import prune_sources, strip_source_artifact
+    from nkyel.tools.builtins.task_tool import _task_result_command
 
     unified = KnowledgeSource(provider="lightrag", title="Guide", excerpt="LightRAG evidence")
     unified_text, unified_artifact = format_result(RetrievalResult(hits=[RetrievalHit(content=unified.excerpt, source=unified)]))
@@ -205,8 +205,8 @@ def test_mixed_delegation_preserves_both_source_contracts() -> None:
 async def test_ragflow_fallback_honors_disabled_runtime_scope(monkeypatch) -> None:
     from types import SimpleNamespace
 
-    from deerflow.community.ragflow import tools
-    from deerflow.knowledge_scope import KNOWLEDGE_SCOPE_RUNTIME_KEY
+    from nkyel.community.ragflow import tools
+    from nkyel.knowledge_scope import KNOWLEDGE_SCOPE_RUNTIME_KEY
 
     def forbidden():
         pytest.fail("disabled knowledge scope must not resolve settings or access the provider")

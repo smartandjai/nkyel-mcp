@@ -79,37 +79,37 @@ def test_docker_dev_mounts_mutable_configs_through_project_directory():
     assert re.search(r"^\s*-\s*\.\./:/app/project(?:\:\S+)?\s*$", compose, re.M)
     assert not re.search(r"^\s*-\s*[^\n#]*config\.yaml\s*:\s*[^\n#]*$", compose, re.M)
     assert not re.search(r"^\s*-\s*[^\n#]*extensions_config\.json\s*:\s*[^\n#]*$", compose, re.M)
-    assert "DEER_FLOW_CONFIG_PATH=/app/project/config.yaml" in compose
-    assert "DEER_FLOW_EXTENSIONS_CONFIG_PATH=/app/project/extensions_config.json" in compose
+    assert "NKYEL_CONFIG_PATH=/app/project/config.yaml" in compose
+    assert "NKYEL_EXTENSIONS_CONFIG_PATH=/app/project/extensions_config.json" in compose
 
 
 def test_local_dev_gateway_reload_excludes_runtime_state_with_absolute_dirs():
     serve_sh = _read("scripts/serve.sh")
 
-    assert 'export DEER_FLOW_PROJECT_ROOT="$REPO_ROOT"' in serve_sh
-    assert 'BACKEND_RUNTIME_HOME="$REPO_ROOT/backend/.deer-flow"' in serve_sh
-    assert 'export DEER_FLOW_HOME="$BACKEND_RUNTIME_HOME"' in serve_sh
+    assert 'export NKYEL_PROJECT_ROOT="$REPO_ROOT"' in serve_sh
+    assert 'BACKEND_RUNTIME_HOME="$REPO_ROOT/backend/.nkyel"' in serve_sh
+    assert 'export NKYEL_HOME="$BACKEND_RUNTIME_HOME"' in serve_sh
     # Every absolute reload-exclude must be pre-created, including backend/sandbox
     # (#3459 / #3454) — see test_uvicorn_reload_exclude.py for the mechanism.
-    assert 'mkdir -p "$DEER_FLOW_HOME" "$BACKEND_RUNTIME_HOME" "$REPO_ROOT/backend/sandbox"' in serve_sh
-    assert "--reload-exclude='$DEER_FLOW_HOME'" in serve_sh
+    assert 'mkdir -p "$NKYEL_HOME" "$BACKEND_RUNTIME_HOME" "$REPO_ROOT/backend/sandbox"' in serve_sh
+    assert "--reload-exclude='$NKYEL_HOME'" in serve_sh
     assert "--reload-exclude='$BACKEND_RUNTIME_HOME'" in serve_sh
     assert "--reload-exclude='sandbox/'" not in serve_sh
-    assert "--reload-exclude='.deer-flow/'" not in serve_sh
+    assert "--reload-exclude='.nkyel/'" not in serve_sh
 
 
 def test_backend_make_dev_gateway_reload_excludes_runtime_state_with_absolute_dirs():
     makefile = _read("backend/Makefile")
 
-    assert "DEER_FLOW_HOME ?= $(CURDIR)/.deer-flow" in makefile
-    assert "DEER_FLOW_HOME := $(abspath $(DEER_FLOW_HOME))" in makefile
+    assert "NKYEL_HOME ?= $(CURDIR)/.nkyel" in makefile
+    assert "NKYEL_HOME := $(abspath $(NKYEL_HOME))" in makefile
     assert "BACKEND_SANDBOX_HOME := $(abspath $(CURDIR)/sandbox)" in makefile
-    assert 'mkdir -p "$(DEER_FLOW_HOME)" "$(BACKEND_SANDBOX_HOME)"' in makefile
+    assert 'mkdir -p "$(NKYEL_HOME)" "$(BACKEND_SANDBOX_HOME)"' in makefile
     # The launch line may carry runtime-only uv flags (`--locked` pins the
-    # extension lock); what this guards is that DEER_FLOW_HOME is exported on it,
+    # extension lock); what this guards is that NKYEL_HOME is exported on it,
     # so the reload-excludes below resolve to the same absolute directories.
-    assert re.search(r'DEER_FLOW_HOME="\$\(DEER_FLOW_HOME\)" uv run(?: --(?:locked|no-sync))? uvicorn', makefile)
-    assert '--reload-exclude="$(DEER_FLOW_HOME)"' in makefile
+    assert re.search(r'NKYEL_HOME="\$\(NKYEL_HOME\)" uv run(?: --(?:locked|no-sync))? uvicorn', makefile)
+    assert '--reload-exclude="$(NKYEL_HOME)"' in makefile
     assert '--reload-exclude="$(BACKEND_SANDBOX_HOME)"' in makefile
 
 
@@ -196,7 +196,7 @@ def test_frontend_rewrites_langgraph_prefix_to_gateway():
     next_config = _read("frontend/next.config.js")
     api_client = _read("frontend/src/core/api/api-client.ts")
 
-    assert "DEER_FLOW_INTERNAL_LANGGRAPH_BASE_URL" not in next_config
+    assert "NKYEL_INTERNAL_LANGGRAPH_BASE_URL" not in next_config
     assert "http://127.0.0.1:2024" not in next_config
     assert "langgraph-compat" not in api_client
 
@@ -216,7 +216,7 @@ def test_smoke_test_docs_do_not_expect_standalone_langgraph_server():
     for path, content in smoke_files.items():
         assert "localhost:2024" not in content, path
         assert "127.0.0.1:2024" not in content, path
-        assert "deer-flow-langgraph" not in content, path
+        assert "nkyel-langgraph" not in content, path
         assert "langgraph.log" not in content, path
         assert "LangGraph service" not in content, path
         assert "langgraph dev" not in content, path

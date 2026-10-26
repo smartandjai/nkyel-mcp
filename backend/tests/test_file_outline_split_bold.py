@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.utils.file_outline import MAX_OUTLINE_ENTRIES, extract_outline, extract_outline_for_file
+from nkyel.utils.file_outline import MAX_OUTLINE_ENTRIES, extract_outline, extract_outline_for_file
 
 
 @pytest.mark.parametrize("column", ["(2023)", "-12.5", "–12", "+12", "/2023", "(12%)", "---", "%", " 2023", "2023", "$1,234", "€100", "£1,234.50", "¥100", "(€100)", " $100", "$"])

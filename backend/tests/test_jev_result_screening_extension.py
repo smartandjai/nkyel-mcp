@@ -18,19 +18,19 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from deerflow_extension_api import EXTENSION_TASK_STORE_KEY, AgentBuildContext, AgentScope, ExtensionData, MiddlewarePlacement, Placement
+from nkyel_extension_api import EXTENSION_TASK_STORE_KEY, AgentBuildContext, AgentScope, ExtensionData, MiddlewarePlacement, Placement
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.errors import GraphInterrupt
 from langgraph.graph.message import add_messages
 from langgraph.types import Command
 
-from deerflow.extensions.anchors import outermost
-from deerflow.extensions.injection import inject_middlewares
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.anchors import outermost
+from nkyel.extensions.injection import inject_middlewares
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
 
-EXAMPLE = Path(__file__).resolve().parents[2] / "examples/deerflow-extension-jev-screening"
-PACKAGE = EXAMPLE / "deerflow_extension_jev_screening"
-ENTRY = "deerflow_extension_jev_screening:install"
+EXAMPLE = Path(__file__).resolve().parents[2] / "examples/nkyel-extension-jev-screening"
+PACKAGE = EXAMPLE / "nkyel_extension_jev_screening"
+ENTRY = "nkyel_extension_jev_screening:install"
 REAL_CLIENT = httpx.AsyncClient
 KEY = "offline-test-only"
 CANARY = "PRIVATE-PAGE-CANARY"
@@ -65,7 +65,7 @@ def runtime(store):
 
 
 def request(store, *, name="web_fetch", mcp=False, call_id="call-1"):
-    return SimpleNamespace(tool_call={"name": name, "id": call_id, "args": {}}, tool=SimpleNamespace(metadata={"deerflow_mcp": mcp}), runtime=runtime(store))
+    return SimpleNamespace(tool_call={"name": name, "id": call_id, "args": {}}, tool=SimpleNamespace(metadata={"nkyel_mcp": mcp}), runtime=runtime(store))
 
 
 def transport(monkeypatch, responder):
@@ -134,7 +134,7 @@ def test_install_contributes_one_tool_visible_middleware_for_lead_and_subagents(
         assert isinstance(placement, MiddlewarePlacement)
         assert placement.placement is Placement.TOOL_VISIBLE
         assert placement.scope is AgentScope.BOTH
-        assert type(placement.middleware).__module__ == "deerflow_extension_jev_screening.screener"
+        assert type(placement.middleware).__module__ == "nkyel_extension_jev_screening.screener"
 
 
 @pytest.mark.parametrize("config", [{}, {"enabled": False}])
@@ -373,7 +373,7 @@ async def test_network_failures_and_the_deadline_fail_open(load, monkeypatch, fa
 
 @pytest.mark.asyncio
 async def test_local_bug_is_reported_by_host_isolation_and_keeps_the_result(load, monkeypatch):
-    from deerflow_extension_jev_screening import screener
+    from nkyel_extension_jev_screening import screener
 
     requests = transport(monkeypatch, lambda _: noul(0.9))
     screen, errors = screen_for(load)
@@ -392,7 +392,7 @@ async def test_local_bug_is_reported_by_host_isolation_and_keeps_the_result(load
 
 
 def test_before_model_bug_degrades_to_no_update_with_a_diagnostic(load, monkeypatch):
-    from deerflow_extension_jev_screening import screener
+    from nkyel_extension_jev_screening import screener
 
     screen, errors = screen_for(load)
     store = ExtensionData("run-1")
@@ -569,7 +569,7 @@ async def test_only_the_latest_tool_step_is_rewritten_and_never_twice(load, monk
     assert [message.id for message in update["messages"]] == ["newer-result"]
     assert next(m for m in projected if m.id == "older-result").content == older.content
     # A second flag for an already-warned result does not stack warnings.
-    from deerflow_extension_jev_screening import screener
+    from nkyel_extension_jev_screening import screener
 
     store.get_or_init(screener._Pending, screener._Pending).add("call-1")
     assert screen.before_model({"messages": projected}, runtime(store)) is None
@@ -583,9 +583,9 @@ def test_example_imports_only_the_public_extension_contract():
                 imported.update(alias.name for alias in node.names)
             elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
                 imported.add(node.module)
-    host = sorted(name for name in imported if name == "deerflow" or name.startswith("deerflow."))
+    host = sorted(name for name in imported if name == "nkyel" or name.startswith("nkyel."))
     assert host == []
-    assert "deerflow_extension_api" in imported
+    assert "nkyel_extension_api" in imported
 
 
 @pytest.mark.asyncio

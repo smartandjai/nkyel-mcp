@@ -106,7 +106,7 @@ backend/tests/test_authorization_principal.py
 新增：
 
 ```text
-backend/packages/harness/deerflow/authz/principal.py
+backend/packages/harness/nkyel/authz/principal.py
 ```
 
 接口和核心实现：
@@ -115,7 +115,7 @@ backend/packages/harness/deerflow/authz/principal.py
 from collections.abc import Mapping
 from typing import Any
 
-from deerflow.authz.provider import Principal
+from nkyel.authz.provider import Principal
 
 
 def build_principal_from_context(
@@ -149,7 +149,7 @@ def build_principal_from_context(
     )
 ```
 
-修改 `backend/packages/harness/deerflow/authz/__init__.py` 导出
+修改 `backend/packages/harness/nkyel/authz/__init__.py` 导出
 `build_principal_from_context`。
 
 ### Step 3：新增 Gateway 防伪失败测试
@@ -249,7 +249,7 @@ backend/tests/test_task_tool_core_logic.py
 修改：
 
 ```text
-backend/packages/harness/deerflow/tools/builtins/task_tool.py
+backend/packages/harness/nkyel/tools/builtins/task_tool.py
 ```
 
 在现有 parent identity capture 块增加：
@@ -291,7 +291,7 @@ backend/tests/test_subagent_executor.py
 修改：
 
 ```text
-backend/packages/harness/deerflow/subagents/executor.py
+backend/packages/harness/nkyel/subagents/executor.py
 ```
 
 构造参数增加：
@@ -352,9 +352,9 @@ middleware context 映射断言放在现有 `test_guardrail_middleware.py`，ada
 修改：
 
 ```text
-backend/packages/harness/deerflow/guardrails/provider.py
-backend/packages/harness/deerflow/guardrails/middleware.py
-backend/packages/harness/deerflow/authz/adapter.py
+backend/packages/harness/nkyel/guardrails/provider.py
+backend/packages/harness/nkyel/guardrails/middleware.py
+backend/packages/harness/nkyel/authz/adapter.py
 ```
 
 `GuardrailRequest` 增加带默认值的字段：
@@ -415,7 +415,7 @@ docs/plans/2026-07-10-pluggable-authorization-implementation-notes.md
 新增 5 个文件：
 
 ```text
-backend/packages/harness/deerflow/authz/principal.py
+backend/packages/harness/nkyel/authz/principal.py
 backend/tests/test_authorization_principal.py
 docs/plans/2026-07-10-pluggable-authorization-implementation-notes.md
 docs/plans/2026-07-15-authz-phase1a-implementation-plan.md
@@ -426,15 +426,15 @@ docs/plans/2026-07-15-authz-phase1a1-trusted-principal-implementation-plan.md
 
 ```text
 backend/AGENTS.md
-backend/packages/harness/deerflow/authz/__init__.py
-backend/packages/harness/deerflow/authz/adapter.py
-backend/packages/harness/deerflow/authz/provider.py
-backend/packages/harness/deerflow/guardrails/provider.py
-backend/packages/harness/deerflow/guardrails/middleware.py
+backend/packages/harness/nkyel/authz/__init__.py
+backend/packages/harness/nkyel/authz/adapter.py
+backend/packages/harness/nkyel/authz/provider.py
+backend/packages/harness/nkyel/guardrails/provider.py
+backend/packages/harness/nkyel/guardrails/middleware.py
 backend/app/gateway/services.py
-backend/packages/harness/deerflow/tools/builtins/task_tool.py
-backend/packages/harness/deerflow/subagents/executor.py
-backend/packages/harness/deerflow/sandbox/tools.py
+backend/packages/harness/nkyel/tools/builtins/task_tool.py
+backend/packages/harness/nkyel/subagents/executor.py
+backend/packages/harness/nkyel/sandbox/tools.py
 backend/tests/test_authorization_provider.py
 backend/tests/test_channel_user_id_env.py
 backend/tests/test_guardrail_middleware.py
@@ -450,10 +450,10 @@ docs/plans/2026-07-10-pluggable-authorization-rfc.md
 ## 5. 明确不修改
 
 ```text
-backend/packages/harness/deerflow/config/authorization_config.py
+backend/packages/harness/nkyel/config/authorization_config.py
 config.example.yaml
-backend/packages/harness/deerflow/agents/lead_agent/agent.py
-backend/packages/harness/deerflow/client.py
+backend/packages/harness/nkyel/agents/lead_agent/agent.py
+backend/packages/harness/nkyel/client.py
 ```
 
 本 PR 不实现：
@@ -461,7 +461,7 @@ backend/packages/harness/deerflow/client.py
 - RBAC provider 和 provider factory（Phase 1A-2）。
 - Layer 1 工具过滤和 deferred catalog 防提升（Phase 1B）。
 - Layer 2 自动接线及与显式 guardrail 的组合顺序（Phase 1B）。
-- DeerFlowClient skill filter gap（独立 bugfix PR）。
+- NkyelClient skill filter gap（独立 bugfix PR）。
 - route、model、skill、sandbox、MCP server 授权。
 - RBAC 配置示例和配置版本变更。
 
@@ -483,8 +483,8 @@ uv run pytest tests/test_channel_user_id_env.py -q
 uv run pytest tests/test_authorization_principal.py tests/test_gateway_services.py tests/test_channel_user_id_env.py tests/test_task_tool_core_logic.py tests/test_subagent_executor.py tests/test_authorization_provider.py tests/test_guardrail_middleware.py -q
 uv run pytest tests/test_harness_boundary.py -q
 
-uv run ruff check packages/harness/deerflow/authz packages/harness/deerflow/guardrails packages/harness/deerflow/tools/builtins/task_tool.py packages/harness/deerflow/subagents/executor.py packages/harness/deerflow/sandbox/tools.py app/gateway/services.py tests/test_authorization_principal.py tests/test_authorization_provider.py tests/test_channel_user_id_env.py tests/test_task_tool_core_logic.py tests/test_subagent_executor.py tests/test_gateway_services.py
-uv run ruff format --check packages/harness/deerflow/authz packages/harness/deerflow/guardrails packages/harness/deerflow/tools/builtins/task_tool.py packages/harness/deerflow/subagents/executor.py packages/harness/deerflow/sandbox/tools.py app/gateway/services.py tests/test_authorization_principal.py tests/test_authorization_provider.py tests/test_channel_user_id_env.py tests/test_task_tool_core_logic.py tests/test_subagent_executor.py tests/test_gateway_services.py
+uv run ruff check packages/harness/nkyel/authz packages/harness/nkyel/guardrails packages/harness/nkyel/tools/builtins/task_tool.py packages/harness/nkyel/subagents/executor.py packages/harness/nkyel/sandbox/tools.py app/gateway/services.py tests/test_authorization_principal.py tests/test_authorization_provider.py tests/test_channel_user_id_env.py tests/test_task_tool_core_logic.py tests/test_subagent_executor.py tests/test_gateway_services.py
+uv run ruff format --check packages/harness/nkyel/authz packages/harness/nkyel/guardrails packages/harness/nkyel/tools/builtins/task_tool.py packages/harness/nkyel/subagents/executor.py packages/harness/nkyel/sandbox/tools.py app/gateway/services.py tests/test_authorization_principal.py tests/test_authorization_provider.py tests/test_channel_user_id_env.py tests/test_task_tool_core_logic.py tests/test_subagent_executor.py tests/test_gateway_services.py
 ```
 
 提交前运行：

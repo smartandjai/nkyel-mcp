@@ -19,9 +19,9 @@ from app.gateway import upload_ingestion
 from app.gateway.auth.models import User
 from app.gateway.deps import get_config
 from app.gateway.routers import uploads
-from deerflow.sandbox.lease import get_sandbox_lease_manager
-from deerflow.uploads.companions import resolve_companion
-from deerflow.uploads.manager import cleanup_stale_upload_staging_files
+from nkyel.sandbox.lease import get_sandbox_lease_manager
+from nkyel.uploads.companions import resolve_companion
+from nkyel.uploads.manager import cleanup_stale_upload_staging_files
 
 
 class ChunkedUpload:
@@ -816,7 +816,7 @@ def test_startup_cleanup_reclaims_a_published_staging_alias_immediately(tmp_path
     name is removed leaves ``notes.txt`` and its ``.upload-*.part`` alias on one
     inode. The next startup must reclaim the alias at once: left in place, the
     destination fails the multi-link check on its next replacement upload."""
-    from deerflow.uploads.manager import validate_upload_destination
+    from nkyel.uploads.manager import validate_upload_destination
 
     thread_uploads_dir = tmp_path / "threads" / "thread-local" / "user-data" / "uploads"
     thread_uploads_dir.mkdir(parents=True)
@@ -1040,7 +1040,7 @@ def test_upload_files_releases_non_local_sandbox_when_sync_fails(tmp_path, failu
 
 @pytest.mark.parametrize("run_finishes_during_sync", [False, True])
 def test_upload_files_keeps_active_run_sandbox_until_last_holder_finishes(tmp_path, run_finishes_during_sync):
-    from deerflow.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
+    from nkyel.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
 
     async def go():
         provider = MagicMock()

@@ -1,4 +1,4 @@
-"""The Helm chart generates and injects ``DEER_FLOW_CREDENTIALS_KEY``.
+"""The Helm chart generates and injects ``NKYEL_CREDENTIALS_KEY``.
 
 Every gateway Pod must encrypt and decrypt stored credentials with one key, so
 the chart generates a Fernet key into the app Secret once, preserves it across
@@ -21,10 +21,10 @@ import pytest
 import yaml
 from cryptography.fernet import Fernet
 
-from deerflow.config.credentials_key import CREDENTIALS_KEY_ENV_VAR, parse_credentials_keys
+from nkyel.config.credentials_key import CREDENTIALS_KEY_ENV_VAR, parse_credentials_keys
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CHART = REPO_ROOT / "deploy" / "helm" / "deer-flow"
+CHART = REPO_ROOT / "deploy" / "helm" / "nkyel"
 APP_SECRET_TEMPLATE = CHART / "templates" / "secret-app.yaml"
 README = CHART / "README.md"
 NOTES = CHART / "templates" / "NOTES.txt"
@@ -37,7 +37,7 @@ def _render_chart(*settings: str) -> list[dict]:
     helm = shutil.which("helm")
     if helm is None:
         pytest.skip("helm is unavailable")
-    command = [helm, "template", "deer-flow", str(CHART)]
+    command = [helm, "template", "nkyel", str(CHART)]
     for setting in settings:
         command.extend(["--set", setting])
     rendered = subprocess.run(command, check=True, capture_output=True, text=True).stdout

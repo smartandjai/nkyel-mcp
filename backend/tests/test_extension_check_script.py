@@ -17,7 +17,7 @@ def wheel(
     tmp_path,
     *,
     entry="example = example:install",
-    requirement="deerflow-extension-api>=0.2,<0.3",
+    requirement="nkyel-extension-api>=0.2,<0.3",
     files=None,
 ):
     path = tmp_path / "example-0.1.0-py3-none-any.whl"
@@ -28,7 +28,7 @@ def wheel(
         )
         archive.writestr(
             "example-0.1.0.dist-info/entry_points.txt",
-            f"[deerflow.extensions]\n{entry}\n",
+            f"[nkyel.extensions]\n{entry}\n",
         )
         archive.writestr(
             "example/__init__.py",
@@ -76,8 +76,8 @@ def test_dotted_entry_module_is_accepted_without_importing_plugin(tmp_path):
     "requirement",
     [
         "unrelated>=1",
-        "deerflow-extension-api>=99",
-        'deerflow-extension-api>=0.2; extra == "optional"',
+        "nkyel-extension-api>=99",
+        'nkyel-extension-api>=0.2; extra == "optional"',
     ],
 )
 def test_missing_or_incompatible_api_dependency_is_rejected(tmp_path, requirement):

@@ -11,7 +11,7 @@ import pytest
 import yaml
 from support.nginx_conf import NGINX_CONFIGS, extract_location_block, read_config
 
-CHART = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "deer-flow"
+CHART = Path(__file__).resolve().parents[2] / "deploy" / "helm" / "nkyel"
 BROWSER_PATTERN = r"^/api/threads/[^/]+/browser/stream"
 
 
@@ -55,7 +55,7 @@ def test_rendered_helm_live_browser_websocket_config(provisioner_enabled: bool) 
     helm = shutil.which("helm")
     if helm is None:
         pytest.skip("helm is unavailable")
-    command = [helm, "template", "deer-flow", str(CHART), "--show-only", "templates/configmap-nginx.yaml", "--set", f"provisioner.enabled={str(provisioner_enabled).lower()}"]
+    command = [helm, "template", "nkyel", str(CHART), "--show-only", "templates/configmap-nginx.yaml", "--set", f"provisioner.enabled={str(provisioner_enabled).lower()}"]
     rendered = subprocess.run(command, check=True, capture_output=True, text=True, encoding="utf-8").stdout
     config_map = yaml.safe_load(rendered)
     _assert_browser_websocket_config(config_map["data"]["nginx.conf"], helm_defaults=True)

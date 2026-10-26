@@ -587,7 +587,7 @@ describe("ProjectDocumentsSection", () => {
         makeAgentThread({
           thread_id: "thread-archived",
           values: { title: "Archived chat" },
-          metadata: { deerflow_archived: true },
+          metadata: { nkyel_archived: true },
         }),
       ],
     ];

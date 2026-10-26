@@ -3,7 +3,7 @@ import json
 import httpx
 import pytest
 
-from deerflow.community.lightrag.client import (
+from nkyel.community.lightrag.client import (
     LightRAGAPIError,
     LightRAGClient,
     LightRAGConnectionError,

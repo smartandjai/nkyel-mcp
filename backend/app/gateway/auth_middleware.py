@@ -3,7 +3,7 @@
 Rejects unauthenticated requests to non-public paths with 401. When a
 request passes the cookie check, resolves the JWT payload to a real
 ``User`` object and stamps it into both ``request.state.user`` and the
-``deerflow.runtime.user_context`` contextvar so that repository-layer
+``nkyel.runtime.user_context`` contextvar so that repository-layer
 owner filtering works automatically via the sentinel pattern.
 
 Fine-grained permission checks remain in authz.py decorators.
@@ -29,7 +29,7 @@ from app.gateway.auth_disabled import (
 from app.gateway.authz import AuthContext, resolve_route_permissions
 from app.gateway.internal_auth import INTERNAL_AUTH_HEADER_NAME, get_internal_user, is_valid_internal_auth_token
 from app.gateway.request_path import get_request_route_path
-from deerflow.runtime.user_context import reset_current_user, set_current_user
+from nkyel.runtime.user_context import reset_current_user, set_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
        signed user does not exist / is stale
 
     On success, stamps ``request.state.user`` and the
-    ``deerflow.runtime.user_context`` contextvar so that repository-layer
+    ``nkyel.runtime.user_context`` contextvar so that repository-layer
     owner filters work downstream without every route needing a
     ``@require_auth`` decorator. Routes that need per-resource
     authorization (e.g. "user A cannot read user B's thread by guessing

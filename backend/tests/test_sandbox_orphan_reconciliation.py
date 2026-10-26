@@ -18,19 +18,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from deerflow.community.aio_sandbox.aio_sandbox_provider import (
+from nkyel.community.aio_sandbox.aio_sandbox_provider import (
     SandboxBeingDestroyedError,
     SandboxPolicyReplacementDeferredError,
 )
-from deerflow.community.aio_sandbox.ownership import compute_lease_ttl
-from deerflow.community.aio_sandbox.sandbox_info import SandboxInfo
+from nkyel.community.aio_sandbox.ownership import compute_lease_ttl
+from nkyel.community.aio_sandbox.sandbox_info import SandboxInfo
 
 # ── SandboxBackend.list_running() default ────────────────────────────────────
 
 
 def test_backend_list_running_default_returns_empty():
     """Base SandboxBackend.list_running() returns empty list (backward compat for RemoteSandboxBackend)."""
-    from deerflow.community.aio_sandbox.backend import SandboxBackend
+    from nkyel.community.aio_sandbox.backend import SandboxBackend
 
     class StubBackend(SandboxBackend):
         def create(self, thread_id, sandbox_id, extra_mounts=None, *, user_id=None):
@@ -55,12 +55,12 @@ def test_backend_list_running_default_returns_empty():
 
 def _make_local_backend():
     """Create a LocalContainerBackend with minimal config."""
-    from deerflow.community.aio_sandbox.local_backend import LocalContainerBackend
+    from nkyel.community.aio_sandbox.local_backend import LocalContainerBackend
 
     return LocalContainerBackend(
         image="test-image:latest",
         base_port=8080,
-        container_prefix="deer-flow-sandbox",
+        container_prefix="nkyel-sandbox",
         config_mounts=[],
         environment={},
     )
@@ -117,10 +117,10 @@ def test_list_running_returns_containers(monkeypatch):
 
     _mock_ps_and_inspect(
         monkeypatch,
-        ps_output="deer-flow-sandbox-abc12345\ndeer-flow-sandbox-def67890\n",
+        ps_output="nkyel-sandbox-abc12345\nnkyel-sandbox-def67890\n",
         inspect_payload=[
-            _make_inspect_entry("deer-flow-sandbox-abc12345", "2026-04-08T01:22:50.000000000Z", "8081"),
-            _make_inspect_entry("deer-flow-sandbox-def67890", "2026-04-08T02:22:50.000000000Z", "8082"),
+            _make_inspect_entry("nkyel-sandbox-abc12345", "2026-04-08T01:22:50.000000000Z", "8081"),
+            _make_inspect_entry("nkyel-sandbox-def67890", "2026-04-08T02:22:50.000000000Z", "8082"),
         ],
     )
 
@@ -150,9 +150,9 @@ def test_list_running_skips_non_matching_names(monkeypatch):
 
     _mock_ps_and_inspect(
         monkeypatch,
-        ps_output="deer-flow-sandbox-abc12345\nsome-other-container\n",
+        ps_output="nkyel-sandbox-abc12345\nsome-other-container\n",
         inspect_payload=[
-            _make_inspect_entry("deer-flow-sandbox-abc12345", "2026-04-08T01:22:50Z", "8081"),
+            _make_inspect_entry("nkyel-sandbox-abc12345", "2026-04-08T01:22:50Z", "8081"),
         ],
     )
 
@@ -168,9 +168,9 @@ def test_list_running_includes_containers_without_port(monkeypatch):
 
     _mock_ps_and_inspect(
         monkeypatch,
-        ps_output="deer-flow-sandbox-abc12345\n",
+        ps_output="nkyel-sandbox-abc12345\n",
         inspect_payload=[
-            _make_inspect_entry("deer-flow-sandbox-abc12345", "2026-04-08T01:22:50Z", host_port=None),
+            _make_inspect_entry("nkyel-sandbox-abc12345", "2026-04-08T01:22:50Z", host_port=None),
         ],
     )
 
@@ -207,7 +207,7 @@ def test_list_running_handles_inspect_failure(monkeypatch):
 
     _mock_ps_and_inspect(
         monkeypatch,
-        ps_output="deer-flow-sandbox-abc12345\n",
+        ps_output="nkyel-sandbox-abc12345\n",
         inspect_payload=None,  # Signals inspect failure
     )
 
@@ -225,7 +225,7 @@ def test_list_running_handles_malformed_inspect_json(monkeypatch):
         result = MagicMock()
         if len(cmd) >= 2 and cmd[1] == "ps":
             result.returncode = 0
-            result.stdout = "deer-flow-sandbox-abc12345\n"
+            result.stdout = "nkyel-sandbox-abc12345\n"
             result.stderr = ""
         else:
             result.returncode = 0
@@ -251,19 +251,19 @@ def test_list_running_uses_single_batch_inspect_call(monkeypatch):
         result = MagicMock()
         if len(cmd) >= 2 and cmd[1] == "ps":
             result.returncode = 0
-            result.stdout = "deer-flow-sandbox-a\ndeer-flow-sandbox-b\ndeer-flow-sandbox-c\n"
+            result.stdout = "nkyel-sandbox-a\nnkyel-sandbox-b\nnkyel-sandbox-c\n"
             result.stderr = ""
             return result
         if len(cmd) >= 2 and cmd[1] == "inspect":
             inspect_call_count["count"] += 1
             # Expect all three names passed in a single call
-            assert cmd[2:] == ["deer-flow-sandbox-a", "deer-flow-sandbox-b", "deer-flow-sandbox-c"]
+            assert cmd[2:] == ["nkyel-sandbox-a", "nkyel-sandbox-b", "nkyel-sandbox-c"]
             result.returncode = 0
             result.stdout = json.dumps(
                 [
-                    _make_inspect_entry("deer-flow-sandbox-a", "2026-04-08T01:22:50Z", "8081"),
-                    _make_inspect_entry("deer-flow-sandbox-b", "2026-04-08T01:22:50Z", "8082"),
-                    _make_inspect_entry("deer-flow-sandbox-c", "2026-04-08T01:22:50Z", "8083"),
+                    _make_inspect_entry("nkyel-sandbox-a", "2026-04-08T01:22:50Z", "8081"),
+                    _make_inspect_entry("nkyel-sandbox-b", "2026-04-08T01:22:50Z", "8082"),
+                    _make_inspect_entry("nkyel-sandbox-c", "2026-04-08T01:22:50Z", "8083"),
                 ]
             )
             result.stderr = ""
@@ -284,7 +284,7 @@ def test_list_running_uses_single_batch_inspect_call(monkeypatch):
 
 def test_parse_docker_timestamp_with_nanoseconds():
     """Should correctly parse Docker's ISO 8601 timestamp with nanoseconds."""
-    from deerflow.community.aio_sandbox.local_backend import _parse_docker_timestamp
+    from nkyel.community.aio_sandbox.local_backend import _parse_docker_timestamp
 
     ts = _parse_docker_timestamp("2026-04-08T01:22:50.123456789Z")
     assert ts > 0
@@ -294,7 +294,7 @@ def test_parse_docker_timestamp_with_nanoseconds():
 
 def test_parse_docker_timestamp_without_fractional_seconds():
     """Should parse plain ISO 8601 timestamps without fractional seconds."""
-    from deerflow.community.aio_sandbox.local_backend import _parse_docker_timestamp
+    from nkyel.community.aio_sandbox.local_backend import _parse_docker_timestamp
 
     ts = _parse_docker_timestamp("2026-04-08T01:22:50Z")
     expected = datetime(2026, 4, 8, 1, 22, 50, tzinfo=UTC).timestamp()
@@ -302,7 +302,7 @@ def test_parse_docker_timestamp_without_fractional_seconds():
 
 
 def test_parse_docker_timestamp_empty_returns_zero():
-    from deerflow.community.aio_sandbox.local_backend import _parse_docker_timestamp
+    from nkyel.community.aio_sandbox.local_backend import _parse_docker_timestamp
 
     assert _parse_docker_timestamp("") == 0.0
     assert _parse_docker_timestamp("not a timestamp") == 0.0
@@ -312,21 +312,21 @@ def test_parse_docker_timestamp_empty_returns_zero():
 
 
 def test_extract_host_port_returns_mapped_port():
-    from deerflow.community.aio_sandbox.local_backend import _extract_host_port
+    from nkyel.community.aio_sandbox.local_backend import _extract_host_port
 
     entry = {"NetworkSettings": {"Ports": {"8080/tcp": [{"HostIp": "0.0.0.0", "HostPort": "8081"}]}}}
     assert _extract_host_port(entry, 8080) == 8081
 
 
 def test_extract_host_port_returns_none_when_unmapped():
-    from deerflow.community.aio_sandbox.local_backend import _extract_host_port
+    from nkyel.community.aio_sandbox.local_backend import _extract_host_port
 
     entry = {"NetworkSettings": {"Ports": {}}}
     assert _extract_host_port(entry, 8080) is None
 
 
 def test_extract_host_port_handles_missing_fields():
-    from deerflow.community.aio_sandbox.local_backend import _extract_host_port
+    from nkyel.community.aio_sandbox.local_backend import _extract_host_port
 
     assert _extract_host_port({}, 8080) is None
     assert _extract_host_port({"NetworkSettings": None}, 8080) is None
@@ -344,7 +344,7 @@ def _make_shared_ownership_store(**kwargs):
     backend-agnostic. The redis backend's own semantics are pinned separately in
     ``test_sandbox_ownership_store.py``.
     """
-    from deerflow.community.aio_sandbox.ownership.memory import MemoryOwnershipStore
+    from nkyel.community.aio_sandbox.ownership.memory import MemoryOwnershipStore
 
     kwargs.setdefault("ttl_seconds", 600)
     return MemoryOwnershipStore(owner_id="__shared__", **kwargs)
@@ -424,10 +424,10 @@ def _make_provider_for_reconciliation(tmp_path=None, *, worker_id: str = "worker
     to model two gateway instances coordinating through one ownership backend.
     ``tmp_path`` is accepted and ignored: ownership no longer lives on disk.
     """
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
-    from deerflow.sandbox.acquire_serialization import AcquireSerializer
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.sandbox.acquire_serialization import AcquireSerializer
 
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = aio_mod.AioSandboxProvider.__new__(aio_mod.AioSandboxProvider)
     provider._lock = threading.Lock()
     provider._sandboxes = {}
@@ -457,7 +457,7 @@ def _make_provider_for_reconciliation(tmp_path=None, *, worker_id: str = "worker
     provider._owner_id = worker_id
     provider._ownership_config = SandboxOwnershipConfig()
     if store is None:
-        from deerflow.community.aio_sandbox.ownership.memory import MemoryOwnershipStore
+        from nkyel.community.aio_sandbox.ownership.memory import MemoryOwnershipStore
 
         provider._ownership = MemoryOwnershipStore(owner_id=worker_id, ttl_seconds=600)
     else:
@@ -473,7 +473,7 @@ def test_reconcile_adopts_old_containers_into_warm_pool(tmp_path):
     old_info = SandboxInfo(
         sandbox_id="old12345",
         sandbox_url="http://localhost:8081",
-        container_name="deer-flow-sandbox-old12345",
+        container_name="nkyel-sandbox-old12345",
         created_at=now - 1200,  # 20 minutes old, > 600s idle_timeout
     )
     provider._backend.list_running.return_value = [old_info]
@@ -493,7 +493,7 @@ def test_reconcile_adopts_young_containers(tmp_path):
     young_info = SandboxInfo(
         sandbox_id="young123",
         sandbox_url="http://localhost:8082",
-        container_name="deer-flow-sandbox-young123",
+        container_name="nkyel-sandbox-young123",
         created_at=now - 60,  # 1 minute old, < 600s idle_timeout
     )
     provider._backend.list_running.return_value = [young_info]
@@ -514,13 +514,13 @@ def test_reconcile_mixed_containers_all_adopted(tmp_path):
     old_info = SandboxInfo(
         sandbox_id="old_one",
         sandbox_url="http://localhost:8081",
-        container_name="deer-flow-sandbox-old_one",
+        container_name="nkyel-sandbox-old_one",
         created_at=now - 1200,
     )
     young_info = SandboxInfo(
         sandbox_id="young_one",
         sandbox_url="http://localhost:8082",
-        container_name="deer-flow-sandbox-young_one",
+        container_name="nkyel-sandbox-young_one",
         created_at=now - 60,
     )
     provider._backend.list_running.return_value = [old_info, young_info]
@@ -540,7 +540,7 @@ def test_reconcile_skips_already_tracked_containers(tmp_path):
     existing_info = SandboxInfo(
         sandbox_id="existing1",
         sandbox_url="http://localhost:8081",
-        container_name="deer-flow-sandbox-existing1",
+        container_name="nkyel-sandbox-existing1",
         created_at=now - 1200,
     )
     # Pre-populate _sandboxes to simulate already-tracked container
@@ -585,7 +585,7 @@ def test_reconcile_skips_container_owned_by_peer():
     info = SandboxInfo(
         sandbox_id="shared01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-shared01",
+        container_name="nkyel-sandbox-shared01",
         created_at=now - 50,
     )
     worker_a._publish_ownership("shared01")
@@ -607,7 +607,7 @@ def test_reconcile_does_not_replace_mismatched_policy_while_peer_owns_container(
     info = SandboxInfo(
         sandbox_id="rolling01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-rolling01",
+        container_name="nkyel-sandbox-rolling01",
         created_at=time.time() - 50,
         requires_replacement=True,
     )
@@ -623,13 +623,13 @@ def test_reconcile_does_not_replace_mismatched_policy_while_peer_owns_container(
 
 def test_reconcile_replaces_mismatched_policy_after_orphan_grace_and_destroy_claim():
     """A stale policy is replaced only after grace plus an exclusive teardown lease."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     shared = _make_shared_ownership_store()
     worker = _make_provider_for_reconciliation(worker_id="worker-b", store=shared)
     info = SandboxInfo(
         sandbox_id="rolling02",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-rolling02",
+        container_name="nkyel-sandbox-rolling02",
         created_at=time.time() - 50,
         requires_replacement=True,
     )
@@ -668,7 +668,7 @@ def test_reconcile_does_not_replace_mismatched_policy_during_local_teardown():
     info = SandboxInfo(
         sandbox_id="rolling03",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-rolling03",
+        container_name="nkyel-sandbox-rolling03",
         requires_replacement=True,
     )
     worker._backend.list_running.return_value = [info]
@@ -684,14 +684,14 @@ def test_reconcile_does_not_replace_mismatched_policy_during_local_teardown():
 
 def test_discover_or_create_defers_mismatched_policy_owned_by_live_peer(tmp_path):
     """The request path uses the same fence instead of deleting on discovery."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     shared = _make_shared_ownership_store()
     worker_a = _make_provider_for_reconciliation(worker_id="worker-a", store=shared)
     worker_b = _make_provider_for_reconciliation(worker_id="worker-b", store=shared)
     info = SandboxInfo(
         sandbox_id="rolling04",
         sandbox_url="",
-        container_name="deer-flow-sandbox-rolling04",
+        container_name="nkyel-sandbox-rolling04",
         requires_replacement=True,
     )
     worker_a._publish_ownership(info.sandbox_id)
@@ -713,14 +713,14 @@ def test_discover_or_create_defers_mismatched_policy_owned_by_live_peer(tmp_path
 @pytest.mark.asyncio
 async def test_async_discover_or_create_defers_mismatched_policy_owned_by_live_peer(tmp_path):
     """The async request path must preserve the same replacement fence."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     shared = _make_shared_ownership_store()
     worker_a = _make_provider_for_reconciliation(worker_id="worker-a", store=shared)
     worker_b = _make_provider_for_reconciliation(worker_id="worker-b", store=shared)
     info = SandboxInfo(
         sandbox_id="rolling05",
         sandbox_url="",
-        container_name="deer-flow-sandbox-rolling05",
+        container_name="nkyel-sandbox-rolling05",
         requires_replacement=True,
     )
     worker_a._publish_ownership(info.sandbox_id)
@@ -749,7 +749,7 @@ def test_idle_reap_does_not_destroy_peer_owned_warm_entry():
     info = SandboxInfo(
         sandbox_id="a99c8444",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-a99c8444",
+        container_name="nkyel-sandbox-a99c8444",
         created_at=time.time() - 50,
     )
     # Simulate the bad old path: B already has it in warm (or adopted wrongly).
@@ -782,7 +782,7 @@ def test_multi_worker_release_then_peer_reconcile_cannot_kill():
     info = SandboxInfo(
         sandbox_id=sid,
         sandbox_url="http://localhost:8080",
-        container_name=f"deer-flow-sandbox-{sid}",
+        container_name=f"nkyel-sandbox-{sid}",
         created_at=time.time() - 50,
     )
     running[sid] = info
@@ -815,14 +815,14 @@ def test_expired_lease_lets_peer_adopt_crashed_owner_container():
     leak when the owning instance dies without releasing. Adoption is delayed by
     the recovery grace, but a dead owner never republishes, so it still happens.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     shared = _make_shared_ownership_store(ttl_seconds=0.05)
     dead = _make_provider_for_reconciliation(worker_id="worker-dead", store=shared)
     worker_b = _make_provider_for_reconciliation(worker_id="worker-b", store=shared)
     info = SandboxInfo(
         sandbox_id="crashed1",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-crashed1",
+        container_name="nkyel-sandbox-crashed1",
         created_at=time.time() - 50,
     )
     dead._publish_ownership("crashed1")
@@ -855,7 +855,7 @@ def test_acquire_fails_closed_when_ownership_cannot_be_published():
     exclusion while the sandbox was handed out as usable — peers then saw an
     unowned live container and reaped it.
     """
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError
 
     worker = _make_provider_for_reconciliation(worker_id="worker-a")
     worker._ownership = MagicMock()
@@ -865,7 +865,7 @@ def test_acquire_fails_closed_when_ownership_cannot_be_published():
     info = SandboxInfo(
         sandbox_id="new001",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-new001",
+        container_name="nkyel-sandbox-new001",
         created_at=time.time(),
     )
 
@@ -881,13 +881,13 @@ def test_acquire_fails_closed_when_ownership_cannot_be_published():
 
 def test_reuse_fails_closed_when_ownership_cannot_be_published():
     """Same fail-closed rule on the in-process reuse path."""
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError
 
     worker = _make_provider_for_reconciliation(worker_id="worker-a")
     info = SandboxInfo(
         sandbox_id="sb1",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-sb1",
+        container_name="nkyel-sandbox-sb1",
         created_at=time.time(),
     )
     worker._sandboxes["sb1"] = MagicMock()
@@ -903,7 +903,7 @@ def test_reuse_fails_closed_when_ownership_cannot_be_published():
 
 def test_destroy_fails_closed_when_ownership_unknown():
     """A store that cannot answer must not be read as 'container is free'."""
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError
 
     worker = _make_provider_for_reconciliation(worker_id="worker-a")
     worker._ownership = MagicMock()
@@ -912,7 +912,7 @@ def test_destroy_fails_closed_when_ownership_unknown():
     info = SandboxInfo(
         sandbox_id="unknown1",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-unknown1",
+        container_name="nkyel-sandbox-unknown1",
         created_at=time.time() - 50,
     )
 
@@ -923,7 +923,7 @@ def test_destroy_fails_closed_when_ownership_unknown():
 
 def test_reconcile_fails_closed_when_ownership_unknown():
     """A store outage must not turn every peer container into an adoptable orphan."""
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError
 
     worker = _make_provider_for_reconciliation(worker_id="worker-b")
     worker._ownership = MagicMock()
@@ -937,14 +937,14 @@ def test_reconcile_fails_closed_when_ownership_unknown():
     info = SandboxInfo(
         sandbox_id="unknown2",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-unknown2",
+        container_name="nkyel-sandbox-unknown2",
         created_at=time.time() - 50,
     )
     worker._backend.list_running.return_value = [info]
 
     # Unowned for a full grace, so the container is adoptable and the only thing
     # left standing between it and the warm pool is the claim.
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     now = time.time()
     with patch.object(aio_mod.time, "time", return_value=now):
         worker._reconcile_orphans()
@@ -970,7 +970,7 @@ def test_init_always_starts_lease_renewal(monkeypatch, idle_timeout):
     a test that calls ``_start_lease_renewal()`` directly passes on the broken code
     and guards nothing.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
 
     started: list[str] = []
     monkeypatch.setattr(aio_mod.AioSandboxProvider, "_load_config", lambda self: {"idle_timeout": idle_timeout, "replicas": 3, "ownership": None})
@@ -998,7 +998,7 @@ def test_renewal_keeps_the_sandbox_when_the_store_cannot_answer():
     fleet-wide eviction the LAPSED/LOST split exists to prevent, which is pinned
     only for the flushed-store path, never for a raising one.
     """
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError
 
     worker = _make_provider_for_reconciliation(worker_id="worker-a")
     worker._ownership = MagicMock()
@@ -1006,7 +1006,7 @@ def test_renewal_keeps_the_sandbox_when_the_store_cannot_answer():
     info = SandboxInfo(
         sandbox_id="live02",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-live02",
+        container_name="nkyel-sandbox-live02",
         created_at=time.time(),
     )
     sandbox = MagicMock()
@@ -1033,7 +1033,7 @@ def test_renewal_keeps_the_sandbox_when_lapsed_reclaim_cannot_answer():
     the claim. Renewal must keep the sandbox and retry rather than route the
     claim through the ordinary fail-closed reap helper and evict a live entry.
     """
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError, RenewOutcome
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError, RenewOutcome
 
     worker = _make_provider_for_reconciliation(worker_id="worker-a")
     worker._ownership = MagicMock()
@@ -1064,9 +1064,9 @@ def test_load_config_carries_the_stream_bridge_section():
     deployment silently fell back to `memory` — #4206 reopened on exactly the
     deployments the inference exists for.
     """
-    from deerflow.config.stream_bridge_config import StreamBridgeConfig
+    from nkyel.config.stream_bridge_config import StreamBridgeConfig
 
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = aio_mod.AioSandboxProvider.__new__(aio_mod.AioSandboxProvider)
 
     bridge = StreamBridgeConfig(type="redis", redis_url="redis://bridge:6379/0")
@@ -1088,9 +1088,9 @@ def test_init_infers_redis_ownership_from_a_redis_stream_bridge():
     between them — the same reason `test_init_always_starts_lease_renewal` drives
     `__init__` instead of calling `_start_lease_renewal` directly.
     """
-    from deerflow.config.stream_bridge_config import StreamBridgeConfig
+    from nkyel.config.stream_bridge_config import StreamBridgeConfig
 
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
 
     app_config = MagicMock()
     app_config.stream_bridge = StreamBridgeConfig(type="redis", redis_url="redis://bridge:6379/0")
@@ -1124,7 +1124,7 @@ def test_init_infers_redis_ownership_from_a_redis_stream_bridge():
 
 def test_renewal_loop_refreshes_owned_leases():
     """The renewal thread actually renews (the loop body, not just its wiring)."""
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
 
     worker = _make_provider_for_reconciliation(worker_id="worker-a")
     worker._ownership_config = SandboxOwnershipConfig(renewal_interval_seconds=0.05)
@@ -1157,7 +1157,7 @@ def test_renewal_covers_warm_entries_not_just_active():
     info = SandboxInfo(
         sandbox_id="warm01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-warm01",
+        container_name="nkyel-sandbox-warm01",
         created_at=time.time(),
     )
     worker._sandboxes["active01"] = MagicMock()
@@ -1186,7 +1186,7 @@ def test_renewal_does_not_forget_a_warm_entry_mid_teardown():
     info = SandboxInfo(
         sandbox_id="warm-stop",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-warm-stop",
+        container_name="nkyel-sandbox-warm-stop",
         created_at=time.time(),
     )
     worker._warm_pool["warm-stop"] = (info, time.monotonic())
@@ -1243,7 +1243,7 @@ def test_lost_lease_drops_sandbox_without_destroying_container():
     info = SandboxInfo(
         sandbox_id="moved01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-moved01",
+        container_name="nkyel-sandbox-moved01",
         created_at=time.time(),
     )
     sandbox = MagicMock()
@@ -1268,7 +1268,7 @@ def test_lost_lease_drops_sandbox_without_destroying_container():
 
 def test_ownership_rollback_on_create_closes_the_client_it_drops():
     """A fenced rollback destroys the container; its host-side client must not leak (#2872)."""
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError
 
     worker = _make_provider_for_reconciliation(worker_id="worker-a")
     worker._ownership = MagicMock()
@@ -1277,11 +1277,11 @@ def test_ownership_rollback_on_create_closes_the_client_it_drops():
     info = SandboxInfo(
         sandbox_id="new002",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-new002",
+        container_name="nkyel-sandbox-new002",
         created_at=time.time(),
     )
 
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     created: list[MagicMock] = []
 
     def fake_aio_sandbox(**kwargs):
@@ -1300,7 +1300,7 @@ def test_ownership_rollback_on_create_closes_the_client_it_drops():
 
 def test_ownership_rollback_does_not_destroy_when_teardown_claim_is_unavailable():
     """Unknown ownership is not permission to remove a possibly peer-created container."""
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError
 
     worker = _make_provider_for_reconciliation(worker_id="worker-a")
     worker._ownership = MagicMock()
@@ -1309,11 +1309,11 @@ def test_ownership_rollback_does_not_destroy_when_teardown_claim_is_unavailable(
     info = SandboxInfo(
         sandbox_id="new003",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-new003",
+        container_name="nkyel-sandbox-new003",
         created_at=time.time(),
     )
 
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     created: list[MagicMock] = []
 
     def fake_aio_sandbox(**kwargs):
@@ -1343,7 +1343,7 @@ def test_acquire_takes_over_ownership_so_a_thread_can_move_instances():
     info = SandboxInfo(
         sandbox_id="thread01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-thread01",
+        container_name="nkyel-sandbox-thread01",
         created_at=time.time(),
     )
     worker_a._publish_ownership("thread01")
@@ -1368,7 +1368,7 @@ def test_store_losing_all_state_does_not_evict_live_sandboxes():
     info = SandboxInfo(
         sandbox_id="live01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-live01",
+        container_name="nkyel-sandbox-live01",
         created_at=time.time(),
     )
     sandbox = MagicMock()
@@ -1406,7 +1406,7 @@ def test_peer_reconcile_after_state_loss_does_not_steal_a_live_container():
     info = SandboxInfo(
         sandbox_id="live01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-live01",
+        container_name="nkyel-sandbox-live01",
         created_at=time.time(),
     )
     sandbox = MagicMock()
@@ -1444,14 +1444,14 @@ def test_adoption_grace_expires_so_a_truly_orphaned_container_is_still_adopted()
     than the TTL by construction. Reconciliation must adopt it then, or a crashed
     instance's containers would leak forever.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     shared = _make_shared_ownership_store()
     worker_b = _make_provider_for_reconciliation(worker_id="worker-b", store=shared)
     ttl = compute_lease_ttl(worker_b._ownership_config)
     info = SandboxInfo(
         sandbox_id="crashed1",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-crashed1",
+        container_name="nkyel-sandbox-crashed1",
         created_at=time.time() - 50,
     )
     worker_b._backend.list_running.return_value = [info]
@@ -1479,7 +1479,7 @@ def test_adoption_grace_restarts_when_a_live_owner_republishes():
     because the container simply reads as owned. So the second lapse is the whole
     test; without it this passes with the reset deleted.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     shared = _make_shared_ownership_store()
     worker_a = _make_provider_for_reconciliation(worker_id="worker-a", store=shared)
     worker_b = _make_provider_for_reconciliation(worker_id="worker-b", store=shared)
@@ -1487,7 +1487,7 @@ def test_adoption_grace_restarts_when_a_live_owner_republishes():
     info = SandboxInfo(
         sandbox_id="live01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-live01",
+        container_name="nkyel-sandbox-live01",
         created_at=time.time(),
     )
     worker_b._backend.list_running.return_value = [info]
@@ -1532,7 +1532,7 @@ def test_acquire_refuses_a_container_a_peer_is_destroying():
     info = SandboxInfo(
         sandbox_id="dying01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-dying01",
+        container_name="nkyel-sandbox-dying01",
         created_at=time.time(),
     )
 
@@ -1560,7 +1560,7 @@ def test_teardown_marker_is_held_for_a_stop_that_outlives_the_lease_ttl():
     reopened by its own expiry. The `flock` this replaced could not expire; a
     lease can, so it has to be held on purpose.
     """
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
 
     lease_ttl = 0.15
     shared = _make_shared_ownership_store(ttl_seconds=lease_ttl)
@@ -1571,7 +1571,7 @@ def test_teardown_marker_is_held_for_a_stop_that_outlives_the_lease_ttl():
     info = SandboxInfo(
         sandbox_id="doomed1",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-doomed1",
+        container_name="nkyel-sandbox-doomed1",
         created_at=time.time(),
     )
 
@@ -1620,7 +1620,7 @@ def test_unhealthy_drop_holds_the_teardown_marker_for_its_stop():
     cannot see the id either: nothing refreshes the marker unless the stop holds
     it.
     """
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
 
     lease_ttl = 0.15
     shared = _make_shared_ownership_store(ttl_seconds=lease_ttl)
@@ -1630,7 +1630,7 @@ def test_unhealthy_drop_holds_the_teardown_marker_for_its_stop():
     info = SandboxInfo(
         sandbox_id="sick01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-sick01",
+        container_name="nkyel-sandbox-sick01",
         created_at=time.time(),
     )
 
@@ -1672,7 +1672,7 @@ def test_destroy_holds_the_teardown_marker_for_its_stop():
     unnoticed. "Every path does X" claims keep leaving exactly one sibling
     untested — this is that sibling.
     """
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
 
     lease_ttl = 0.15
     shared = _make_shared_ownership_store(ttl_seconds=lease_ttl)
@@ -1682,7 +1682,7 @@ def test_destroy_holds_the_teardown_marker_for_its_stop():
     info = SandboxInfo(
         sandbox_id="doomed3",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-doomed3",
+        container_name="nkyel-sandbox-doomed3",
         created_at=time.time(),
     )
 
@@ -1731,7 +1731,7 @@ def test_destroy_releases_the_teardown_marker_when_the_stop_fails():
     info = SandboxInfo(
         sandbox_id="boom01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-boom01",
+        container_name="nkyel-sandbox-boom01",
         created_at=time.time(),
     )
     worker._sandboxes["boom01"] = MagicMock()
@@ -1813,7 +1813,7 @@ def test_teardown_join_budget_covers_refresh_and_final_release():
     join budget needs to exceed both sequential operation bounds rather than
     only one of them.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     store_operation_timeout_seconds = 5.0
 
     assert aio_mod.AioSandboxProvider._TEARDOWN_JOIN_TIMEOUT_SECONDS > 2 * store_operation_timeout_seconds
@@ -1830,7 +1830,7 @@ def test_teardown_release_waits_for_the_heartbeat_to_exit():
     create) until the TTL. Owning the release inside the heartbeat sequences it
     strictly after the last refresh. (fancyboi999, PR #4221)
     """
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
 
     # Long store TTL so nothing lapses via TTL during the test — the only thing
     # that may clear the marker is a real release.
@@ -1847,7 +1847,7 @@ def test_teardown_release_waits_for_the_heartbeat_to_exit():
     info = SandboxInfo(
         sandbox_id="defer1",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-defer1",
+        container_name="nkyel-sandbox-defer1",
         created_at=time.time(),
     )
 
@@ -1897,7 +1897,7 @@ def test_evict_keeps_the_warm_entry_when_the_claim_is_refused():
     info = SandboxInfo(
         sandbox_id="peer01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-peer01",
+        container_name="nkyel-sandbox-peer01",
         created_at=time.time(),
     )
     worker_a._warm_pool["peer01"] = (info, time.monotonic() - 5)
@@ -1926,7 +1926,7 @@ def test_reclaim_drops_a_container_a_peer_is_destroying():
     info = SandboxInfo(
         sandbox_id="dying02",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-dying02",
+        container_name="nkyel-sandbox-dying02",
         created_at=time.time(),
     )
     worker_a._warm_pool["dying02"] = (info, time.monotonic())
@@ -1959,7 +1959,7 @@ def test_created_sandbox_is_not_rolled_back_when_a_peer_is_destroying_its_id():
     info = SandboxInfo(
         sandbox_id="fresh01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-fresh01",
+        container_name="nkyel-sandbox-fresh01",
         created_at=time.time(),
     )
     # A peer's teardown marker is still on this id when we finish creating.
@@ -2007,7 +2007,7 @@ def test_teardown_heartbeat_stops_when_the_stop_returns():
     if it outlived the destroy the marker would be refreshed indefinitely and no
     peer could ever adopt or recreate the container.
     """
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
 
     shared = _make_shared_ownership_store(ttl_seconds=0.15)
     worker_a = _make_provider_for_reconciliation(worker_id="worker-a", store=shared)
@@ -2015,7 +2015,7 @@ def test_teardown_heartbeat_stops_when_the_stop_returns():
     info = SandboxInfo(
         sandbox_id="doomed2",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-doomed2",
+        container_name="nkyel-sandbox-doomed2",
         created_at=time.time(),
     )
     worker_a._warm_pool["doomed2"] = (info, time.monotonic())
@@ -2040,7 +2040,7 @@ def test_cached_sandbox_being_destroyed_is_dropped_not_reused():
     info = SandboxInfo(
         sandbox_id="dying02",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-dying02",
+        container_name="nkyel-sandbox-dying02",
         created_at=time.time(),
     )
     sandbox = MagicMock()
@@ -2070,7 +2070,7 @@ def test_destroy_claims_before_untracking():
     info = SandboxInfo(
         sandbox_id="peer01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-peer01",
+        container_name="nkyel-sandbox-peer01",
         created_at=time.time(),
     )
     sandbox = MagicMock()
@@ -2094,7 +2094,7 @@ def test_refused_idle_destroy_keeps_the_warm_entry():
     info = SandboxInfo(
         sandbox_id="warmpeer",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-warmpeer",
+        container_name="nkyel-sandbox-warmpeer",
         created_at=time.time(),
     )
     worker_a._warm_pool["warmpeer"] = (info, time.monotonic() - 999)
@@ -2114,7 +2114,7 @@ def test_unhealthy_sandbox_owned_by_peer_is_not_destroyed():
     info = SandboxInfo(
         sandbox_id="sick01",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-sick01",
+        container_name="nkyel-sandbox-sick01",
         created_at=time.time(),
     )
     worker_a._sandboxes["sick01"] = MagicMock()
@@ -2210,7 +2210,7 @@ def test_sighup_handler_registered():
     original_sigterm = signal.getsignal(signal.SIGTERM)
     original_sigint = signal.getsignal(signal.SIGINT)
     try:
-        aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+        aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
         provider._original_sighup = original_sighup
         provider._original_sigterm = original_sigterm
         provider._original_sigint = original_sigint
@@ -2243,7 +2243,7 @@ def test_sighup_handler_registered():
 
 def _active_sandbox(provider, sandbox_id, info, *, thread_key=("u", "t1")):
     """Track *info* as an active sandbox on *provider*."""
-    from deerflow.community.aio_sandbox.aio_sandbox import AioSandbox
+    from nkyel.community.aio_sandbox.aio_sandbox import AioSandbox
 
     provider._sandboxes[sandbox_id] = AioSandbox(id=sandbox_id, base_url=info.sandbox_url)
     provider._sandbox_infos[sandbox_id] = info
@@ -2256,7 +2256,7 @@ def _info(sandbox_id, *, created_at=None):
     return SandboxInfo(
         sandbox_id=sandbox_id,
         sandbox_url="http://localhost:8080",
-        container_name=f"deer-flow-sandbox-{sandbox_id}",
+        container_name=f"nkyel-sandbox-{sandbox_id}",
         created_at=time.time() if created_at is None else created_at,
     )
 
@@ -2586,14 +2586,14 @@ def test_discovered_sandbox_client_is_closed_when_ownership_publish_fails():
     not of the `AioSandbox` HTTP client constructed before the publish. The
     sibling create path already closes it on the same failure.
     """
-    from deerflow.community.aio_sandbox.ownership import OwnershipBackendError
+    from nkyel.community.aio_sandbox.ownership import OwnershipBackendError
 
     provider = _make_provider_for_reconciliation()
     provider._ownership = MagicMock()
     provider._ownership.take.side_effect = OwnershipBackendError("store down")
 
     created = []
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     real_sandbox_cls = aio_mod.AioSandbox
 
     def tracking_sandbox(**kwargs):

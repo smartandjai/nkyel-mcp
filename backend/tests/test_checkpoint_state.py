@@ -9,8 +9,8 @@ from langchain_core.messages import AnyMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph.message import add_messages
 
-from deerflow.runtime import CheckpointStateAccessor
-from deerflow.runtime.checkpoint_mode import CHECKPOINT_MODE_METADATA_KEY, INTERNAL_CHECKPOINT_MODE_KEY
+from nkyel.runtime import CheckpointStateAccessor
+from nkyel.runtime.checkpoint_mode import CHECKPOINT_MODE_METADATA_KEY, INTERNAL_CHECKPOINT_MODE_KEY
 
 
 class FakeCheckpointer:
@@ -86,7 +86,7 @@ def _assert_delta_config_is_copied(original: dict[str, Any], forwarded: dict[str
 def test_mutation_graph_bakes_snapshot_frequency_into_fallback_schema() -> None:
     from langgraph.channels import DeltaChannel
 
-    from deerflow.runtime.checkpoint_state import build_state_mutation_graph
+    from nkyel.runtime.checkpoint_state import build_state_mutation_graph
 
     default_graph = build_state_mutation_graph("compact", "delta")
     assert isinstance(default_graph.channels["messages"], DeltaChannel)
@@ -157,7 +157,7 @@ async def test_async_accessor_binds_persistence_guards_operations_and_preserves_
 async def test_async_accessor_reads_checkpoint_metadata_without_materializing_state() -> None:
     graph = FakeGraph()
     saver = FakeCheckpointer()
-    saver.checkpoint_tuple = SimpleNamespace(metadata={"deerflow_agent_name": "stateless-agent"})
+    saver.checkpoint_tuple = SimpleNamespace(metadata={"nkyel_agent_name": "stateless-agent"})
     accessor = CheckpointStateAccessor.bind(graph, saver, mode="delta")
     config = {
         "configurable": {"thread_id": "thread-metadata", "checkpoint_ns": ""},
@@ -167,7 +167,7 @@ async def test_async_accessor_reads_checkpoint_metadata_without_materializing_st
 
     metadata = await accessor.aget_metadata(config)
 
-    assert metadata == {"deerflow_agent_name": "stateless-agent"}
+    assert metadata == {"nkyel_agent_name": "stateless-agent"}
     assert graph.calls == []
     assert len(saver.async_configs) == 1
     _assert_delta_config_is_copied(config, saver.async_configs[0])
@@ -176,7 +176,7 @@ async def test_async_accessor_reads_checkpoint_metadata_without_materializing_st
 
 @pytest.mark.anyio
 async def test_full_accessor_metadata_read_rejects_delta_checkpoint() -> None:
-    from deerflow.runtime.checkpoint_mode import CheckpointModeMismatchError
+    from nkyel.runtime.checkpoint_mode import CheckpointModeMismatchError
 
     graph = FakeGraph()
     saver = FakeCheckpointer()
@@ -241,7 +241,7 @@ async def test_full_accessor_gates_writes_and_checks_reads_on_the_returned_snaps
 async def test_full_accessor_raises_when_the_returned_snapshot_is_delta_marked() -> None:
     """A full-mode accessor must fail closed on a delta checkpoint, detected
     via the returned snapshot metadata (no pre-read tuple fetch)."""
-    from deerflow.runtime.checkpoint_mode import CheckpointModeMismatchError
+    from nkyel.runtime.checkpoint_mode import CheckpointModeMismatchError
 
     graph = FakeGraph()
     saver = FakeCheckpointer()
@@ -266,7 +266,7 @@ async def test_full_accessor_raises_when_the_returned_snapshot_is_delta_marked()
 @pytest.mark.anyio
 async def test_full_accessor_writes_still_check_compatibility_before_writing() -> None:
     """Writes cannot be un-applied, so the pre-write tuple fetch stays."""
-    from deerflow.runtime.checkpoint_mode import CheckpointModeMismatchError
+    from nkyel.runtime.checkpoint_mode import CheckpointModeMismatchError
 
     graph = FakeGraph()
 

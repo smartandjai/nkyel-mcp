@@ -26,7 +26,7 @@ pytestmark = pytest.mark.asyncio
 
 
 async def test_convert_file_to_markdown_parse_and_write_do_not_block_event_loop(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from deerflow.utils import file_conversion
+    from nkyel.utils import file_conversion
 
     large_text = "x" * (2 * 1024 * 1024)  # 2 MB conversion result
     monkeypatch.setattr(file_conversion, "_do_convert", lambda path, _converter: path.read_text(encoding="utf-8") + large_text)
@@ -54,7 +54,7 @@ async def test_cancelled_conversion_cleanup_failure_preserves_cancellation(
     are now caught and logged inside the handler, and the captured
     cancellation is always re-raised.
     """
-    from deerflow.utils import file_conversion
+    from nkyel.utils import file_conversion
 
     large_text = "x" * (2 * 1024 * 1024)
     monkeypatch.setattr(file_conversion, "_do_convert", lambda *_args, **_kwargs: large_text)

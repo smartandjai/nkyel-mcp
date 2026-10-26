@@ -13,7 +13,7 @@ import pytest
 @pytest.fixture
 def scanner():
     # Import after the autouse fixtures initialize the runtime package.
-    from deerflow.workspace_changes import scanner
+    from nkyel.workspace_changes import scanner
 
     return scanner
 

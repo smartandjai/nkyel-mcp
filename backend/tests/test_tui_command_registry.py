@@ -2,8 +2,8 @@
 
 import pytest
 
-from deerflow.skills.slash import RESERVED_SLASH_SKILL_NAMES
-from deerflow.tui.command_registry import (
+from nkyel.skills.slash import RESERVED_SLASH_SKILL_NAMES
+from nkyel.tui.command_registry import (
     BUILTIN_COMMANDS,
     build_registry,
     filter_commands,

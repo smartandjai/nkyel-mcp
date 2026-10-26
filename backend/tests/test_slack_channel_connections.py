@@ -15,8 +15,8 @@ from app.channels.message_bus import MessageBus, OutboundMessage
 
 
 async def _make_repo(tmp_path):
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-    from deerflow.persistence.engine import get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+    from nkyel.persistence.engine import get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'slack.db'}", sqlite_dir=str(tmp_path))
     return ChannelConnectionRepository(
@@ -34,7 +34,7 @@ def test_slack_connect_command_binds_socket_mode_identity(tmp_path):
         repo = await _make_repo(tmp_path)
         state = "slack-bind-code"
         await repo.create_oauth_state(
-            owner_user_id="deerflow-user-1",
+            owner_user_id="nkyel-user-1",
             provider="slack",
             state=state,
             expires_at=datetime.now(UTC) + timedelta(minutes=5),
@@ -55,7 +55,7 @@ def test_slack_connect_command_binds_socket_mode_identity(tmp_path):
             code=state,
         )
 
-        connections = await repo.list_connections("deerflow-user-1")
+        connections = await repo.list_connections("nkyel-user-1")
         assert handled is True
         assert len(connections) == 1
         assert connections[0]["provider"] == "slack"

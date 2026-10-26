@@ -9,10 +9,10 @@ from sqlalchemy import event, update
 
 from app.gateway.app import create_app
 from app.gateway.routers import subagent_batches
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.subagent_batches import SubagentBatchRepository
-from deerflow.persistence.subagent_batches.model import SubagentBatchItemRow
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.subagent_batches import SubagentBatchRepository
+from nkyel.persistence.subagent_batches.model import SubagentBatchItemRow
 
 
 def _batch(**overrides):

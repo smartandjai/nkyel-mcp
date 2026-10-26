@@ -25,9 +25,9 @@ from app.gateway.authz import require_permission
 from app.gateway.deps import get_config, get_project_document_repo, get_project_repo, get_thread_store
 from app.gateway.routers.uploads import DEFAULT_MAX_FILE_SIZE, UPLOAD_CHUNK_SIZE, _get_upload_limit
 from app.gateway.upload_ingestion import ThreadUploadIngestionService, UnsafeFilenameError, UnsafeUploadDestinationError
-from deerflow.config.app_config import AppConfig
-from deerflow.config.paths import Paths, get_paths
-from deerflow.projects.documents import (
+from nkyel.config.app_config import AppConfig
+from nkyel.config.paths import Paths, get_paths
+from nkyel.projects.documents import (
     ShelfContentMissingError,
     ShelfUploadTooLargeError,
     _content_intact_batch,
@@ -39,12 +39,12 @@ from deerflow.projects.documents import (
     stage_document_copy_for_attach,
     validate_shelf_filename,
 )
-from deerflow.projects.summaries import enqueue_summary
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.uploads.manager import normalize_filename
-from deerflow.utils.file_io import run_file_io
-from deerflow.utils.text_detection import _is_active_content_mime_type, is_text_file_by_content
-from deerflow.utils.thread_id import ThreadId
+from nkyel.projects.summaries import enqueue_summary
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.uploads.manager import normalize_filename
+from nkyel.utils.file_io import run_file_io
+from nkyel.utils.text_detection import _is_active_content_mime_type, is_text_file_by_content
+from nkyel.utils.thread_id import ThreadId
 
 logger = logging.getLogger(__name__)
 

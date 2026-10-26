@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from deerflow.runtime.checkpoint_cache import redis as redis_cache
+from nkyel.runtime.checkpoint_cache import redis as redis_cache
 
 
 class _RedisClient:

@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 r"""Local SystemMessage PoC / fix verification (Python standard library only).
 
-中文速览：PAT 是 DeerFlow 的个人访问令牌，不是模型 API Key；下面的浏览器
-代码通过正常登录创建它。DEERFLOW_THREAD_ID 是新测试聊天地址最后一段 ID。
+中文速览：PAT 是 nkyel 的个人访问令牌，不是模型 API Key；下面的浏览器
+代码通过正常登录创建它。NKYEL_THREAD_ID 是新测试聊天地址最后一段 ID。
 同一脚本修复前用 --expect vulnerable，修复后用 --expect blocked；每次换新
 测试会话。脚本会追加消息，旧版本可能留下持续指令；不会删除历史或关闭认证。
 
 SETUP / 使用说明
 1. Start your own local service, log in, create a DISPOSABLE chat and send "你好".
-   DEERFLOW_THREAD_ID is the final ID in /workspace/chats/<ID>, not the page URL,
+   NKYEL_THREAD_ID is the final ID in /workspace/chats/<ID>, not the page URL,
    user ID or model ID. Use a fresh chat for each before/after comparison. Do not
    send messages in the browser while the script is running. The PoC uses
-   DEERFLOW_ASSISTANT_ID (default: lead_agent); set it to the Agent/assistant ID
+   NKYEL_ASSISTANT_ID (default: lead_agent); set it to the Agent/assistant ID
    used by that chat when the deployment uses a different ID.
-2. PAT means DeerFlow Personal Access Token, NOT a model provider API key.
+2. PAT means nkyel Personal Access Token, NOT a model provider API key.
    Create one with the logged-in browser session using the existing auth API.
-   In Chrome DevTools Console on your local DeerFlow page, run:
+   In Chrome DevTools Console on your local nkyel page, run:
 
    const csrf = document.cookie.split('; ').find(x => x.startsWith('csrf_token='))?.slice(11);
    if (!csrf) throw new Error('Log in / reload first; csrf_token is missing');
@@ -35,17 +35,17 @@ SETUP / 使用说明
    and X-CSRF-Token header. Do not paste credentials into issues or PRs.
 3. From the repository's backend/tests directory, in macOS zsh:
 
-   read -rs "DEERFLOW_PAT?Paste DeerFlow PAT: "; export DEERFLOW_PAT; printf '\n'
-   read "DEERFLOW_THREAD_ID?Paste NEW test chat ID: "; export DEERFLOW_THREAD_ID
-   DEERFLOW_BASE_URL='http://localhost:2026' DEERFLOW_ASSISTANT_ID='lead_agent' \
-   DEERFLOW_TIMEOUT_SECONDS='600' DEERFLOW_CONFIRM_APPEND='YES' \
+   read -rs "NKYEL_PAT?Paste nkyel PAT: "; export NKYEL_PAT; printf '\n'
+   read "NKYEL_THREAD_ID?Paste NEW test chat ID: "; export NKYEL_THREAD_ID
+   NKYEL_BASE_URL='http://localhost:2026' NKYEL_ASSISTANT_ID='lead_agent' \
+   NKYEL_TIMEOUT_SECONDS='600' NKYEL_CONFIRM_APPEND='YES' \
    ../.venv/bin/python poc_external_system_message_injection.py --expect blocked
 
    On the UNFIXED revision, use the SAME script with --expect vulnerable instead.
    Do not roll back a production/shared service to reproduce. Use an isolated
    checkout and copy this script there; no backend prompt/auth changes are needed.
-   On bash, use `read -rsp 'Paste PAT: ' DEERFLOW_PAT` and `read -rp 'Chat ID: ' DEERFLOW_THREAD_ID`.
-   Alternative session auth: set DEERFLOW_ACCESS_TOKEN and DEERFLOW_CSRF_TOKEN
+   On bash, use `read -rsp 'Paste PAT: ' NKYEL_PAT` and `read -rp 'Chat ID: ' NKYEL_THREAD_ID`.
+   Alternative session auth: set NKYEL_ACCESS_TOKEN and NKYEL_CSRF_TOKEN
    from the logged-in browser's Cookies panel. PAT takes precedence. With neither
    credential, the script sends no auth: ONLY an already-enabled auth-disabled
    development service may accept it. Never disable auth just to run this test.
@@ -127,20 +127,20 @@ def _safe_secret(value: str, name: str) -> str:
 
 def auth_headers() -> dict[str, str]:
     """Use supplied credentials, or let an auth-disabled Gateway decide."""
-    pat = os.environ.get("DEERFLOW_PAT")
+    pat = os.environ.get("NKYEL_PAT")
     if pat:
-        return {"Authorization": f"Bearer {_safe_secret(pat, 'DEERFLOW_PAT')}"}
+        return {"Authorization": f"Bearer {_safe_secret(pat, 'NKYEL_PAT')}"}
 
-    access_token = os.environ.get("DEERFLOW_ACCESS_TOKEN")
-    csrf_token = os.environ.get("DEERFLOW_CSRF_TOKEN")
+    access_token = os.environ.get("NKYEL_ACCESS_TOKEN")
+    csrf_token = os.environ.get("NKYEL_CSRF_TOKEN")
     if not access_token and not csrf_token:
         return {}
     if not access_token or not csrf_token:
-        raise PocError("Session authentication requires both DEERFLOW_ACCESS_TOKEN and DEERFLOW_CSRF_TOKEN.")
+        raise PocError("Session authentication requires both NKYEL_ACCESS_TOKEN and NKYEL_CSRF_TOKEN.")
 
     cookie = SimpleCookie()
-    cookie["access_token"] = _safe_secret(access_token, "DEERFLOW_ACCESS_TOKEN")
-    cookie["csrf_token"] = _safe_secret(csrf_token, "DEERFLOW_CSRF_TOKEN")
+    cookie["access_token"] = _safe_secret(access_token, "NKYEL_ACCESS_TOKEN")
+    cookie["csrf_token"] = _safe_secret(csrf_token, "NKYEL_CSRF_TOKEN")
     return {
         "Cookie": cookie.output(header="", sep=";").strip(),
         "X-CSRF-Token": csrf_token,
@@ -148,10 +148,10 @@ def auth_headers() -> dict[str, str]:
 
 
 def configured_assistant_id() -> str:
-    """Return the Agent ID used for PoC runs, defaulting to DeerFlow's lead agent."""
-    assistant_id = os.environ.get("DEERFLOW_ASSISTANT_ID", DEFAULT_ASSISTANT_ID).strip()
+    """Return the Agent ID used for PoC runs, defaulting to nkyel's lead agent."""
+    assistant_id = os.environ.get("NKYEL_ASSISTANT_ID", DEFAULT_ASSISTANT_ID).strip()
     if not assistant_id or any(char in assistant_id for char in "\r\n"):
-        raise PocError("DEERFLOW_ASSISTANT_ID must be a non-empty Agent/assistant ID without newlines")
+        raise PocError("NKYEL_ASSISTANT_ID must be a non-empty Agent/assistant ID without newlines")
     return assistant_id
 
 
@@ -343,21 +343,21 @@ def send_and_capture(
 
 
 def _configuration() -> tuple[str, str, float, str]:
-    if os.environ.get("DEERFLOW_CONFIRM_APPEND") != "YES":
-        raise PocError("This PoC appends messages to the target thread. Set DEERFLOW_CONFIRM_APPEND=YES after confirming the thread ID.")
-    base_url = os.environ.get("DEERFLOW_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
+    if os.environ.get("NKYEL_CONFIRM_APPEND") != "YES":
+        raise PocError("This PoC appends messages to the target thread. Set NKYEL_CONFIRM_APPEND=YES after confirming the thread ID.")
+    base_url = os.environ.get("NKYEL_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
     parsed = urllib.parse.urlsplit(base_url)
     if parsed.scheme not in {"http", "https"} or parsed.hostname not in {"localhost", "127.0.0.1", "::1"} or parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment:
-        raise PocError("DEERFLOW_BASE_URL must be a local loopback origin, e.g. http://localhost:2026 (no Markdown, credentials or path).")
-    thread_id = os.environ.get("DEERFLOW_THREAD_ID", "").strip()
+        raise PocError("NKYEL_BASE_URL must be a local loopback origin, e.g. http://localhost:2026 (no Markdown, credentials or path).")
+    thread_id = os.environ.get("NKYEL_THREAD_ID", "").strip()
     if not thread_id or any(char in thread_id for char in "/?#\\") or any(char.isspace() for char in thread_id):
-        raise PocError("Set DEERFLOW_THREAD_ID to a new test chat's ID, not the full /workspace/chats/<ID> URL. See --help.")
+        raise PocError("Set NKYEL_THREAD_ID to a new test chat's ID, not the full /workspace/chats/<ID> URL. See --help.")
     try:
-        timeout = float(os.environ.get("DEERFLOW_TIMEOUT_SECONDS", "600"))
+        timeout = float(os.environ.get("NKYEL_TIMEOUT_SECONDS", "600"))
     except ValueError as exc:
-        raise PocError("DEERFLOW_TIMEOUT_SECONDS must be a positive finite number") from exc
+        raise PocError("NKYEL_TIMEOUT_SECONDS must be a positive finite number") from exc
     if not math.isfinite(timeout) or timeout <= 0:
-        raise PocError("DEERFLOW_TIMEOUT_SECONDS must be a positive finite number")
+        raise PocError("NKYEL_TIMEOUT_SECONDS must be a positive finite number")
     return base_url, thread_id, timeout, configured_assistant_id()
 
 

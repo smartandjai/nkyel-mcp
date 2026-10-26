@@ -15,8 +15,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from deerflow.agents.lead_agent import prompt as prompt_module
-from deerflow.subagents import registry as registry_module
+from nkyel.agents.lead_agent import prompt as prompt_module
+from nkyel.subagents import registry as registry_module
 
 # A first line that breaks out of the <subagent_system> block and forges a
 # framework-reserved block the model would read as trusted context. Only the

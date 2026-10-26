@@ -26,8 +26,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.community.aio_sandbox.quarantine import SandboxQuarantine
-from deerflow.community.aio_sandbox.sandbox_info import SandboxInfo
+from nkyel.community.aio_sandbox.quarantine import SandboxQuarantine
+from nkyel.community.aio_sandbox.sandbox_info import SandboxInfo
 
 
 def test_retire_survives_a_peer_fencing_between_listing_and_rmdir(tmp_path, monkeypatch):

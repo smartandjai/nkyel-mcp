@@ -4,28 +4,28 @@ import json
 import logging
 from types import SimpleNamespace
 
-from deerflow.tools.tools import get_available_tools
+from nkyel.tools.tools import get_available_tools
 
 
 def _make_config():
     return SimpleNamespace(
         tools=[
-            SimpleNamespace(name="bash", group="bash", use="deerflow.sandbox.tools:bash_tool"),
+            SimpleNamespace(name="bash", group="bash", use="nkyel.sandbox.tools:bash_tool"),
             SimpleNamespace(name="ls", group="file:read", use="tests:ls_tool"),
         ],
         models=[],
-        sandbox=SimpleNamespace(use="deerflow.sandbox.local:LocalSandboxProvider", allow_host_bash=False),
+        sandbox=SimpleNamespace(use="nkyel.sandbox.local:LocalSandboxProvider", allow_host_bash=False),
         tool_search=SimpleNamespace(enabled=False),
         get_model_config=lambda name: None,
     )
 
 
 def test_tool_assembly_refreshes_cache_when_no_server_is_enabled(monkeypatch):
-    from deerflow.config.extensions_config import ExtensionsConfig
+    from nkyel.config.extensions_config import ExtensionsConfig
 
-    monkeypatch.setattr("deerflow.tools.tools.get_app_config", lambda: _make_config())
+    monkeypatch.setattr("nkyel.tools.tools.get_app_config", lambda: _make_config())
     monkeypatch.setattr(
-        "deerflow.tools.tools.resolve_variable",
+        "nkyel.tools.tools.resolve_variable",
         lambda use, _: SimpleNamespace(name="bash" if "bash" in use else "ls"),
     )
     monkeypatch.setattr(
@@ -36,7 +36,7 @@ def test_tool_assembly_refreshes_cache_when_no_server_is_enabled(monkeypatch):
 
     calls: list[str] = []
     monkeypatch.setattr(
-        "deerflow.mcp.cache.refresh_mcp_cache_if_active",
+        "nkyel.mcp.cache.refresh_mcp_cache_if_active",
         lambda: calls.append("refresh") or False,
     )
 
@@ -48,7 +48,7 @@ def test_tool_assembly_refreshes_cache_when_no_server_is_enabled(monkeypatch):
 def test_tool_assembly_does_not_leak_credentials_on_malformed_config(monkeypatch, tmp_path, caplog):
     """A malformed config must not echo resolved $VAR secrets into the log."""
     cfg = tmp_path / "extensions_config.json"
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     monkeypatch.setenv("MCP_SECRET", "TOPSECRET123")
     cfg.write_text(
         json.dumps(
@@ -62,9 +62,9 @@ def test_tool_assembly_does_not_leak_credentials_on_malformed_config(monkeypatch
         encoding="utf-8",
     )
 
-    monkeypatch.setattr("deerflow.tools.tools.get_app_config", lambda: _make_config())
+    monkeypatch.setattr("nkyel.tools.tools.get_app_config", lambda: _make_config())
     monkeypatch.setattr(
-        "deerflow.tools.tools.resolve_variable",
+        "nkyel.tools.tools.resolve_variable",
         lambda use, _: SimpleNamespace(name="bash" if "bash" in use else "ls"),
     )
 
@@ -79,11 +79,11 @@ def test_tool_assembly_does_not_leak_credentials_on_malformed_config(monkeypatch
 
 def test_tool_assembly_logs_diagnostics_for_non_config_failures(monkeypatch, caplog):
     """Only config-load failures are sanitized; other MCP errors keep diagnostics."""
-    from deerflow.config.extensions_config import ExtensionsConfig
+    from nkyel.config.extensions_config import ExtensionsConfig
 
-    monkeypatch.setattr("deerflow.tools.tools.get_app_config", lambda: _make_config())
+    monkeypatch.setattr("nkyel.tools.tools.get_app_config", lambda: _make_config())
     monkeypatch.setattr(
-        "deerflow.tools.tools.resolve_variable",
+        "nkyel.tools.tools.resolve_variable",
         lambda use, _: SimpleNamespace(name="bash" if "bash" in use else "ls"),
     )
     monkeypatch.setattr(
@@ -102,7 +102,7 @@ def test_tool_assembly_logs_diagnostics_for_non_config_failures(monkeypatch, cap
     def _boom():
         raise RuntimeError("retired pool close failed: pipe still open")
 
-    monkeypatch.setattr("deerflow.mcp.cache.get_cached_mcp_tools", _boom)
+    monkeypatch.setattr("nkyel.mcp.cache.get_cached_mcp_tools", _boom)
 
     with caplog.at_level(logging.ERROR):
         get_available_tools(include_mcp=True, subagent_enabled=False)

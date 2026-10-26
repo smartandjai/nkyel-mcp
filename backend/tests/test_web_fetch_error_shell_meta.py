@@ -1,7 +1,7 @@
 """web_fetch error-page classification (issue #4273).
 
 Fetching a missing URL succeeds at the transport layer, so the server's error page
-reached the model stamped ``deerflow_tool_meta.status="success"``: none of the existing
+reached the model stamped ``nkyel_tool_meta.status="success"``: none of the existing
 error branches (tool ``status="error"``, an ``Error:`` prefix, a JSON ``error`` field)
 apply to a 200-with-an-error-body, and it fell through to success. ToolProgress then
 counted the shell as evidence.
@@ -23,9 +23,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import ToolMessage
 
-from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-from deerflow.agents.middlewares.tool_progress_middleware import ToolProgressMiddleware
-from deerflow.agents.middlewares.tool_result_meta import (
+from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+from nkyel.agents.middlewares.tool_progress_middleware import ToolProgressMiddleware
+from nkyel.agents.middlewares.tool_result_meta import (
     _ATTRS_BY_ERROR_TYPE,
     _ERROR_SHELL_PHRASES,
     TOOL_META_KEY,
@@ -222,8 +222,8 @@ _LEGIT_ESSAY = "<html><head><title>Not Found: a short history of the 404</title>
 
 def _render(html: str, code: str, status: str) -> str:
     """Run the real web_fetch_tool over *html*; only the network client is faked."""
-    from deerflow.community.browserless import tools as browserless_tools
-    from deerflow.community.browserless.browserless_client import BrowserlessFetchResult
+    from nkyel.community.browserless import tools as browserless_tools
+    from nkyel.community.browserless.browserless_client import BrowserlessFetchResult
 
     client = MagicMock()
     client.fetch_html_with_status = AsyncMock(return_value=BrowserlessFetchResult(html=html, target_status_code=code, target_status=status))
@@ -326,7 +326,7 @@ _CRAWL4AI_ARTICLE_FIT = "# 404 Ways to Cook Rice\nRice is a staple for most of t
 
 def _render_crawl4ai(markdown: str) -> str:
     """Run the real crawl4ai web_fetch_tool; only the remote /md call is faked."""
-    from deerflow.community.crawl4ai import tools as crawl4ai_tools
+    from nkyel.community.crawl4ai import tools as crawl4ai_tools
 
     client = MagicMock()
     client.fetch_markdown = AsyncMock(return_value=markdown)

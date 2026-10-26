@@ -561,7 +561,7 @@ export default function ChatPage() {
   );
 
   // Project affiliation chip: shown once the materialized thread's metadata
-  // carries `deerflow_project_id` (written by the create/move endpoints and
+  // carries `nkyel_project_id` (written by the create/move endpoints and
   // exposed here read-only).
   const affiliatedProjectId =
     !isNewThread && !isMock && threadMetadata.data

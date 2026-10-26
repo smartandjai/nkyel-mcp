@@ -24,14 +24,14 @@ from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from langgraph.errors import GraphBubbleUp
 
-from deerflow.agents.middlewares.llm_error_handling_middleware import (
+from nkyel.agents.middlewares.llm_error_handling_middleware import (
     EmptyModelResponseError,
     LLMErrorHandlingMiddleware,
     _extract_in_band_status,
     _extract_retry_after_ms,
 )
-from deerflow.config.app_config import AppConfig, LlmCallConfig
-from deerflow.config.sandbox_config import SandboxConfig
+from nkyel.config.app_config import AppConfig, LlmCallConfig
+from nkyel.config.sandbox_config import SandboxConfig
 
 
 @pytest.fixture(autouse=True)
@@ -45,7 +45,7 @@ def _reset_process_limiter() -> Iterator[None]:
     would freeze the cap for every later test regardless of what cap they ask
     for.
     """
-    from deerflow.agents.middlewares import llm_error_handling_middleware as mod
+    from nkyel.agents.middlewares import llm_error_handling_middleware as mod
 
     mod._PROCESS_LIMITER = None
     mod._CAP_RESOLVED = False
@@ -154,7 +154,7 @@ def test_async_model_call_retries_busy_provider_then_succeeds(
         fake_writer,
     )
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.llm_error_handling_middleware.aemit_custom_event",
+        "nkyel.agents.middlewares.llm_error_handling_middleware.aemit_custom_event",
         fake_emit_custom_event,
     )
 
@@ -182,7 +182,7 @@ def test_async_model_call_returns_user_message_for_quota_errors() -> None:
 
     assert isinstance(result, AIMessage)
     assert "out of quota" in str(result.content)
-    assert result.additional_kwargs["deerflow_error_fallback"] is True
+    assert result.additional_kwargs["nkyel_error_fallback"] is True
     assert result.additional_kwargs["error_reason"] == "quota"
     assert result.additional_kwargs["error_type"] == "FakeError"
 
@@ -204,7 +204,7 @@ def test_async_model_call_marks_transient_retry_exhaustion_as_error_fallback(
 
     assert isinstance(result, AIMessage)
     assert "temporarily unavailable" in str(result.content)
-    assert result.additional_kwargs["deerflow_error_fallback"] is True
+    assert result.additional_kwargs["nkyel_error_fallback"] is True
     assert result.additional_kwargs["error_reason"] == "transient"
     assert result.additional_kwargs["error_detail"] == "Connection error."
 
@@ -382,7 +382,7 @@ def test_sync_model_call_uses_retry_after_header(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr("time.sleep", fake_sleep)
     monkeypatch.setattr("langgraph.config.get_stream_writer", lambda: events.append)
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.llm_error_handling_middleware.emit_custom_event",
+        "nkyel.agents.middlewares.llm_error_handling_middleware.emit_custom_event",
         fake_emit_custom_event,
     )
 
@@ -429,7 +429,7 @@ def test_persistent_empty_stop_returns_explicit_error_fallback(monkeypatch: pyte
 
     assert isinstance(result, AIMessage)
     assert attempts == 2
-    assert result.additional_kwargs["deerflow_error_fallback"] is True
+    assert result.additional_kwargs["nkyel_error_fallback"] is True
     assert result.additional_kwargs["error_reason"] == "empty_response"
     assert result.additional_kwargs["error_type"] == "EmptyModelResponseError"
     assert "empty response" in str(result.content).lower()
@@ -529,7 +529,7 @@ def test_nonvisible_stop_response_retries_then_returns_marked_fallback(
     result = middleware.wrap_model_call(SimpleNamespace(), handler)
 
     assert attempts == 2
-    assert result.additional_kwargs["deerflow_error_fallback"] is True
+    assert result.additional_kwargs["nkyel_error_fallback"] is True
     assert result.additional_kwargs["error_reason"] == "empty_response"
 
 
@@ -808,7 +808,7 @@ async def test_empty_response_retry_budget_survives_real_agent_tool_loop(monkeyp
     final_message = states[-1]["messages"][-1]
     assert model.call_count == 3
     assert tool_invocations == ["probe"]
-    assert final_message.additional_kwargs["deerflow_error_fallback"] is True
+    assert final_message.additional_kwargs["nkyel_error_fallback"] is True
     assert final_message.additional_kwargs["error_reason"] == "empty_response"
 
 
@@ -820,7 +820,7 @@ def test_sync_retry_event_preserves_langgraph_control_flow(monkeypatch: pytest.M
 
     monkeypatch.setattr("langgraph.config.get_stream_writer", lambda: lambda _payload: None)
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.llm_error_handling_middleware.emit_custom_event",
+        "nkyel.agents.middlewares.llm_error_handling_middleware.emit_custom_event",
         interrupt_dispatch,
     )
 
@@ -837,7 +837,7 @@ async def test_async_retry_event_preserves_langgraph_control_flow(monkeypatch: p
 
     monkeypatch.setattr("langgraph.config.get_stream_writer", lambda: lambda _payload: None)
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.llm_error_handling_middleware.aemit_custom_event",
+        "nkyel.agents.middlewares.llm_error_handling_middleware.aemit_custom_event",
         interrupt_dispatch,
     )
 
@@ -1656,7 +1656,7 @@ def test_async_index_error_exhausted_returns_user_fallback(
 ) -> None:
     """If every retry hits the same empty-``generations`` IndexError, the
     middleware must still produce a user-facing fallback AIMessage (with
-    ``deerflow_error_fallback=True``) instead of letting the IndexError
+    ``nkyel_error_fallback=True``) instead of letting the IndexError
     propagate out of the agent loop and ending the run in ``error``
     status with no GitHub-side reply.
     """
@@ -1673,7 +1673,7 @@ def test_async_index_error_exhausted_returns_user_fallback(
     result = asyncio.run(middleware.awrap_model_call(SimpleNamespace(), handler))
 
     assert isinstance(result, AIMessage)
-    assert result.additional_kwargs["deerflow_error_fallback"] is True
+    assert result.additional_kwargs["nkyel_error_fallback"] is True
     assert result.additional_kwargs["error_reason"] == "transient"
     assert result.additional_kwargs["error_type"] == "IndexError"
     assert "temporarily unavailable" in str(result.content)
@@ -1744,7 +1744,7 @@ def test_sync_empty_stream_exhausted_uses_configured_attempts(
 
     assert attempts == 2
     assert isinstance(result, AIMessage)
-    assert result.additional_kwargs["deerflow_error_fallback"] is True
+    assert result.additional_kwargs["nkyel_error_fallback"] is True
     assert result.additional_kwargs["error_reason"] == "transient"
 
 
@@ -1923,7 +1923,7 @@ async def test_limiter_releases_slot_during_backoff_sleep(
     result_a = await task_a
     result_b = await task_b
     assert result_b.content == "b-ok"
-    assert result_a.additional_kwargs.get("deerflow_error_fallback") is True
+    assert result_a.additional_kwargs.get("nkyel_error_fallback") is True
 
 
 # ---------- Decorrelated jitter ----------
@@ -2030,7 +2030,7 @@ def test_retry_after_date_boundaries(monkeypatch: pytest.MonkeyPatch, delta_seco
 
 @pytest.mark.parametrize("raw", ["Thu, 01 Jan 2026 00:01:00 GMT", "Thursday, 01-Jan-26 00:01:00 GMT", "Thu Jan  1 00:01:00 2026"])
 def test_retry_after_date_formats_use_utc(monkeypatch: pytest.MonkeyPatch, raw: str) -> None:
-    from deerflow.agents.middlewares import llm_error_handling_middleware as middleware
+    from nkyel.agents.middlewares import llm_error_handling_middleware as middleware
 
     now = datetime(2026, 1, 1, tzinfo=UTC)
     monkeypatch.setattr(middleware, "time", SimpleNamespace(time=lambda: now.timestamp()))
@@ -2297,7 +2297,7 @@ async def test_async_burst_rate_uses_tight_budget_and_longer_base(
     assert len(waits) == 1
     # Longer burst base: delay in [burst_base, cap] = [0.1s, 0.2s]
     assert 0.1 <= waits[0] <= 0.2
-    assert result.additional_kwargs.get("deerflow_error_fallback") is True
+    assert result.additional_kwargs.get("nkyel_error_fallback") is True
     assert result.additional_kwargs.get("error_reason") == "burst_rate"
 
 
@@ -2619,7 +2619,7 @@ def test_cap_is_frozen_at_first_construction_and_unchanged_by_later_instances() 
     and the construction-order / config-freshness race (Part B) has nothing to
     race on.
     """
-    from deerflow.agents.middlewares.llm_error_handling_middleware import _get_process_limiter
+    from nkyel.agents.middlewares.llm_error_handling_middleware import _get_process_limiter
 
     first_mw = _build_middleware(max_concurrent_llm_calls=1)
     limiter = _get_process_limiter()
@@ -2685,7 +2685,7 @@ def test_first_constructed_cap_wins_over_later_config_snapshot() -> None:
     proves the Part A invariant (a sustained queue never admits callers above
     the frozen cap).
     """
-    from deerflow.agents.middlewares.llm_error_handling_middleware import _get_process_limiter
+    from nkyel.agents.middlewares.llm_error_handling_middleware import _get_process_limiter
 
     # "Newer" config (cap 1) constructed FIRST -> freezes the cap at 1.
     _build_middleware(max_concurrent_llm_calls=1)
@@ -2743,7 +2743,7 @@ async def test_frozen_cap_binds_calls_across_isolated_loop() -> None:
     instance (higher cap) cannot raise it, so cross-loop in-flight calls never
     exceed the frozen cap. Replaces the prior generation-aware cross-loop test.
     """
-    from deerflow.agents.middlewares.llm_error_handling_middleware import _get_process_limiter
+    from nkyel.agents.middlewares.llm_error_handling_middleware import _get_process_limiter
 
     # First construction (cap 1) freezes the cap; a later cap=3 instance can't raise it.
     _build_middleware(max_concurrent_llm_calls=1)
@@ -2853,7 +2853,7 @@ async def test_limiter_cancellation_after_dequeue_hands_off_to_next_waiter(
     been dequeued+granted but *before* it wakes, which is the window the prior
     limiter stranded the next waiter in.
     """
-    from deerflow.agents.middlewares.llm_error_handling_middleware import _get_process_limiter
+    from nkyel.agents.middlewares.llm_error_handling_middleware import _get_process_limiter
 
     middleware = _build_middleware(max_concurrent_llm_calls=1)
     a_started = asyncio.Event()
@@ -2945,7 +2945,7 @@ def test_burst_first_retry_uses_jitter_not_fixed_value(monkeypatch: pytest.Monke
     middleware = _build_middleware()  # defaults
     exc = FakeError("rate increased too quickly", status_code=429, code="limit_burst_rate")
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.llm_error_handling_middleware.random.randint",
+        "nkyel.agents.middlewares.llm_error_handling_middleware.random.randint",
         lambda lo, hi: 7000,
     )
     assert middleware._build_retry_delay_ms(None, exc, reason="burst_rate") == 7000
@@ -2965,7 +2965,7 @@ async def test_async_burst_first_retry_non_degenerate_default_config(
 
     monkeypatch.setattr(asyncio, "sleep", fake_sleep)
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.llm_error_handling_middleware.random.randint",
+        "nkyel.agents.middlewares.llm_error_handling_middleware.random.randint",
         lambda lo, hi: 7000,
     )
 
@@ -3058,7 +3058,7 @@ def test_circuit_recovery_survives_a_backward_wall_clock_step(monkeypatch: pytes
     clock caught back up. Monotonic timing is immune: the recovery window advances
     with real elapsed time regardless of what the wall clock does.
     """
-    import deerflow.agents.middlewares.llm_error_handling_middleware as mod
+    import nkyel.agents.middlewares.llm_error_handling_middleware as mod
 
     clock = _FakeMonotonic()
     middleware = _build_middleware(retry_max_attempts=1)
@@ -3329,7 +3329,7 @@ def test_async_in_stream_504_retries_with_the_full_budget_then_succeeds(monkeypa
 
     monkeypatch.setattr("asyncio.sleep", fake_sleep)
     monkeypatch.setattr("langgraph.config.get_stream_writer", lambda: events.append)
-    monkeypatch.setattr("deerflow.agents.middlewares.llm_error_handling_middleware.aemit_custom_event", fake_emit_custom_event)
+    monkeypatch.setattr("nkyel.agents.middlewares.llm_error_handling_middleware.aemit_custom_event", fake_emit_custom_event)
 
     result = asyncio.run(middleware.awrap_model_call(SimpleNamespace(), handler))
 
@@ -3355,7 +3355,7 @@ def test_sync_in_stream_504_exhausts_the_full_budget_into_the_transient_fallback
     assert attempts == 3
     assert isinstance(result, AIMessage)
     assert "temporarily unavailable" in str(result.content)
-    assert result.additional_kwargs["deerflow_error_fallback"] is True
+    assert result.additional_kwargs["nkyel_error_fallback"] is True
     assert result.additional_kwargs["error_type"] == "APIError"
     assert result.additional_kwargs["error_reason"] == "transient"
     assert result.additional_kwargs["error_detail"] == _OMNIROUTE_COMBO_504
@@ -3411,7 +3411,7 @@ async def test_in_stream_error_from_a_real_openai_stream_is_retried() -> None:
     assert len(requests) == 2
     assert isinstance(result, AIMessage)
     assert result.content == "recovered"
-    assert "deerflow_error_fallback" not in result.additional_kwargs
+    assert "nkyel_error_fallback" not in result.additional_kwargs
 
 
 @pytest.mark.anyio
@@ -3454,5 +3454,5 @@ async def test_in_stream_error_after_partial_output_is_retried_from_the_start() 
     assert len(requests) == 2
     assert isinstance(result, AIMessage)
     assert result.content == "recovered"
-    assert "deerflow_error_fallback" not in result.additional_kwargs
+    assert "nkyel_error_fallback" not in result.additional_kwargs
     assert "".join(streamed) == "partial answrecovered"

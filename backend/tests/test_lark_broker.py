@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.integrations import lark_broker
-from deerflow.integrations.lark_broker import BrokerConfig, run_lark_cli, serve
+from nkyel.integrations import lark_broker
+from nkyel.integrations.lark_broker import BrokerConfig, run_lark_cli, serve
 
 # Several tests execute the broker's POSIX artifacts directly: the fake
 # ``lark-cli`` binary, the shim, and the launcher are ``#!`` scripts (the real
@@ -301,7 +301,7 @@ def test_shim_open_pipe_stdin_fails_without_executing(broker_server, tmp_path: P
         env={
             **os.environ,
             lark_broker.LARK_BROKER_URL_ENV: f"http://{host}:{port}",
-            "DEERFLOW_LARK_BROKER_STDIN_GRACE_SECONDS": "0.2",
+            "NKYEL_LARK_BROKER_STDIN_GRACE_SECONDS": "0.2",
         },
     )
     try:
@@ -392,7 +392,7 @@ def test_shim_idle_stdin_fails_without_executing_partial_input(broker_server, tm
         env={
             **os.environ,
             lark_broker.LARK_BROKER_URL_ENV: f"http://{host}:{port}",
-            "DEERFLOW_LARK_BROKER_STDIN_TAIL_SECONDS": "0.3",
+            "NKYEL_LARK_BROKER_STDIN_TAIL_SECONDS": "0.3",
         },
     )
     proc.stdin.write(b"first-chunk")
@@ -414,7 +414,7 @@ def test_shim_idle_stdin_fails_without_executing_partial_input(broker_server, tm
 
 
 @_skip_windows
-@pytest.mark.parametrize("window", ["DEERFLOW_LARK_BROKER_STDIN_GRACE_SECONDS", "DEERFLOW_LARK_BROKER_STDIN_TAIL_SECONDS"])
+@pytest.mark.parametrize("window", ["NKYEL_LARK_BROKER_STDIN_GRACE_SECONDS", "NKYEL_LARK_BROKER_STDIN_TAIL_SECONDS"])
 @pytest.mark.parametrize("value", ["inf", "1e309", "nan", "-1", "junk"])
 def test_shim_invalid_stdin_window_preserves_input(broker_server, tmp_path: Path, window: str, value: str) -> None:
     """Invalid operator settings fall back rather than discarding valid input."""
@@ -446,7 +446,7 @@ def test_shim_delayed_first_byte_within_window_is_preserved(broker_server, tmp_p
         env={
             **os.environ,
             lark_broker.LARK_BROKER_URL_ENV: f"http://{host}:{port}",
-            "DEERFLOW_LARK_BROKER_STDIN_GRACE_SECONDS": "5",
+            "NKYEL_LARK_BROKER_STDIN_GRACE_SECONDS": "5",
         },
     )
     try:
@@ -502,7 +502,7 @@ def test_install_shim_writes_runtime_layout(tmp_path: Path) -> None:
     assert os.access(dest / "bin" / "lark-cli", os.X_OK)
     assert shim_body.read_text(encoding="utf-8") == lark_broker.LARK_CLI_BROKER_SHIM_SCRIPT
     assert os.access(shim_body, os.X_OK)
-    marker = json.loads((dest / ".deerflow-lark-cli-runtime.json").read_text())
+    marker = json.loads((dest / ".nkyel-lark-cli-runtime.json").read_text())
     assert marker == {"version": "v1.0.65", "kind": "shim"}
 
 
@@ -532,7 +532,7 @@ def test_launcher_resolves_python_and_forwards(broker_server, tmp_path: Path) ->
 
 @_skip_windows
 def test_launcher_can_pin_interpreter_via_env(broker_server, tmp_path: Path) -> None:
-    """DEERFLOW_LARK_BROKER_PYTHON pins the interpreter for images with no python3
+    """NKYEL_LARK_BROKER_PYTHON pins the interpreter for images with no python3
     on PATH (the launcher must not silently ENOEXEC)."""
     host, port = broker_server
     dest = tmp_path / "runtime"
@@ -690,10 +690,10 @@ def test_allowed_subcommand_still_runs_with_denylist(tmp_path: Path) -> None:
     assert payload["argv"] == ["auth", "status"]
 
 
-@pytest.mark.parametrize("name", ["DEERFLOW_LARK_BROKER_PORT", "DEERFLOW_LARK_BROKER_TIMEOUT"])
+@pytest.mark.parametrize("name", ["NKYEL_LARK_BROKER_PORT", "NKYEL_LARK_BROKER_TIMEOUT"])
 def test_config_from_env_treats_blank_numbers_as_unset(monkeypatch, name) -> None:
-    monkeypatch.delenv("DEERFLOW_LARK_BROKER_PORT", raising=False)
-    monkeypatch.delenv("DEERFLOW_LARK_BROKER_TIMEOUT", raising=False)
+    monkeypatch.delenv("NKYEL_LARK_BROKER_PORT", raising=False)
+    monkeypatch.delenv("NKYEL_LARK_BROKER_TIMEOUT", raising=False)
     monkeypatch.setenv(name, "")
 
     config = lark_broker._config_from_env()

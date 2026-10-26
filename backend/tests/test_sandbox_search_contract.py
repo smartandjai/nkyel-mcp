@@ -17,7 +17,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
 PROVIDERS = ("local", "aio", "e2b", "boxlite", "tenki", "opensandbox")
 REMOTE_PROVIDERS = tuple(name for name in PROVIDERS if name != "local")
@@ -65,7 +65,7 @@ class _Transport:
 
     def find_files(self, *, path: str, glob: str):
         self.check(path)
-        # Python's filesystem glob is independent of DeerFlow's path_matches.
+        # Python's filesystem glob is independent of nkyel's path_matches.
         matches = sorted(p for p in filesystem_glob.glob(filesystem_glob.escape(str(Path(path))) + "/" + glob, recursive=True) if Path(p).is_file())
         return SimpleNamespace(data=SimpleNamespace(files=matches))
 
@@ -95,28 +95,28 @@ def provider(request, tmp_path, monkeypatch):
     if name == "local":
         sandbox = LocalSandbox("search-contract")
     elif name == "aio":
-        from deerflow.community.aio_sandbox import aio_sandbox as module
+        from nkyel.community.aio_sandbox import aio_sandbox as module
 
         client = SimpleNamespace(file=transport, shell=SimpleNamespace(exec_command=transport.aio_shell))
         monkeypatch.setattr(module, "AioSandboxClient", lambda **kwargs: client)
         monkeypatch.setattr(module, "sandbox_http_trust_env", lambda _url: True)
         sandbox = module.AioSandbox("search-contract", "http://127.0.0.1:1", home_dir=str(tmp_path))
     elif name == "e2b":
-        from deerflow.community.e2b_sandbox.e2b_sandbox import E2BSandbox
+        from nkyel.community.e2b_sandbox.e2b_sandbox import E2BSandbox
 
         sandbox = E2BSandbox("search-contract", SimpleNamespace(commands=SimpleNamespace(run=transport.shell)))
     elif name == "boxlite":
-        from deerflow.community.boxlite.box import BoxliteBox
+        from nkyel.community.boxlite.box import BoxliteBox
 
         sandbox = BoxliteBox("search-contract", SimpleNamespace(), run=None)
         monkeypatch.setattr(sandbox, "_sh", transport.shell)
     elif name == "tenki":
-        from deerflow.community.tenki.sandbox import TenkiSandbox
+        from nkyel.community.tenki.sandbox import TenkiSandbox
 
         sandbox = TenkiSandbox("search-contract", SimpleNamespace())
         monkeypatch.setattr(sandbox, "_sh", transport.shell)
     elif name == "opensandbox":
-        from deerflow.community.opensandbox.sandbox import OpenSandboxSandbox
+        from nkyel.community.opensandbox.sandbox import OpenSandboxSandbox
 
         sandbox = OpenSandboxSandbox("search-contract", SimpleNamespace(), run_command_opts_cls=SimpleNamespace)
         monkeypatch.setattr(sandbox, "_run", transport.opensandbox_shell)

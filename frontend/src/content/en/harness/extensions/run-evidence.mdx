@@ -76,7 +76,7 @@ A cursor from one reader is rejected by a reader with a different scope, so a cu
 
 ### Return types
 
-All return types are frozen dataclasses from `deerflow_extension_api`.
+All return types are frozen dataclasses from `nkyel_extension_api`.
 
 **`RunStatusView`**: one run's lifecycle state.
 
@@ -168,7 +168,7 @@ Events come from the configured `run_events` store (`memory`, `db`, or `jsonl`) 
 
 This service polls the reader and records, for every finished run, how many events of each type it persisted. It keeps its cursor in memory, so it rescans from the beginning after a restart. A real exporter would store the cursor next to its output.
 
-```python filename="deerflow_extension_digest/__init__.py"
+```python filename="nkyel_extension_digest/__init__.py"
 """Count persisted event types for every finished run."""
 
 from __future__ import annotations
@@ -179,7 +179,7 @@ from collections import Counter
 from collections.abc import Mapping
 from typing import Any
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     ExtensionRegistry,
     ExtensionRuntimeDeps,
     InvalidRunEvidenceCursor,
@@ -265,7 +265,7 @@ Points worth copying:
 
 This route returns the signed-in user's recently changed runs, one page at a time. It uses the request reader, so the host guarantees each caller sees only their own runs. It declares `api="0.2.3"` because the request-reader helpers first shipped in that contract version.
 
-```python filename="deerflow_extension_myruns/__init__.py"
+```python filename="nkyel_extension_myruns/__init__.py"
 """List the caller's own recently changed runs."""
 
 from __future__ import annotations
@@ -273,7 +273,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     ExtensionRegistry,
     InvalidRunEvidenceCursor,
     RunEvidenceReader,

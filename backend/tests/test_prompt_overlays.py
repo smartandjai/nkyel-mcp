@@ -6,7 +6,7 @@ import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import ValidationError
 
-from deerflow.config.prompt_overlay import PromptOverlay
+from nkyel.config.prompt_overlay import PromptOverlay
 
 
 def test_default_overlay_is_byte_identical():
@@ -23,29 +23,29 @@ def test_invalid_overlay_rejected():
 
 
 def test_lead_overlay_uses_explicit_snapshot_and_does_not_accumulate(monkeypatch):
-    from deerflow.agents.lead_agent import prompt as module
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.agents.lead_agent import prompt as module
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     config = AppConfig(sandbox=SandboxConfig(use="test"))
     for helper in ("get_agent_soul", "get_skills_prompt_section", "get_deferred_tools_prompt_section", "_build_acp_section", "_build_custom_mounts_section", "_build_memory_tool_section"):
         monkeypatch.setattr(module, helper, lambda *args, **kwargs: "")
     stock = module.apply_prompt_template(app_config=config)
     configured = config.model_copy(update={"lead_prompt_overlay": PromptOverlay(prepend="规则 {unbound}", append="tail")})
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
     expected = "规则 {unbound}\n\n" + stock + "\n\ntail"
     assert module.apply_prompt_template(app_config=configured) == expected
     assert module.apply_prompt_template(app_config=configured) == expected
     assert module.apply_prompt_template(app_config=config) == stock
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: configured)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: configured)
     assert module.apply_prompt_template() == expected
 
 
 @pytest.mark.parametrize("name", ["general-purpose", "bash"])
 def test_builtin_overlay_does_not_mutate_registry(name):
-    from deerflow.config.subagents_config import SubagentsAppConfig
-    from deerflow.subagents.builtins import BUILTIN_SUBAGENTS
-    from deerflow.subagents.registry import get_subagent_config
+    from nkyel.config.subagents_config import SubagentsAppConfig
+    from nkyel.subagents.builtins import BUILTIN_SUBAGENTS
+    from nkyel.subagents.registry import get_subagent_config
 
     original = BUILTIN_SUBAGENTS[name].system_prompt
     config = SubagentsAppConfig(agents={name: {"prompt_overlay": {"prepend": "First rule", "append": "Operator rule"}}})
@@ -59,8 +59,8 @@ def test_builtin_overlay_does_not_mutate_registry(name):
 
 
 def test_memory_overlay_only_modifies_system_authority():
-    from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-    from deerflow.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater
+    from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+    from nkyel.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater
 
     storage = MagicMock()
     base = MemoryUpdater(DeerMemConfig(), storage)
@@ -80,8 +80,8 @@ def test_memory_overlay_only_modifies_system_authority():
 
 
 def test_memory_overlay_requires_system_message(monkeypatch):
-    from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-    from deerflow.agents.memory.backends.deermem.deermem.core import updater as module
+    from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+    from nkyel.agents.memory.backends.deermem.deermem.core import updater as module
 
     monkeypatch.setattr(module, "load_prompt_messages", lambda *args, **kwargs: [HumanMessage(content="data")])
     updater = module.MemoryUpdater(DeerMemConfig(prompt_append="trusted rule"), MagicMock())

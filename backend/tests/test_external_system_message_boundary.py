@@ -25,8 +25,8 @@ from pydantic import Field
 
 from app.gateway.routers import runs, thread_runs
 from app.gateway.services import normalize_input, strip_server_owned_state_metadata
-from deerflow.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
-from deerflow.agents.middlewares.system_message_coalescing_middleware import SystemMessageCoalescingMiddleware
+from nkyel.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
+from nkyel.agents.middlewares.system_message_coalescing_middleware import SystemMessageCoalescingMiddleware
 
 MARKER = "synthetic-system-injection-marker"
 

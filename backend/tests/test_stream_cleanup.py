@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from deerflow.runtime.runs.stream_cleanup import AgentStreamCloseCancelledError, close_agent_stream
+from nkyel.runtime.runs.stream_cleanup import AgentStreamCloseCancelledError, close_agent_stream
 
 
 class _BlockingStream:

@@ -36,7 +36,7 @@ const THREADS_WITH_SIDE_CHATS = THREADS.map((thread, i) =>
     ? {
         ...thread,
         metadata: {
-          deerflow_sidecar: true,
+          nkyel_sidecar: true,
           parent_thread_id: THREADS[0]!.thread_id,
         },
       }

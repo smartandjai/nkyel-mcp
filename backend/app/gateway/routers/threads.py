@@ -4,7 +4,7 @@ Combines the existing thread-local filesystem cleanup with LangGraph
 Platform-compatible thread management backed by the checkpointer.
 
 Channel values returned in state responses are serialized through
-:func:`deerflow.runtime.serialization.serialize_channel_values` to
+:func:`nkyel.runtime.serialization.serialize_channel_values` to
 ensure LangChain message objects are converted to JSON-safe dicts
 matching the LangGraph Platform wire format expected by the
 ``useStream`` React hook.
@@ -49,23 +49,23 @@ from app.gateway.services import (
     strip_server_owned_state_metadata,
 )
 from app.gateway.utils import sanitize_log_param
-from deerflow.agents.thread_state import THREAD_STATE_REDUCER_FIELDS
-from deerflow.config.paths import Paths, get_paths
-from deerflow.config.summarization_config import ContextSize
-from deerflow.persistence.thread_meta import PROJECT_FILTER_UNSET, THREAD_ARCHIVED_METADATA_KEY, THREAD_PINNED_METADATA_KEY, THREAD_PROJECT_METADATA_KEY, ThreadOwnershipConflictError
-from deerflow.runtime import ThreadOperationKind, serialize_channel_values_for_api
-from deerflow.runtime.checkpoint_mode import CheckpointModeMismatchError, CheckpointModeReconfigurationError
-from deerflow.runtime.checkpoint_state import graph_reducer_channels, graph_state_schema, graph_writable_channels
-from deerflow.runtime.context_compaction import (
+from nkyel.agents.thread_state import THREAD_STATE_REDUCER_FIELDS
+from nkyel.config.paths import Paths, get_paths
+from nkyel.config.summarization_config import ContextSize
+from nkyel.persistence.thread_meta import PROJECT_FILTER_UNSET, THREAD_ARCHIVED_METADATA_KEY, THREAD_PINNED_METADATA_KEY, THREAD_PROJECT_METADATA_KEY, ThreadOwnershipConflictError
+from nkyel.runtime import ThreadOperationKind, serialize_channel_values_for_api
+from nkyel.runtime.checkpoint_mode import CheckpointModeMismatchError, CheckpointModeReconfigurationError
+from nkyel.runtime.checkpoint_state import graph_reducer_channels, graph_state_schema, graph_writable_channels
+from nkyel.runtime.context_compaction import (
     ContextCompactionDisabled,
     ContextCompactionFailed,
     ContextCompactionPendingWork,
     ThreadCompactionResult,
     compact_thread_context,
 )
-from deerflow.runtime.context_keys import checkpoint_agent_binding_metadata
-from deerflow.runtime.events.message_seq import stamp_messages_with_seq
-from deerflow.runtime.goal import (
+from nkyel.runtime.context_keys import checkpoint_agent_binding_metadata
+from nkyel.runtime.events.message_seq import stamp_messages_with_seq
+from nkyel.runtime.goal import (
     DEFAULT_MAX_GOAL_CONTINUATIONS,
     GOAL_OUTCOME_CHANNEL,
     build_goal_state,
@@ -75,16 +75,16 @@ from deerflow.runtime.goal import (
     read_thread_goal,
     write_thread_goal,
 )
-from deerflow.runtime.journal import build_branch_history_seed_events
-from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY, admit_origin
-from deerflow.runtime.runs.manager import ConflictError
-from deerflow.runtime.runs.worker import RUN_MESSAGE_IDS_METADATA_KEY, valid_duration_entry, valid_run_message_id_entry
-from deerflow.runtime.secret_context import redact_metadata_secrets
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.uploads.companions import register_companion, resolve_companion
-from deerflow.utils.file_io import await_drained, run_file_io
-from deerflow.utils.thread_id import ThreadId, resolve_thread_id, validate_thread_id
-from deerflow.utils.time import coerce_iso, now_iso
+from nkyel.runtime.journal import build_branch_history_seed_events
+from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY, admit_origin
+from nkyel.runtime.runs.manager import ConflictError
+from nkyel.runtime.runs.worker import RUN_MESSAGE_IDS_METADATA_KEY, valid_duration_entry, valid_run_message_id_entry
+from nkyel.runtime.secret_context import redact_metadata_secrets
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.uploads.companions import register_companion, resolve_companion
+from nkyel.utils.file_io import await_drained, run_file_io
+from nkyel.utils.thread_id import ThreadId, resolve_thread_id, validate_thread_id
+from nkyel.utils.time import coerce_iso, now_iso
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/threads", tags=["threads"])
@@ -123,11 +123,11 @@ def _checkpoint_mode_http_error(exc: Exception, thread_id: str) -> HTTPException
 # owner identity through the API surface. Defense-in-depth — the
 # row-level invariant is still ``threads_meta.user_id`` populated from
 # the auth contextvar; this list closes the metadata-blob echo gap.
-# ``deerflow_origin`` marks a thread the server created for a schedule or an
+# ``nkyel_origin`` marks a thread the server created for a schedule or an
 # extension; only the server sets it (``create_thread`` below, run admission).
-_SERVER_RESERVED_METADATA_KEYS: frozenset[str] = frozenset({"owner_id", "user_id", THREAD_PROJECT_METADATA_KEY, DEERFLOW_ORIGIN_KEY})
-_SIDECAR_METADATA_KEY = "deerflow_sidecar"
-_BRANCH_METADATA_KEY = "deerflow_branch"
+_SERVER_RESERVED_METADATA_KEYS: frozenset[str] = frozenset({"owner_id", "user_id", THREAD_PROJECT_METADATA_KEY, NKYEL_ORIGIN_KEY})
+_SIDECAR_METADATA_KEY = "nkyel_sidecar"
+_BRANCH_METADATA_KEY = "nkyel_branch"
 _BRANCH_TITLE_SEQUENCE_METADATA_KEY = "branch_title_sequence"
 # Thread-scoped runtime channels a branch must NOT inherit from its parent:
 # ``sandbox.sandbox_id`` binds path mappings and the release lifecycle to the
@@ -523,11 +523,11 @@ class ThreadSearchRequest(BaseModel):
         """Reject filter entries the SQL backend cannot compile.
 
         Enforces consistent behaviour across SQL and memory backends.
-        See ``deerflow.persistence.json_compat`` for the shared validators.
+        See ``nkyel.persistence.json_compat`` for the shared validators.
         """
         if not v:
             return v
-        from deerflow.persistence.json_compat import validate_metadata_filter_key, validate_metadata_filter_value
+        from nkyel.persistence.json_compat import validate_metadata_filter_key, validate_metadata_filter_value
 
         bad_entries: list[str] = []
         for key, value in v.items():
@@ -564,7 +564,7 @@ class ThreadPatchRequest(BaseModel):
     @classmethod
     def validate_archive_flag(cls, value: dict[str, Any]) -> dict[str, Any]:
         if THREAD_ARCHIVED_METADATA_KEY in value and not isinstance(value[THREAD_ARCHIVED_METADATA_KEY], bool):
-            raise ValueError("deerflow_archived must be a boolean")
+            raise ValueError("nkyel_archived must be a boolean")
         return value
 
 
@@ -758,7 +758,7 @@ async def _ensure_thread_for_goal(thread_id: str, request: Request) -> None:
 async def delete_thread_data(thread_id: str, request: Request) -> ThreadDeleteResponse:
     """Delete local persisted filesystem data for a thread.
 
-    Cleans DeerFlow-managed thread directories, removes checkpoint data,
+    Cleans nkyel-managed thread directories, removes checkpoint data,
     and removes the thread_meta row from the configured ThreadMetaStore
     (sqlite or memory).
     """
@@ -899,7 +899,7 @@ async def _delete_thread_data_with_reservation(thread_id: str, request: Request)
     # by thread_id, so leaving one alive after the owner deletes the thread lets
     # a later caller who guesses the id reuse the retained page/cookies.
     try:
-        from deerflow.community.browser_automation import get_browser_session_manager
+        from nkyel.community.browser_automation import get_browser_session_manager
 
         await get_browser_session_manager().close_session(thread_id)
     except ImportError:
@@ -917,7 +917,7 @@ async def _delete_thread_data_with_reservation(thread_id: str, request: Request)
     # the thread is gone, and reading the current incarnation here would race a
     # concurrently minted one. See #5188.
     try:
-        from deerflow.mcp.session_pool import get_session_pool
+        from nkyel.mcp.session_pool import get_session_pool
 
         await get_session_pool().close_thread_scope(user_id=user_id, thread_id=thread_id)
     except Exception:
@@ -979,7 +979,7 @@ async def create_thread(body: ThreadCreateRequest, request: Request) -> ThreadRe
     # request.state is never HTTP input.
     metadata = dict(body.metadata)
     if (origin := admit_origin(getattr(request.state, "run_origin", None))) is not None:
-        metadata[DEERFLOW_ORIGIN_KEY] = origin
+        metadata[NKYEL_ORIGIN_KEY] = origin
 
     # Idempotency: return existing record when already present
     existing_record = await _resolve_existing_thread(thread_store, thread_id, thread_owner_user_id, thread_owner_kwargs)
@@ -987,7 +987,7 @@ async def create_thread(body: ThreadCreateRequest, request: Request) -> ThreadRe
         return _existing_thread_response(thread_id, existing_record)
 
     # Write thread_meta so the thread appears in /threads/search immediately
-    from deerflow.persistence.projects import ProjectNotAssignableError
+    from nkyel.persistence.projects import ProjectNotAssignableError
 
     try:
         created_record = await thread_store.create(
@@ -1042,7 +1042,7 @@ async def create_thread(body: ThreadCreateRequest, request: Request) -> ThreadRe
 
     logger.info("Thread created: %s", sanitize_log_param(thread_id))
     # Respond from the persisted record — the store stamps
-    # ``metadata.deerflow_project_id`` from the assigned project_id column, so
+    # ``metadata.nkyel_project_id`` from the assigned project_id column, so
     # echoing ``body.metadata`` here would omit the membership the retry path
     # (``_existing_thread_response``) reports.
     return _existing_thread_response(thread_id, created_record)
@@ -1128,7 +1128,7 @@ async def _branch_thread_with_reservation(
     # store re-validates the project inside the insert (same fail-closed path
     # as create/move), and the inherited id may be stale only when the project
     # was archived or deleted after the source read.
-    from deerflow.persistence.projects import ProjectNotAssignableError
+    from nkyel.persistence.projects import ProjectNotAssignableError
 
     source_project_id = (source_metadata or {}).get(THREAD_PROJECT_METADATA_KEY)
 
@@ -1292,7 +1292,7 @@ async def search_threads(body: ThreadSearchRequest, request: Request) -> list[Th
     (SQL-backed for sqlite/postgres, Store-backed for memory mode).
     """
     from app.gateway.deps import get_thread_store
-    from deerflow.persistence.thread_meta import InvalidMetadataFilterError
+    from nkyel.persistence.thread_meta import InvalidMetadataFilterError
 
     repo = get_thread_store(request)
     # Three-state project filter: key absent → no filter; explicit null →
@@ -1819,7 +1819,7 @@ async def _persist_run_history_metadata_background(
     audited_message_ids: set[str],
 ) -> None:
     """Best-effort history migration behind durable checkpoint admission."""
-    from deerflow.runtime.runs.worker import persist_run_history_metadata
+    from nkyel.runtime.runs.worker import persist_run_history_metadata
 
     try:
         async with reserve_checkpoint_write(request, thread_id, user_id=user_id):

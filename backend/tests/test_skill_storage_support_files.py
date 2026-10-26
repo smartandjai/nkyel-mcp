@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.skills.storage import get_or_new_skill_storage, reset_skill_storage
-from deerflow.skills.storage.skill_storage import read_text_or_none
+from nkyel.skills.storage import get_or_new_skill_storage, reset_skill_storage
+from nkyel.skills.storage.skill_storage import read_text_or_none
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n\xff\xfe\x00"
 

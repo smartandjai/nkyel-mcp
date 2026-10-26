@@ -17,13 +17,13 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.gateway.routers import models as models_router
-from deerflow.authz.provider import AuthzDecision, AuthzReason
-from deerflow.authz.rbac import RbacAuthorizationProvider
-from deerflow.config.app_config import AppConfig
-from deerflow.config.authorization_config import AuthorizationConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.token_usage_config import TokenUsageConfig
+from nkyel.authz.provider import AuthzDecision, AuthzReason
+from nkyel.authz.rbac import RbacAuthorizationProvider
+from nkyel.config.app_config import AppConfig
+from nkyel.config.authorization_config import AuthorizationConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.token_usage_config import TokenUsageConfig
 
 # ── Helpers ────────────────────────────────────────────────────────────
 
@@ -43,7 +43,7 @@ def _make_app_config(model_names: list[str]) -> AppConfig:
     """Build a minimal AppConfig with the given model names."""
     return AppConfig(
         models=[ModelConfig(name=n, model=n, use="langchain_openai:ChatOpenAI") for n in model_names],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         token_usage=TokenUsageConfig(enabled=False),
         authorization=AuthorizationConfig(),
     )
@@ -305,7 +305,7 @@ def test_list_models_internal_caller_with_bound_owner_uses_owner_role(monkeypatc
     app = _internal_caller_app(app_config, internal_user)
 
     with TestClient(app) as client:
-        response = client.get("/api/models", headers={"X-DeerFlow-Owner-User-Id": "admin-1"})
+        response = client.get("/api/models", headers={"X-nkyel-Owner-User-Id": "admin-1"})
 
     assert response.status_code == 200
     names = [m["name"] for m in response.json()["models"]]
@@ -501,7 +501,7 @@ def _enable_runtime_authorization(monkeypatch, provider) -> AuthorizationConfig:
     Returns an enabled AuthorizationConfig the caller assigns to app_config.
     """
     monkeypatch.setattr(
-        "deerflow.agents.lead_agent.agent.resolve_authorization_provider",
+        "nkyel.agents.lead_agent.agent.resolve_authorization_provider",
         lambda config: provider,
     )
     return AuthorizationConfig(enabled=True, fail_closed=True, default_role="user")
@@ -509,7 +509,7 @@ def _enable_runtime_authorization(monkeypatch, provider) -> AuthorizationConfig:
 
 def test_authorize_model_name_disabled_is_noop():
     """When authorization is disabled, model name is returned unchanged."""
-    from deerflow.agents.lead_agent.agent import _authorize_model_name
+    from nkyel.agents.lead_agent.agent import _authorize_model_name
 
     app_config = _make_app_config(["gpt-4", "claude-3"])
     # AuthorizationConfig() defaults to enabled=False.
@@ -519,7 +519,7 @@ def test_authorize_model_name_disabled_is_noop():
 
 def test_authorize_model_name_allowed_returns_same(monkeypatch):
     """Allowed model → returned unchanged."""
-    from deerflow.agents.lead_agent.agent import _authorize_model_name
+    from nkyel.agents.lead_agent.agent import _authorize_model_name
 
     provider = RbacAuthorizationProvider(
         roles={"user": {"models": {"allow": ["gpt-4", "claude-3"]}}},
@@ -533,7 +533,7 @@ def test_authorize_model_name_allowed_returns_same(monkeypatch):
 
 def test_authorize_model_name_denied_falls_back_gracefully(monkeypatch):
     """Denied model → falls back to first allowed model (RFC §9)."""
-    from deerflow.agents.lead_agent.agent import _authorize_model_name
+    from nkyel.agents.lead_agent.agent import _authorize_model_name
 
     provider = RbacAuthorizationProvider(
         roles={"user": {"models": {"allow": ["claude-3"]}}},
@@ -547,7 +547,7 @@ def test_authorize_model_name_denied_falls_back_gracefully(monkeypatch):
 
 def test_authorize_model_name_all_denied_fail_closed_raises(monkeypatch):
     """All models denied + fail_closed → ValueError."""
-    from deerflow.agents.lead_agent.agent import _authorize_model_name
+    from nkyel.agents.lead_agent.agent import _authorize_model_name
 
     provider = RbacAuthorizationProvider(
         roles={"user": {"models": {"allow": []}}},
@@ -561,7 +561,7 @@ def test_authorize_model_name_all_denied_fail_closed_raises(monkeypatch):
 
 def test_authorize_model_name_all_denied_fail_open_returns_original(monkeypatch):
     """All models denied + fail_open → returns original model name."""
-    from deerflow.agents.lead_agent.agent import _authorize_model_name
+    from nkyel.agents.lead_agent.agent import _authorize_model_name
 
     provider = RbacAuthorizationProvider(
         roles={"user": {"models": {"allow": []}}},
@@ -573,7 +573,7 @@ def test_authorize_model_name_all_denied_fail_open_returns_original(monkeypatch)
         default_role="user",
     )
     monkeypatch.setattr(
-        "deerflow.agents.lead_agent.agent.resolve_authorization_provider",
+        "nkyel.agents.lead_agent.agent.resolve_authorization_provider",
         lambda config: provider,
     )
 
@@ -611,12 +611,12 @@ def test_authorize_model_name_custom_provider_list_vs_use_divergence(monkeypatch
     app_config = _make_app_config(["gpt-4", "claude-3"])
     app_config.authorization = AuthorizationConfig(enabled=True, fail_closed=True, default_role="user")
     monkeypatch.setattr(
-        "deerflow.agents.lead_agent.agent.resolve_authorization_provider",
+        "nkyel.agents.lead_agent.agent.resolve_authorization_provider",
         lambda config: _ListButNotUseProvider(),
     )
 
     # gpt-4 is listable but denied for use → falls back to claude-3
-    from deerflow.agents.lead_agent.agent import _authorize_model_name
+    from nkyel.agents.lead_agent.agent import _authorize_model_name
 
     result = _authorize_model_name("gpt-4", context=_rbac_context(), app_config=app_config)
     assert result != "gpt-4"
@@ -651,11 +651,11 @@ def test_authorize_model_name_custom_provider_no_usable_fallback_fail_closed(mon
     app_config = _make_app_config(["gpt-4", "claude-3"])
     app_config.authorization = AuthorizationConfig(enabled=True, fail_closed=True, default_role="user")
     monkeypatch.setattr(
-        "deerflow.agents.lead_agent.agent.resolve_authorization_provider",
+        "nkyel.agents.lead_agent.agent.resolve_authorization_provider",
         lambda config: _AllListNoneUseProvider(),
     )
 
-    from deerflow.agents.lead_agent.agent import _authorize_model_name
+    from nkyel.agents.lead_agent.agent import _authorize_model_name
 
     # gpt-4 denied for use; fallback candidates also denied → ValueError
     with pytest.raises(ValueError, match="No models are authorized"):
@@ -682,19 +682,19 @@ def test_authorize_model_name_custom_provider_no_usable_fallback_fail_open(monke
     app_config = _make_app_config(["gpt-4", "claude-3"])
     app_config.authorization = AuthorizationConfig(enabled=True, fail_closed=False, default_role="user")
     monkeypatch.setattr(
-        "deerflow.agents.lead_agent.agent.resolve_authorization_provider",
+        "nkyel.agents.lead_agent.agent.resolve_authorization_provider",
         lambda config: _AllListNoneUseProvider(),
     )
 
-    from deerflow.agents.lead_agent.agent import _authorize_model_name
+    from nkyel.agents.lead_agent.agent import _authorize_model_name
 
     result = _authorize_model_name("gpt-4", context=_rbac_context(), app_config=app_config)
     assert result == "gpt-4"
 
 
-# ── DeerFlowClient._ensure_agent path ─────────────────────────────────
+# ── NkyelClient._ensure_agent path ─────────────────────────────────
 # Regression for willem-bd's Round 4 coverage observation: the embedded/library
-# lead-agent construction path (``DeerFlowClient._ensure_agent``) must enforce
+# lead-agent construction path (``NkyelClient._ensure_agent``) must enforce
 # ``model:use`` too, not just the Gateway runtime path (``_make_lead_agent``).
 # Otherwise a consumer that enables ``authorization`` with role-scoped model
 # policies gets tools filtered yet can still run a model the role is denied
@@ -718,7 +718,7 @@ def test_client_ensure_agent_enforces_model_use_when_authorized(monkeypatch):
 
     provider = RbacAuthorizationProvider(roles={"user": {"models": {"allow": ["claude-3"]}}})
     monkeypatch.setattr(
-        "deerflow.agents.lead_agent.agent.resolve_authorization_provider",
+        "nkyel.agents.lead_agent.agent.resolve_authorization_provider",
         lambda config: provider,
     )
     captured_name = _stub_client_assembly(monkeypatch)
@@ -747,7 +747,7 @@ def test_client_ensure_agent_resolves_none_default_before_authorization(monkeypa
     # Deny the default ``gpt-4``; the gate must fallback to ``claude-3``.
     provider = RbacAuthorizationProvider(roles={"user": {"models": {"allow": ["claude-3"]}}})
     monkeypatch.setattr(
-        "deerflow.agents.lead_agent.agent.resolve_authorization_provider",
+        "nkyel.agents.lead_agent.agent.resolve_authorization_provider",
         lambda config: provider,
     )
     captured_name = _stub_client_assembly(monkeypatch)
@@ -786,47 +786,47 @@ def _stub_client_assembly(monkeypatch) -> dict[str, str]:
     """
     captured: dict[str, str] = {}
     monkeypatch.setattr(
-        "deerflow.client.create_chat_model",
+        "nkyel.client.create_chat_model",
         lambda **kwargs: captured.__setitem__("name", kwargs.get("name")) or object(),
     )
-    monkeypatch.setattr("deerflow.client.create_agent", lambda **kwargs: object())
-    monkeypatch.setattr("deerflow.client.build_middlewares", lambda *args, **kwargs: [])
-    monkeypatch.setattr("deerflow.client.DeerFlowClient._get_tools", staticmethod(lambda *, model_name, subagent_enabled, mcp_plugins=None: []))  # noqa: ARG005
-    monkeypatch.setattr("deerflow.client.get_enabled_skills_for_config", lambda app_config, **kw: [])  # noqa: ARG005
+    monkeypatch.setattr("nkyel.client.create_agent", lambda **kwargs: object())
+    monkeypatch.setattr("nkyel.client.build_middlewares", lambda *args, **kwargs: [])
+    monkeypatch.setattr("nkyel.client.NkyelClient._get_tools", staticmethod(lambda *, model_name, subagent_enabled, mcp_plugins=None: []))  # noqa: ARG005
+    monkeypatch.setattr("nkyel.client.get_enabled_skills_for_config", lambda app_config, **kw: [])  # noqa: ARG005
     monkeypatch.setattr(
-        "deerflow.client.build_skill_search_setup",
+        "nkyel.client.build_skill_search_setup",
         lambda skills, *, enabled, container_base_path, skill_authorization=None: SimpleNamespace(describe_skill_tool=None, skill_names=frozenset()),  # noqa: ARG005
     )
     monkeypatch.setattr(
-        "deerflow.client.assemble_deferred_tools",
+        "nkyel.client.assemble_deferred_tools",
         lambda tools, *, enabled: ([], SimpleNamespace(deferred_names=frozenset())),  # noqa: ARG005
     )
-    monkeypatch.setattr("deerflow.client.build_mcp_routing_middleware", lambda *args, **kwargs: None)  # noqa: ARG005
-    monkeypatch.setattr("deerflow.client.get_mcp_routing_hints_prompt_section", lambda *args, **kwargs: "")  # noqa: ARG005
-    monkeypatch.setattr("deerflow.client.apply_prompt_template", lambda **kwargs: "")  # noqa: ARG005
-    monkeypatch.setattr("deerflow.client.get_thread_state_schema", lambda *args, **kwargs: object())  # noqa: ARG005
-    monkeypatch.setattr("deerflow.client.normalize_middleware_state_schemas", lambda schemas, mode, freq: [])  # noqa: ARG005
-    monkeypatch.setattr("deerflow.client.get_effective_user_id", lambda: "user-123")
+    monkeypatch.setattr("nkyel.client.build_mcp_routing_middleware", lambda *args, **kwargs: None)  # noqa: ARG005
+    monkeypatch.setattr("nkyel.client.get_mcp_routing_hints_prompt_section", lambda *args, **kwargs: "")  # noqa: ARG005
+    monkeypatch.setattr("nkyel.client.apply_prompt_template", lambda **kwargs: "")  # noqa: ARG005
+    monkeypatch.setattr("nkyel.client.get_thread_state_schema", lambda *args, **kwargs: object())  # noqa: ARG005
+    monkeypatch.setattr("nkyel.client.normalize_middleware_state_schemas", lambda schemas, mode, freq: [])  # noqa: ARG005
+    monkeypatch.setattr("nkyel.client.get_effective_user_id", lambda: "user-123")
     # ``apply_tool_authorization`` (called with the empty tool list above) still
     # resolves a provider via ``tool_filter.resolve_authorization_provider``; route
     # it at an allow-all RBAC provider so the empty list stays empty. The skill
     # filter (added in Phase 3 Skills PR) resolves via ``skill_filter`` namespace.
     monkeypatch.setattr(
-        "deerflow.authz.tool_filter.resolve_authorization_provider",
+        "nkyel.authz.tool_filter.resolve_authorization_provider",
         lambda config: RbacAuthorizationProvider(roles={"user": {"tools": {"allow": "*"}}}),
     )
     monkeypatch.setattr(
-        "deerflow.authz.skill_filter.resolve_authorization_provider",
+        "nkyel.authz.skill_filter.resolve_authorization_provider",
         lambda config: RbacAuthorizationProvider(roles={"user": {"skills": {"allow": "*"}}}),
     )
     return captured
 
 
 def _bare_client(app_config):
-    """Construct a ``DeerFlowClient`` without running ``__init__``."""
-    from deerflow.client import DeerFlowClient
+    """Construct a ``NkyelClient`` without running ``__init__``."""
+    from nkyel.client import NkyelClient
 
-    client = DeerFlowClient.__new__(DeerFlowClient)
+    client = NkyelClient.__new__(NkyelClient)
     client._app_config = app_config
     client._agent_name = "default"
     client._available_skills = None

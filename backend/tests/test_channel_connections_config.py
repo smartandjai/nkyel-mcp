@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
 
 def test_channel_connections_disabled_by_default():
@@ -26,7 +26,7 @@ def test_enabled_channel_connections_do_not_require_public_url_or_encryption_key
             "enabled": True,
             "telegram": {
                 "enabled": True,
-                "bot_username": "deerflow_bot",
+                "bot_username": "nkyel_bot",
             },
             "slack": {"enabled": True},
             "discord": {"enabled": True},

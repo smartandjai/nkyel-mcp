@@ -1,7 +1,7 @@
 """Layer 1 authorization for middleware-declared tools (spec: PR 2, tool path).
 
 Covers the five-step declaration pass in
-``deerflow.agents.middlewares.tool_declarations`` — record the ordinary pass,
+``nkyel.agents.middlewares.tool_declarations`` — record the ordinary pass,
 collect declarations, seeded incremental decision, build-local narrowing view,
 post-chain verification — plus the copy contract, the ``TodoMiddleware``
 degradation, and the wiring on the lead / client / subagent assembly paths.
@@ -20,8 +20,8 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import StructuredTool
 
-from deerflow.agents.middlewares.todo_middleware import TodoMiddleware
-from deerflow.agents.middlewares.tool_declarations import (
+from nkyel.agents.middlewares.todo_middleware import TodoMiddleware
+from nkyel.agents.middlewares.tool_declarations import (
     DeclaredToolViewError,
     LayerOneOutcome,
     apply_declared_tool_view,
@@ -31,13 +31,13 @@ from deerflow.agents.middlewares.tool_declarations import (
     narrow_declared_tools,
     verify_declared_tool_view,
 )
-from deerflow.agents.thread_state import normalize_middleware_state_schemas
-from deerflow.authz.provider import AuthzDecision, Principal
-from deerflow.authz.tool_filter import apply_tool_authorization
-from deerflow.config.app_config import AppConfig
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.extensions.isolation import IsolatedMiddleware
+from nkyel.agents.thread_state import normalize_middleware_state_schemas
+from nkyel.authz.provider import AuthzDecision, Principal
+from nkyel.authz.tool_filter import apply_tool_authorization
+from nkyel.config.app_config import AppConfig
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.extensions.isolation import IsolatedMiddleware
 
 
 def _tool(name: str) -> StructuredTool:
@@ -722,8 +722,8 @@ class TestTodoDegradation:
 class TestLeadAgentWiring:
     @pytest.mark.parametrize("is_bootstrap", [False, True])
     def test_denied_declaration_absent_from_the_bound_middleware_stack(self, monkeypatch, is_bootstrap):
-        from deerflow.agents.lead_agent import agent as lead_agent_module
-        from deerflow.config.model_config import ModelConfig
+        from nkyel.agents.lead_agent import agent as lead_agent_module
+        from nkyel.config.model_config import ModelConfig
 
         config = AppConfig(
             models=[
@@ -738,7 +738,7 @@ class TestLeadAgentWiring:
             authorization=AuthorizationConfig(
                 enabled=True,
                 provider=AuthorizationProviderConfig(
-                    use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                    use="nkyel.authz.rbac:RbacAuthorizationProvider",
                     config={"roles": {"user": {"tools": {"allow": ["safe_tool", "history_read", "allowed_decl"]}}}},
                 ),
             ),
@@ -758,8 +758,8 @@ class TestLeadAgentWiring:
             lambda *args, **kwargs: SimpleNamespace(describe_skill_tool=None, skill_names=frozenset()),
             raising=False,
         )
-        monkeypatch.setattr("deerflow.skills.describe.build_skill_search_setup", lead_agent_module.build_skill_search_setup)
-        monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **kwargs: [_tool("safe_tool")])
+        monkeypatch.setattr("nkyel.skills.describe.build_skill_search_setup", lead_agent_module.build_skill_search_setup)
+        monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **kwargs: [_tool("safe_tool")])
         monkeypatch.setattr(lead_agent_module, "should_use_memory_tools", lambda memory_config: False)
 
         declaring = _DeclaringMiddleware([_tool("allowed_decl"), _tool("denied_decl")])
@@ -782,9 +782,9 @@ class TestLeadAgentWiring:
 
 class TestClientWiring:
     def test_denied_declaration_absent_from_the_bound_middleware_stack(self, tmp_path):
-        import deerflow.skills.storage as _storage_mod
-        from deerflow.client import DeerFlowClient
-        from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+        import nkyel.skills.storage as _storage_mod
+        from nkyel.client import NkyelClient
+        from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
         provider = _FilterProvider(["safe_tool", "allowed_decl"])
         app_config = MagicMock()
@@ -810,24 +810,24 @@ class TestClientWiring:
         declaring = _DeclaringMiddleware([_tool("allowed_decl"), _tool("denied_decl")])
         safe_tool = _tool("safe_tool")
 
-        with patch("deerflow.client.get_app_config", return_value=app_config):
-            client = DeerFlowClient()
+        with patch("nkyel.client.get_app_config", return_value=app_config):
+            client = NkyelClient()
         client._app_config = app_config
 
         with (
-            patch("deerflow.client.create_chat_model"),
-            patch("deerflow.client.create_agent", return_value=MagicMock()) as mock_create_agent,
-            patch("deerflow.client.build_middlewares", return_value=[declaring]),
-            patch("deerflow.client.apply_prompt_template", return_value="prompt"),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.create_chat_model"),
+            patch("nkyel.client.create_agent", return_value=MagicMock()) as mock_create_agent,
+            patch("nkyel.client.build_middlewares", return_value=[declaring]),
+            patch("nkyel.client.apply_prompt_template", return_value="prompt"),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
             patch.object(client, "_get_tools", return_value=[safe_tool]),
-            patch("deerflow.authz.tool_filter.resolve_authorization_provider", return_value=provider),
-            patch("deerflow.agents.lead_agent.agent.resolve_authorization_provider", return_value=provider),
+            patch("nkyel.authz.tool_filter.resolve_authorization_provider", return_value=provider),
+            patch("nkyel.agents.lead_agent.agent.resolve_authorization_provider", return_value=provider),
             # Phase 3 resolves a skill-authorization provider through
             # skill_filter's own import; a separate double keeps the tool-path
             # call assertions below exact.
-            patch("deerflow.authz.skill_filter.resolve_authorization_provider", return_value=_FilterProvider([])),
-            patch("deerflow.runtime.checkpointer.get_checkpointer", return_value=None),
+            patch("nkyel.authz.skill_filter.resolve_authorization_provider", return_value=_FilterProvider([])),
+            patch("nkyel.runtime.checkpointer.get_checkpointer", return_value=None),
         ):
             client._ensure_agent(client._get_runnable_config("t1"), context={"user_role": "user"})
 
@@ -842,14 +842,14 @@ class TestClientWiring:
 
 class TestDescriptorConsistency:
     def test_descriptor_reports_the_narrowed_set(self):
-        from deerflow.agents.assembly_descriptor import build_assembly_descriptor
+        from nkyel.agents.assembly_descriptor import build_assembly_descriptor
 
         allowed, denied = _tool("allowed_decl"), _tool("denied_decl")
         original = _DeclaringMiddleware([allowed, denied])
         view, _ = _narrow([original], provider=_FilterProvider(["allowed_decl"]), outcome=_outcome([], []))
 
         descriptor = build_assembly_descriptor(
-            namespace="deerflow",
+            namespace="nkyel",
             agent_name="test",
             requested_model="test-model",
             effective_model="test-model",

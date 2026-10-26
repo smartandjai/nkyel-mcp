@@ -65,7 +65,7 @@ describe("channels api", () => {
             connection_status: "not_connected",
             credential_values: {
               bot_token: "********",
-              bot_username: "deerflow_bot",
+              bot_username: "nkyel_bot",
             },
           },
         ],
@@ -80,7 +80,7 @@ describe("channels api", () => {
           display_name: "Telegram",
           credential_values: {
             bot_token: "********",
-            bot_username: "deerflow_bot",
+            bot_username: "nkyel_bot",
           },
         },
       ],
@@ -117,17 +117,17 @@ describe("channels api", () => {
       jsonResponse(200, {
         provider: "telegram",
         mode: "deep_link",
-        url: "https://t.me/deerflow_bot?start=state",
+        url: "https://t.me/nkyel_bot?start=state",
         code: "state",
-        instruction: "Send /start state to the DeerFlow Telegram bot.",
+        instruction: "Send /start state to the nkyel Telegram bot.",
         expires_in: 600,
       }),
     );
 
     await expect(connectChannelProvider("telegram")).resolves.toMatchObject({
       provider: "telegram",
-      url: "https://t.me/deerflow_bot?start=state",
-      instruction: "Send /start state to the DeerFlow Telegram bot.",
+      url: "https://t.me/nkyel_bot?start=state",
+      instruction: "Send /start state to the nkyel Telegram bot.",
     });
     expect(mockedFetch).toHaveBeenCalledWith(
       "/backend/api/channels/telegram/connect",
@@ -142,7 +142,7 @@ describe("channels api", () => {
         mode: "binding_code",
         url: null,
         code: "abc123",
-        instruction: "Send /connect abc123 to the DeerFlow Slack bot.",
+        instruction: "Send /connect abc123 to the nkyel Slack bot.",
         expires_in: 600,
       }),
     );
@@ -151,7 +151,7 @@ describe("channels api", () => {
       provider: "slack",
       url: null,
       code: "abc123",
-      instruction: "Send /connect abc123 to the DeerFlow Slack bot.",
+      instruction: "Send /connect abc123 to the nkyel Slack bot.",
     });
   });
 

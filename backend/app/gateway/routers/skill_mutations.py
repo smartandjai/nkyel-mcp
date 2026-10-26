@@ -3,7 +3,7 @@
 from dataclasses import asdict
 from typing import Annotated
 
-from deerflow_extension_api import HostCapabilityError
+from nkyel_extension_api import HostCapabilityError
 from fastapi import APIRouter, HTTPException, Path, Query, Request
 
 from app.gateway.deps import require_admin_user

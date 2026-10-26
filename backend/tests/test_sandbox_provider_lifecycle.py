@@ -16,9 +16,9 @@ from unittest.mock import Mock
 
 import pytest
 
-import deerflow.sandbox.sandbox_provider as sandbox_provider
-from deerflow.sandbox.sandbox import Sandbox
-from deerflow.sandbox.sandbox_provider import SandboxProvider
+import nkyel.sandbox.sandbox_provider as sandbox_provider
+from nkyel.sandbox.sandbox import Sandbox
+from nkyel.sandbox.sandbox_provider import SandboxProvider
 
 
 class SlowSandboxProvider(SandboxProvider):
@@ -297,7 +297,7 @@ def test_losing_cold_start_racer_shuts_down_its_orphan(monkeypatch):
 
 
 def test_failed_shutdown_remains_reachable_with_its_execution_manager():
-    from deerflow.sandbox.lease import get_sandbox_lease_manager
+    from nkyel.sandbox.lease import get_sandbox_lease_manager
 
     provider = ShutdownSandboxProvider()
     provider.shutdown = Mock(side_effect=[RuntimeError("cleanup failed"), None])
@@ -316,7 +316,7 @@ def test_failed_shutdown_remains_reachable_with_its_execution_manager():
 
 
 def test_failed_shutdown_does_not_replace_a_concurrently_installed_provider():
-    from deerflow.sandbox.lease import discard_sandbox_lease_manager
+    from nkyel.sandbox.lease import discard_sandbox_lease_manager
 
     old, replacement = ShutdownSandboxProvider(), ShutdownSandboxProvider()
 

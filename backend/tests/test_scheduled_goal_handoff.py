@@ -14,18 +14,18 @@ from langgraph.graph import END, START, StateGraph
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.persistence.base import Base
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.run.sql import RunRepository
-from deerflow.runtime import goal
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import ConflictError, RunManager, RunRecord
-from deerflow.runtime.runs.schemas import DisconnectMode, RunStatus
-from deerflow.runtime.runs.store.base import canonical_run_created_at
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.persistence.base import Base
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.run.sql import RunRepository
+from nkyel.runtime import goal
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import ConflictError, RunManager, RunRecord
+from nkyel.runtime.runs.schemas import DisconnectMode, RunStatus
+from nkyel.runtime.runs.store.base import canonical_run_created_at
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 @pytest_asyncio.fixture(params=["memory", "sqlite"])

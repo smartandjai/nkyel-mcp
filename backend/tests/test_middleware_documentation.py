@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 from langchain.agents.middleware import AgentMiddleware
 
-from deerflow.agents import create_deerflow_agent
-from deerflow.client import DeerFlowClient
-from deerflow.config.extensions_config import ExtensionsConfig
+from nkyel.agents import create_nkyel_agent
+from nkyel.client import NkyelClient
+from nkyel.config.extensions_config import ExtensionsConfig
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MIDDLEWARE_GUIDES = (
@@ -48,8 +48,8 @@ def test_custom_middleware_example_uses_current_lifecycle_hooks(path: Path) -> N
 
 def test_documented_registration_apis_exist() -> None:
     ExtensionsConfig.model_validate({"middlewares": ["pkg.mod:MyMiddleware"]})
-    assert "middlewares" in inspect.signature(DeerFlowClient.__init__).parameters
-    assert "extra_middleware" in inspect.signature(create_deerflow_agent).parameters
+    assert "middlewares" in inspect.signature(NkyelClient.__init__).parameters
+    assert "extra_middleware" in inspect.signature(create_nkyel_agent).parameters
 
 
 @pytest.mark.parametrize("path", MIDDLEWARE_GUIDES, ids=str)
@@ -57,17 +57,17 @@ def test_embedded_middleware_scope_is_explicit(path: Path) -> None:
     content = (REPO_ROOT / path).read_text(encoding="utf-8")
     markers = (
         (
-            "DeerFlowClient(middlewares=[",
+            "NkyelClient(middlewares=[",
             "builds the full lead-agent chain",
-            "create_deerflow_agent(extra_middleware=[",
+            "create_nkyel_agent(extra_middleware=[",
             "builds a smaller feature-based lead-agent chain",
             "Neither API forwards middleware to subagents.",
         )
         if "/zh/" not in path.as_posix()
         else (
-            "DeerFlowClient(middlewares=[",
+            "NkyelClient(middlewares=[",
             "构建完整的主 Agent 链",
-            "create_deerflow_agent(extra_middleware=[",
+            "create_nkyel_agent(extra_middleware=[",
             "构建较小的按功能组装的主 Agent 链",
             "两个 API 均不会将中间件转发给子 Agent。",
         )

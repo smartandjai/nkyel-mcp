@@ -7,22 +7,22 @@ from types import ModuleType, SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
-from deerflow_extension_api import EXTENSION_TASK_STORE_KEY, ExtensionData, TaskInfo, TaskOutcome
+from nkyel_extension_api import EXTENSION_TASK_STORE_KEY, ExtensionData, TaskInfo, TaskOutcome
 from langchain_core.messages import AIMessage
 
-from deerflow.extensions import reset_loaded_extensions, set_loaded_extensions
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions import reset_loaded_extensions, set_loaded_extensions
+from nkyel.extensions.registry import ExtensionRegistry
 
 _MOCKED_MODULE_NAMES = (
-    "deerflow.agents",
-    "deerflow.agents.thread_state",
-    "deerflow.agents.middlewares",
-    "deerflow.agents.middlewares.thread_data_middleware",
-    "deerflow.sandbox",
-    "deerflow.sandbox.middleware",
-    "deerflow.sandbox.security",
-    "deerflow.models",
-    "deerflow.skills.storage",
+    "nkyel.agents",
+    "nkyel.agents.thread_state",
+    "nkyel.agents.middlewares",
+    "nkyel.agents.middlewares.thread_data_middleware",
+    "nkyel.sandbox",
+    "nkyel.sandbox.middleware",
+    "nkyel.sandbox.security",
+    "nkyel.models",
+    "nkyel.skills.storage",
 )
 
 
@@ -31,31 +31,31 @@ def env():
     """Import the real executor behind conftest's cycle-breaking mock."""
     reset_loaded_extensions()
     original_modules = {name: sys.modules.get(name) for name in _MOCKED_MODULE_NAMES}
-    original_executor = sys.modules.get("deerflow.subagents.executor")
-    subagents_pkg = sys.modules.get("deerflow.subagents")
+    original_executor = sys.modules.get("nkyel.subagents.executor")
+    subagents_pkg = sys.modules.get("nkyel.subagents")
     missing = object()
     original_executor_attr = getattr(subagents_pkg, "executor", missing) if subagents_pkg is not None else missing
 
-    sys.modules.pop("deerflow.subagents.executor", None)
+    sys.modules.pop("nkyel.subagents.executor", None)
     if subagents_pkg is not None and hasattr(subagents_pkg, "executor"):
         delattr(subagents_pkg, "executor")
 
     try:
         for name in _MOCKED_MODULE_NAMES:
             sys.modules[name] = MagicMock()
-        storage_module = ModuleType("deerflow.skills.storage")
+        storage_module = ModuleType("nkyel.skills.storage")
         storage_module.get_or_new_skill_storage = lambda **kwargs: SimpleNamespace(load_skills=lambda *, enabled_only: [])
         storage_module.get_or_new_user_skill_storage = lambda user_id, **kwargs: SimpleNamespace(load_skills=lambda *, enabled_only: [])
-        sys.modules["deerflow.skills.storage"] = storage_module
+        sys.modules["nkyel.skills.storage"] = storage_module
 
-        from deerflow.subagents.config import SubagentConfig
-        from deerflow.subagents.executor import (
+        from nkyel.subagents.config import SubagentConfig
+        from nkyel.subagents.executor import (
             SubagentExecutor,
             SubagentResult,
             SubagentStatus,
         )
 
-        sys.modules["deerflow.subagents.executor"].get_app_config = lambda: SimpleNamespace(
+        sys.modules["nkyel.subagents.executor"].get_app_config = lambda: SimpleNamespace(
             tool_search=SimpleNamespace(enabled=False),
             authorization=SimpleNamespace(enabled=False),
         )
@@ -73,10 +73,10 @@ def env():
             else:
                 sys.modules[name] = original
         if original_executor is None:
-            sys.modules.pop("deerflow.subagents.executor", None)
+            sys.modules.pop("nkyel.subagents.executor", None)
         else:
-            sys.modules["deerflow.subagents.executor"] = original_executor
-        subagents_pkg = sys.modules.get("deerflow.subagents")
+            sys.modules["nkyel.subagents.executor"] = original_executor
+        subagents_pkg = sys.modules.get("nkyel.subagents")
         if subagents_pkg is not None:
             if original_executor_attr is missing:
                 if hasattr(subagents_pkg, "executor"):

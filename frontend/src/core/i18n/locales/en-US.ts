@@ -122,7 +122,7 @@ export const enUS: Translations = {
   },
 
   capabilities: {
-    toolsAndIntegrations: "Tools & integrations",
+    toolsAndIntegrations: "Connected Tools",
     icon: {
       title: "Plugin icon",
       upload: "Upload plugin icon",
@@ -141,10 +141,10 @@ export const enUS: Translations = {
       categories: {
         office: "Office & collaboration",
         knowledge: "Documents & knowledge",
-        research: "Search & research",
+        research: "nkyel Search",
         business: "Business & data",
         development: "Development & operations",
-        custom: "Custom plugins",
+        custom: "Custom connections",
       },
       hints: {
         office: "Keep your team in sync",
@@ -165,15 +165,15 @@ export const enUS: Translations = {
       notice:
         "Discover integrations for your team. Connect accounts and configure access when you need them.",
       configured: "Configured",
-      nativeHint: "Supported by DeerFlow · requires deployment configuration",
+      nativeHint: "Supported by nkyel · requires deployment configuration",
       guideHint: "Setup reference · not connected",
       unknownStatus: "Status unavailable",
       notConnected: "Not connected",
     },
     integrationSkills: "From plugins",
     sharedSkills: "Shared skills",
-    title: "Capability Center",
-    description: "Add tools and skills that help DeerFlow work your way.",
+    title: "Connections",
+    description: "Add tools and skills that help nkyel work your way.",
     plugins: "Plugins",
     skills: "Skills",
     searchPlugins: "Search plugins by name or purpose",
@@ -229,7 +229,7 @@ export const enUS: Translations = {
     showingOf: (loaded, total) => `Showing ${loaded} of ${total}`,
     download: "Download",
     thinking: "Thinking",
-    artifacts: "Artifacts",
+    artifacts: "Deliverables",
     public: "Public",
     custom: "Custom",
     notAvailableInDemoMode: "Not available in demo mode",
@@ -255,9 +255,9 @@ export const enUS: Translations = {
     editRerunWarning:
       "Rerunning restores conversation state only. Files, memory, and external actions are not undone.",
     branch: "Branch conversation",
-    showArtifacts: "Show artifacts of this conversation",
-    browser: "Browser",
-    showBrowser: "Open browser panel",
+    showArtifacts: "Mission Files & Deliverables",
+    browser: "nkyel Computer",
+    showBrowser: "Open nkyel Computer",
   },
 
   browserStream: {
@@ -309,13 +309,13 @@ export const enUS: Translations = {
 
   // Welcome
   welcome: {
-    greeting: "Hello, again!",
+    greeting: "What would you like to accomplish?",
     description:
-      "Welcome to 🦌 DeerFlow, an open source super agent. With built-in and custom skills, DeerFlow helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
+      "Welcome to 🦌 nkyel, an open source super agent. With built-in and custom skills, nkyel helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
 
     createYourOwnSkill: "Create Your Own Skill",
     createYourOwnSkillDescription:
-      "Create your own skill to release the power of DeerFlow. With customized skills,\nDeerFlow can help you search on the web, analyze data, and generate\n artifacts like slides, web pages and do almost anything.",
+      "Create your own skill to release the power of nkyel. With customized skills,\nnkyel can help you search on the web, analyze data, and generate\n artifacts like slides, web pages and do almost anything.",
   },
 
   // Clipboard
@@ -408,10 +408,11 @@ export const enUS: Translations = {
     excerptTruncated: "This excerpt was shortened to fit the retrieval limit.",
     sourceUnavailable:
       "Source evidence is unavailable in the loaded conversation.",
-    knowledgeSourcesSummary: (count: number) => `${count} knowledge sources`,
+    knowledgeSourcesSummary: (count: number) =>
+      `${count} ${count === 1 ? "source & reference" : "sources & references"}`,
     sourcesSummary: (count) =>
-      `Used ${count} ${count === 1 ? "source" : "sources"}`,
-    citeCount: (count) => `${count} ${count === 1 ? "cite" : "cites"}`,
+      `${count} ${count === 1 ? "source & reference" : "Sources & References"}`,
+    citeCount: (count) => `${count} ${count === 1 ? "citation" : "citations"}`,
     copyReference: (title) => `Copy ${title} reference`,
     copiedReference: (title) => `Copied ${title} reference`,
   },
@@ -462,7 +463,7 @@ export const enUS: Translations = {
     mentionClose: "Close references",
 
     placeholder: "How can I assist you today?",
-    disclaimer: "DeerFlow is AI and can make mistakes",
+    disclaimer: "nkyel is AI and can make mistakes",
     createSkillPrompt:
       "We're going to build a new skill step by step with `skill-creator`. To start, what do you want this skill to do?",
     addAttachments: "Add attachments",
@@ -484,7 +485,7 @@ export const enUS: Translations = {
     voiceInputStartLabel: "Dictate with voice",
     voiceInputStopLabel: "Stop voice input",
     voiceInputStart:
-      "Dictate with voice. DeerFlow receives only transcribed text; audio is handled by your browser or system speech service.",
+      "Dictate with voice. nkyel receives only transcribed text; audio is handled by your browser or system speech service.",
     voiceInputStop: "Stop voice input",
     voiceInputListening: "Listening... Click to stop voice input.",
     voiceInputUnsupported:
@@ -505,9 +506,9 @@ export const enUS: Translations = {
     reasoningMode: "Reasoning",
     reasoningModeDescription:
       "Reasoning before action, balance between time and accuracy",
-    proMode: "Pro",
+    proMode: "Deep Research",
     proModeDescription:
-      "Reasoning, planning and executing, get more accurate results, may take more time",
+      "In-depth research, reasoning, planning, and multi-step verification",
     ultraMode: "Ultra",
     ultraModeDescription:
       "Pro mode with subagents to divide work; best for complex multi-step tasks",
@@ -661,13 +662,13 @@ export const enUS: Translations = {
 
   // Sidebar
   sidebar: {
-    newChat: "New chat",
-    chats: "Chats",
+    newChat: "New conversation",
+    chats: "Conversations",
     channels: "Channels",
-    recentChats: "Recent chats",
+    recentChats: "Conversations",
     demoChats: "Demo chats",
-    agents: "Agents",
-    scheduledTasks: "Scheduled tasks",
+    agents: "nkyel Atelier",
+    scheduledTasks: "Missions",
     agentsDisabledTooltip: "Feature not enabled",
   },
 
@@ -724,7 +725,7 @@ export const enUS: Translations = {
       "Deleting this project unlinks its chats; chats, their history, and their files are not deleted. Shelf documents move to trash and stay recoverable for the retention window.",
     archived: "Archived",
     empty: "No chats in this project yet.",
-    newChat: "New chat",
+    newChat: "New conversation",
     create: "Create",
     createFailed: "Failed to create project",
     moveFailed: "Failed to move chat",
@@ -843,12 +844,12 @@ export const enUS: Translations = {
     cancelling: "Cancelling…",
     cancelFailed: "Failed to cancel task",
     cancellationRetrying: (attempt) =>
-      `Cancellation attempt ${attempt} failed; DeerFlow will keep retrying.`,
+      `Cancellation attempt ${attempt} failed; nkyel will keep retrying.`,
     notificationRetrying: (attempt) =>
-      `Chat notification attempt ${attempt} failed; DeerFlow will retry with backoff.`,
+      `Chat notification attempt ${attempt} failed; nkyel will retry with backoff.`,
     notificationStopped:
       "Chat notification delivery stopped after repeated or permanent failures.",
-    trackingDegraded: "Status checks are delayed; DeerFlow is still retrying.",
+    trackingDegraded: "Status checks are delayed; nkyel is still retrying.",
     viewDetails: "View details",
     hideDetails: "Hide details",
     detailsFailed: "Couldn't load task details",
@@ -967,8 +968,8 @@ export const enUS: Translations = {
     },
     page: {
       description:
-        "Tasks DeerFlow runs for you on a schedule. You can also just ask in any chat.",
-      descriptionNoChat: "Tasks DeerFlow runs for you on a schedule.",
+        "Tasks nkyel runs for you on a schedule. You can also just ask in any chat.",
+      descriptionNoChat: "Tasks nkyel runs for you on a schedule.",
       newTask: "New task",
       tabs: {
         all: "All",
@@ -981,7 +982,7 @@ export const enUS: Translations = {
       emptyTitle: "No scheduled tasks yet",
       emptyBody:
         "Ask in any chat, for example “Every weekday at 9:00, summarize my GitHub notifications”, or create one here.",
-      emptyBodyNoChat: "Create a task and DeerFlow will run it on schedule.",
+      emptyBodyNoChat: "Create a task and nkyel will run it on schedule.",
       threadFilter: "Showing tasks from this chat",
       showAll: "Show all",
       schedulerOffTitle: "Automatic runs are off on this server",
@@ -1056,7 +1057,7 @@ export const enUS: Translations = {
       trialsDontCount: "Trial runs don't count.",
       autoPauseRule: "Pauses after 3 runs in a row miss the goal",
       goalTooltip:
-        "After each run DeerFlow checks the result against this goal. If it isn't met, the agent keeps working in that run. Meeting it doesn't end the schedule.",
+        "After each run nkyel checks the result against this goal. If it isn't met, the agent keeps working in that run. Meeting it doesn't end the schedule.",
     },
     notice: {
       pausedByAgentTitle: "Paused by agent",
@@ -1269,7 +1270,7 @@ export const enUS: Translations = {
       },
     },
     runErrors: {
-      restarted: "Interrupted: DeerFlow restarted during this run",
+      restarted: "Interrupted: nkyel restarted during this run",
       leaseLost: "Interrupted: the server running it stopped responding",
       queueTimeout: "Skipped: it waited too long for a free slot",
       pausedWhileQueued: "Cancelled because the task was paused",
@@ -1431,7 +1432,7 @@ export const enUS: Translations = {
     deleteConfirm:
       "Are you sure you want to delete this agent? This action cannot be undone.",
     deleteSuccess: "Agent deleted",
-    newChat: "New chat",
+    newChat: "New conversation",
     createPageTitle: "Design your Agent",
     createPageSubtitle:
       "Describe the agent you want — I'll help you create it through conversation.",
@@ -1454,15 +1455,15 @@ export const enUS: Translations = {
     save: "Save agent",
     saving: "Saving agent...",
     saveRequested:
-      "Save requested. DeerFlow is generating and saving an initial version now.",
+      "Save requested. nkyel is generating and saving an initial version now.",
     saveHint:
       "You can save this agent at any time from the top-right menu, even if this is only a first draft.",
     saveCommandMessage:
       "Please save this custom agent now based on everything we have discussed so far. Treat this as my explicit confirmation to save. If some details are still missing, make reasonable assumptions, generate a concise first SOUL.md in English, and call setup_agent immediately without asking me for more confirmation.",
     agentSaveFailed:
-      "DeerFlow could not save this agent. Review the tool error and try again.",
+      "nkyel could not save this agent. Review the tool error and try again.",
     agentCreatedPendingRefresh:
-      "DeerFlow could not confirm the saved agent. Please try saving it again.",
+      "nkyel could not confirm the saved agent. Please try saving it again.",
     more: "More actions",
     agentCreated: "Agent created!",
     startChatting: "Start chatting",
@@ -1520,13 +1521,13 @@ export const enUS: Translations = {
 
   // Workspace
   workspace: {
-    officialWebsite: "DeerFlow's official website",
-    githubTooltip: "DeerFlow on GitHub",
+    officialWebsite: "nkyel's official website",
+    githubTooltip: "nkyel on GitHub",
     settingsAndMore: "Settings and more",
-    visitGithub: "DeerFlow on GitHub",
+    visitGithub: "nkyel on GitHub",
     reportIssue: "Report an issue",
     contactUs: "Contact us",
-    about: "About DeerFlow",
+    about: "About nkyel",
     logout: "Log out",
     gatewayUnavailable: "Gateway is temporarily unavailable.",
     gatewayUnavailableRetrying: "Retrying in the background…",
@@ -1671,10 +1672,10 @@ export const enUS: Translations = {
         "WeChat says this bot is already linked. Close this dialog and check its connection, or choose a different bot on your phone.",
       saved: "Token saved securely",
       savedDescription:
-        "DeerFlow has saved your token on the server and started the WeChat channel.",
+        "nkyel has saved your token on the server and started the WeChat channel.",
       bindTitle: "One more step: link your account",
       bindDescription:
-        "Send this command to the bot in WeChat to link it to your DeerFlow account.",
+        "Send this command to the bot in WeChat to link it to your nkyel account.",
       bindWaiting: "Waiting for your message in WeChat…",
       bindLoading: "Preparing your account connection…",
       bindFailed:
@@ -1691,7 +1692,7 @@ export const enUS: Translations = {
 
       login: "Scan QR code",
       manual: "Use token",
-      description: "Connect WeChat to your DeerFlow workspace.",
+      description: "Connect WeChat to your nkyel workspace.",
       loading: "Generating QR code…",
       imageTitle: "WeChat login QR code",
       scan: "Scan this code with WeChat, then confirm on your phone.",
@@ -1718,15 +1719,15 @@ export const enUS: Translations = {
     saveAndConnect: "Save and connect",
     saveChanges: "Save changes",
     descriptions: {
-      buzz: "Buzz channels and direct messages through your DeerFlow agent.",
+      buzz: "Buzz channels and direct messages through your nkyel agent.",
       qq: "QQ direct messages and group @mentions over WebSocket.",
-      telegram: "Telegram direct messages through your DeerFlow bot.",
+      telegram: "Telegram direct messages through your nkyel bot.",
       slack: "Slack workspace messages and mentions.",
-      discord: "Discord server messages through your DeerFlow bot.",
-      feishu: "Feishu and Lark messages through your DeerFlow app.",
-      dingtalk: "DingTalk Stream Push messages through your DeerFlow bot.",
-      wechat: "WeChat iLink messages through your DeerFlow bot.",
-      wecom: "WeCom messages through your DeerFlow AI bot.",
+      discord: "Discord server messages through your nkyel bot.",
+      feishu: "Feishu and Lark messages through your nkyel app.",
+      dingtalk: "DingTalk Stream Push messages through your nkyel bot.",
+      wechat: "WeChat iLink messages through your nkyel bot.",
+      wecom: "WeCom messages through your nkyel AI bot.",
     },
     connectedAs: (name: string) => `Connected as ${name}.`,
     scheduledUpdates: {
@@ -1740,15 +1741,15 @@ export const enUS: Translations = {
 
   // Page titles (document title)
   pages: {
-    appName: "DeerFlow",
+    appName: "nkyel",
     chats: "Chats",
-    newChat: "New chat",
+    newChat: "New conversation",
     untitled: "Untitled",
   },
 
   // Tool calls
   toolCalls: {
-    details: "Tool details",
+    details: "Activity details",
     failed: "Failed",
     scheduleTaskPending: "Scheduled task operation",
     stopScheduledTaskPending: "Pause this scheduled task",
@@ -1763,7 +1764,7 @@ export const enUS: Translations = {
       "Preview truncated; copying includes only the displayed preview.",
     moreSteps: (count: number) => `${count} more step${count === 1 ? "" : "s"}`,
     lessSteps: "Less steps",
-    executeCommand: "Execute command",
+    executeCommand: "Console: Execute command",
     presentFiles: "Present files",
     needYourHelp: "Need your help",
     useTool: (toolName: string) => `Use "${toolName}" tool`,
@@ -1779,7 +1780,7 @@ export const enUS: Translations = {
     writeFile: "Write file",
     clickToViewContent: "Click to view file content",
     writeTodos: "Update to-do list",
-    skillInstallTooltip: "Install skill and make it available to DeerFlow",
+    skillInstallTooltip: "Install skill and make it available to nkyel",
     browserNavigate: (url: string) => `Open ${url} in browser`,
     browserNavigateGeneric: "Open page in browser",
     browserClick: "Click element in browser",
@@ -1805,7 +1806,7 @@ export const enUS: Translations = {
 
   humanInput: {
     answered: "Answered",
-    pending: "Sending...",
+    pending: "Pending Approval...",
     readOnly: "Read only",
     otherLabel: "Other answer",
     otherPlaceholder: "Type another answer...",
@@ -1890,7 +1891,7 @@ export const enUS: Translations = {
     actions: "Actions",
     keyboardShortcuts: "Keyboard Shortcuts",
     keyboardShortcutsDescription:
-      "Navigate DeerFlow faster with keyboard shortcuts.",
+      "Navigate nkyel faster with keyboard shortcuts.",
     openCommandPalette: "Open Command Palette",
     toggleSidebar: "Toggle Sidebar",
   },
@@ -1898,7 +1899,7 @@ export const enUS: Translations = {
   // Settings
   settings: {
     title: "Settings",
-    description: "Adjust how DeerFlow looks and behaves for you.",
+    description: "Adjust how nkyel looks and behaves for you.",
     models: {
       title: "Models",
       description:
@@ -1992,7 +1993,7 @@ export const enUS: Translations = {
     memory: {
       title: "Memory",
       description:
-        "DeerFlow automatically learns from your conversations in the background. These memories help DeerFlow understand you better and deliver a more personalized experience.",
+        "nkyel automatically learns from your conversations in the background. These memories help nkyel understand you better and deliver a more personalized experience.",
       empty: "No memory data to display.",
       rawJson: "Raw JSON",
       exportButton: "Export memory",
@@ -2167,7 +2168,7 @@ export const enUS: Translations = {
     channels: {
       title: "Channels",
       description:
-        "Connect IM accounts that can send messages to DeerFlow from outside the browser.",
+        "Connect IM accounts that can send messages to nkyel from outside the browser.",
       disabled:
         "Channel connections are not enabled on this server. Ask an administrator to enable channel_connections.",
     },
@@ -2221,7 +2222,7 @@ export const enUS: Translations = {
         changeAppButton: "Change Lark app",
         changeAppTitle: "Switch to a different Lark app",
         changeAppDescription:
-          "Point your DeerFlow account at a different Lark/Feishu app. This only affects your account; other users are not changed.",
+          "Point your nkyel account at a different Lark/Feishu app. This only affects your account; other users are not changed.",
         changeAppIdLabel: "App ID",
         changeAppSecretLabel: "App Secret",
         changeAppAuthResetNote:
@@ -2235,12 +2236,12 @@ export const enUS: Translations = {
         connectionStarted: "Connection link opened",
         connectionReady: "Connection is ready. Opening authorization...",
         authStarted:
-          "Authorization page opened. DeerFlow will detect completion automatically.",
+          "Authorization page opened. nkyel will detect completion automatically.",
         authorizationStillPending:
-          'Authorization is not complete yet. Finish it in the browser; DeerFlow keeps checking automatically. You can click "I completed authorization" if the page does not update.',
+          'Authorization is not complete yet. Finish it in the browser; nkyel keeps checking automatically. You can click "I completed authorization" if the page does not update.',
         permissionTitle: "Authorization scope",
         permissionDescription:
-          "By default, DeerFlow only completes the base sign-in and does not request any business permissions. Select the domains you need here; connected users can re-authorize to add more (scopes accumulate).",
+          "By default, nkyel only completes the base sign-in and does not request any business permissions. Select the domains you need here; connected users can re-authorize to add more (scopes accumulate).",
         authDomains: {
           calendar: {
             label: "Calendar",
@@ -2351,10 +2352,10 @@ export const enUS: Translations = {
           "The first connection needs one browser confirmation from Lark. Open the link below and finish the prompt, then return here to continue authorization.",
         openAuthLinkTitle: "Authorize Lark in your browser",
         openAuthLinkDescription:
-          "Open the link below to authorize. DeerFlow keeps checking automatically and will save the connection after approval.",
+          "Open the link below to authorize. nkyel keeps checking automatically and will save the connection after approval.",
         waitingAuthTitle: "Waiting for Lark authorization",
         waitingAuthDescription:
-          "Finish authorization in the browser page that just opened. DeerFlow will update this panel automatically; the button below is only a fallback.",
+          "Finish authorization in the browser page that just opened. nkyel will update this panel automatically; the button below is only a fallback.",
         openAuthLink: "Open link",
         copyAuthLink: "Copy link",
         completeAuth: "I completed authorization",
@@ -2380,7 +2381,7 @@ export const enUS: Translations = {
           "The current user's authorization was verified with Lark during this connection flow. Reconnect whenever you need to refresh it or add permissions.",
         authNextTitle: "Complete browser authorization next",
         authNextDescription:
-          "Click “Connect Lark”; DeerFlow checks the current status first and opens browser authorization only when disconnected or expired.",
+          "Click “Connect Lark”; nkyel checks the current status first and opens browser authorization only when disconnected or expired.",
       },
     },
     skills: {
@@ -2456,7 +2457,7 @@ export const enUS: Translations = {
       createSkill: "Create skill",
       emptyTitle: "No agent skill yet",
       emptyDescription:
-        "Put your agent skill folders under the `/skills/custom` folder under the root folder of DeerFlow.",
+        "Put your agent skill folders under the `/skills/custom` folder under the root folder of nkyel.",
       emptyButton: "Create Your First Skill",
       adminRequired: "Admin privileges are required to manage agent skills.",
       installAdminRequired:
@@ -2470,12 +2471,12 @@ export const enUS: Translations = {
     notification: {
       title: "Notification",
       description:
-        "DeerFlow only sends a completion notification when the window is not active. This is especially useful for long-running tasks so you can switch to other work and get notified when done.",
+        "nkyel only sends a completion notification when the window is not active. This is especially useful for long-running tasks so you can switch to other work and get notified when done.",
       requestPermission: "Request notification permission",
       deniedHint:
         "Notification permission was denied. You can enable it in your browser's site settings to receive completion alerts.",
       testButton: "Send test notification",
-      testTitle: "DeerFlow",
+      testTitle: "nkyel",
       testBody: "This is a test notification.",
       notSupported: "Your browser does not support notifications.",
       disableNotification: "Disable notification",
@@ -2522,7 +2523,7 @@ export const enUS: Translations = {
       changePasswordDescription: "Update your account password.",
       ssoPasswordDescription: "Password is managed by your SSO provider.",
       ssoPasswordMessage:
-        "This account signs in with {provider}, so DeerFlow cannot manage or change its password here. Use your SSO provider's account settings instead.",
+        "This account signs in with {provider}, so nkyel cannot manage or change its password here. Use your SSO provider's account settings instead.",
       currentPassword: "Current password",
       newPassword: "New password",
       confirmNewPassword: "Confirm new password",
@@ -2548,14 +2549,14 @@ export const enUS: Translations = {
     passwordPlaceholder: "•••••••",
     rememberMe: "Keep me signed in",
     rememberMeDescription:
-      "Keep this browser session when possible. DeerFlow stores only your email, never your password.",
+      "Keep this browser session when possible. nkyel stores only your email, never your password.",
     pleaseWait: "Please wait...",
     signIn: "Sign In",
     createAccount: "Create Account",
     createAdminAccount: "Create admin account",
     adminSetupRequiredTitle: "Administrator setup is required",
     adminSetupRequiredDescription:
-      "DeerFlow needs an administrator account before new regular accounts can be created.",
+      "nkyel needs an administrator account before new regular accounts can be created.",
     orContinueWith: "Or continue with",
     ssoHint:
       "If your account uses single sign-on, sign in with the option below instead.",

@@ -30,21 +30,21 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 from pydantic import Field
 
-from deerflow.agents.lead_agent import agent as lead_agent_module
-from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
-from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
-from deerflow.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
-from deerflow.agents.thread_state import ThreadState
-from deerflow.authz.rbac import RbacAuthorizationProvider
-from deerflow.config.app_config import AppConfig
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
-from deerflow.config.loop_detection_config import LoopDetectionConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.safety_finish_reason_config import SafetyFinishReasonConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.skills_config import SkillsConfig
-from deerflow.config.subagents_config import SubagentsAppConfig
-from deerflow.config.token_budget_config import TokenBudgetConfig
+from nkyel.agents.lead_agent import agent as lead_agent_module
+from nkyel.agents.middlewares.durable_context_middleware import DurableContextMiddleware
+from nkyel.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+from nkyel.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
+from nkyel.agents.thread_state import ThreadState
+from nkyel.authz.rbac import RbacAuthorizationProvider
+from nkyel.config.app_config import AppConfig
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.config.loop_detection_config import LoopDetectionConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.safety_finish_reason_config import SafetyFinishReasonConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.skills_config import SkillsConfig
+from nkyel.config.subagents_config import SubagentsAppConfig
+from nkyel.config.token_budget_config import TokenBudgetConfig
 
 _PARSE_CALLS: list[str] = []
 _WRITE_CALLS: list[str] = []
@@ -262,7 +262,7 @@ def test_allowed_tools_metadata_cannot_grant_rbac_denied_tool(monkeypatch, tmp_p
     allowed-tools lists `write_file` must not make it executable; the
     Guardrail-backed authorization middleware still refuses the call.
     """
-    from deerflow.agents.middlewares.tool_error_handling_middleware import build_lead_runtime_middlewares
+    from nkyel.agents.middlewares.tool_error_handling_middleware import build_lead_runtime_middlewares
 
     provider = RbacAuthorizationProvider(roles={"guest": {"tools": {"allow": ["read_file", "parse_document"]}}})
     _make_skill(tmp_path, "demo-skill", ["write_file"])

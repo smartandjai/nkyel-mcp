@@ -49,14 +49,14 @@ function launch() {
   const { messages } = loadScheduledThread("minute-run");
   const human = messages.find((message) => message.type === "human")!;
   const kwargs = human.additional_kwargs as {
-    deerflow_scheduled_origin: ScheduledOrigin;
+    nkyel_scheduled_origin: ScheduledOrigin;
   };
   const withNote = {
     ...human,
     content: `${human.content as string}\n\n<standing_notes>\n- ${NOTE}\n</standing_notes>`,
     additional_kwargs: {
-      deerflow_scheduled_origin: {
-        ...kwargs.deerflow_scheduled_origin,
+      nkyel_scheduled_origin: {
+        ...kwargs.nkyel_scheduled_origin,
         standing_notes: [NOTE],
       },
     },

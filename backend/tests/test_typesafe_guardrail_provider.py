@@ -20,9 +20,9 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from deerflow.guardrails.middleware import GuardrailMiddleware
-from deerflow.guardrails.provider import GuardrailRequest
-from deerflow.guardrails.typesafe import TypeSafeGuardrailError, TypeSafeGuardrailProvider
+from nkyel.guardrails.middleware import GuardrailMiddleware
+from nkyel.guardrails.provider import GuardrailRequest
+from nkyel.guardrails.typesafe import TypeSafeGuardrailError, TypeSafeGuardrailProvider
 
 _API_KEY = "typesafe-test-key"
 _QUESTION_ID = "risky_tool_call"
@@ -143,9 +143,9 @@ class TestVerdict:
         # repr(): the recorded threshold must replay the recorded probability to
         # the same verdict, so neither value may be rounded for display.
         assert message.startswith("typesafe.tool_call_risky: p=0.982147216796875 >= t=0.5 model=jev-1.13.0 cached=false digest=")
-        assert message.endswith("policy=deerflow.guardrails.typesafe@1.1.0")
+        assert message.endswith("policy=nkyel.guardrails.typesafe@1.1.0")
         assert decision.metadata == {"probability": 0.982147216796875, "threshold": 0.5, "model": "jev-1.13.0", "cached": False, "state_digest": decision.metadata["state_digest"]}
-        assert decision.policy_id == "deerflow.guardrails.typesafe"
+        assert decision.policy_id == "nkyel.guardrails.typesafe"
 
     def test_request_shape_and_state_digest(self):
         server = _Server()
@@ -258,7 +258,7 @@ class TestLocalDecisions:
             assert decision.allow is False
             assert decision.reasons[0].code == "typesafe.tool_not_allowed"
             assert decision.metadata == {"tool_not_allowed": True}
-            assert decision.policy_id == "deerflow.guardrails.typesafe"
+            assert decision.policy_id == "nkyel.guardrails.typesafe"
         assert server.count == 0
 
     def test_empty_allowed_tools_refuses_every_tool(self):

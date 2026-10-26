@@ -10,7 +10,7 @@ from _repository_race_helpers import miss_select_factory
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from deerflow.persistence.channel_connections import (
+from nkyel.persistence.channel_connections import (
     ChannelConnectionRepository,
     ChannelConnectionRow,
     ChannelConversationRow,
@@ -18,12 +18,12 @@ from deerflow.persistence.channel_connections import (
     ChannelCredentialRow,
     ChannelOAuthStateRow,
 )
-from deerflow.persistence.channel_connections.sql import _UPSERT_MAX_ATTEMPTS
+from nkyel.persistence.channel_connections.sql import _UPSERT_MAX_ATTEMPTS
 
 
 @pytest.fixture
 async def repo(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'channels.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -254,7 +254,7 @@ class TestChannelConnectionRepository:
             cipher=ChannelCredentialCipher.from_key("wrong-encryption-key"),
         )
 
-        with caplog.at_level(logging.WARNING, logger="deerflow.persistence.channel_connections.sql"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.persistence.channel_connections.sql"):
             credentials = await wrong_key_repo.get_credentials(connection["id"])
 
         assert credentials is None

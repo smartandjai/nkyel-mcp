@@ -15,13 +15,13 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-import deerflow.persistence.models  # noqa: F401
-from deerflow.persistence.base import Base
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.scheduled_task_runs import ActiveScheduledRunConflict, ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ACTIVE_RUN_STATUSES, ONCE_TASK_STATUS_BY_RUN_STATUS, ScheduledTaskRow
+import nkyel.persistence.models  # noqa: F401
+from nkyel.persistence.base import Base
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.scheduled_task_runs import ActiveScheduledRunConflict, ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ACTIVE_RUN_STATUSES, ONCE_TASK_STATUS_BY_RUN_STATUS, ScheduledTaskRow
 
 pytestmark = pytest.mark.asyncio
 
@@ -241,7 +241,7 @@ async def test_recovery_lookup_prefers_the_highest_sequence_whenever_one_exists(
     await _create_task(first)
     now = datetime(2026, 7, 15, 12, 0, tzinfo=UTC)
     # The later sequence carries the earlier caller clock: sequence still wins.
-    with patch("deerflow.persistence.scheduled_task_runs.sql.datetime") as clock:
+    with patch("nkyel.persistence.scheduled_task_runs.sql.datetime") as clock:
         clock.now.return_value = now + timedelta(seconds=30)
         await _create_run(first, "older-sequenced")
         clock.now.return_value = now

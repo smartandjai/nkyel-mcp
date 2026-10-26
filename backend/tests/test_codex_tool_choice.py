@@ -10,8 +10,8 @@ import httpx
 import pytest
 from langchain_core.messages import HumanMessage, ToolMessage
 
-from deerflow.models import openai_codex_provider as provider
-from deerflow.models.credential_loader import CodexCliCredential
+from nkyel.models import openai_codex_provider as provider
+from nkyel.models.credential_loader import CodexCliCredential
 
 
 @pytest.mark.parametrize(

@@ -17,10 +17,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.projects.documents import add_staged_document, converted_markdown_path, ensure_converted_markdown, original_file_path, stage_document_bytes
-from deerflow.projects.tools import _list_project_documents_impl, _read_project_document_impl
-from deerflow.projects.trash import make_purge_file_remover
-from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+from nkyel.projects.documents import add_staged_document, converted_markdown_path, ensure_converted_markdown, original_file_path, stage_document_bytes
+from nkyel.projects.tools import _list_project_documents_impl, _read_project_document_impl
+from nkyel.projects.trash import make_purge_file_remover
+from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
 pytestmark = pytest.mark.anyio
 
@@ -30,11 +30,11 @@ _USER = "u1"
 @pytest.fixture
 async def env(tmp_path, monkeypatch):
     """Real SQLite repos + a real per-user projects layout on disk."""
-    import deerflow.config.paths as paths_mod
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
+    import nkyel.config.paths as paths_mod
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setattr(paths_mod, "_paths", None)
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}", sqlite_dir=str(tmp_path))
     sf = get_session_factory()
@@ -96,7 +96,7 @@ class TestListProjectDocuments:
         assert "error" in result
 
     async def test_fail_closed_without_session_factory(self, env, monkeypatch):
-        monkeypatch.setattr("deerflow.persistence.get_session_factory", lambda: None)
+        monkeypatch.setattr("nkyel.persistence.get_session_factory", lambda: None)
         result = json.loads(await _list_project_documents_impl(_runtime(project_id=env.project["id"]), offset=0, limit=10))
         assert "error" in result
 
@@ -153,14 +153,14 @@ class TestReadProjectDocument:
         assert "attach" in result["error"]
 
     async def test_convertible_document_converts_on_first_read_when_enabled(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         async def fake_convert(file_path, output_path=None):
             output_path.write_text("# converted markdown", encoding="utf-8")
             return output_path
 
         monkeypatch.setattr(documents_mod, "convert_file_to_markdown", fake_convert)
-        monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: True)
+        monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: True)
         row = await _shelve(env, name="report.docx", data=b"\x00docx-bytes")
 
         runtime = _runtime(project_id=env.project["id"])
@@ -174,7 +174,7 @@ class TestReadProjectDocument:
         assert second["content"] == "# converted markdown"
 
     async def test_convertible_document_is_declined_when_conversion_is_off(self, env, monkeypatch):
-        monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: False)
+        monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: False)
         row = await _shelve(env, name="report.docx", data=b"\x00docx-bytes")
         result = json.loads(await _read_project_document_impl(_runtime(project_id=env.project["id"]), document_id=row["id"], offset=0, limit=100))
         assert "error" in result
@@ -196,7 +196,7 @@ class TestReadProjectDocument:
         assert "no longer on the shelf" in result["error"]
 
     async def test_missing_content_reports_content_missing(self, env):
-        from deerflow.projects.documents import original_file_path
+        from nkyel.projects.documents import original_file_path
 
         row = await _shelve(env, name="lost.txt", data=b"was here")
         original_file_path(env.paths, user_id=_USER, row=row).unlink()
@@ -208,14 +208,14 @@ class TestReadProjectDocument:
         """A convertible extension takes the conversion path BEFORE the
         null-byte text heuristic: an ASCII85-style PDF head samples as text
         but must never be raw-served."""
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         async def fake_convert(file_path, output_path=None):
             output_path.write_text("# converted markdown", encoding="utf-8")
             return output_path
 
         monkeypatch.setattr(documents_mod, "convert_file_to_markdown", fake_convert)
-        monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: True)
+        monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: True)
         row = await _shelve(env, name="report.pdf", data=b"%PDF-1.4\n1 0 obj<</Type/Catalog>>stream\nGBTor ASCII85 body\n")
         result = json.loads(await _read_project_document_impl(_runtime(project_id=env.project["id"]), document_id=row["id"], offset=0, limit=200))
         assert result["content"] == "# converted markdown"
@@ -223,7 +223,7 @@ class TestReadProjectDocument:
     async def test_convertible_pdf_with_text_like_head_declined_when_conversion_is_off(self, env, monkeypatch):
         """With auto-convert off, a null-free-head convertible reports the
         conversion_disabled decline — never the raw PDF syntax."""
-        monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: False)
+        monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: False)
         row = await _shelve(env, name="report.pdf", data=b"%PDF-1.4\n1 0 obj<</Type/Catalog>>stream\nGBTor ASCII85 body\n")
         result = json.loads(await _read_project_document_impl(_runtime(project_id=env.project["id"]), document_id=row["id"], offset=0, limit=200))
         assert "error" in result
@@ -244,7 +244,7 @@ class TestInsertFailureNamespacePreservation:
     async def test_refresh_failure_after_commit_keeps_row_and_bytes(self, env, monkeypatch):
         from sqlalchemy.ext.asyncio import AsyncSession
 
-        from deerflow.persistence.projects.model import ProjectDocumentRow
+        from nkyel.persistence.projects.model import ProjectDocumentRow
 
         real_refresh = AsyncSession.refresh
         failed = False
@@ -308,8 +308,8 @@ class TestInsertFailureNamespacePreservation:
         bytes because ``get`` filters trashed rows."""
         from sqlalchemy.ext.asyncio import AsyncSession
 
-        from deerflow.persistence.projects.model import ProjectDocumentRow
-        from deerflow.projects.trash import restore_document
+        from nkyel.persistence.projects.model import ProjectDocumentRow
+        from nkyel.projects.trash import restore_document
 
         real_refresh = AsyncSession.refresh
         fired = False
@@ -348,8 +348,8 @@ class TestInsertFailureNamespacePreservation:
         survive and the row restores into another project."""
         from sqlalchemy.ext.asyncio import AsyncSession
 
-        from deerflow.persistence.projects.model import ProjectDocumentRow
-        from deerflow.projects.trash import restore_document
+        from nkyel.persistence.projects.model import ProjectDocumentRow
+        from nkyel.projects.trash import restore_document
 
         real_refresh = AsyncSession.refresh
         fired = False
@@ -386,7 +386,7 @@ class TestBoundedReads:
     (immutable rows, §6.2) in a bounded process-local LRU."""
 
     async def test_early_window_never_reads_the_whole_file(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         payload = b"0123456789abcdef\n" * 300_000  # ~5.1 MiB
         staged = await stage_document_bytes(env.paths, user_id=_USER, project_id=env.project["id"], chunks=[payload], max_bytes=8 << 20)
@@ -426,7 +426,7 @@ class TestBoundedReads:
         assert state["bytes"] < 1 << 20
 
     async def test_total_chars_is_computed_once_and_cached_across_pages(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         calls = 0
         real_count = documents_mod._count_text_chars
@@ -482,14 +482,14 @@ class TestReadOriginalIntegrity:
         assert "content_missing" in result["error"]
 
     async def test_missing_original_with_cached_derived_reports_content_missing(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         async def fake_convert(file_path, output_path=None):
             output_path.write_text("# converted markdown", encoding="utf-8")
             return output_path
 
         monkeypatch.setattr(documents_mod, "convert_file_to_markdown", fake_convert)
-        monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: True)
+        monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: True)
         row = await _shelve(env, name="report.docx", data=b"\x00docx-bytes")
         runtime = _runtime(project_id=env.project["id"])
         first = json.loads(await _read_project_document_impl(runtime, document_id=row["id"], offset=0, limit=100))
@@ -501,7 +501,7 @@ class TestReadOriginalIntegrity:
         assert "content_missing" in result["error"]
 
     async def test_valid_derived_is_served_without_reconversion(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         calls = 0
 
@@ -512,7 +512,7 @@ class TestReadOriginalIntegrity:
             return output_path
 
         monkeypatch.setattr(documents_mod, "convert_file_to_markdown", fake_convert)
-        monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: True)
+        monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: True)
         row = await _shelve(env, name="report.docx", data=b"\x00docx-bytes")
         runtime = _runtime(project_id=env.project["id"])
         first = json.loads(await _read_project_document_impl(runtime, document_id=row["id"], offset=0, limit=100))
@@ -549,13 +549,13 @@ class TestConversionSerialization:
         return fake_convert
 
     async def test_conversion_does_not_block_unrelated_database_writes(self, env, monkeypatch):
-        from deerflow.persistence.thread_meta.sql import ThreadMetaRepository
-        from deerflow.projects import documents as documents_mod
+        from nkyel.persistence.thread_meta.sql import ThreadMetaRepository
+        from nkyel.projects import documents as documents_mod
 
         started = threading.Event()
         finish = threading.Event()
         monkeypatch.setattr(documents_mod, "convert_file_to_markdown", self._gated_convert(started, finish))
-        monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: True)
+        monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: True)
         row = await _shelve(env, name="report.docx", data=b"\x00docx-bytes")
 
         # Driven through the agent tool, the path a first read actually takes.
@@ -571,14 +571,14 @@ class TestConversionSerialization:
         assert self._no_temp_left(env, row)
 
     async def test_restored_document_converts_from_its_new_project_into_its_original_namespace(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         async def fake_convert(file_path, output_path=None):
             output_path.write_text("# converted markdown", encoding="utf-8")
             return output_path
 
         monkeypatch.setattr(documents_mod, "convert_file_to_markdown", fake_convert)
-        monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: True)
+        monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: True)
         row = await _shelve(env, name="report.docx", data=b"\x00docx-bytes")
         target = await env.projects.create(name="T", user_id=_USER)
         assert await env.docs.trash(row["id"], user_id=_USER) is True
@@ -595,7 +595,7 @@ class TestConversionSerialization:
         assert self._no_temp_left(env, restored)
 
     async def test_purge_during_conversion_proceeds_and_conversion_publishes_nothing(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         started = threading.Event()
         finish = threading.Event()
@@ -619,7 +619,7 @@ class TestConversionSerialization:
         assert self._no_temp_left(env, row)
 
     async def test_trash_during_conversion_proceeds_and_conversion_publishes_nothing(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         started = threading.Event()
         finish = threading.Event()
@@ -639,7 +639,7 @@ class TestConversionSerialization:
         assert self._no_temp_left(env, row)
 
     async def test_failed_conversion_of_a_row_purged_meanwhile_reports_content_missing(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         started = threading.Event()
         finish = threading.Event()
@@ -665,7 +665,7 @@ class TestConversionSerialization:
         assert self._no_temp_left(env, row)
 
     async def test_cancelled_conversion_drains_and_leaves_no_staged_output(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         started = threading.Event()
         finish = threading.Event()
@@ -687,7 +687,7 @@ class TestConversionSerialization:
         assert self._no_temp_left(env, row)
 
     async def test_purge_committed_first_conversion_publishes_nothing(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         called = False
 
@@ -710,7 +710,7 @@ class TestConversionSerialization:
         assert self._no_temp_left(env, row)
 
     async def test_trash_committed_first_conversion_publishes_nothing(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         called = False
 
@@ -753,7 +753,7 @@ class TestConversionSingleFlight:
         return fake_convert
 
     async def test_concurrent_first_reads_share_one_conversion_across_event_loops(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         started = threading.Event()
         finish = threading.Event()
@@ -781,7 +781,7 @@ class TestConversionSingleFlight:
         assert documents_mod._inflight_conversions == {}
 
     async def test_cancelled_follower_leaves_the_shared_conversion_running(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         started = threading.Event()
         finish = threading.Event()
@@ -805,7 +805,7 @@ class TestConversionSingleFlight:
         assert documents_mod._inflight_conversions == {}
 
     async def test_follower_takes_over_when_the_leader_is_cancelled(self, env, monkeypatch):
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         started = threading.Event()
         finish = threading.Event()

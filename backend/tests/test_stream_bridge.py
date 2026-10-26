@@ -11,18 +11,18 @@ import anyio
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.stream_bridge_config import (
+from nkyel.config.stream_bridge_config import (
     MAX_HEARTBEAT_INTERVAL_SECONDS,
     MAX_RECOVERED_STREAM_CLEANUP_DELAY_SECONDS,
     StreamBridgeConfig,
     set_stream_bridge_config,
 )
-from deerflow.runtime import END_SENTINEL, HEARTBEAT_SENTINEL, MemoryStreamBridge, StreamGap, StreamProducerLeaseState, make_stream_bridge
+from nkyel.runtime import END_SENTINEL, HEARTBEAT_SENTINEL, MemoryStreamBridge, StreamGap, StreamProducerLeaseState, make_stream_bridge
 
-# RedisStreamBridge is no longer re-exported from deerflow.runtime (redis is an
+# RedisStreamBridge is no longer re-exported from nkyel.runtime (redis is an
 # optional extra; see the NOTE in runtime/stream_bridge/__init__.py). Import it
 # directly from the submodule.
-from deerflow.runtime.stream_bridge.redis import RedisStreamBridge
+from nkyel.runtime.stream_bridge.redis import RedisStreamBridge
 
 _INVALID_NUMERIC_REDIS_CURSORS = [
     pytest.param("9" * 5000 + "-0", id="oversized-milliseconds"),
@@ -961,8 +961,8 @@ async def test_redis_cleanup_deletes_stream(redis_bridge: RedisStreamBridge):
     await redis_bridge.cleanup(run_id)
 
     assert fake.deleted == [
-        "deerflow:stream_bridge:redis-run-cleanup",
-        "deerflow:stream_bridge:redis-run-cleanup:producer-tracked",
+        "nkyel:stream_bridge:redis-run-cleanup",
+        "nkyel:stream_bridge:redis-run-cleanup:producer-tracked",
     ]
 
 
@@ -1021,7 +1021,7 @@ async def test_redis_recovery_cleanup_rejects_active_registration_window():
 
 @pytest.mark.anyio
 async def test_redis_lost_producer_lease_cancels_the_owning_task(monkeypatch):
-    import deerflow.runtime.stream_bridge.redis as redis_bridge_module
+    import nkyel.runtime.stream_bridge.redis as redis_bridge_module
 
     monkeypatch.setattr(
         redis_bridge_module,
@@ -1600,7 +1600,7 @@ async def test_redis_publish_refreshes_stream_ttl():
         client=fake,
     )
     run_id = "redis-run-ttl"
-    key = "deerflow:stream_bridge:redis-run-ttl"
+    key = "nkyel:stream_bridge:redis-run-ttl"
 
     await bridge.publish(run_id, "event-1", {"n": 1})
     await bridge.publish(run_id, "event-2", {"n": 2})
@@ -2073,7 +2073,7 @@ async def test_memory_subscribe_replays_gap_when_buffer_empty_and_cursor_behind_
 async def test_make_stream_bridge_uses_docker_redis_env(monkeypatch):
     """Docker can enable Redis bridge without editing config.yaml."""
     set_stream_bridge_config(None)
-    monkeypatch.setenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("NKYEL_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
     try:
         async with make_stream_bridge() as bridge:
             assert isinstance(bridge, RedisStreamBridge)
@@ -2085,7 +2085,7 @@ async def test_make_stream_bridge_uses_docker_redis_env(monkeypatch):
 @pytest.mark.anyio
 async def test_make_stream_bridge_passes_redis_options(monkeypatch):
     """Redis options from config should be forwarded to Redis bridge setup."""
-    import deerflow.runtime.stream_bridge.redis as redis_module
+    import nkyel.runtime.stream_bridge.redis as redis_module
 
     captured: dict = {}
 
@@ -2123,13 +2123,13 @@ async def test_make_stream_bridge_passes_redis_options(monkeypatch):
 #
 # Opt-in and self-skipping: when no Redis is reachable these are skipped so
 # `make test` stays green without Redis. Point at a server with
-# DEER_FLOW_TEST_REDIS_URL (defaults to redis://localhost:6379/15 — DB 15 to
+# NKYEL_TEST_REDIS_URL (defaults to redis://localhost:6379/15 — DB 15 to
 # avoid clobbering real data) and select with `pytest -m integration`. They
 # cover what _FakeRedis only approximates: real XADD/XREAD semantics, live-tail
 # reconnects for malformed Last-Event-ID values, the server <ms>-<seq> ID
 # format, and MAXLEN trimming.
 
-REDIS_TEST_URL = os.environ.get("DEER_FLOW_TEST_REDIS_URL", "redis://localhost:6379/15")
+REDIS_TEST_URL = os.environ.get("NKYEL_TEST_REDIS_URL", "redis://localhost:6379/15")
 
 
 def _redis_available() -> bool:
@@ -2156,7 +2156,7 @@ async def real_redis_bridge():
     from redis.asyncio import Redis
 
     client = Redis.from_url(REDIS_TEST_URL, decode_responses=True)
-    key_prefix = f"deerflow:test:{uuid.uuid4().hex}"
+    key_prefix = f"nkyel:test:{uuid.uuid4().hex}"
     bridge = RedisStreamBridge(redis_url=REDIS_TEST_URL, queue_maxsize=2, key_prefix=key_prefix, client=client)
     try:
         yield bridge
@@ -2364,7 +2364,7 @@ async def test_redis_integration_stream_ttl_reclaims_key():
     from redis.asyncio import Redis
 
     client = Redis.from_url(REDIS_TEST_URL, decode_responses=True)
-    key_prefix = f"deerflow:test:{uuid.uuid4().hex}"
+    key_prefix = f"nkyel:test:{uuid.uuid4().hex}"
     bridge = RedisStreamBridge(
         redis_url=REDIS_TEST_URL,
         queue_maxsize=2,

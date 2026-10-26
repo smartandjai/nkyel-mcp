@@ -9,25 +9,25 @@ from types import SimpleNamespace
 import pytest
 from sqlalchemy import text
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_engine, init_engine_from_config
-from deerflow.runtime.checkpointer.async_provider import make_checkpointer
-from deerflow.runtime.checkpointer.provider import _resolve_checkpointer_config, _sync_checkpointer_cm
-from deerflow.runtime.store.async_provider import make_store
-from deerflow.runtime.store.provider import _resolve_store_config, _sync_store_cm
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_engine, init_engine_from_config
+from nkyel.runtime.checkpointer.async_provider import make_checkpointer
+from nkyel.runtime.checkpointer.provider import _resolve_checkpointer_config, _sync_checkpointer_cm
+from nkyel.runtime.store.async_provider import make_store
+from nkyel.runtime.store.provider import _resolve_store_config, _sync_store_cm
 
-POSTGRES_URL = os.getenv("DEERFLOW_TEST_POSTGRES_URL")
+POSTGRES_URL = os.getenv("NKYEL_TEST_POSTGRES_URL")
 
 pytestmark = pytest.mark.skipif(
     not POSTGRES_URL,
-    reason="set DEERFLOW_TEST_POSTGRES_URL to run live PostgreSQL schema integration tests",
+    reason="set NKYEL_TEST_POSTGRES_URL to run live PostgreSQL schema integration tests",
 )
 
 
 @pytest.mark.anyio
 async def test_postgres_schema_places_orm_checkpointer_and_store_tables_together():
     """Verify a real PostgreSQL backend places all persistence tables in one schema."""
-    schema = f"deerflow_test_{uuid.uuid4().hex[:12]}"
+    schema = f"nkyel_test_{uuid.uuid4().hex[:12]}"
     db_config = DatabaseConfig(backend="postgres", postgres_url=POSTGRES_URL or "", postgres_schema=schema)
     app_config = SimpleNamespace(checkpointer=None, database=db_config)
 
@@ -76,7 +76,7 @@ def test_sync_postgres_schema_places_checkpointer_and_store_tables_together():
     """
     import psycopg
 
-    schema = f"deerflow_test_{uuid.uuid4().hex[:12]}"
+    schema = f"nkyel_test_{uuid.uuid4().hex[:12]}"
     db_config = DatabaseConfig(
         backend="postgres",
         postgres_url=POSTGRES_URL or "",
@@ -105,7 +105,7 @@ def test_sync_postgres_schema_places_checkpointer_and_store_tables_together():
         by_schema = {(table_schema, table_name) for table_schema, table_name in rows}
         assert any(table_schema == schema and "checkpoint" in table_name for table_schema, table_name in by_schema)
         assert any(table_schema == schema and ("store" in table_name or "migration" in table_name) for table_schema, table_name in by_schema)
-        # The DeerFlow LangGraph tables must NOT leak into public.
+        # The nkyel LangGraph tables must NOT leak into public.
         assert not any(table_schema == "public" and ("checkpoint" in table_name or table_name == "store") for table_schema, table_name in by_schema)
     finally:
         with psycopg.connect(POSTGRES_URL or "", autocommit=True) as conn:

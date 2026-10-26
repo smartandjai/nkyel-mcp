@@ -49,7 +49,7 @@ def test_stream_accounts_openai_compatible_usage(client, provider):
     from langchain.agents import create_agent
     from langchain_openai import ChatOpenAI
 
-    from deerflow.models.vllm_provider import VllmChatModel
+    from nkyel.models.vllm_provider import VllmChatModel
 
     model_class = VllmChatModel if provider == "vllm" else ChatOpenAI
     model = model_class(

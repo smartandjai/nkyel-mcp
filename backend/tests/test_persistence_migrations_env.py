@@ -1,7 +1,7 @@
 """Tests for the ``include_object`` filter used by ``migrations/env.py``.
 
 LangGraph checkpointer tables (``checkpoints`` and friends) live alongside
-DeerFlow's own tables in the same database. Alembic must NEVER emit DDL for
+nkyel's own tables in the same database. Alembic must NEVER emit DDL for
 them or a future ``alembic revision --autogenerate`` would propose
 ``drop_table('checkpoints')`` whenever LangGraph's tables are reflected from
 a live DB.
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import sqlalchemy as sa
 
-from deerflow.persistence.migrations._env_filters import (
+from nkyel.persistence.migrations._env_filters import (
     LANGGRAPH_OWNED_TABLES,
     include_object,
 )
@@ -35,7 +35,7 @@ def test_filter_excludes_langgraph_checkpoint_tables() -> None:
         assert include_object(_table(owned), owned, "table", True, None) is False
 
 
-def test_filter_includes_deerflow_tables() -> None:
+def test_filter_includes_nkyel_tables() -> None:
     for owned in ("runs", "threads_meta", "feedback", "users", "channel_connections"):
         assert include_object(_table(owned), owned, "table", True, None) is True
 
@@ -50,7 +50,7 @@ def test_filter_excludes_indexes_on_langgraph_tables() -> None:
     assert include_object(idx, idx.name, "index", True, None) is False
 
 
-def test_filter_includes_indexes_on_deerflow_tables() -> None:
+def test_filter_includes_indexes_on_nkyel_tables() -> None:
     md = sa.MetaData()
     parent = sa.Table("runs", md, sa.Column("run_id", sa.String, primary_key=True))
     idx = sa.Index("ix_runs_something", parent.c.run_id)
@@ -83,7 +83,7 @@ def test_env_module_wires_busy_timeout_for_sqlite() -> None:
     """
     from pathlib import Path  # noqa: PLC0415
 
-    env_path = Path(__file__).resolve().parents[1] / "packages/harness/deerflow/persistence/migrations/env.py"
+    env_path = Path(__file__).resolve().parents[1] / "packages/harness/nkyel/persistence/migrations/env.py"
     src = env_path.read_text(encoding="utf-8")
     assert "PRAGMA busy_timeout=30000" in src or "PRAGMA busy_timeout = 30000" in src, (
         "env.py must set busy_timeout on its alembic-spawned engine; without it, cross-process bootstrap on SQLite fails fast instead of waiting for the file lock"
@@ -102,36 +102,36 @@ class TestExtensionOwnedTables:
     `_autogen_revision.py` diffs against a throwaway SQLite built from the
     migration chain, where no extension table exists. The exposed path is a
     direct `alembic revision --autogenerate` from the migrations directory,
-    whose `alembic.ini` points at a real `./data/deerflow.db` — the same path
+    whose `alembic.ini` points at a real `./data/nkyel.db` — the same path
     `LANGGRAPH_OWNED_TABLES` covers.
     """
 
     def setup_method(self):
-        from deerflow.persistence.migrations import _env_filters
+        from nkyel.persistence.migrations import _env_filters
 
         self._saved = set(_env_filters.EXTENSION_TABLE_PREFIXES)
 
     def teardown_method(self):
-        from deerflow.persistence.migrations import _env_filters
+        from nkyel.persistence.migrations import _env_filters
 
         _env_filters.EXTENSION_TABLE_PREFIXES.clear()
         _env_filters.EXTENSION_TABLE_PREFIXES.update(self._saved)
 
     def test_a_registered_prefix_is_excluded(self):
-        from deerflow.persistence.migrations._env_filters import include_object, register_extension_table_prefix
+        from nkyel.persistence.migrations._env_filters import include_object, register_extension_table_prefix
 
         register_extension_table_prefix("ext_")
         assert include_object(None, "ext_events", "table", True, None) is False
 
     def test_an_unregistered_table_is_still_included(self):
-        from deerflow.persistence.migrations._env_filters import include_object
+        from nkyel.persistence.migrations._env_filters import include_object
 
         assert include_object(None, "runs", "table", True, None) is True
 
     def test_an_index_on_an_excluded_table_is_excluded_too(self):
         from types import SimpleNamespace
 
-        from deerflow.persistence.migrations._env_filters import include_object, register_extension_table_prefix
+        from nkyel.persistence.migrations._env_filters import include_object, register_extension_table_prefix
 
         register_extension_table_prefix("ext_")
         index = SimpleNamespace(table=SimpleNamespace(name="ext_events"))
@@ -143,7 +143,7 @@ class TestExtensionOwnedTables:
         # alembic no longer believes exists).
         from types import SimpleNamespace
 
-        from deerflow.persistence.migrations._env_filters import include_object, register_extension_table_prefix
+        from nkyel.persistence.migrations._env_filters import include_object, register_extension_table_prefix
 
         register_extension_table_prefix("ext_")
         constraint = SimpleNamespace(table=SimpleNamespace(name="ext_events"))
@@ -152,13 +152,13 @@ class TestExtensionOwnedTables:
     def test_registration_rejects_an_empty_prefix(self):
         import pytest
 
-        from deerflow.persistence.migrations._env_filters import register_extension_table_prefix
+        from nkyel.persistence.migrations._env_filters import register_extension_table_prefix
 
         with pytest.raises(ValueError):
             register_extension_table_prefix("")
 
     def test_langgraph_exclusion_is_unaffected(self):
-        from deerflow.persistence.migrations._env_filters import include_object
+        from nkyel.persistence.migrations._env_filters import include_object
 
         assert include_object(None, "checkpoints", "table", True, None) is False
 
@@ -168,13 +168,13 @@ class TestExtensionOwnedTables:
         loudly at registration time rather than degrade autogenerate silently."""
         import pytest
 
-        from deerflow.persistence.migrations._env_filters import register_extension_table_prefix
+        from nkyel.persistence.migrations._env_filters import register_extension_table_prefix
 
         with pytest.raises(ValueError, match="runs"):
             register_extension_table_prefix("run")
 
     def test_registration_accepts_a_prefix_that_matches_no_host_table(self):
-        from deerflow.persistence.migrations._env_filters import EXTENSION_TABLE_PREFIXES, register_extension_table_prefix
+        from nkyel.persistence.migrations._env_filters import EXTENSION_TABLE_PREFIXES, register_extension_table_prefix
 
         register_extension_table_prefix("acme_ext_")
         assert "acme_ext_" in EXTENSION_TABLE_PREFIXES
@@ -187,9 +187,9 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine
 
-import deerflow.persistence.models  # noqa: F401 - populate Base.metadata
-from deerflow.persistence.base import Base
-from deerflow.persistence.migrations._env_filters import (
+import nkyel.persistence.models  # noqa: F401 - populate Base.metadata
+from nkyel.persistence.base import Base
+from nkyel.persistence.migrations._env_filters import (
     include_object,
     register_configured_extension_table_prefixes,
 )
@@ -240,7 +240,7 @@ class TestPrefixesReachTheAlembicProcess:
         proc = subprocess.run(
             [sys.executable, str(script), str(tmp_path / "probe.db")],
             cwd=str(backend),
-            env={**os.environ, "DEER_FLOW_CONFIG_PATH": str(tmp_path / "config.yaml"), "PYTHONPATH": str(backend)},
+            env={**os.environ, "NKYEL_CONFIG_PATH": str(tmp_path / "config.yaml"), "PYTHONPATH": str(backend)},
             capture_output=True,
             text=True,
             timeout=180,
@@ -291,7 +291,7 @@ class TestPrefixesReachTheAlembicProcess:
         import ast
         from pathlib import Path
 
-        env_py = Path(__file__).resolve().parents[1] / "packages/harness/deerflow/persistence/migrations/env.py"
+        env_py = Path(__file__).resolve().parents[1] / "packages/harness/nkyel/persistence/migrations/env.py"
         called = {node.func.id for node in ast.walk(ast.parse(env_py.read_text(encoding="utf-8"))) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)}
 
         assert "register_configured_extension_table_prefixes" in called, "env.py must populate the prefix set; include_object reads it in that process"

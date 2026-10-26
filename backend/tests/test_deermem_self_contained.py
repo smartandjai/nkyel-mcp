@@ -4,7 +4,7 @@ Covers: DI construction (owns storage/updater/queue/llm), zero-config defaults,
 ``trace_id`` threading to the optional ``callbacks`` hook, langfuse being
 optional, ``hide_from_ui`` default-skip + hook-keep, empty ``storage_class``
 (portable default), and portability -- ``backends/deermem/`` has exactly one
-``from deerflow`` line (the ABC contract) and can be vendored into another agent
+``from nkyel`` line (the ABC contract) and can be vendored into another agent
 by copying the folder and repointing that one line.
 
 Storage is isolated via ``$DEERMEM_DATA_DIR`` -> ``tmp_path``; the LLM is a fake
@@ -20,13 +20,13 @@ from pathlib import Path
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
-from deerflow.agents.memory.backends.deermem.deermem.core import storage as deermem_storage
-from deerflow.agents.memory.backends.deermem.deermem.core.message_processing import (
+from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
+from nkyel.agents.memory.backends.deermem.deermem.core import storage as deermem_storage
+from nkyel.agents.memory.backends.deermem.deermem.core.message_processing import (
     filter_messages_for_memory,
 )
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage
-from deerflow.agents.memory.manager import MemoryCallbacks, MemoryCorruptionError
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage
+from nkyel.agents.memory.manager import MemoryCallbacks, MemoryCorruptionError
 
 
 @pytest.fixture
@@ -95,7 +95,7 @@ def test_add_swallows_queue_full_so_backpressure_does_not_break_caller(deermem_d
 
     # Second add for a different key hits the cap -> QueueFull internally. It
     # must be caught: no exception escapes DeerMem.add.
-    with caplog.at_level(logging.WARNING, logger="deerflow.agents.memory.backends.deermem.deer_mem"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.agents.memory.backends.deermem.deer_mem"):
         dm.add("thread-B", conv, agent_name="lead_agent", user_id="u")
     assert "rejected under backpressure" in caplog.text
     # thread-B was rejected (not enqueued); only thread-A remains.
@@ -163,7 +163,7 @@ def test_get_context_injects_facts_only_in_middleware_mode(deermem_data_dir):
     middleware.import_memory(
         {
             "user": {
-                "workContext": {"summary": "Works on DeerFlow memory."},
+                "workContext": {"summary": "Works on nkyel memory."},
             },
             "history": {
                 "recentMonths": {"summary": "Recently redesigned storage."},
@@ -184,10 +184,10 @@ def test_get_context_injects_facts_only_in_middleware_mode(deermem_data_dir):
     middleware_context = middleware.get_context(user_id="u")
     tool_context = DeerMem(backend_config=backend_config, mode="tool").get_context(user_id="u")
 
-    assert "Works on DeerFlow memory." in middleware_context
+    assert "Works on nkyel memory." in middleware_context
     assert "Recently redesigned storage." in middleware_context
     assert "Use FTS5 for active fact recall." in middleware_context
-    assert "Works on DeerFlow memory." in tool_context
+    assert "Works on nkyel memory." in tool_context
     assert "Recently redesigned storage." in tool_context
     assert "Use FTS5 for active fact recall." not in tool_context
     assert "Facts:" not in tool_context
@@ -347,20 +347,20 @@ def test_storage_class_empty_uses_filememorystorage():
     assert isinstance(dm._storage, FileMemoryStorage)
 
 
-def test_portability_only_abc_contract_imports_deerflow():
-    """backends/deermem/ has exactly ONE `from deerflow` line: the ABC contract in deer_mem.py."""
-    import deerflow.agents.memory.backends.deermem as pkg
+def test_portability_only_abc_contract_imports_nkyel():
+    """backends/deermem/ has exactly ONE `from nkyel` line: the ABC contract in deer_mem.py."""
+    import nkyel.agents.memory.backends.deermem as pkg
 
     root = Path(pkg.__file__).parent
-    deerflow_imports = []
+    nkyel_imports = []
     for p in root.rglob("*.py"):
         for line in p.read_text(encoding="utf-8").splitlines():
             s = line.strip()
-            if s.startswith("from deerflow") or s.startswith("import deerflow"):
-                deerflow_imports.append((p.relative_to(root).as_posix(), s))
-    assert len(deerflow_imports) == 1, deerflow_imports
-    assert deerflow_imports[0][0] == "deer_mem.py"
-    assert "memory.manager import MemoryConflictError, MemoryCorruptionError, MemoryManager" in deerflow_imports[0][1]
+            if s.startswith("from nkyel") or s.startswith("import nkyel"):
+                nkyel_imports.append((p.relative_to(root).as_posix(), s))
+    assert len(nkyel_imports) == 1, nkyel_imports
+    assert nkyel_imports[0][0] == "deer_mem.py"
+    assert "memory.manager import MemoryConflictError, MemoryCorruptionError, MemoryManager" in nkyel_imports[0][1]
 
 
 # Minimal vendored host contract (what another agent would ship). DeerMem only
@@ -443,11 +443,11 @@ class MemoryCorruptionError(RuntimeError): ...
 def test_portability_vendor_to_other_agent(tmp_path, monkeypatch):
     """Copy backends/deermem/ into a temp package, repoint the ONE ABC import to
     a vendored manager, import, and run a round-trip -- proves copy + 1-line +
-    run portability (zero deerflow dependency at runtime)."""
+    run portability (zero nkyel dependency at runtime)."""
     import importlib
     import shutil
 
-    import deerflow.agents.memory.backends.deermem as pkg
+    import nkyel.agents.memory.backends.deermem as pkg
 
     src = Path(pkg.__file__).parent
     # Vendored host package with a minimal manager.py (the contract).
@@ -461,7 +461,7 @@ def test_portability_vendor_to_other_agent(tmp_path, monkeypatch):
     # Repoint the single ABC-contract import line to the vendored manager.
     deer_mem_file = dst_pkg / "deer_mem.py"
     text = deer_mem_file.read_text(encoding="utf-8")
-    contract_import = "from deerflow.agents.memory.manager import MemoryConflictError, MemoryCorruptionError, MemoryManager"
+    contract_import = "from nkyel.agents.memory.manager import MemoryConflictError, MemoryCorruptionError, MemoryManager"
     assert contract_import in text
     text = text.replace(
         contract_import,
@@ -496,7 +496,7 @@ def test_per_user_memory_path_matches_host_safe_user_id(deermem_data_dir):
     path / safe_user_id logic can't silently orphan existing per-user memory
     (risk:high, persistent state).
     """
-    from deerflow.config.paths import make_safe_user_id
+    from nkyel.config.paths import make_safe_user_id
 
     user_id = "test-user-123@example.com"
     # storage_path mirrors what the host factory injects (runtime_home / base_dir)
@@ -961,8 +961,8 @@ def test_is_human_clarification_response_matches_host_read():
     so hidden-message filtering doesn't diverge between production (host hook) and
     standalone / test (mirror default). Pins drift (#5)."""
 
-    from deerflow.agents.human_input import read_human_input_response
-    from deerflow.agents.memory.backends.deermem.deermem.core.message_processing import _is_human_clarification_response
+    from nkyel.agents.human_input import read_human_input_response
+    from nkyel.agents.memory.backends.deermem.deermem.core.message_processing import _is_human_clarification_response
 
     def payload(**overrides):
         base = {"version": 1, "kind": "human_input_response", "source": "s", "request_id": "r", "value": "v", "response_kind": "text"}
@@ -991,8 +991,8 @@ def test_is_human_clarification_response_matches_host_read():
 def test_build_llm_returns_none_when_no_model_configured():
     """Zero-config (no model_config, or model_config with no model) -> None.
     Non-LLM ops still work; an update raises at runtime."""
-    from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemModelConfig
-    from deerflow.agents.memory.backends.deermem.deermem.core.llm import build_llm
+    from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemModelConfig
+    from nkyel.agents.memory.backends.deermem.deermem.core.llm import build_llm
 
     assert build_llm(None) is None
     assert build_llm(DeerMemModelConfig()) is None  # model=None default
@@ -1005,11 +1005,11 @@ def test_build_llm_degrades_to_none_on_init_failure(caplog):
     disabled; an update raises at runtime with the underlying error logged."""
     from unittest.mock import patch
 
-    from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemModelConfig
-    from deerflow.agents.memory.backends.deermem.deermem.core.llm import build_llm
+    from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemModelConfig
+    from nkyel.agents.memory.backends.deermem.deermem.core.llm import build_llm
 
     model_config = DeerMemModelConfig(provider="openai", model="bogus-model", api_key="k")
-    llm_logger = "deerflow.agents.memory.backends.deermem.deermem.core.llm"
+    llm_logger = "nkyel.agents.memory.backends.deermem.deermem.core.llm"
 
     with patch("langchain.chat_models.init_chat_model", side_effect=RuntimeError("boom")):
         with caplog.at_level("WARNING", logger=llm_logger):
@@ -1024,9 +1024,9 @@ def test_from_backend_config_warns_on_unknown_keys(caplog):
     missing the ``h``) does not silently fall back to the default and write
     memory to an unintended location. Mirrors the host layer's
     load_memory_config_from_dict warning."""
-    from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+    from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
 
-    cfg_logger = "deerflow.agents.memory.backends.deermem.deermem.config"
+    cfg_logger = "nkyel.agents.memory.backends.deermem.deermem.config"
     with caplog.at_level("WARNING", logger=cfg_logger):
         cfg = DeerMemConfig.from_backend_config({"storage_path": "/tmp/x", "storage_pat": "/tmp/y"})
 
@@ -1038,9 +1038,9 @@ def test_from_backend_config_warns_on_unknown_keys(caplog):
 
 def test_from_backend_config_silent_on_known_keys(caplog):
     """No warning when every key is known (regression guard for the typo warning)."""
-    from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+    from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
 
-    cfg_logger = "deerflow.agents.memory.backends.deermem.deermem.config"
+    cfg_logger = "nkyel.agents.memory.backends.deermem.deermem.config"
     with caplog.at_level("WARNING", logger=cfg_logger):
         DeerMemConfig.from_backend_config({"storage_path": "/tmp/x", "max_facts": 20})
     assert not any("Unknown backend_config keys" in r.message for r in caplog.records)
@@ -1055,7 +1055,7 @@ def test_from_backend_config_null_values_fall_back_to_defaults():
     fields like ``model: DeerMemModelConfig`` reject an explicit ``None`` even
     though the omitted key would use the field default — so the shipped example
     config crashed every run with a DeerMemConfig ValidationError."""
-    from deerflow.agents.memory.backends.deermem.deermem.config import (
+    from nkyel.agents.memory.backends.deermem.deermem.config import (
         DeerMemConfig,
         DeerMemModelConfig,
     )
@@ -1072,9 +1072,9 @@ def test_from_backend_config_null_values_fall_back_to_defaults():
 def test_from_backend_config_null_values_do_not_warn_as_unknown(caplog):
     """Dropped ``None`` entries are known keys — they must not trip the
     unknown-key typo warning."""
-    from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+    from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
 
-    cfg_logger = "deerflow.agents.memory.backends.deermem.deermem.config"
+    cfg_logger = "nkyel.agents.memory.backends.deermem.deermem.config"
     with caplog.at_level("WARNING", logger=cfg_logger):
         DeerMemConfig.from_backend_config({"model": None})
     assert not any("Unknown backend_config keys" in r.message for r in caplog.records)

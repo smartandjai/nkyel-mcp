@@ -7,9 +7,9 @@ import yaml
 from langchain_core.messages import ToolMessage
 from pydantic import ValidationError
 
-from deerflow.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware
-from deerflow.config.app_config import AppConfig
-from deerflow.config.tool_output_config import ToolOutputConfig
+from nkyel.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware
+from nkyel.config.app_config import AppConfig
+from nkyel.config.tool_output_config import ToolOutputConfig
 
 LIMIT_FIELDS = (
     "externalize_min_chars",

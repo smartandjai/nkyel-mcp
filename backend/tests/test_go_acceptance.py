@@ -6,7 +6,7 @@ against a module whose tests call ``t.Skip``.
 
 import pytest
 
-from deerflow.subagents.acceptance_checks import check_acceptance_criteria, render_acceptance_section
+from nkyel.subagents.acceptance_checks import check_acceptance_criteria, render_acceptance_section
 
 ALL_SKIPPED = """\
 === RUN   TestAlpha

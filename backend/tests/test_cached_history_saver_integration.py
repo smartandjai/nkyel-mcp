@@ -30,10 +30,10 @@ from langgraph.graph import StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.types import Command, interrupt
 
-from deerflow.agents.thread_state import merge_message_writes
-from deerflow.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
-from deerflow.runtime.checkpointer.cached_saver import CachedHistorySaver
+from nkyel.agents.thread_state import merge_message_writes
+from nkyel.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.runtime.checkpointer.cached_saver import CachedHistorySaver
 
 STEPS = 5
 SNAPSHOT_FREQUENCY = 2

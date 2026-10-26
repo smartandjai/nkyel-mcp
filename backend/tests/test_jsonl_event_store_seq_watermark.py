@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
+from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
 
 
 def event(run_id):

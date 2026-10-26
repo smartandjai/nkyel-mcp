@@ -5,9 +5,9 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.reload_boundary import STARTUP_ONLY_FIELDS
-from deerflow.extensions import (
+from nkyel.config.app_config import AppConfig
+from nkyel.config.reload_boundary import STARTUP_ONLY_FIELDS
+from nkyel.extensions import (
     EMPTY_EXTENSIONS,
     ExtensionRegistry,
     get_loaded_extensions,
@@ -35,7 +35,7 @@ class _Marker:
 # (sandbox) intentionally still error when null"), so every AppConfig
 # construction below supplies it, matching the pattern already used in
 # test_app_config_reload.py.
-_SANDBOX = {"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}
+_SANDBOX = {"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}
 
 
 def test_app_config_defaults_to_no_plugins():
@@ -128,7 +128,7 @@ def test_reset_does_not_leak_app_store_writes():
 
 
 def test_runtime_diagnostics_are_bounded_without_replacing_the_live_list(monkeypatch):
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
 
     monkeypatch.setattr(extensions_module, "_MAX_RUNTIME_DIAGNOSTICS", 3)
     extensions_module.reset_runtime_diagnostics()

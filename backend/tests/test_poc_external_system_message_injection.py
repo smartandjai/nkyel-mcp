@@ -12,10 +12,10 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def isolated_environment(monkeypatch):
-    for name in ("DEERFLOW_PAT", "DEERFLOW_ACCESS_TOKEN", "DEERFLOW_CSRF_TOKEN", "DEERFLOW_BASE_URL", "DEERFLOW_THREAD_ID", "DEERFLOW_ASSISTANT_ID", "DEERFLOW_TIMEOUT_SECONDS", "DEERFLOW_CONFIRM_APPEND"):
+    for name in ("NKYEL_PAT", "NKYEL_ACCESS_TOKEN", "NKYEL_CSRF_TOKEN", "NKYEL_BASE_URL", "NKYEL_THREAD_ID", "NKYEL_ASSISTANT_ID", "NKYEL_TIMEOUT_SECONDS", "NKYEL_CONFIRM_APPEND"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("DEERFLOW_THREAD_ID", "synthetic-poc-thread")
-    monkeypatch.setenv("DEERFLOW_CONFIRM_APPEND", "YES")
+    monkeypatch.setenv("NKYEL_THREAD_ID", "synthetic-poc-thread")
+    monkeypatch.setenv("NKYEL_CONFIRM_APPEND", "YES")
 
 
 def test_auth_headers_allows_gateway_auth_disabled_mode():
@@ -23,26 +23,26 @@ def test_auth_headers_allows_gateway_auth_disabled_mode():
 
 
 def test_pat_takes_precedence_and_session_requires_both_cookies(monkeypatch):
-    monkeypatch.setenv("DEERFLOW_ACCESS_TOKEN", "fixture-session")
+    monkeypatch.setenv("NKYEL_ACCESS_TOKEN", "fixture-session")
     with pytest.raises(poc.PocError):
         poc.auth_headers()
-    monkeypatch.setenv("DEERFLOW_CSRF_TOKEN", "fixture-csrf")
+    monkeypatch.setenv("NKYEL_CSRF_TOKEN", "fixture-csrf")
     assert poc.auth_headers()["X-CSRF-Token"] == "fixture-csrf"
-    monkeypatch.setenv("DEERFLOW_PAT", "fixture-pat")
+    monkeypatch.setenv("NKYEL_PAT", "fixture-pat")
     assert poc.auth_headers() == {"Authorization": "Bearer fixture-pat"}
 
 
 @pytest.mark.parametrize(
     "name,value",
     [
-        ("DEERFLOW_THREAD_ID", ""),
-        ("DEERFLOW_THREAD_ID", "http://localhost:2026/workspace/chats/id"),
-        ("DEERFLOW_BASE_URL", "https://example.com"),
-        ("DEERFLOW_BASE_URL", "http://user:secret@localhost:2026"),
-        ("DEERFLOW_ASSISTANT_ID", ""),
-        ("DEERFLOW_TIMEOUT_SECONDS", "nan"),
-        ("DEERFLOW_TIMEOUT_SECONDS", "-1"),
-        ("DEERFLOW_CONFIRM_APPEND", "NO"),
+        ("NKYEL_THREAD_ID", ""),
+        ("NKYEL_THREAD_ID", "http://localhost:2026/workspace/chats/id"),
+        ("NKYEL_BASE_URL", "https://example.com"),
+        ("NKYEL_BASE_URL", "http://user:secret@localhost:2026"),
+        ("NKYEL_ASSISTANT_ID", ""),
+        ("NKYEL_TIMEOUT_SECONDS", "nan"),
+        ("NKYEL_TIMEOUT_SECONDS", "-1"),
+        ("NKYEL_CONFIRM_APPEND", "NO"),
     ],
 )
 def test_invalid_configuration_fails_before_network(monkeypatch, name, value):
@@ -167,7 +167,7 @@ def test_stream_run_uses_configured_assistant_id(monkeypatch):
             captured.append((request, timeout))
             return response
 
-    monkeypatch.setenv("DEERFLOW_ASSISTANT_ID", "custom-agent")
+    monkeypatch.setenv("NKYEL_ASSISTANT_ID", "custom-agent")
     monkeypatch.setattr(poc, "_HTTP", _Opener())
 
     result = poc.stream_run("http://localhost:2026/api/test", {}, [], 10)

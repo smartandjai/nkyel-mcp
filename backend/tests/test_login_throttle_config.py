@@ -18,9 +18,9 @@ import pytest
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.gateway.auth import login_throttle
-from deerflow.config.auth_config import LocalAuthConfig, LoginThrottleStorage, resolve_login_throttle_storage
-from deerflow.config.reload_boundary import STARTUP_ONLY_FIELDS, STARTUP_ONLY_PREFIX
-from deerflow.persistence.login_throttle import MemoryLoginThrottleStore, SqlLoginThrottleStore
+from nkyel.config.auth_config import LocalAuthConfig, LoginThrottleStorage, resolve_login_throttle_storage
+from nkyel.config.reload_boundary import STARTUP_ONLY_FIELDS, STARTUP_ONLY_PREFIX
+from nkyel.persistence.login_throttle import MemoryLoginThrottleStore, SqlLoginThrottleStore
 
 
 @pytest.fixture(autouse=True)
@@ -138,8 +138,8 @@ def test_explicit_db_without_an_engine_fails_closed_at_startup():
 
 def test_lazy_resolution_explicit_db_without_an_engine_fails_closed(monkeypatch):
     """The bare-app path applies the same rule and installs nothing."""
-    from deerflow.config import app_config as app_config_module
-    from deerflow.persistence import engine as engine_module
+    from nkyel.config import app_config as app_config_module
+    from nkyel.persistence import engine as engine_module
 
     monkeypatch.setattr(app_config_module, "get_app_config", lambda: _config("db", "sqlite"))
     monkeypatch.setattr(engine_module, "get_session_factory", lambda: None)
@@ -149,8 +149,8 @@ def test_lazy_resolution_explicit_db_without_an_engine_fails_closed(monkeypatch)
 
 
 def test_lazy_resolution_auto_without_an_engine_falls_back_to_memory(monkeypatch, caplog):
-    from deerflow.config import app_config as app_config_module
-    from deerflow.persistence import engine as engine_module
+    from nkyel.config import app_config as app_config_module
+    from nkyel.persistence import engine as engine_module
 
     monkeypatch.setattr(app_config_module, "get_app_config", lambda: _config("auto", "sqlite"))
     monkeypatch.setattr(engine_module, "get_session_factory", lambda: None)
@@ -176,8 +176,8 @@ def test_install_and_reset_hooks():
 
 def test_lazy_resolution_uses_live_config_and_installs_once(monkeypatch, session_factory):
     """A bare app (no Gateway lifespan) resolves on first use and keeps that store."""
-    from deerflow.config import app_config as app_config_module
-    from deerflow.persistence import engine as engine_module
+    from nkyel.config import app_config as app_config_module
+    from nkyel.persistence import engine as engine_module
 
     monkeypatch.setattr(app_config_module, "get_app_config", lambda: _config("auto", "sqlite"))
     monkeypatch.setattr(engine_module, "get_session_factory", lambda: session_factory)
@@ -189,8 +189,8 @@ def test_lazy_resolution_uses_live_config_and_installs_once(monkeypatch, session
 
 
 def test_lazy_resolution_without_config_file_uses_defaults(monkeypatch):
-    from deerflow.config import app_config as app_config_module
-    from deerflow.persistence import engine as engine_module
+    from nkyel.config import app_config as app_config_module
+    from nkyel.persistence import engine as engine_module
 
     def _missing():
         raise FileNotFoundError("no config.yaml")
@@ -202,7 +202,7 @@ def test_lazy_resolution_without_config_file_uses_defaults(monkeypatch):
 
 def test_lazy_resolution_propagates_a_malformed_config(monkeypatch):
     """Like the policy read: a broken config.yaml fails loudly rather than silently picking a store."""
-    from deerflow.config import app_config as app_config_module
+    from nkyel.config import app_config as app_config_module
 
     def _malformed():
         raise ValueError("config validation error")

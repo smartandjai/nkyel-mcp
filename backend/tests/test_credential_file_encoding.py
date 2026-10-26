@@ -6,7 +6,7 @@ from pathlib import Path
 import doctor
 import pytest
 
-from deerflow.models.credential_loader import load_claude_code_credential, load_codex_cli_credential
+from nkyel.models.credential_loader import load_claude_code_credential, load_codex_cli_credential
 
 
 @pytest.fixture(autouse=True)
@@ -58,7 +58,7 @@ def test_doctor_accepts_the_same_utf8_credential_files(credential_file, encoding
     path.write_text(json.dumps(payload), encoding=encoding)
     provider = "claude_provider:ClaudeChatModel" if loader is load_claude_code_credential else "openai_codex_provider:CodexChatModel"
     config = path.parent / "config.yaml"
-    config.write_text(f"config_version: 5\nmodels:\n  - name: synthetic\n    use: deerflow.models.{provider}\n    model: synthetic\n", encoding="utf-8")
+    config.write_text(f"config_version: 5\nmodels:\n  - name: synthetic\n    use: nkyel.models.{provider}\n    model: synthetic\n", encoding="utf-8")
 
     assert loader() is not None
     results = doctor.check_llm_auth(config)

@@ -15,10 +15,10 @@ from pydantic import ValidationError
 from app.gateway.auth.models import User
 from app.gateway.knowledge_scope_admission import admit_message_knowledge_scope
 from app.gateway.routers.agents import AgentCreateRequest, AgentUpdateRequest, create_agent_endpoint, get_agent, router, update_agent
-from deerflow.config.agents_api_config import load_agents_api_config_from_dict
-from deerflow.config.agents_config import AgentConfig, preserve_non_managed_fields
-from deerflow.config.app_config import AppConfig, pop_current_app_config, push_current_app_config
-from deerflow.knowledge_scope import canonicalize_knowledge_scope
+from nkyel.config.agents_api_config import load_agents_api_config_from_dict
+from nkyel.config.agents_config import AgentConfig, preserve_non_managed_fields
+from nkyel.config.app_config import AppConfig, pop_current_app_config, push_current_app_config
+from nkyel.knowledge_scope import canonicalize_knowledge_scope
 
 SCOPE = {
     "version": 1,
@@ -39,8 +39,8 @@ def test_agent_config_validates_and_preserves_knowledge_default():
 
 @pytest.fixture
 def agent_home(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     load_agents_api_config_from_dict({"enabled": True})
     yield
     load_agents_api_config_from_dict({})
@@ -63,7 +63,7 @@ def test_default_is_snapshotted_but_explicit_turn_selection_wins(override):
     message = HumanMessage(content="Policy?", additional_kwargs={} if override is None else {"knowledge_scope": override})
     graph_input = {"messages": [message]}
     agent = SimpleNamespace(tool_groups=None, knowledge_scope=SCOPE)
-    app = SimpleNamespace(knowledge_base=SimpleNamespace(enabled=True), get_tool_config=lambda _: SimpleNamespace(use="deerflow.community.ragflow.tools:knowledge_search_tool"))
+    app = SimpleNamespace(knowledge_base=SimpleNamespace(enabled=True), get_tool_config=lambda _: SimpleNamespace(use="nkyel.community.ragflow.tools:knowledge_search_tool"))
     result = admit_message_knowledge_scope(graph_input, assistant_id="researcher", app_config=app, agent_config=agent)
     expected = override or SCOPE
     assert graph_input["messages"][0].additional_kwargs["knowledge_scope"] == expected
@@ -74,7 +74,7 @@ def test_default_is_snapshotted_but_explicit_turn_selection_wins(override):
 @pytest.mark.parametrize("recovered", [None, {"version": 1, "mode": "disabled"}])
 def test_recovery_does_not_pick_up_changed_agent_default(recovered):
     graph_input = {"messages": [HumanMessage(content="Policy?")]}
-    app = SimpleNamespace(knowledge_base=SimpleNamespace(enabled=True), get_tool_config=lambda _: SimpleNamespace(use="deerflow.community.ragflow.tools:knowledge_search_tool"))
+    app = SimpleNamespace(knowledge_base=SimpleNamespace(enabled=True), get_tool_config=lambda _: SimpleNamespace(use="nkyel.community.ragflow.tools:knowledge_search_tool"))
     result = admit_message_knowledge_scope(graph_input, assistant_id="researcher", app_config=app, agent_config=SimpleNamespace(tool_groups=None, knowledge_scope=SCOPE), recovery=True, recovery_scope=recovered)
     assert result == recovered
     assert graph_input["messages"][0].additional_kwargs == ({} if recovered is None else {"knowledge_scope": recovered})
@@ -82,9 +82,9 @@ def test_recovery_does_not_pick_up_changed_agent_default(recovered):
 
 @pytest.mark.asyncio
 async def test_harness_setup_and_self_update_preserve_binding(agent_home):
-    from deerflow.runtime.user_context import get_effective_user_id
-    from deerflow.tools.builtins.setup_agent_tool import setup_agent
-    from deerflow.tools.builtins.update_agent_tool import update_agent as update_tool
+    from nkyel.runtime.user_context import get_effective_user_id
+    from nkyel.tools.builtins.setup_agent_tool import setup_agent
+    from nkyel.tools.builtins.update_agent_tool import update_agent as update_tool
 
     await create_agent_endpoint(AgentCreateRequest(name="researcher", knowledge_scope=SCOPE))
     runtime = SimpleNamespace(context={"agent_name": "researcher", "user_id": get_effective_user_id()}, config={"configurable": {}}, tool_call_id="setup-1")
@@ -100,7 +100,7 @@ async def test_harness_setup_and_self_update_preserve_binding(agent_home):
 @pytest.mark.asyncio
 async def test_same_name_file_agents_keep_separate_bindings(agent_home):
     from app.gateway.services import _load_scope_agent_config
-    from deerflow.persistence.agents import get_agent_store
+    from nkyel.persistence.agents import get_agent_store
 
     store = get_agent_store()
     store.create("researcher", {"knowledge_scope": SCOPE}, "Soul", user_id="alice")
@@ -115,7 +115,7 @@ async def test_same_name_file_agents_keep_separate_bindings(agent_home):
 def test_default_never_reenables_agent_knowledge_tools(tool_groups):
     from fastapi import HTTPException
 
-    app = SimpleNamespace(knowledge_base=SimpleNamespace(enabled=True), get_tool_config=lambda _: SimpleNamespace(use="deerflow.community.ragflow.tools:knowledge_search_tool"))
+    app = SimpleNamespace(knowledge_base=SimpleNamespace(enabled=True), get_tool_config=lambda _: SimpleNamespace(use="nkyel.community.ragflow.tools:knowledge_search_tool"))
     with pytest.raises(HTTPException) as error:
         admit_message_knowledge_scope({"messages": [HumanMessage(content="Policy?")]}, assistant_id="researcher", app_config=app, agent_config=SimpleNamespace(tool_groups=tool_groups, knowledge_scope=SCOPE))
     assert error.value.status_code == 422
@@ -125,16 +125,16 @@ def test_default_never_reenables_agent_knowledge_tools(tool_groups):
 def self_update_context(request, agent_home, tmp_path):
     from sqlalchemy import create_engine
 
-    from deerflow.persistence.agents import AgentRow, get_agent_store
-    from deerflow.persistence.base import Base
+    from nkyel.persistence.agents import AgentRow, get_agent_store
+    from nkyel.persistence.base import Base
 
     app = AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "agent_storage": {"backend": request.param},
             "database": {"backend": "sqlite", "sqlite_dir": str(tmp_path)},
             "knowledge_base": {"enabled": True},
-            "tools": [{"name": "knowledge_search", "group": "knowledge", "use": "deerflow.community.ragflow.tools:knowledge_search_tool"}],
+            "tools": [{"name": "knowledge_search", "group": "knowledge", "use": "nkyel.community.ragflow.tools:knowledge_search_tool"}],
         }
     )
     if request.param == "db":
@@ -155,7 +155,7 @@ def self_update_context(request, agent_home, tmp_path):
 @pytest.mark.parametrize("scope", [SCOPE, {"version": 1, "mode": "disabled"}, {"version": 1, "mode": "all"}])
 async def test_self_update_removing_knowledge_keeps_next_turn_admissible(self_update_context, old_groups, new_groups, scope):
     from app.gateway.services import _load_scope_agent_config
-    from deerflow.tools.builtins.update_agent_tool import update_agent as update_tool
+    from nkyel.tools.builtins.update_agent_tool import update_agent as update_tool
 
     store, app, runtime = self_update_context
     config = {"tool_groups": old_groups, "knowledge_scope": scope, "display_name": "Researcher"}
@@ -186,7 +186,7 @@ async def test_self_update_removing_knowledge_keeps_next_turn_admissible(self_up
     [{"description": "Updated"}, {"skills": []}, {"soul": "Updated soul"}, {"tool_groups": ["knowledge"]}, {"tool_groups": ["web", "knowledge"]}, {"description": "Updated", "tool_groups": "null"}],
 )
 def test_self_update_preserves_knowledge_when_access_is_not_removed(self_update_context, updates):
-    from deerflow.tools.builtins.update_agent_tool import update_agent as update_tool
+    from nkyel.tools.builtins.update_agent_tool import update_agent as update_tool
 
     store, _, runtime = self_update_context
     store.create("researcher", {"tool_groups": ["web", "knowledge"], "knowledge_scope": SCOPE}, "Soul", user_id="alice")
@@ -196,7 +196,7 @@ def test_self_update_preserves_knowledge_when_access_is_not_removed(self_update_
 
 
 def test_self_update_does_not_rewrite_untouched_incompatible_default(self_update_context):
-    from deerflow.tools.builtins.update_agent_tool import update_agent as update_tool
+    from nkyel.tools.builtins.update_agent_tool import update_agent as update_tool
 
     store, _, runtime = self_update_context
     store.create("researcher", {"tool_groups": ["web"], "knowledge_scope": SCOPE}, "Soul", user_id="alice")
@@ -206,7 +206,7 @@ def test_self_update_does_not_rewrite_untouched_incompatible_default(self_update
 
 
 def test_self_update_without_knowledge_default_keeps_none(self_update_context):
-    from deerflow.tools.builtins.update_agent_tool import update_agent as update_tool
+    from nkyel.tools.builtins.update_agent_tool import update_agent as update_tool
 
     store, _, runtime = self_update_context
     store.create("researcher", {"tool_groups": ["web", "knowledge"]}, "Soul", user_id="alice")

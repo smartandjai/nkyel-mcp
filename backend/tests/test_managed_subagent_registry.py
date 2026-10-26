@@ -5,9 +5,9 @@ from __future__ import annotations
 import time
 from concurrent.futures import ThreadPoolExecutor
 
-from deerflow.config.subagents_config import CustomSubagentConfig, SubagentOverrideConfig, SubagentsAppConfig
-from deerflow.persistence.managed_subagents import ManagedSubagentDefinition
-from deerflow.subagents import registry
+from nkyel.config.subagents_config import CustomSubagentConfig, SubagentOverrideConfig, SubagentsAppConfig
+from nkyel.persistence.managed_subagents import ManagedSubagentDefinition
+from nkyel.subagents import registry
 
 
 def _managed(name: str, *, enabled: bool = True) -> ManagedSubagentDefinition:

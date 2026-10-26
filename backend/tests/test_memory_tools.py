@@ -10,7 +10,7 @@ middleware) is covered by ``TestModeGating`` at the bottom.
 import json
 from types import SimpleNamespace
 
-from deerflow.agents.memory.tools import (
+from nkyel.agents.memory.tools import (
     get_memory_tools,
     memory_add_tool,
     memory_delete_tool,
@@ -113,8 +113,8 @@ class _MockManager:
 
 def _install_manager(monkeypatch, manager):
     manager._drop_fact_ops()
-    monkeypatch.setattr("deerflow.agents.memory.tools.get_memory_manager", lambda: manager)
-    monkeypatch.setattr("deerflow.agents.memory.tools.resolve_runtime_user_id", lambda runtime: "test-user")
+    monkeypatch.setattr("nkyel.agents.memory.tools.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.tools.resolve_runtime_user_id", lambda runtime: "test-user")
     return manager
 
 
@@ -255,7 +255,7 @@ class TestMemoryAddTool:
         runtime = SimpleNamespace(context={"agent_name": "code-agent"})
         # resolve_runtime_user_id is monkeypatched to "test-user" by _install_manager;
         # override here to assert the runtime channel flows through.
-        import deerflow.agents.memory.tools as tools_mod
+        import nkyel.agents.memory.tools as tools_mod
 
         tools_mod.resolve_runtime_user_id = lambda r: "runtime-user"
 
@@ -374,14 +374,14 @@ class TestModeGating:
     def test_tool_mode_registers_tools_not_middleware(self, monkeypatch):
         """When mode=tool, get_memory_tools are added to extra_tools and
         MemoryMiddleware is NOT in the chain."""
-        from deerflow.agents.factory import _assemble_from_features
-        from deerflow.agents.features import RuntimeFeatures
-        from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.agents.factory import _assemble_from_features
+        from nkyel.agents.features import RuntimeFeatures
+        from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+        from nkyel.config.memory_config import MemoryConfig
 
         tool_config = MemoryConfig(enabled=True, mode="tool")
         monkeypatch.setattr(
-            "deerflow.config.memory_config.get_memory_config",
+            "nkyel.config.memory_config.get_memory_config",
             lambda: tool_config,
         )
 
@@ -400,13 +400,13 @@ class TestModeGating:
 
     def test_explicit_memory_config_drives_factory_mode(self, monkeypatch):
         """Factory mode gating should use the explicit config before ambient globals."""
-        from deerflow.agents.factory import _assemble_from_features
-        from deerflow.agents.features import RuntimeFeatures
-        from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.agents.factory import _assemble_from_features
+        from nkyel.agents.features import RuntimeFeatures
+        from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+        from nkyel.config.memory_config import MemoryConfig
 
         monkeypatch.setattr(
-            "deerflow.config.memory_config.get_memory_config",
+            "nkyel.config.memory_config.get_memory_config",
             lambda: MemoryConfig(enabled=True, mode="middleware"),
         )
 
@@ -421,10 +421,10 @@ class TestModeGating:
     def test_mem0_tool_mode_keeps_passive_write_middleware(self):
         """mem0 has search tools but no fact CRUD, so tool mode must retain
         the per-turn middleware write path that feeds server-side extraction."""
-        from deerflow.agents.factory import _assemble_from_features
-        from deerflow.agents.features import RuntimeFeatures
-        from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.agents.factory import _assemble_from_features
+        from nkyel.agents.features import RuntimeFeatures
+        from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+        from nkyel.config.memory_config import MemoryConfig
 
         config = MemoryConfig(enabled=True, mode="tool", manager_class="mem0")
         chain, extra_tools = _assemble_from_features(RuntimeFeatures(memory=True, memory_config=config), name="test-agent")
@@ -435,14 +435,14 @@ class TestModeGating:
     def test_middleware_mode_appends_middleware_not_tools(self, monkeypatch):
         """When mode=middleware (default), MemoryMiddleware IS in the chain
         and memory tools are NOT in extra_tools."""
-        from deerflow.agents.factory import _assemble_from_features
-        from deerflow.agents.features import RuntimeFeatures
-        from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.agents.factory import _assemble_from_features
+        from nkyel.agents.features import RuntimeFeatures
+        from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+        from nkyel.config.memory_config import MemoryConfig
 
         mw_config = MemoryConfig(enabled=True, mode="middleware")
         monkeypatch.setattr(
-            "deerflow.config.memory_config.get_memory_config",
+            "nkyel.config.memory_config.get_memory_config",
             lambda: mw_config,
         )
 
@@ -459,14 +459,14 @@ class TestModeGating:
         """When memory.enabled=False, middleware IS appended but no-ops at
         runtime (the enabled check is inside after_agent, not the factory).
         Tools are never registered because mode is middleware (default)."""
-        from deerflow.agents.factory import _assemble_from_features
-        from deerflow.agents.features import RuntimeFeatures
-        from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.agents.factory import _assemble_from_features
+        from nkyel.agents.features import RuntimeFeatures
+        from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+        from nkyel.config.memory_config import MemoryConfig
 
         disabled_config = MemoryConfig(enabled=False, mode="middleware")
         monkeypatch.setattr(
-            "deerflow.config.memory_config.get_memory_config",
+            "nkyel.config.memory_config.get_memory_config",
             lambda: disabled_config,
         )
 
@@ -482,7 +482,7 @@ class TestModeGating:
 
     def test_should_use_memory_tools_requires_tool_mode_and_enabled(self):
         """Tool-mode helper should require both mode=tool and enabled=True."""
-        from deerflow.config.memory_config import MemoryConfig, should_use_memory_tools
+        from nkyel.config.memory_config import MemoryConfig, should_use_memory_tools
 
         assert should_use_memory_tools(MemoryConfig(enabled=True, mode="tool")) is True
         assert should_use_memory_tools(MemoryConfig(enabled=False, mode="tool")) is False
@@ -490,14 +490,14 @@ class TestModeGating:
 
     def test_tool_mode_disabled_logs_warning_and_uses_middleware(self, monkeypatch, caplog):
         """mode=tool with enabled=False should be visible and still disable tools."""
-        from deerflow.agents.factory import _assemble_from_features
-        from deerflow.agents.features import RuntimeFeatures
-        from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.agents.factory import _assemble_from_features
+        from nkyel.agents.features import RuntimeFeatures
+        from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+        from nkyel.config.memory_config import MemoryConfig
 
         disabled_tool_config = MemoryConfig(enabled=False, mode="tool")
         monkeypatch.setattr(
-            "deerflow.config.memory_config.get_memory_config",
+            "nkyel.config.memory_config.get_memory_config",
             lambda: disabled_tool_config,
         )
 
@@ -509,9 +509,9 @@ class TestModeGating:
 
     def test_lead_agent_deduplicates_memory_tools_after_appending(self, monkeypatch):
         """Configured tools should not duplicate tool-mode memory tools."""
-        from deerflow.agents.lead_agent import agent as lead_agent_module
-        from deerflow.config.authorization_config import AuthorizationConfig
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.agents.lead_agent import agent as lead_agent_module
+        from nkyel.config.authorization_config import AuthorizationConfig
+        from nkyel.config.memory_config import MemoryConfig
 
         monkeypatch.setattr(lead_agent_module, "_resolve_model_name", lambda x=None, **kwargs: "default-model")
         monkeypatch.setattr(lead_agent_module, "create_chat_model", lambda **kwargs: "model")
@@ -525,7 +525,7 @@ class TestModeGating:
             lambda name, *, user_id=None: SimpleNamespace(model=None, skills=None, tool_groups=None),
         )
         monkeypatch.setattr(lead_agent_module, "_load_enabled_available_skills", lambda available_skills, *, app_config, user_id=None: [])
-        monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **kwargs: [_NamedTool("memory_search"), _NamedTool("bash")])
+        monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **kwargs: [_NamedTool("memory_search"), _NamedTool("bash")])
 
         app_config = SimpleNamespace(
             get_model_config=lambda name: SimpleNamespace(supports_thinking=False, supports_vision=False),
@@ -544,9 +544,9 @@ class TestModeGating:
 
     def test_lead_agent_preserves_non_memory_duplicate_tool_names(self, monkeypatch):
         """Memory-tool collision handling should not drop unrelated duplicate tools."""
-        from deerflow.agents.lead_agent import agent as lead_agent_module
-        from deerflow.config.authorization_config import AuthorizationConfig
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.agents.lead_agent import agent as lead_agent_module
+        from nkyel.config.authorization_config import AuthorizationConfig
+        from nkyel.config.memory_config import MemoryConfig
 
         monkeypatch.setattr(lead_agent_module, "_resolve_model_name", lambda x=None, **kwargs: "default-model")
         monkeypatch.setattr(lead_agent_module, "create_chat_model", lambda **kwargs: "model")
@@ -560,7 +560,7 @@ class TestModeGating:
             lambda name, *, user_id=None: SimpleNamespace(model=None, skills=None, tool_groups=None),
         )
         monkeypatch.setattr(lead_agent_module, "_load_enabled_available_skills", lambda available_skills, *, app_config, user_id=None: [])
-        monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **kwargs: [_NamedTool("bash"), _NamedTool("bash")])
+        monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **kwargs: [_NamedTool("bash"), _NamedTool("bash")])
 
         app_config = SimpleNamespace(
             get_model_config=lambda name: SimpleNamespace(supports_thinking=False, supports_vision=False),

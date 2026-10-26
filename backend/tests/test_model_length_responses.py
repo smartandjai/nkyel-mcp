@@ -12,7 +12,7 @@ from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.agents.middlewares.model_length_finish_reason_middleware import (
+from nkyel.agents.middlewares.model_length_finish_reason_middleware import (
     MODEL_LENGTH_CAPPED_STOP_REASON,
     ModelLengthFinishReasonMiddleware,
 )

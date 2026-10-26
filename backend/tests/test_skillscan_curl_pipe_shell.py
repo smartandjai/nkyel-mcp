@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-import deerflow
-from deerflow.skills.skillscan import orchestrator as _orchestrator
-from deerflow.skills.skillscan import scan_skill_dir
+import nkyel
+from nkyel.skills.skillscan import orchestrator as _orchestrator
+from nkyel.skills.skillscan import scan_skill_dir
 
 # The two sudo-option branches overlap unless the standalone branch refuses
 # value-taking options: `-u` then matches both, so a chain of them inside the
@@ -95,12 +95,12 @@ def test_repeated_sudo_option_chain_stays_linear() -> None:
     hanging the suite.
     """
     assert len(_REPEATED_OPTION_CHAIN) == 211
-    harness = Path(deerflow.__file__).resolve().parents[1]
+    harness = Path(nkyel.__file__).resolve().parents[1]
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(filter(None, (str(harness), env.get("PYTHONPATH", ""))))
     script = textwrap.dedent(
         f"""
-        from deerflow.skills.skillscan.orchestrator import _scan_shell
+        from nkyel.skills.skillscan.orchestrator import _scan_shell
 
         payload = {_REPEATED_OPTION_CHAIN!r}
         assert _scan_shell("install.sh", payload) == []

@@ -13,8 +13,8 @@ import pytest
 import sqlalchemy as sa
 from alembic import command
 
-from deerflow.persistence.bootstrap import _get_alembic_config
-from deerflow.persistence.engine import close_engine, init_engine
+from nkyel.persistence.bootstrap import _get_alembic_config
+from nkyel.persistence.engine import close_engine, init_engine
 
 pytestmark = pytest.mark.asyncio
 
@@ -56,7 +56,7 @@ COLUMNS_AT_0024 = COLUMNS - {"summary"}
 async def _engine(tmp_path, name: str = "test.db"):
     url = f"sqlite+aiosqlite:///{tmp_path / name}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
-    from deerflow.persistence.engine import get_engine
+    from nkyel.persistence.engine import get_engine
 
     return get_engine()
 

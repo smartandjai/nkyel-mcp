@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import deerflow.runtime.runs.worker as worker_module
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
-from deerflow.runtime.runs.manager import ConflictError, RunManager
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.runs.worker import RunContext, run_agent
-from deerflow.runtime.stream_bridge import MemoryStreamBridge
+import nkyel.runtime.runs.worker as worker_module
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
+from nkyel.runtime.runs.manager import ConflictError, RunManager
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.runs.worker import RunContext, run_agent
+from nkyel.runtime.stream_bridge import MemoryStreamBridge
 
 
 class DummyAgent:

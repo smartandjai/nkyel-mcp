@@ -17,8 +17,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config import blob_storage_config as bsc
-from deerflow.storage import (
+from nkyel.config import blob_storage_config as bsc
+from nkyel.storage import (
     BlobNotConfiguredError,
     BlobNotFoundError,
     BlobReadError,
@@ -32,9 +32,9 @@ from deerflow.storage import (
     reset_blob_store,
     validate_blob_kind,
 )
-from deerflow.storage import contract as contract_module
-from deerflow.storage.backends.local_fs import LocalFsBlobStore
-from deerflow.storage.backends.local_fs import local_fs_store as local_fs_module
+from nkyel.storage import contract as contract_module
+from nkyel.storage.backends.local_fs import LocalFsBlobStore
+from nkyel.storage.backends.local_fs import local_fs_store as local_fs_module
 
 
 @pytest.fixture(autouse=True)
@@ -235,7 +235,7 @@ def test_invalid_kind_is_rejected_before_touching_disk(store: LocalFsBlobStore, 
 
 
 def test_oversized_put_is_refused(store: LocalFsBlobStore, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr("deerflow.storage.backends.local_fs.local_fs_store._MAX_BLOB_BYTES", 4)
+    monkeypatch.setattr("nkyel.storage.backends.local_fs.local_fs_store._MAX_BLOB_BYTES", 4)
     with pytest.raises(BlobWriteError):
         store.put_bytes(b"12345", kind="tool-output")
 
@@ -339,13 +339,13 @@ def test_content_allocation_failure_still_fails_put(store: LocalFsBlobStore, mon
 
 
 def test_package_exports_the_whole_error_family():
-    """Callers use `from deerflow.storage import ...`, so the error they must
+    """Callers use `from nkyel.storage import ...`, so the error they must
     catch has to be reachable there — and be the same class the contract
     raises, not a re-exported copy."""
     assert BlobNotConfiguredError is contract_module.BlobNotConfiguredError
     assert BlobStoreError is contract_module.BlobStoreError
     for name in ("BlobNotConfiguredError", "BlobStoreError", "BlobNotFoundError", "validate_blob_kind"):
-        assert name in __import__("deerflow.storage", fromlist=["__all__"]).__all__
+        assert name in __import__("nkyel.storage", fromlist=["__all__"]).__all__
 
     bsc.set_blob_storage_config(bsc.BlobStorageConfig())
     reset_blob_store()
@@ -408,7 +408,7 @@ def test_factory_does_not_keep_cached_store_for_invalid_backend(tmp_path: Path):
 
 
 def test_replaced_store_stays_open_until_reset(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    import deerflow.storage.manager as mgr
+    import nkyel.storage.manager as mgr
 
     closed: list[Path] = []
 
@@ -442,7 +442,7 @@ def test_dotted_import_path_backend(tmp_path: Path):
     bsc.set_blob_storage_config(
         bsc.BlobStorageConfig(
             enabled=True,
-            backend="deerflow.storage.backends.local_fs:LocalFsBlobStore",
+            backend="nkyel.storage.backends.local_fs:LocalFsBlobStore",
             backend_config={"root": str(tmp_path / "d")},
         )
     )
@@ -454,7 +454,7 @@ def test_dotted_import_path_backend(tmp_path: Path):
 def test_single_module_import_path_backend(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, separator: str):
     module_name = "deployment_blob_backend"
     (tmp_path / f"{module_name}.py").write_text(
-        "from deerflow.storage.backends.local_fs import LocalFsBlobStore\n\nclass DeploymentBlobStore(LocalFsBlobStore):\n    pass\n",
+        "from nkyel.storage.backends.local_fs import LocalFsBlobStore\n\nclass DeploymentBlobStore(LocalFsBlobStore):\n    pass\n",
         encoding="utf-8",
     )
     monkeypatch.syspath_prepend(str(tmp_path))
@@ -476,7 +476,7 @@ def test_single_module_import_path_backend(tmp_path: Path, monkeypatch: pytest.M
 
 
 def test_relative_root_is_resolved_against_runtime_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    import deerflow.storage.manager as mgr
+    import nkyel.storage.manager as mgr
 
     monkeypatch.setattr(mgr, "_default_backend_config", lambda: {"root": str(tmp_path / "state")})
     bsc.set_blob_storage_config(bsc.BlobStorageConfig(enabled=True, backend="local_fs", backend_config={"root": "relative"}))

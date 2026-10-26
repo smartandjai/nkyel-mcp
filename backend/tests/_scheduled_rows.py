@@ -2,8 +2,8 @@
 
 from datetime import UTC, datetime, timedelta
 
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
 
 BASE = datetime(2026, 10, 1, 1, 0, tzinfo=UTC)
 

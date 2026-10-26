@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# DeerFlow "lark-cli broker" image (Pattern B, issue #4338).
+# nkyel "lark-cli broker" image (Pattern B, issue #4338).
 #
 # Purpose: hold `lark-cli` + the per-user Lark credentials in a long-running
 # sidecar and expose only the command surface over loopback, so the plaintext
@@ -23,11 +23,11 @@
 # from docker/lark-cli-init) into /opt/lark-cli, so the sidecar has a real binary.
 #
 # The shim itself is written from the in-process constant
-# LARK_CLI_BROKER_SHIM_SCRIPT (deerflow.integrations.lark_broker), so the image's
+# LARK_CLI_BROKER_SHIM_SCRIPT (nkyel.integrations.lark_broker), so the image's
 # shim can never drift from the Gateway's copy.
 #
 # Build (defaults to the pinned version below):
-#   docker build -t deer-flow/lark-cli-broker:v1.0.65 \
+#   docker build -t nkyel/lark-cli-broker:v1.0.65 \
 #     --build-arg LARK_CLI_VERSION=v1.0.65 \
 #     -f docker/lark-cli-broker/Dockerfile .
 #
@@ -62,17 +62,17 @@ ENV LARK_CLI_VERSION=${LARK_CLI_VERSION}
 
 COPY --from=builder /opt/lark-cli /opt/lark-cli
 # Single stdlib-only module drives both install-shim and serve.
-COPY backend/packages/harness/deerflow/integrations/lark_broker.py /opt/broker/lark_broker.py
+COPY backend/packages/harness/nkyel/integrations/lark_broker.py /opt/broker/lark_broker.py
 COPY docker/lark-cli-broker/entrypoint.sh /usr/local/bin/lark-cli-broker
 RUN chmod +x /usr/local/bin/lark-cli-broker
 
 # serve mode: the sidecar runs the real arch-dispatch launcher and reads the
 # credential dirs the provisioner mounts into the sidecar only.
-ENV DEERFLOW_LARK_BROKER_CLI=/opt/lark-cli/bin/lark-cli \
+ENV NKYEL_LARK_BROKER_CLI=/opt/lark-cli/bin/lark-cli \
     LARKSUITE_CLI_CONFIG_DIR=/var/lark/config \
     LARKSUITE_CLI_DATA_DIR=/var/lark/data \
-    DEERFLOW_LARK_BROKER_HOST=127.0.0.1 \
-    DEERFLOW_LARK_BROKER_PORT=8788 \
+    NKYEL_LARK_BROKER_HOST=127.0.0.1 \
+    NKYEL_LARK_BROKER_PORT=8788 \
     LARK_CLI_RUNTIME_DEST=/mnt/integrations/lark-cli/runtime
 
 ENTRYPOINT ["/usr/local/bin/lark-cli-broker"]

@@ -28,7 +28,7 @@ try:
 except ImportError:  # pragma: no cover - Windows only
     resource = None  # type: ignore[assignment]
 
-GIT_SHA_ENV = "DEERFLOW_CHECKPOINT_BENCH_GIT_SHA"
+GIT_SHA_ENV = "NKYEL_CHECKPOINT_BENCH_GIT_SHA"
 
 
 def parse_positive_int_csv(value: str, *, option: str) -> list[int]:

@@ -20,9 +20,9 @@ import shutil
 import sys
 from pathlib import Path
 
-from deerflow.config.app_config import get_app_config
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.paths import Paths, get_paths
+from nkyel.config.app_config import get_app_config
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.paths import Paths, get_paths
 
 logger = logging.getLogger(__name__)
 
@@ -339,7 +339,7 @@ def _build_owner_map_from_db(database: DatabaseConfig) -> dict[str, str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Migrate DeerFlow data to per-user layout")
+    parser = argparse.ArgumentParser(description="Migrate nkyel data to per-user layout")
     parser.add_argument("--dry-run", action="store_true", help="Log actions without making changes")
     parser.add_argument(
         "--user-id",

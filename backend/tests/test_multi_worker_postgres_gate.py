@@ -28,12 +28,12 @@ from app.gateway.deps import (
     langgraph_runtime,
 )
 from app.gateway.routers.browser import _browser_tools_enabled
-from deerflow.config.credentials_key import CREDENTIALS_KEY_ENV_VAR, GENERATE_KEY_COMMAND
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.deployment_config import MULTI_INSTANCE_ENV_VAR, DeploymentConfig, multi_instance_declaration
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.config.stream_bridge_config import StreamBridgeConfig
+from nkyel.config.credentials_key import CREDENTIALS_KEY_ENV_VAR, GENERATE_KEY_COMMAND
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.deployment_config import MULTI_INSTANCE_ENV_VAR, DeploymentConfig, multi_instance_declaration
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.config.stream_bridge_config import StreamBridgeConfig
 
 
 def _config_with_backend(
@@ -84,7 +84,7 @@ def isolated_worker_env(monkeypatch):
     monkeypatch.delenv("GATEWAY_WORKERS", raising=False)
     monkeypatch.delenv("WEB_CONCURRENCY", raising=False)
     monkeypatch.delenv(MULTI_INSTANCE_ENV_VAR, raising=False)
-    monkeypatch.delenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_STREAM_BRIDGE_REDIS_URL", raising=False)
     monkeypatch.delenv(CREDENTIALS_KEY_ENV_VAR, raising=False)
 
 
@@ -358,7 +358,7 @@ def test_runtime_browser_surface_stays_disabled_after_incompatible_hot_reload(mo
     monkeypatch.setenv("GATEWAY_WORKERS", "2")
     live_config = SimpleNamespace(tools=[SimpleNamespace(name="browser_navigate", model_extra={})])
 
-    with patch("deerflow.config.get_app_config", return_value=live_config):
+    with patch("nkyel.config.get_app_config", return_value=live_config):
         assert _browser_tools_enabled() is False
 
 
@@ -474,11 +474,11 @@ async def test_langgraph_runtime_invokes_gate_before_persistence_setup(monkeypat
 
     with (
         patch(
-            "deerflow.persistence.engine.init_engine_from_config",
+            "nkyel.persistence.engine.init_engine_from_config",
             init_engine_from_config,
         ),
-        patch("deerflow.runtime.make_stream_bridge", side_effect=_noop_stream_bridge) as make_stream_bridge,
-        patch("deerflow.runtime.make_store", side_effect=_noop_stream_bridge) as make_store,
+        patch("nkyel.runtime.make_stream_bridge", side_effect=_noop_stream_bridge) as make_stream_bridge,
+        patch("nkyel.runtime.make_store", side_effect=_noop_stream_bridge) as make_store,
     ):
         app = FastAPI()
         startup_config = _config_with_backend("sqlite")
@@ -505,9 +505,9 @@ def test_multi_worker_requires_a_cross_process_stream_bridge(monkeypatch):
 
 
 def test_multi_worker_accepts_the_env_redis_stream_bridge(monkeypatch):
-    """docker-compose and the Helm chart inject DEER_FLOW_STREAM_BRIDGE_REDIS_URL instead of a config section."""
+    """docker-compose and the Helm chart inject NKYEL_STREAM_BRIDGE_REDIS_URL instead of a config section."""
     monkeypatch.setenv("GATEWAY_WORKERS", "2")
-    monkeypatch.setenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("NKYEL_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
     _enforce_postgres_for_multi_worker(_config_with_backend("postgres", heartbeat_enabled=True))
 
 
@@ -562,7 +562,7 @@ def test_declared_multi_instance_requires_a_redis_stream_bridge():
 
 
 def test_declared_multi_instance_accepts_the_env_redis_stream_bridge(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("NKYEL_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
     _enforce_postgres_for_multi_worker(_cluster_ready(deployment_multi_instance=True, stream_bridge_type=None))
 
 
@@ -600,7 +600,7 @@ def test_declared_multi_instance_rejects_process_local_browser():
 
 @pytest.mark.parametrize("value", ["1", "true", "True", "yes", "on", "replicas"])
 def test_env_declaration_is_gated(monkeypatch, value):
-    """DEER_FLOW_MULTI_INSTANCE is what deploy tooling sets from the replica count.
+    """NKYEL_MULTI_INSTANCE is what deploy tooling sets from the replica count.
 
     Any spelling that is not an explicit "off" counts: a typo must fail closed
     (run the gate) rather than silently disable it.
@@ -615,7 +615,7 @@ def test_env_declaration_is_gated(monkeypatch, value):
 
 @pytest.mark.parametrize("value", ["", "0", "false", "False", "no", "off", "  "])
 def test_falsy_env_declaration_stays_inert(monkeypatch, value):
-    """A templated DEER_FLOW_MULTI_INSTANCE=false (one replica) must not trip the gate."""
+    """A templated NKYEL_MULTI_INSTANCE=false (one replica) must not trip the gate."""
     monkeypatch.setenv(MULTI_INSTANCE_ENV_VAR, value)
     _enforce_postgres_for_multi_worker(_config_with_backend("sqlite", scheduler_enabled=True))
 
@@ -736,7 +736,7 @@ def _throttle_warnings(caplog):
 
 def test_login_throttle_warning_fires_for_a_declared_multi_instance_deployment_on_memory(caplog):
     """Explicit memory counters under N replicas hand an attacker N x max_login_attempts guesses."""
-    from deerflow.config.auth_config import LoginThrottleStorage
+    from nkyel.config.auth_config import LoginThrottleStorage
 
     with caplog.at_level("WARNING"):
         _validate_login_throttle_storage(_with_throttle_storage(_cluster_ready(deployment_multi_instance=True), LoginThrottleStorage.MEMORY))
@@ -813,7 +813,7 @@ def test_declared_multi_instance_warns_when_a_relative_index_path_stays_below_st
 
 def test_declared_multi_instance_defaults_the_memory_root_to_runtime_home(monkeypatch, caplog, tmp_path):
     """An empty storage_path means the host injects runtime_home(), which is the shared home volume."""
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     config = _cluster_ready(deployment_multi_instance=True)
     config.memory = _memory_config()
     with caplog.at_level("WARNING"):
@@ -860,7 +860,7 @@ def test_retrieval_index_warning_only_covers_the_bundled_fts5_index(caplog, memo
 
 
 # ---------------------------------------------------------------------------
-# At-rest credentials key (DEER_FLOW_CREDENTIALS_KEY)
+# At-rest credentials key (NKYEL_CREDENTIALS_KEY)
 # ---------------------------------------------------------------------------
 
 _VALID_KEY = "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE="
@@ -970,8 +970,8 @@ async def test_langgraph_runtime_enforces_the_credentials_key_before_persistence
         yield MagicMock()
 
     with (
-        patch("deerflow.persistence.engine.init_engine_from_config", init_engine_from_config),
-        patch("deerflow.runtime.make_stream_bridge", side_effect=_noop_stream_bridge) as make_stream_bridge,
+        patch("nkyel.persistence.engine.init_engine_from_config", init_engine_from_config),
+        patch("nkyel.runtime.make_stream_bridge", side_effect=_noop_stream_bridge) as make_stream_bridge,
     ):
         startup_config = _with_channel_connections(_cluster_ready(deployment_multi_instance=True))
         with pytest.raises(SystemExit, match=CREDENTIALS_KEY_ENV_VAR):
@@ -993,7 +993,7 @@ def _channels_cluster(*, leader_lease=None, channels=None, connections=None, **o
     ``channels`` is the raw ``channels`` mapping that lives in ``AppConfig.model_extra``;
     ``connections`` is the ``channel_connections`` section.
     """
-    from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+    from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
     config = _cluster_ready(**overrides)
     section = dict(channels or {})

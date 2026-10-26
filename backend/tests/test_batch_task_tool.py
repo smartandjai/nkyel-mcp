@@ -6,14 +6,14 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 
-from deerflow.mcp_scope import (
+from nkyel.mcp_scope import (
     THREAD_INCARNATION_CONTEXT_KEY,
     THREAD_INCARNATION_METADATA_GUARD_KEY,
 )
-from deerflow.subagents.config import SubagentConfig
-from deerflow.tools.builtins.batch_task_tool import BatchTaskItem
+from nkyel.subagents.config import SubagentConfig
+from nkyel.tools.builtins.batch_task_tool import BatchTaskItem
 
-tool_module = importlib.import_module("deerflow.tools.builtins.batch_task_tool")
+tool_module = importlib.import_module("nkyel.tools.builtins.batch_task_tool")
 _MISSING = object()
 
 
@@ -291,7 +291,7 @@ def test_bound_batch_tools_sync_path_uses_the_explicit_submitter(monkeypatch) ->
     would keep that wrapper around the unbound coroutine and fall through to
     the process-global submitter.
     """
-    from deerflow.tools.tools import _ensure_sync_invocable_tool
+    from nkyel.tools.tools import _ensure_sync_invocable_tool
 
     fallback = AsyncMock()
     monkeypatch.setattr(tool_module, "get_subagent_batch_submitter", lambda: fallback)

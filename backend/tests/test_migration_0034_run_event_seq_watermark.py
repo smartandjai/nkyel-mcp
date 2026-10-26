@@ -14,8 +14,8 @@ from alembic import command
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence import bootstrap
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 REVISION = "0034_run_event_seq_watermark"
 PREVIOUS = "0033_batch_result_artifact"

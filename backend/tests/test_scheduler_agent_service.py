@@ -8,18 +8,18 @@ from sqlalchemy import select
 
 from app.scheduler.notification_delivery import render_notification_text
 from app.scheduler.service import ScheduledTaskService
-from deerflow.persistence.channel_connections import ChannelConnectionRepository
-from deerflow.persistence.channel_connections.model import ChannelConnectionRow
-from deerflow.persistence.notification_deliveries import NotificationDeliveryRepository, NotificationDeliveryRow
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.runtime import RunStatus
+from nkyel.persistence.channel_connections import ChannelConnectionRepository
+from nkyel.persistence.channel_connections.model import ChannelConnectionRow
+from nkyel.persistence.notification_deliveries import NotificationDeliveryRepository, NotificationDeliveryRow
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.runtime import RunStatus
 
 
 @pytest.fixture
 async def scheduler(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'scheduler.db'}", sqlite_dir=str(tmp_path))
     sf = get_session_factory()
@@ -244,7 +244,7 @@ async def scheduled_miss(sf, tasks, service, launches, verdict=None):
 
 
 async def streak_boundary(sf):
-    from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
+    from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
 
     async with sf() as session:
         row = await session.get(ScheduledTaskRow, "task-a")
@@ -301,7 +301,7 @@ async def test_noop_edit_keeps_boundary(scheduler):
 @pytest.mark.anyio
 async def test_resume_does_not_reset_streak(scheduler):
     from app.gateway.scheduled_task_validation import prepare_resume_updates
-    from deerflow.persistence.scheduled_task_runs.finalization import AUTO_PAUSE_LAST_ERROR
+    from nkyel.persistence.scheduled_task_runs.finalization import AUTO_PAUSE_LAST_ERROR
 
     sf, tasks, _occurrences, service, launches, _deliveries = scheduler
     await create_task(tasks, goal_objective="report is ready")
@@ -361,7 +361,7 @@ async def test_page_created_task_gets_previous_reference_and_notes(scheduler):
 @pytest.mark.parametrize("marker_kind", ["agent_stop", "auto_pause"])
 @pytest.mark.parametrize("trial_outcome", ["success", "failure", "launch_failure"])
 async def test_trial_on_paused_task_keeps_pause_marker(scheduler, marker_kind, trial_outcome):
-    from deerflow.persistence.scheduled_task_runs.finalization import AGENT_STOP_LAST_ERROR_PREFIX, AUTO_PAUSE_LAST_ERROR
+    from nkyel.persistence.scheduled_task_runs.finalization import AGENT_STOP_LAST_ERROR_PREFIX, AUTO_PAUSE_LAST_ERROR
 
     sf, tasks, occurrences, service, launches, _deliveries = scheduler
     await create_task(tasks)
@@ -393,7 +393,7 @@ async def test_trial_on_paused_task_keeps_pause_marker(scheduler, marker_kind, t
 
 
 def _live_scheduler_config(monkeypatch, *, tool_enabled):
-    from deerflow.config import app_config
+    from nkyel.config import app_config
 
     live = SimpleNamespace(scheduler=SimpleNamespace(enabled=True, tool_enabled=tool_enabled))
     monkeypatch.setattr(app_config, "get_app_config", lambda: live)
@@ -402,7 +402,7 @@ def _live_scheduler_config(monkeypatch, *, tool_enabled):
 
 @pytest.mark.anyio
 async def test_launch_appends_stop_rule_only_at_launch(scheduler, monkeypatch):
-    from deerflow.scheduler.stop_rule import STOP_RULE_PREFIX
+    from nkyel.scheduler.stop_rule import STOP_RULE_PREFIX
 
     _live_scheduler_config(monkeypatch, tool_enabled=True)
     sf, tasks, _occurrences, service, launches, _deliveries = scheduler
@@ -421,7 +421,7 @@ async def test_launch_appends_stop_rule_only_at_launch(scheduler, monkeypatch):
 
 @pytest.mark.anyio
 async def test_launch_prompt_without_own_stop(scheduler):
-    from deerflow.scheduler.stop_rule import STOP_RULE_NO_TOOL_PREFIX
+    from nkyel.scheduler.stop_rule import STOP_RULE_NO_TOOL_PREFIX
 
     _sf, tasks, occurrences, service, launches, _deliveries = scheduler
     without_tool = ScheduledTaskService(task_repo=tasks, task_run_repo=occurrences, launch_run=service._launch_run, poll_interval_seconds=1, lease_seconds=120, max_concurrent_runs=3, own_stop_available=False)
@@ -433,7 +433,7 @@ async def test_launch_prompt_without_own_stop(scheduler):
 
 @pytest.mark.anyio
 async def test_stop_rule_phrasing_follows_the_live_tool_setting(scheduler, monkeypatch):
-    from deerflow.scheduler.stop_rule import STOP_RULE_NO_TOOL_PREFIX, STOP_RULE_PREFIX
+    from nkyel.scheduler.stop_rule import STOP_RULE_NO_TOOL_PREFIX, STOP_RULE_PREFIX
 
     sf, tasks, _occurrences, service, launches, _deliveries = scheduler
     live = _live_scheduler_config(monkeypatch, tool_enabled=True)

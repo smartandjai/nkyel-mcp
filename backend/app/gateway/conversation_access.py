@@ -12,14 +12,14 @@ from urllib.parse import urlsplit
 from fastapi import HTTPException, Request
 
 from app.gateway.conversation_reader import read_visible_message_page
-from deerflow.constants import CONVERSATION_TOOL_NAME, CONVERSATION_TOOL_USE
-from deerflow.utils.llm_text import strip_think_blocks
-from deerflow.utils.thread_id import validate_thread_id
+from nkyel.constants import CONVERSATION_TOOL_NAME, CONVERSATION_TOOL_USE
+from nkyel.utils.llm_text import strip_think_blocks
+from nkyel.utils.thread_id import validate_thread_id
 
 if TYPE_CHECKING:
-    from deerflow.config.app_config import AppConfig
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.worker import RunContext
+    from nkyel.config.app_config import AppConfig
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.worker import RunContext
 
 logger = logging.getLogger(__name__)
 _MESSAGE_TEXT_LIMIT = 4000
@@ -50,10 +50,10 @@ def _source_id(reference: str, request_url: str) -> str:
     parsed = urlsplit(reference)
     origin = urlsplit(request_url)
     if parsed.scheme not in {"http", "https"} or (parsed.scheme, parsed.netloc) != (origin.scheme, origin.netloc) or parsed.query or parsed.fragment:
-        raise ValueError("Use a thread ID or a conversation URL from this DeerFlow origin")
+        raise ValueError("Use a thread ID or a conversation URL from this nkyel origin")
     match = re.fullmatch(r"/workspace/(?:agents/[^/]+/)?chats/([^/]+)", parsed.path)
     if match is None:
-        raise ValueError("Expected a DeerFlow conversation URL")
+        raise ValueError("Expected a nkyel conversation URL")
     return validate_thread_id(match.group(1))
 
 

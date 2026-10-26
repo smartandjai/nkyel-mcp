@@ -2,7 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.gateway.routers.mcp import McpServerConfigResponse
-from deerflow.config.extensions_config import ExtensionsConfig
+from nkyel.config.extensions_config import ExtensionsConfig
 
 
 def test_task_toolsets_preserve_raw_tool_names_and_support_multiple_groups() -> None:

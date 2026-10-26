@@ -188,8 +188,8 @@ def test_same_role_assignment_is_idempotent(monkeypatch):
 
 
 def test_assignable_role_names_union_of_builtins_and_configured():
-    from deerflow.authz.rbac import RbacAuthorizationProvider
-    from deerflow.config.authorization_config import AuthorizationConfig
+    from nkyel.authz.rbac import RbacAuthorizationProvider
+    from nkyel.config.authorization_config import AuthorizationConfig
 
     provider = RbacAuthorizationProvider(
         roles={
@@ -236,7 +236,7 @@ def _make_sqlite_repo(tmpdir):
     import asyncio
 
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-    from deerflow.persistence.engine import get_session_factory, init_engine
+    from nkyel.persistence.engine import get_session_factory, init_engine
 
     async def _setup():
         await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmpdir}/users.db", sqlite_dir=tmpdir)
@@ -255,7 +255,7 @@ def test_stale_credential_snapshot_cannot_restore_revoked_role(tmp_path):
     import tempfile
 
     from app.gateway.auth.repositories.base import LastAdminRemainsError
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     with tempfile.TemporaryDirectory() as tmpdir:
         repo = _make_sqlite_repo(tmpdir)
@@ -420,7 +420,7 @@ def test_langgraph_authenticate_rejects_suspended_session():
     import pytest
 
     from app.gateway.auth.jwt import create_access_token
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     with tempfile.TemporaryDirectory() as tmpdir:
         repo = _make_sqlite_repo(tmpdir)
@@ -469,7 +469,7 @@ def test_browser_ws_authenticator_rejects_suspended_session():
     import tempfile
 
     from app.gateway.auth.jwt import create_access_token
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     with tempfile.TemporaryDirectory() as tmpdir:
         repo = _make_sqlite_repo(tmpdir)
@@ -512,7 +512,7 @@ def test_repo_set_disabled_field_scoped_and_last_active_admin():
     import tempfile
 
     from app.gateway.auth.repositories.base import LastActiveAdminError
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     with tempfile.TemporaryDirectory() as tmpdir:
         repo = _make_sqlite_repo(tmpdir)
@@ -571,7 +571,7 @@ def test_disabled_account_rejected_at_login_and_flagged_for_resolvers():
     import tempfile
 
     from app.gateway.auth.local_provider import LocalAuthProvider
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     with tempfile.TemporaryDirectory() as tmpdir:
         repo = _make_sqlite_repo(tmpdir)

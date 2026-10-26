@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from langgraph_sdk.sse import SSEDecoder, aiter_lines_raw
 from starlette.responses import StreamingResponse
 
-from deerflow.runtime.stream_bridge import END_SENTINEL, MemoryStreamBridge, StreamEvent, StreamGap
+from nkyel.runtime.stream_bridge import END_SENTINEL, MemoryStreamBridge, StreamEvent, StreamGap
 
 
 @pytest.mark.asyncio
@@ -90,8 +90,8 @@ async def test_gateway_sse_reconnect_preserves_complete_retained_output():
     from langchain_core.messages import AIMessageChunk
 
     from app.gateway.services import sse_consumer
-    from deerflow.runtime import RunManager, RunStatus
-    from deerflow.runtime.serialization import serialize
+    from nkyel.runtime import RunManager, RunStatus
+    from nkyel.runtime.serialization import serialize
 
     bridge = MemoryStreamBridge(queue_maxsize=2)
     manager = RunManager()

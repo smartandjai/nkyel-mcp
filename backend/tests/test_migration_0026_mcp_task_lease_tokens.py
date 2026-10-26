@@ -15,7 +15,7 @@ from alembic import command
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from deerflow.persistence import bootstrap
+from nkyel.persistence import bootstrap
 
 pytestmark = pytest.mark.asyncio
 

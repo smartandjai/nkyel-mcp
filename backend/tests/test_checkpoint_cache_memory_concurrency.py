@@ -8,8 +8,8 @@ from queue import Queue
 
 import pytest
 
-from deerflow.runtime.checkpoint_cache.base import make_history_key
-from deerflow.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
+from nkyel.runtime.checkpoint_cache.base import make_history_key
+from nkyel.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
 
 
 @pytest.mark.parametrize("mutation", ["evict", "purge", "close"])

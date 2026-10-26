@@ -9,9 +9,9 @@ from fastapi.testclient import TestClient
 from app.gateway.auth.models import User
 from app.gateway.deps import get_config
 from app.gateway.routers import knowledge
-from deerflow.extensions import ExtensionRegistry, reset_loaded_extensions
-from deerflow.knowledge import KnowledgeCapabilities, RetrievalCatalogPage
-from deerflow.knowledge.providers import GENERIC_KNOWLEDGE_TOOL
+from nkyel.extensions import ExtensionRegistry, reset_loaded_extensions
+from nkyel.knowledge import KnowledgeCapabilities, RetrievalCatalogPage
+from nkyel.knowledge.providers import GENERIC_KNOWLEDGE_TOOL
 
 
 def setup_provider(operations):

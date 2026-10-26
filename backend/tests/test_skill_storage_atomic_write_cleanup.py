@@ -9,9 +9,9 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.config.paths import Paths
-from deerflow.skills.storage import get_or_new_skill_storage, reset_skill_storage
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config.paths import Paths
+from nkyel.skills.storage import get_or_new_skill_storage, reset_skill_storage
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 
 @pytest.fixture(autouse=True)
@@ -28,8 +28,8 @@ def storage(tmp_path):
 
 @pytest.fixture()
 def user_storage(tmp_path):
-    with patch("deerflow.config.paths.get_paths", return_value=Paths(base_dir=tmp_path)):
-        with patch("deerflow.config.paths._paths", None):
+    with patch("nkyel.config.paths.get_paths", return_value=Paths(base_dir=tmp_path)):
+        with patch("nkyel.config.paths._paths", None):
             created = UserScopedSkillStorage("test-user", host_path=str(tmp_path))
     return created
 
@@ -71,10 +71,10 @@ def test_write_custom_skill_preserves_replace_error_when_cleanup_fails(tmp_path,
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             with pytest.raises(OSError) as raised:
                 selected.write_custom_skill("demo-skill", "SKILL.md", "replacement")
         assert raised.value is primary
@@ -125,10 +125,10 @@ def test_skill_states_preserve_save_error_when_cleanup_fails(monkeypatch, caplog
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             with pytest.raises(OSError) as raised:
                 user_storage._write_skill_states({"new-skill": {"enabled": True}})
         assert raised.value is primary
@@ -174,10 +174,10 @@ def test_skill_states_keyboard_interrupt_still_cleans(monkeypatch, caplog, user_
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             with pytest.raises(KeyboardInterrupt) as raised:
                 user_storage._write_skill_states({"new-skill": {"enabled": True}})
         assert raised.value is primary

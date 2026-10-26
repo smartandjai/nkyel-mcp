@@ -27,10 +27,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from deerflow.config.app_config import AppConfig
+from nkyel.config.app_config import AppConfig
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CHART = REPO_ROOT / "deploy" / "helm" / "deer-flow"
+CHART = REPO_ROOT / "deploy" / "helm" / "nkyel"
 VALUES = CHART / "values.yaml"
 APP_SECRET_TEMPLATE = CHART / "templates" / "secret-app.yaml"
 README = CHART / "README.md"
@@ -53,7 +53,7 @@ def _render_chart(*settings: str) -> list[dict]:
     helm = shutil.which("helm")
     if helm is None:
         pytest.skip("helm is unavailable")
-    command = [helm, "template", "deer-flow", str(CHART)]
+    command = [helm, "template", "nkyel", str(CHART)]
     for setting in settings:
         command.extend(["--set", setting])
     rendered = subprocess.run(command, check=True, capture_output=True, text=True).stdout

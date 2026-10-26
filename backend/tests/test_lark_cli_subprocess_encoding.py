@@ -31,9 +31,9 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.config import paths as paths_module
-from deerflow.config.paths import Paths
-from deerflow.integrations import lark_cli
+from nkyel.config import paths as paths_module
+from nkyel.config.paths import Paths
+from nkyel.integrations import lark_cli
 
 # A code page that cannot represent the payload below and is not UTF-8.
 MANGLING_CODEPAGE = "cp1252"
@@ -118,7 +118,7 @@ def isolated_paths(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     ``_run_lark_cli_json`` and ``probe_lark_auth`` reach
     ``ensure_lark_cli_credential_tree`` through the global ``get_paths()``
     singleton, so without this every run would create and harden a real
-    ``<cwd>/.deer-flow/users/alice/integrations/lark-cli/{config,data}`` tree --
+    ``<cwd>/.nkyel/users/alice/integrations/lark-cli/{config,data}`` tree --
     the same directory a live deployment keeps real per-user Lark credentials
     in -- in whatever directory pytest runs from. The sibling
     ``test_lark_cli_integration.py`` isolates it the same way.

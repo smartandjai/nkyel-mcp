@@ -1,6 +1,6 @@
 name: Nightly Build
 
-# Nightly build of the three DeerFlow container images (backend, frontend,
+# Nightly build of the three nkyel container images (backend, frontend,
 # provisioner) and the Helm chart, published to GHCR from the default branch.
 #
 # This mirrors the tag-driven release workflows (container.yaml + chart.yaml)
@@ -10,16 +10,16 @@ name: Nightly Build
 # release. Images are amd64-only to match the release builds.
 #
 # Artifacts (under the running repo's owner):
-#   ghcr.io/<owner>/deer-flow-{backend,frontend,provisioner}:nightly
-#   ghcr.io/<owner>/deer-flow-{backend,frontend,provisioner}:nightly-YYYYMMDD
-#   oci://ghcr.io/<owner>/charts/deer-flow   chart version <base>-nightly.YYYYMMDD-<sha>
+#   ghcr.io/<owner>/nkyel-{backend,frontend,provisioner}:nightly
+#   ghcr.io/<owner>/nkyel-{backend,frontend,provisioner}:nightly-YYYYMMDD
+#   oci://ghcr.io/<owner>/charts/nkyel   chart version <base>-nightly.YYYYMMDD-<sha>
 #
 # The nightly chart defaults image.tag=nightly and image.registry=ghcr.io/<owner>
 # (patched in-workflow, never committed), so installing it pulls the matching
 # nightly images with no values overrides.
 #
 # Restricted to the upstream repo: every job is gated on
-# `github.repository == 'bytedance/deer-flow'`, so a scheduled run or manual
+# `github.repository == 'bytedance/nkyel'`, so a scheduled run or manual
 # dispatch on a fork skips all jobs rather than pushing to the fork's own GHCR
 # namespace. Scheduled workflows also only fire on the default branch.
 
@@ -38,7 +38,7 @@ env:
 
 jobs:
   prepare:
-    if: github.repository == 'bytedance/deer-flow'
+    if: github.repository == 'bytedance/nkyel'
     runs-on: ubuntu-latest
     outputs:
       date: ${{ steps.date.outputs.date }}
@@ -62,7 +62,7 @@ jobs:
         # users see and the chart version can't drift apart.
         run: |
           set -euo pipefail
-          BASE=$(grep -m1 '^version:' deploy/helm/deer-flow/Chart.yaml | awk '{print $2}')
+          BASE=$(grep -m1 '^version:' deploy/helm/nkyel/Chart.yaml | awk '{print $2}')
           # A malformed/missing Chart.yaml version would yield an empty BASE ->
           # `-nightly.<date>-<sha>` (invalid semver) that now flows into both
           # the chart publish and the frontend About-page version. Fail loudly.
@@ -75,7 +75,7 @@ jobs:
           echo "Nightly version: ${NIGHTLY}"
 
   validate-chart:
-    if: github.repository == 'bytedance/deer-flow'
+    if: github.repository == 'bytedance/nkyel'
     # Catch a broken render or a stale config_version before publish. A broken
     # chart published under an OCI version is immutable (GHCR won't let you
     # overwrite --version), so a regression must fail here, not on install.
@@ -87,9 +87,9 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
 
       - name: Lint chart
-        run: helm lint deploy/helm/deer-flow
+        run: helm lint deploy/helm/nkyel
       - name: Validate templates render
-        run: helm template deer-flow deploy/helm/deer-flow --include-crds >/dev/null
+        run: helm template nkyel deploy/helm/nkyel --include-crds >/dev/null
 
       # The chart's `config:` block embeds a config_version that must not fall
       # behind config.example.yaml. Shared with chart.yaml via
@@ -99,7 +99,7 @@ jobs:
 
   build-images:
     needs: prepare
-    if: github.repository == 'bytedance/deer-flow'
+    if: github.repository == 'bytedance/nkyel'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -176,7 +176,7 @@ jobs:
     # failed image build withholds the chart rather than publishing one that
     # would fail to pull in-cluster.
     needs: [prepare, validate-chart, build-images]
-    if: github.repository == 'bytedance/deer-flow'
+    if: github.repository == 'bytedance/nkyel'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -200,7 +200,7 @@ jobs:
         # committed back.
         run: |
           set -eu
-          CHART=deploy/helm/deer-flow
+          CHART=deploy/helm/nkyel
           echo "Nightly chart version: ${NIGHTLY}"
           sed -i "s|^version:.*|version: ${NIGHTLY}|" "$CHART/Chart.yaml"
           sed -i "s|^appVersion:.*|appVersion: \"${NIGHTLY}\"|" "$CHART/Chart.yaml"
@@ -218,7 +218,7 @@ jobs:
           echo "--- image block ---"; sed -n '11,14p' "$CHART/values.yaml"
 
       - name: Lint patched chart
-        run: helm lint deploy/helm/deer-flow
+        run: helm lint deploy/helm/nkyel
 
       - name: Log in to GHCR
         run: |
@@ -227,7 +227,7 @@ jobs:
 
       - name: Package and push chart
         run: |
-          helm package deploy/helm/deer-flow --destination ./packages
+          helm package deploy/helm/nkyel --destination ./packages
           for pkg in ./packages/*.tgz; do
             echo "--- pushing $pkg"
             helm push "$pkg" oci://ghcr.io/${{ github.repository_owner }}/charts

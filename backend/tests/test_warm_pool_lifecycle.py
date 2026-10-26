@@ -10,7 +10,7 @@ from unittest import mock
 
 import pytest
 
-from deerflow.community.warm_pool_lifecycle import DEFAULT_IDLE_TIMEOUT, DEFAULT_REPLICAS, WarmPoolLifecycleMixin
+from nkyel.community.warm_pool_lifecycle import DEFAULT_IDLE_TIMEOUT, DEFAULT_REPLICAS, WarmPoolLifecycleMixin
 
 
 class _Provider(WarmPoolLifecycleMixin[str]):
@@ -98,11 +98,11 @@ def test_stop_idle_checker_rejects_live_thread_after_timeout() -> None:
 @pytest.mark.parametrize(
     ("module_name", "class_name"),
     [
-        ("deerflow.community.aio_sandbox.aio_sandbox_provider", "AioSandboxProvider"),
-        ("deerflow.community.boxlite.provider", "BoxliteProvider"),
+        ("nkyel.community.aio_sandbox.aio_sandbox_provider", "AioSandboxProvider"),
+        ("nkyel.community.boxlite.provider", "BoxliteProvider"),
         # Tenki separates the permanent admission fence from cleanup completion;
         # test_tenki_lifecycle exercises its retry through the real constructor.
-        ("deerflow.community.opensandbox.provider", "OpenSandboxProvider"),
+        ("nkyel.community.opensandbox.provider", "OpenSandboxProvider"),
     ],
 )
 def test_provider_shutdown_resets_guard_when_idle_checker_stop_fails(module_name: str, class_name: str) -> None:

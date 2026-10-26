@@ -4,16 +4,16 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'examples/deerflow-extension-jev-context/**'
+      - 'examples/nkyel-extension-jev-context/**'
       - 'backend/packages/extension-api/**'
-      - 'backend/packages/harness/deerflow/extensions/**'
+      - 'backend/packages/harness/nkyel/extensions/**'
       - '.github/workflows/jev-plugin-package.yml'
   push:
     branches: [main, "*-dev"]
     paths:
-      - 'examples/deerflow-extension-jev-context/**'
+      - 'examples/nkyel-extension-jev-context/**'
       - 'backend/packages/extension-api/**'
-      - 'backend/packages/harness/deerflow/extensions/**'
+      - 'backend/packages/harness/nkyel/extensions/**'
       - '.github/workflows/jev-plugin-package.yml'
 
 permissions:
@@ -41,7 +41,7 @@ jobs:
         run: uv sync --locked
       - name: Build and install the independent wheel
         run: |
-          uv build --wheel examples/deerflow-extension-jev-context --out-dir "$RUNNER_TEMP/jev-wheel"
+          uv build --wheel examples/nkyel-extension-jev-context --out-dir "$RUNNER_TEMP/jev-wheel"
           uv pip install --python backend/.venv/bin/python --no-deps --target "$RUNNER_TEMP/jev-installed" "$RUNNER_TEMP"/jev-wheel/*.whl
       - name: Verify installed entry point through the host
-        run: backend/.venv/bin/python examples/deerflow-extension-jev-context/scripts/verify_package.py --installed-dir "$RUNNER_TEMP/jev-installed"
+        run: backend/.venv/bin/python examples/nkyel-extension-jev-context/scripts/verify_package.py --installed-dir "$RUNNER_TEMP/jev-installed"

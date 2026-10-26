@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     AgentBuildContext,
     AgentScope,
     MiddlewarePlacement,
@@ -13,9 +13,9 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
 from langchain_core.messages import AIMessage
 
-from deerflow.extensions.anchors import PlacementAnchor, inner_of, innermost, outer_of, outermost
-from deerflow.extensions.injection import inject_middlewares
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions.anchors import PlacementAnchor, inner_of, innermost, outer_of, outermost
+from nkyel.extensions.injection import inject_middlewares
+from nkyel.extensions.registry import ExtensionRegistry
 
 
 class _Core:
@@ -92,7 +92,7 @@ def _ctx() -> AgentBuildContext:
 
 
 def _tags(stack: list[object]) -> list[str]:
-    from deerflow.extensions.isolation import IsolatedMiddleware
+    from nkyel.extensions.isolation import IsolatedMiddleware
 
     out = []
     for m in stack:

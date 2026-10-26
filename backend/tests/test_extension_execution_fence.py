@@ -2,11 +2,11 @@
 
 import pytest
 import pytest_asyncio
-from deerflow_extension_api import ExecutionFence
+from nkyel_extension_api import ExecutionFence
 from sqlalchemy import insert
 from test_run_repository import _cleanup, _make_repo
 
-from deerflow.persistence.extension_leases.model import ExtensionExecutionLeaseRow
+from nkyel.persistence.extension_leases.model import ExtensionExecutionLeaseRow
 
 
 @pytest_asyncio.fixture
@@ -23,7 +23,7 @@ async def test_admission_rejects_stale_extension_epoch(repo):
     async with repo._sf() as session:
         await session.execute(insert(ExtensionExecutionLeaseRow).values(namespace="test", resource_id="workflow", user_id="alice", holder_id="new", epoch=2, expires_at=9999999999))
         await session.commit()
-    from deerflow.runtime.runs.manager import ConflictError
+    from nkyel.runtime.runs.manager import ConflictError
 
     with pytest.raises(ConflictError, match="execution fence"):
         await repo.create_thread_operation_atomic("child", thread_id="thread", owner_worker_id="worker", lease_expires_at=None, user_id="alice", execution_fence=ExecutionFence("test", "workflow", "old", 1))
@@ -33,7 +33,7 @@ async def test_admission_rejects_stale_extension_epoch(repo):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("changed", ["holder", "epoch", "user", "expired", "missing"])
 async def test_fence_rejects_wrong_authority(repo, changed):
-    from deerflow.runtime.runs.manager import ConflictError
+    from nkyel.runtime.runs.manager import ConflictError
 
     values = dict(namespace="test", resource_id="workflow", user_id="alice", holder_id="owner", epoch=1, expires_at=9999999999)
     if changed != "missing":
@@ -65,11 +65,11 @@ async def test_postgres_takeover_fences_admission_after_lock_wait():
     from sqlalchemy import update
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from deerflow.persistence.run import RunRepository
-    from deerflow.persistence.run.model import RunChangeClockRow, RunRow
-    from deerflow.runtime.runs.manager import ConflictError
+    from nkyel.persistence.run import RunRepository
+    from nkyel.persistence.run.model import RunChangeClockRow, RunRow
+    from nkyel.runtime.runs.manager import ConflictError
 
-    dsn = os.getenv("DEERFLOW_TEST_WORKFLOW_POSTGRES")
+    dsn = os.getenv("NKYEL_TEST_WORKFLOW_POSTGRES")
     if not dsn:
         pytest.skip("Requires dedicated PostgreSQL")
     schema = "fence_test_" + uuid.uuid4().hex
@@ -117,7 +117,7 @@ async def test_postgres_takeover_fences_admission_after_lock_wait():
 
 @pytest.mark.asyncio
 async def test_fenced_cancel_cannot_cancel_successor_child(repo):
-    from deerflow.runtime.runs.manager import ConflictError
+    from nkyel.runtime.runs.manager import ConflictError
 
     async with repo._sf() as session:
         await session.execute(insert(ExtensionExecutionLeaseRow).values(namespace="test", resource_id="workflow", user_id="alice", holder_id="new", epoch=2, expires_at=9999999999))
@@ -137,7 +137,7 @@ async def test_execution_fence_migration_upgrade_and_downgrade(tmp_path):
     from alembic import command
     from sqlalchemy.ext.asyncio import create_async_engine
 
-    from deerflow.persistence import bootstrap
+    from nkyel.persistence import bootstrap
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'fence-migration.db'}")
     config = bootstrap._get_alembic_config(engine)

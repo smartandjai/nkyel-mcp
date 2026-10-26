@@ -124,10 +124,10 @@ def test_cache_hash_accepts_non_utf8_filesystem_names(analysis):
 def test_excel_duplicate_sheet_names_keep_their_data(analysis, tmp_path):
     # Optional real-spatial integration: no download from the default test run.
     # Supply an already installed official extension directory to opt in.
-    extension_dir = os.environ.get("DEERFLOW_TEST_SPATIAL_DIRECTORY")
+    extension_dir = os.environ.get("NKYEL_TEST_SPATIAL_DIRECTORY")
     if not extension_dir:
         pytest.skip(
-            "set DEERFLOW_TEST_SPATIAL_DIRECTORY for real Excel/spatial integration"
+            "set NKYEL_TEST_SPATIAL_DIRECTORY for real Excel/spatial integration"
         )
     import openpyxl
 
@@ -156,10 +156,10 @@ def test_excel_duplicate_sheet_names_keep_their_data(analysis, tmp_path):
 def test_cli_cache_reopen_and_reorder_select_the_requested_sources(
     analysis, tmp_path, monkeypatch, capsys, caplog
 ):
-    extension_dir = os.environ.get("DEERFLOW_TEST_SPATIAL_DIRECTORY")
+    extension_dir = os.environ.get("NKYEL_TEST_SPATIAL_DIRECTORY")
     if not extension_dir:
         pytest.skip(
-            "set DEERFLOW_TEST_SPATIAL_DIRECTORY for real CLI/spatial integration"
+            "set NKYEL_TEST_SPATIAL_DIRECTORY for real CLI/spatial integration"
         )
     import logging
     import sys
@@ -287,9 +287,9 @@ def test_inspect_and_summary_handle_quoted_headers(analysis, tmp_path):
 
 
 def test_excel_paths_and_sheet_names_are_bound_as_values(analysis, tmp_path):
-    extension_dir = os.environ.get("DEERFLOW_TEST_SPATIAL_DIRECTORY")
+    extension_dir = os.environ.get("NKYEL_TEST_SPATIAL_DIRECTORY")
     if not extension_dir:
-        pytest.skip("set DEERFLOW_TEST_SPATIAL_DIRECTORY for real Excel integration")
+        pytest.skip("set NKYEL_TEST_SPATIAL_DIRECTORY for real Excel integration")
     import openpyxl
 
     path = tmp_path / "owner's report.xlsx"

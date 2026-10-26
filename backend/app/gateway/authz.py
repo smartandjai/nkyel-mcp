@@ -1,4 +1,4 @@
-"""Authorization decorators and context for DeerFlow.
+"""Authorization decorators and context for nkyel.
 
 Inspired by LangGraph Auth system: https://github.com/langchain-ai/langgraph/blob/main/libs/sdk-py/langgraph_sdk/auth/__init__.py
 
@@ -45,14 +45,14 @@ from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 from fastapi import HTTPException, Request
 
-from deerflow.authz.principal import build_principal_from_context
-from deerflow.authz.provider import AuthorizationProvider, AuthzDecision, AuthzRequest, Principal
-from deerflow.authz.runtime import construct_authorization_provider, resolve_authorization_provider, resolve_authorization_provider_spec
-from deerflow.config.authorization_config import AuthorizationConfig
+from nkyel.authz.principal import build_principal_from_context
+from nkyel.authz.provider import AuthorizationProvider, AuthzDecision, AuthzRequest, Principal
+from nkyel.authz.runtime import construct_authorization_provider, resolve_authorization_provider, resolve_authorization_provider_spec
+from nkyel.config.authorization_config import AuthorizationConfig
 
 if TYPE_CHECKING:
     from app.gateway.auth.models import User
-    from deerflow.config.app_config import AppConfig
+    from nkyel.config.app_config import AppConfig
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -181,7 +181,7 @@ def _make_test_request_stub() -> Any:
     Used when decorated route handlers are invoked without FastAPI's
     request injection. Includes fields accessed by auth helpers.
     """
-    return SimpleNamespace(state=SimpleNamespace(), cookies={}, _deerflow_test_bypass_auth=True)
+    return SimpleNamespace(state=SimpleNamespace(), cookies={}, _nkyel_test_bypass_auth=True)
 
 
 def _get_route_authorization_config() -> AuthorizationConfig:
@@ -193,7 +193,7 @@ def _get_route_authorization_config() -> AuthorizationConfig:
     ``extensions_config.json`` on every call, so async request paths use
     :func:`_route_authorization_config_async`.
     """
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     try:
         return get_app_config().authorization
@@ -487,15 +487,15 @@ def authorize_sandbox_for_request(
     builds the Principal from the request-scoped ``user`` — the same identity
     construction as ``resolve_model_authorization`` (including the
     ``INTERNAL_SYSTEM_ROLE → None`` pop). Raises
-    :class:`~deerflow.sandbox.exceptions.SandboxAuthorizationError` on deny or
+    :class:`~nkyel.sandbox.exceptions.SandboxAuthorizationError` on deny or
     on provider-resolution failure under ``fail_closed``; callers translate
     that into skipping the sandbox sync (not an HTTP error, since the primary
     operation — e.g. file upload — can proceed without it).
 
     No-op when ``authorization.enabled`` is false.
     """
-    from deerflow.authz.sandbox_authz import authorize_sandbox_execution
-    from deerflow.sandbox.exceptions import SandboxAuthorizationError
+    from nkyel.authz.sandbox_authz import authorize_sandbox_execution
+    from nkyel.sandbox.exceptions import SandboxAuthorizationError
 
     config = _get_route_authorization_config()
     if config.enabled is not True:
@@ -556,7 +556,7 @@ def _plugin_loaded_config() -> AppConfig | None:
     no configuration at all from one whose running policy just became
     unreadable.
     """
-    from deerflow.config.app_config import peek_loaded_app_config
+    from nkyel.config.app_config import peek_loaded_app_config
 
     return peek_loaded_app_config()
 
@@ -599,7 +599,7 @@ def _plugin_app_config() -> AppConfig | None:
     so the caller applies the failure policy of the policy it is running on
     (:func:`_plugin_config_failure_fail_closed`).
     """
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     try:
         return get_app_config()
@@ -737,7 +737,7 @@ async def authorize_plugin_action_for_request(request: Request, *, namespace: st
     disabled); raises ``HTTPException(403)`` on deny, and on a provider
     resolution failure under ``fail_closed``.
     """
-    from deerflow.authz.plugin_authz import PluginAuthorizationError, aenforce_plugin_action
+    from nkyel.authz.plugin_authz import PluginAuthorizationError, aenforce_plugin_action
 
     try:
         provider, principal, app_config = await aresolve_plugin_authorization(request)
@@ -778,7 +778,7 @@ class SandboxRequestLease:
         """Drop the request holder without bypassing concurrent executions."""
         if self.owner_id is None or self.provider is None:
             return
-        from deerflow.sandbox.lease import get_sandbox_lease_manager
+        from nkyel.sandbox.lease import get_sandbox_lease_manager
 
         owner_id = self.owner_id
         self.owner_id = None
@@ -813,7 +813,7 @@ async def try_acquire_sandbox_for_request(
     - ``request is None`` (direct-call tests) and unresolvable users skip the
       gate — same fail-open semantics as the models routes' anonymous bypass.
     """
-    from deerflow.sandbox.exceptions import SandboxAuthorizationError
+    from nkyel.sandbox.exceptions import SandboxAuthorizationError
 
     try:
         from app.gateway.deps import get_optional_user_from_request
@@ -831,7 +831,7 @@ async def try_acquire_sandbox_for_request(
             provider=None,
         )
 
-    from deerflow.sandbox.lease import SandboxClientUnavailableError, get_sandbox_lease_manager
+    from nkyel.sandbox.lease import SandboxClientUnavailableError, get_sandbox_lease_manager
 
     owner_id = f"{owner_prefix}:{uuid.uuid4()}"
     try:
@@ -935,7 +935,7 @@ def require_auth[**P, T](func: Callable[P, T]) -> Callable[P, T]:
                 raise ValueError("require_auth decorator requires 'request' parameter")
             request = kwargs["request"]
 
-        if getattr(request, "_deerflow_test_bypass_auth", False):
+        if getattr(request, "_nkyel_test_bypass_auth", False):
             return await func(*args, **kwargs)
 
         # Authenticate and set context
@@ -1017,7 +1017,7 @@ def require_permission(
                 else:
                     return await func(*args, **kwargs)
 
-            if getattr(request, "_deerflow_test_bypass_auth", False):
+            if getattr(request, "_nkyel_test_bypass_auth", False):
                 return await func(*args, **kwargs)
 
             auth: AuthContext = getattr(request.state, "auth", None)
@@ -1063,7 +1063,7 @@ def require_permission(
                 )
                 if not allowed and getattr(auth.user, "system_role", None) == INTERNAL_SYSTEM_ROLE:
                     # Trusted internal callers (channel workers) also act for
-                    # the connection owner carried in X-DeerFlow-Owner-User-Id.
+                    # the connection owner carried in X-nkyel-Owner-User-Id.
                     # Scope the check to that owner instead of bypassing it; a
                     # leaked internal token must not grant cross-user thread
                     # access. The header is honored only after ``auth`` proved

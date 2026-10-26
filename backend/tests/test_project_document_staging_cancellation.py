@@ -12,8 +12,8 @@ import pytest
 from _router_auth_helpers import call_unwrapped
 from fastapi import Response
 
-from deerflow.config.paths import Paths
-from deerflow.projects import documents
+from nkyel.config.paths import Paths
+from nkyel.projects import documents
 
 
 @pytest.mark.asyncio

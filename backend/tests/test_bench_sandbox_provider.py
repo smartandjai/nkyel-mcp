@@ -260,7 +260,7 @@ def test_health_check_skip_seconds_is_forwarded_and_serialized(monkeypatch, tmp_
 
 
 def test_boxlite_factory_restores_module_state(monkeypatch):
-    import deerflow.community.boxlite.provider as provider_mod
+    import nkyel.community.boxlite.provider as provider_mod
 
     original_get_app_config = provider_mod.get_app_config
 
@@ -613,7 +613,7 @@ def test_new_invocation_cannot_reuse_previous_thread_identity(tmp_path):
 
 
 def test_aio_factory_uses_current_config_contract_and_reports_effective_image(monkeypatch):
-    import deerflow.community.aio_sandbox.aio_sandbox_provider as provider_module
+    import nkyel.community.aio_sandbox.aio_sandbox_provider as provider_module
 
     real_provider = provider_module.AioSandboxProvider
     original_get_config = provider_module.get_app_config
@@ -625,7 +625,7 @@ def test_aio_factory_uses_current_config_contract_and_reports_effective_image(mo
             self._config = real_provider._load_config(self)
 
     monkeypatch.setattr(provider_module, "AioSandboxProvider", ConfigOnlyProvider)
-    provider, config = bench._make_aio_provider({"container_prefix": "deerflow-bench-test"})
+    provider, config = bench._make_aio_provider({"container_prefix": "nkyel-bench-test"})
     assert provider._config["network"]["mode"] == "open"
     assert config["image"] == provider._config["image"]
     assert config["image"]

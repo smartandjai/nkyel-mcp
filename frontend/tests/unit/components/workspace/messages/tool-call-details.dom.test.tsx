@@ -186,7 +186,7 @@ describe("generic tool details", () => {
         tool(""),
         {
           ...tool('{"reason":"denied"}'),
-          additional_kwargs: { deerflow_tool_meta: { status: "error" } },
+          additional_kwargs: { nkyel_tool_meta: { status: "error" } },
         } as Message,
         call,
         tool("later result"),
@@ -290,7 +290,7 @@ it.each(["bash", "read_file", "mcp_lookup"])(
           invocation,
           {
             ...tool("provider denied"),
-            additional_kwargs: { deerflow_tool_meta: { status: "error" } },
+            additional_kwargs: { nkyel_tool_meta: { status: "error" } },
           } as Message,
         ],
         false,
@@ -304,7 +304,7 @@ it.each(["bash", "read_file", "mcp_lookup"])(
       {
         ...tool("limited results"),
         additional_kwargs: {
-          deerflow_tool_meta: { status: "partial_success" },
+          nkyel_tool_meta: { status: "partial_success" },
         },
       } as Message,
     ]) {

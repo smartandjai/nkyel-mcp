@@ -63,7 +63,7 @@ log_level: warning
 models:
 {model_block}
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
 skills:
   path: {home / "skills"}
   container_path: /mnt/skills
@@ -73,13 +73,13 @@ tool_groups:
 tools:
   - name: ls
     group: file:read
-    use: deerflow.sandbox.tools:ls_tool
+    use: nkyel.sandbox.tools:ls_tool
   - name: read_file
     group: file:read
-    use: deerflow.sandbox.tools:read_file_tool
+    use: nkyel.sandbox.tools:read_file_tool
   - name: write_file
     group: file:write
-    use: deerflow.sandbox.tools:write_file_tool
+    use: nkyel.sandbox.tools:write_file_tool
 # Memory + summarization make background / debounced model calls whose timing is
 # non-deterministic; disable them so record and replay see the same model-call
 # set. Title stays enabled, but the default title.model_name: null path is a
@@ -102,7 +102,7 @@ def prepare_hermetic_extras(home: Path) -> Path:
     system prompt has no environment-dependent skills/MCP content.
 
     Returns the extensions-config path; the caller must point
-    ``DEER_FLOW_EXTENSIONS_CONFIG_PATH`` at it. Call before starting the gateway.
+    ``NKYEL_EXTENSIONS_CONFIG_PATH`` at it. Call before starting the gateway.
     """
     (home / "skills" / "public").mkdir(parents=True, exist_ok=True)
     (home / "skills" / "custom").mkdir(parents=True, exist_ok=True)

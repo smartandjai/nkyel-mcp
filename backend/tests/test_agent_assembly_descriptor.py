@@ -8,7 +8,7 @@ observation point.
 
 from pathlib import Path
 
-from deerflow_extension_api import AgentAssemblyDescriptor, MiddlewareDescriptor, ToolDescriptor
+from nkyel_extension_api import AgentAssemblyDescriptor, MiddlewareDescriptor, ToolDescriptor
 
 
 def test_fingerprint_is_stable_for_identical_assemblies():
@@ -109,16 +109,16 @@ class TestShelfIndexReleasePolicy:
 
     @staticmethod
     def _params(**projects_kwargs):
-        from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
-        from deerflow.config.app_config import AppConfig
-        from deerflow.config.model_config import ModelConfig
-        from deerflow.config.projects_config import ProjectsConfig
-        from deerflow.config.sandbox_config import SandboxConfig
+        from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+        from nkyel.config.app_config import AppConfig
+        from nkyel.config.model_config import ModelConfig
+        from nkyel.config.projects_config import ProjectsConfig
+        from nkyel.config.sandbox_config import SandboxConfig
 
         config = AppConfig(
             models=[ModelConfig(name="m", display_name="m", description=None, use="langchain_openai:ChatOpenAI", model="m", supports_thinking=False, supports_vision=False)],
             projects=ProjectsConfig(**projects_kwargs),
-            sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+            sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         )
         return DynamicContextMiddleware(app_config=config).release_policy_parameters()
 
@@ -141,7 +141,7 @@ class TestShelfIndexReleasePolicy:
         )
 
     def test_both_effective_shelf_limits_are_declared(self):
-        from deerflow.config.projects_config import ProjectsConfig
+        from nkyel.config.projects_config import ProjectsConfig
 
         params = self._params()
         assert params["shelf_index_max_entries"] == ProjectsConfig().shelf_index_max_entries
@@ -166,7 +166,7 @@ class TestLeadAgentAssembly:
         """langgraph.json declares this factory; its ABI must not move."""
         import inspect
 
-        from deerflow.agents.lead_agent.agent import make_lead_agent
+        from nkyel.agents.lead_agent.agent import make_lead_agent
 
         signature = inspect.signature(make_lead_agent)
         assert list(signature.parameters) == ["config"]
@@ -181,11 +181,11 @@ class TestLeadAgentAssembly:
         entries are all commented out, and assembly raises "No chat models are
         configured" before it can produce anything to assert on.
         """
-        from deerflow.agents.lead_agent import agent as lead_agent_module
-        from deerflow.config.app_config import AppConfig
-        from deerflow.config.model_config import ModelConfig
-        from deerflow.config.sandbox_config import SandboxConfig
-        from deerflow.config.subagents_config import CustomSubagentConfig, SubagentsAppConfig
+        from nkyel.agents.lead_agent import agent as lead_agent_module
+        from nkyel.config.app_config import AppConfig
+        from nkyel.config.model_config import ModelConfig
+        from nkyel.config.sandbox_config import SandboxConfig
+        from nkyel.config.subagents_config import CustomSubagentConfig, SubagentsAppConfig
 
         app_config = AppConfig(
             models=[
@@ -200,7 +200,7 @@ class TestLeadAgentAssembly:
                 )
             ],
             subagents=SubagentsAppConfig(custom_agents={"researcher": CustomSubagentConfig(description="research", system_prompt="research")}),
-            sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+            sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         )
         monkeypatch.setattr(lead_agent_module, "get_app_config", lambda: app_config)
         monkeypatch.setattr(
@@ -219,7 +219,7 @@ class TestLeadAgentAssembly:
         and schema, probing every middleware), so it only happens when an
         observer is actually registered to receive it.
         """
-        from deerflow.extensions.registry import ExtensionRegistry
+        from nkyel.extensions.registry import ExtensionRegistry
 
         class _NoOpObserver:
             def on_agent_assembled(self, app_store, descriptor):
@@ -231,8 +231,8 @@ class TestLeadAgentAssembly:
         return registry.build()
 
     def test_assemble_returns_both_the_graph_and_a_descriptor(self, monkeypatch):
-        from deerflow.agents.lead_agent.agent import LeadAgentAssembly, assemble_lead_agent
-        from deerflow.extensions import bind_agent_build_extensions
+        from nkyel.agents.lead_agent.agent import LeadAgentAssembly, assemble_lead_agent
+        from nkyel.extensions import bind_agent_build_extensions
 
         self._isolate_from_the_ambient_config(monkeypatch)
         with bind_agent_build_extensions(self._extensions_with_an_agent_assembly_observer()):
@@ -245,12 +245,12 @@ class TestLeadAgentAssembly:
         assert assembly.descriptor.fingerprint
 
     def test_descriptor_hashes_the_same_scoped_prompt_passed_to_the_graph(self, monkeypatch):
-        from deerflow_extension_api import canonical_hash
+        from nkyel_extension_api import canonical_hash
 
-        from deerflow.agents.lead_agent import agent as lead_agent_module
-        from deerflow.agents.lead_agent.agent import assemble_lead_agent
-        from deerflow.config.agents_config import AgentConfig
-        from deerflow.extensions import bind_agent_build_extensions
+        from nkyel.agents.lead_agent import agent as lead_agent_module
+        from nkyel.agents.lead_agent.agent import assemble_lead_agent
+        from nkyel.config.agents_config import AgentConfig
+        from nkyel.extensions import bind_agent_build_extensions
 
         self._isolate_from_the_ambient_config(monkeypatch)
         agent_config = AgentConfig(name="custom", allowed_subagents=["general-purpose"])
@@ -282,10 +282,10 @@ class TestLeadAgentAssembly:
     def test_descriptor_subagent_policy_respects_custom_agent_allowed_subagents(self, monkeypatch):
         """Fixes #5205: custom agent assembly descriptor must restrict its
         subagents policy allowlist and runtime limits to allowed_subagents."""
-        from deerflow.agents.lead_agent import agent as lead_agent_module
-        from deerflow.agents.lead_agent.agent import assemble_lead_agent
-        from deerflow.config.agents_config import AgentConfig
-        from deerflow.extensions import bind_agent_build_extensions
+        from nkyel.agents.lead_agent import agent as lead_agent_module
+        from nkyel.agents.lead_agent.agent import assemble_lead_agent
+        from nkyel.config.agents_config import AgentConfig
+        from nkyel.extensions import bind_agent_build_extensions
 
         self._isolate_from_the_ambient_config(monkeypatch)
         agent_config = AgentConfig(name="custom", allowed_subagents=["general-purpose"])
@@ -308,8 +308,8 @@ class TestLeadAgentAssembly:
         assert list(subagent_policy["runtime_limits"].keys()) == ["general-purpose"]
 
     def test_observers_receive_the_descriptor(self, monkeypatch):
-        from deerflow.agents.lead_agent.agent import assemble_lead_agent
-        from deerflow.extensions import bind_agent_build_extensions
+        from nkyel.agents.lead_agent.agent import assemble_lead_agent
+        from nkyel.extensions import bind_agent_build_extensions
 
         seen = []
 
@@ -318,7 +318,7 @@ class TestLeadAgentAssembly:
                 seen.append(descriptor)
 
         monkeypatch.setattr(
-            "deerflow.extensions.notify.notify_agent_assembled",
+            "nkyel.extensions.notify.notify_agent_assembled",
             lambda descriptor, extensions=None: Observer().on_agent_assembled(None, descriptor),
         )
         self._isolate_from_the_ambient_config(monkeypatch)
@@ -330,12 +330,12 @@ class TestLeadAgentAssembly:
         """The zero-observer fast path must skip the expensive build entirely,
         not just skip notifying — mirroring notify_agent_assembled's own
         zero-observer short-circuit."""
-        from deerflow.agents.lead_agent.agent import assemble_lead_agent
+        from nkyel.agents.lead_agent.agent import assemble_lead_agent
 
         def _fail(*args, **kwargs):
             raise AssertionError("build_assembly_descriptor must not run without an observer")
 
-        monkeypatch.setattr("deerflow.agents.assembly_descriptor.build_assembly_descriptor", _fail)
+        monkeypatch.setattr("nkyel.agents.assembly_descriptor.build_assembly_descriptor", _fail)
         self._isolate_from_the_ambient_config(monkeypatch)
         assembly = assemble_lead_agent({"configurable": {"thread_id": "t-3"}})
         assert assembly.descriptor is None
@@ -346,14 +346,14 @@ class TestFactoryConsumersUnwrapTheGraph:
     """A missed unwrap fails at request time, not at import time."""
 
     def test_worker_unwraps_the_assembly(self):
-        from deerflow.agents.lead_agent.agent import LeadAgentAssembly
-        from deerflow.runtime.runs.worker import _agent_graph
+        from nkyel.agents.lead_agent.agent import LeadAgentAssembly
+        from nkyel.runtime.runs.worker import _agent_graph
 
         graph = object()
         assert _agent_graph(LeadAgentAssembly(graph=graph, descriptor=object())) is graph
 
     def test_worker_leaves_a_third_party_bare_graph_alone(self):
-        from deerflow.runtime.runs.worker import _agent_graph
+        from nkyel.runtime.runs.worker import _agent_graph
 
         graph = object()
         assert _agent_graph(graph) is graph
@@ -361,7 +361,7 @@ class TestFactoryConsumersUnwrapTheGraph:
 
 class TestAssemblyObserverHost:
     def test_registration_survives_rollback_of_a_later_install(self):
-        from deerflow.extensions.registry import ExtensionRegistry
+        from nkyel.extensions.registry import ExtensionRegistry
 
         class Observer:
             def on_agent_assembled(self, app_store, descriptor):
@@ -383,8 +383,8 @@ class TestAssemblyObserverHost:
         assert loaded.needs_task_store is False
 
     def test_a_broken_observer_does_not_stop_its_successors(self, caplog):
-        from deerflow.extensions.notify import notify_agent_assembled
-        from deerflow.extensions.registry import ExtensionRegistry
+        from nkyel.extensions.notify import notify_agent_assembled
+        from nkyel.extensions.registry import ExtensionRegistry
 
         seen = []
 
@@ -441,11 +441,11 @@ class TestBuildIdentityIsOutsideTheFingerprint:
         assert before.build != after.build
 
     def test_the_builder_reports_a_build_without_hashing_it(self):
-        from deerflow.agents.assembly_descriptor import build_assembly_descriptor
+        from nkyel.agents.assembly_descriptor import build_assembly_descriptor
 
         def make():
             return build_assembly_descriptor(
-                namespace="deerflow",
+                namespace="nkyel",
                 agent_name="lead-agent",
                 requested_model=None,
                 effective_model="gpt-x",
@@ -471,7 +471,7 @@ class TestWrappedExtensionMiddlewaresStayDistinguishable:
 
     @staticmethod
     def _wrap(inner, source):
-        from deerflow.extensions.isolation import IsolatedMiddleware
+        from nkyel.extensions.isolation import IsolatedMiddleware
 
         return IsolatedMiddleware(inner, source, lambda diagnostic: None)
 
@@ -485,7 +485,7 @@ class TestWrappedExtensionMiddlewaresStayDistinguishable:
         return type(name, (AgentMiddleware,), namespace)()
 
     def test_two_extensions_middlewares_do_not_collapse_into_one_descriptor(self):
-        from deerflow.agents.assembly_descriptor import describe_middleware
+        from nkyel.agents.assembly_descriptor import describe_middleware
 
         first = describe_middleware(self._wrap(self._inner("AlphaMiddleware"), "ext-a"))
         second = describe_middleware(self._wrap(self._inner("BetaMiddleware"), "ext-b"))
@@ -497,7 +497,7 @@ class TestWrappedExtensionMiddlewaresStayDistinguishable:
         assert first != second
 
     def test_a_wrapped_declaration_reaches_the_descriptor(self):
-        from deerflow.agents.assembly_descriptor import describe_middleware
+        from nkyel.agents.assembly_descriptor import describe_middleware
 
         descriptor = describe_middleware(self._wrap(self._inner("DeclaringMiddleware", policy={"limit": 7}), "ext-a"))
 
@@ -507,7 +507,7 @@ class TestWrappedExtensionMiddlewaresStayDistinguishable:
     def test_a_policy_change_inside_a_wrapped_middleware_moves_the_fingerprint(self):
         from dataclasses import replace
 
-        from deerflow.agents.assembly_descriptor import describe_middleware
+        from nkyel.agents.assembly_descriptor import describe_middleware
 
         def descriptor_for(limit):
             return AgentAssemblyDescriptor(
@@ -534,7 +534,7 @@ class TestWrappedExtensionMiddlewaresStayDistinguishable:
         assert base.fingerprint != other.fingerprint
 
     def test_an_unwrapped_host_middleware_reports_no_extension(self):
-        from deerflow.agents.assembly_descriptor import describe_middleware
+        from nkyel.agents.assembly_descriptor import describe_middleware
 
         descriptor = describe_middleware(self._inner("HostMiddleware", policy={"limit": 1}))
 
@@ -554,10 +554,10 @@ class TestModelParametersProjectEffectiveSettings:
 
     @staticmethod
     def _build(model_config, *, model_overrides=None):
-        from deerflow.agents.assembly_descriptor import build_assembly_descriptor
+        from nkyel.agents.assembly_descriptor import build_assembly_descriptor
 
         return build_assembly_descriptor(
-            namespace="deerflow",
+            namespace="nkyel",
             agent_name="lead-agent",
             requested_model=None,
             effective_model="gpt-x",
@@ -575,7 +575,7 @@ class TestModelParametersProjectEffectiveSettings:
 
     @staticmethod
     def _model_config(**extra):
-        from deerflow.config.model_config import ModelConfig
+        from nkyel.config.model_config import ModelConfig
 
         return ModelConfig(
             name="assembly-test-model",
@@ -653,10 +653,10 @@ class TestCustomAgentModelSettingsReachTheDescriptor:
     """
 
     def test_temperature_override_on_a_custom_agent_changes_the_fingerprint(self, monkeypatch):
-        from deerflow.agents.lead_agent import agent as lead_agent_module
-        from deerflow.agents.lead_agent.agent import assemble_lead_agent
-        from deerflow.config.agents_config import AgentConfig, AgentModelSettings
-        from deerflow.extensions import bind_agent_build_extensions
+        from nkyel.agents.lead_agent import agent as lead_agent_module
+        from nkyel.agents.lead_agent.agent import assemble_lead_agent
+        from nkyel.config.agents_config import AgentConfig, AgentModelSettings
+        from nkyel.extensions import bind_agent_build_extensions
 
         TestLeadAgentAssembly._isolate_from_the_ambient_config(monkeypatch)
 
@@ -673,8 +673,8 @@ class TestCustomAgentModelSettingsReachTheDescriptor:
 
     def test_bootstrap_assembly_does_not_invent_model_overrides(self, monkeypatch):
         """The bootstrap branch has no ``agent_config``, so no overrides exist to project."""
-        from deerflow.agents.lead_agent.agent import assemble_lead_agent
-        from deerflow.extensions import bind_agent_build_extensions
+        from nkyel.agents.lead_agent.agent import assemble_lead_agent
+        from nkyel.extensions import bind_agent_build_extensions
 
         TestLeadAgentAssembly._isolate_from_the_ambient_config(monkeypatch)
         with bind_agent_build_extensions(TestLeadAgentAssembly._extensions_with_an_agent_assembly_observer()):
@@ -690,7 +690,7 @@ class TestSkillCatalogHashesContent:
 
     @staticmethod
     def _skill(skill_dir: Path, *, allowed_tools=None, required_secrets=(), secrets_autonomous=True):
-        from deerflow.skills.types import Skill, SkillCategory
+        from nkyel.skills.types import Skill, SkillCategory
 
         skill_file = skill_dir / "SKILL.md"
         return Skill(
@@ -708,10 +708,10 @@ class TestSkillCatalogHashesContent:
 
     @staticmethod
     def _build(enabled_skills):
-        from deerflow.agents.assembly_descriptor import build_assembly_descriptor
+        from nkyel.agents.assembly_descriptor import build_assembly_descriptor
 
         return build_assembly_descriptor(
-            namespace="deerflow",
+            namespace="nkyel",
             agent_name="lead-agent",
             requested_model=None,
             effective_model="gpt-x",
@@ -763,7 +763,7 @@ class TestSkillCatalogHashesContent:
         assert with_bom.fingerprint == without_bom.fingerprint
 
     def test_required_secrets_flag_changes_the_fingerprint(self):
-        from deerflow.skills.types import SecretRequirement
+        from nkyel.skills.types import SecretRequirement
 
         no_secrets = self._skill(Path("/nonexistent/skill-a"))
         with_secret = self._skill(Path("/nonexistent/skill-b"), required_secrets=(SecretRequirement(name="API_KEY"),))
@@ -798,8 +798,8 @@ class TestProjectDocumentToolRegistration:
 
     @staticmethod
     def _assemble(monkeypatch, config):
-        from deerflow.agents.lead_agent.agent import assemble_lead_agent
-        from deerflow.extensions import bind_agent_build_extensions
+        from nkyel.agents.lead_agent.agent import assemble_lead_agent
+        from nkyel.extensions import bind_agent_build_extensions
 
         helpers = TestLeadAgentAssembly
         helpers._isolate_from_the_ambient_config(monkeypatch)
@@ -807,7 +807,7 @@ class TestProjectDocumentToolRegistration:
             return assemble_lead_agent(config)
 
     def test_project_run_registers_both_tools(self, monkeypatch):
-        from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+        from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
         assembly = self._assemble(
             monkeypatch,
@@ -831,7 +831,7 @@ class TestProjectDocumentToolRegistration:
         assert "read_project_document" not in descriptor_names
 
     def test_both_descriptor_variants_are_distinct_and_stable(self, monkeypatch):
-        from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+        from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
         with_project = self._assemble(
             monkeypatch,
@@ -854,7 +854,7 @@ class TestProjectDocumentToolRegistration:
 
     def test_registration_follows_the_key_when_blocks_are_empty(self, monkeypatch):
         """Empty instructions and an empty shelf still mean a project run."""
-        from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+        from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
         assembly = self._assemble(
             monkeypatch,

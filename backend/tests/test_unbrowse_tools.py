@@ -11,7 +11,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def reset_api_key_warned():
     """Reset the module-level warning flag before each test."""
-    import deerflow.community.unbrowse.tools as unbrowse_mod
+    import nkyel.community.unbrowse.tools as unbrowse_mod
 
     unbrowse_mod._api_key_warned = set()
     yield
@@ -20,7 +20,7 @@ def reset_api_key_warned():
 
 @pytest.fixture
 def mock_config_with_key():
-    with patch("deerflow.community.unbrowse.tools.get_app_config") as mock:
+    with patch("nkyel.community.unbrowse.tools.get_app_config") as mock:
         tool_config = MagicMock()
         tool_config.model_extra = {"api_key": "test-unbrowse-key"}
         mock.return_value.get_tool_config.return_value = tool_config
@@ -29,7 +29,7 @@ def mock_config_with_key():
 
 @pytest.fixture
 def mock_config_no_key():
-    with patch("deerflow.community.unbrowse.tools.get_app_config") as mock:
+    with patch("nkyel.community.unbrowse.tools.get_app_config") as mock:
         tool_config = MagicMock()
         tool_config.model_extra = {}
         mock.return_value.get_tool_config.return_value = tool_config
@@ -63,66 +63,66 @@ def _scrape(markdown: object = "# Example Domain\n\nBody", title: object = "Exam
 
 class TestGetApiKey:
     def test_returns_config_key_when_present(self):
-        with patch("deerflow.community.unbrowse.tools.get_app_config") as mock:
+        with patch("nkyel.community.unbrowse.tools.get_app_config") as mock:
             tool_config = MagicMock()
             tool_config.model_extra = {"api_key": "from-config"}
             mock.return_value.get_tool_config.return_value = tool_config
 
-            from deerflow.community.unbrowse.tools import _get_api_key
+            from nkyel.community.unbrowse.tools import _get_api_key
 
             assert _get_api_key("web_fetch") == "from-config"
 
     def test_falls_back_to_env_when_config_key_whitespace(self):
-        with patch("deerflow.community.unbrowse.tools.get_app_config") as mock:
+        with patch("nkyel.community.unbrowse.tools.get_app_config") as mock:
             tool_config = MagicMock()
             tool_config.model_extra = {"api_key": "   "}
             mock.return_value.get_tool_config.return_value = tool_config
             with patch.dict("os.environ", {"UNBROWSE_API_KEY": "env-key"}):
-                from deerflow.community.unbrowse.tools import _get_api_key
+                from nkyel.community.unbrowse.tools import _get_api_key
 
                 assert _get_api_key("web_fetch") == "env-key"
 
     def test_uses_env_when_tool_is_not_configured(self):
-        with patch("deerflow.community.unbrowse.tools.get_app_config") as mock:
+        with patch("nkyel.community.unbrowse.tools.get_app_config") as mock:
             mock.return_value.get_tool_config.return_value = None
             with patch.dict("os.environ", {"UNBROWSE_API_KEY": "env-only"}):
-                from deerflow.community.unbrowse.tools import _get_api_key
+                from nkyel.community.unbrowse.tools import _get_api_key
 
                 assert _get_api_key("web_fetch") == "env-only"
 
     def test_returns_none_when_no_key_anywhere(self):
-        with patch("deerflow.community.unbrowse.tools.get_app_config") as mock:
+        with patch("nkyel.community.unbrowse.tools.get_app_config") as mock:
             mock.return_value.get_tool_config.return_value = None
             with patch.dict("os.environ", {}, clear=True):
-                from deerflow.community.unbrowse.tools import _get_api_key
+                from nkyel.community.unbrowse.tools import _get_api_key
 
                 assert _get_api_key("web_fetch") is None
 
     def test_returns_none_when_env_key_whitespace(self):
-        with patch("deerflow.community.unbrowse.tools.get_app_config") as mock:
+        with patch("nkyel.community.unbrowse.tools.get_app_config") as mock:
             mock.return_value.get_tool_config.return_value = None
             with patch.dict("os.environ", {"UNBROWSE_API_KEY": "  "}, clear=True):
-                from deerflow.community.unbrowse.tools import _get_api_key
+                from nkyel.community.unbrowse.tools import _get_api_key
 
                 assert _get_api_key("web_fetch") is None
 
 
 class TestResolveRender:
     def test_defaults_to_auto(self):
-        from deerflow.community.unbrowse.tools import _resolve_render
+        from nkyel.community.unbrowse.tools import _resolve_render
 
         assert _resolve_render(None) == "auto"
 
     def test_normalizes_supported_modes(self):
-        from deerflow.community.unbrowse.tools import _resolve_render
+        from nkyel.community.unbrowse.tools import _resolve_render
 
         assert _resolve_render(" Never ") == "never"
         assert _resolve_render("always") == "always"
 
     def test_unsupported_mode_falls_back_with_warning(self, caplog):
-        from deerflow.community.unbrowse.tools import _resolve_render
+        from nkyel.community.unbrowse.tools import _resolve_render
 
-        with caplog.at_level(logging.WARNING, logger="deerflow.community.unbrowse.tools"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.community.unbrowse.tools"):
             assert _resolve_render("headless") == "auto"
 
         assert "headless" in caplog.text
@@ -130,9 +130,9 @@ class TestResolveRender:
 
 class TestMissingKeyMessage:
     def test_warns_once_per_tool_name(self, caplog):
-        from deerflow.community.unbrowse.tools import _missing_key_message
+        from nkyel.community.unbrowse.tools import _missing_key_message
 
-        with caplog.at_level(logging.WARNING, logger="deerflow.community.unbrowse.tools"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.community.unbrowse.tools"):
             assert _missing_key_message("web_fetch") == "UNBROWSE_API_KEY is not configured"
             assert _missing_key_message("web_fetch") == "UNBROWSE_API_KEY is not configured"
 
@@ -141,22 +141,22 @@ class TestMissingKeyMessage:
 
 class TestWebFetchTool:
     def test_returns_title_and_markdown(self, mock_config_with_key):
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_post = mock_client_cls.return_value.__enter__.return_value.post
             mock_post.return_value = _make_scrape_response(_scrape())
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
         assert result == "# Example Domain\n\n# Example Domain\n\nBody"
 
     def test_sends_one_json_rpc_tools_call(self, mock_config_with_key):
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_post = mock_client_cls.return_value.__enter__.return_value.post
             mock_post.return_value = _make_scrape_response(_scrape())
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -176,11 +176,11 @@ class TestWebFetchTool:
     def test_render_can_be_set_from_config(self, mock_config_with_key):
         mock_config_with_key.return_value.get_tool_config.return_value.model_extra = {"api_key": "k", "render": "never"}
 
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_post = mock_client_cls.return_value.__enter__.return_value.post
             mock_post.return_value = _make_scrape_response(_scrape())
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -190,30 +190,30 @@ class TestWebFetchTool:
         response = _make_scrape_response(_scrape(markdown="from text"), structured=True)
         response.json.return_value["result"]["structuredContent"] = _scrape(markdown="from structured")
 
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = response
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
         assert result == "# Example Domain\n\nfrom structured"
 
     def test_truncates_long_content(self, mock_config_with_key):
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = _make_scrape_response(_scrape(markdown="x" * 9000, title="Long"))
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
         assert len(result) == len("# Long\n\n") + 4096
 
     def test_non_string_markdown_does_not_raise(self, mock_config_with_key):
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = _make_scrape_response(_scrape(markdown=12345, title="Numeric"))
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -223,10 +223,10 @@ class TestWebFetchTool:
         scrape = _scrape(markdown="Body")
         scrape["metadata"] = None
 
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = _make_scrape_response(scrape)
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -234,10 +234,10 @@ class TestWebFetchTool:
 
     @pytest.mark.parametrize("markdown", ["", None])
     def test_empty_markdown_returns_error(self, mock_config_with_key, markdown):
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = _make_scrape_response(_scrape(markdown=markdown))
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -246,10 +246,10 @@ class TestWebFetchTool:
     def test_json_rpc_error_returns_its_message(self, mock_config_with_key):
         payload = {"jsonrpc": "2.0", "id": 1, "error": {"code": -32000, "message": "page.goto: net::ERR_NAME_NOT_RESOLVED", "data": None}}
 
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = _make_response(payload)
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://nope.invalid"})
 
@@ -258,10 +258,10 @@ class TestWebFetchTool:
     def test_tool_error_result_returns_its_text(self, mock_config_with_key):
         payload = {"jsonrpc": "2.0", "id": 1, "result": {"content": [{"type": "text", "text": "render failed"}], "isError": True}}
 
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = _make_response(payload)
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -278,10 +278,10 @@ class TestWebFetchTool:
         ids=["non-dict-body", "non-dict-result", "non-json-text", "non-object-json"],
     )
     def test_malformed_response_returns_error(self, mock_config_with_key, payload):
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = _make_response(payload)
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -293,20 +293,20 @@ class TestWebFetchTool:
         mock_resp = MagicMock()
         mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError("error", request=request, response=response)
 
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.return_value = mock_resp
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
         assert result == "Error: Unbrowse API error: HTTP 401"
 
     def test_network_error_returns_error_string(self, mock_config_with_key):
-        with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+        with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
             mock_client_cls.return_value.__enter__.return_value.post.side_effect = httpx.ConnectError("boom")
 
-            from deerflow.community.unbrowse.tools import web_fetch_tool
+            from nkyel.community.unbrowse.tools import web_fetch_tool
 
             result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -314,8 +314,8 @@ class TestWebFetchTool:
 
     def test_missing_key_returns_error_string(self, mock_config_no_key):
         with patch.dict("os.environ", {}, clear=True):
-            with patch("deerflow.community.unbrowse.tools.httpx.Client") as mock_client_cls:
-                from deerflow.community.unbrowse.tools import web_fetch_tool
+            with patch("nkyel.community.unbrowse.tools.httpx.Client") as mock_client_cls:
+                from nkyel.community.unbrowse.tools import web_fetch_tool
 
                 result = web_fetch_tool.invoke({"url": "https://example.com"})
 

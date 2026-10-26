@@ -1,11 +1,11 @@
-"""Contract tests for ``deerflow.subagents.status_contract``."""
+"""Contract tests for ``nkyel.subagents.status_contract``."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from deerflow.subagents.status_contract import (
+from nkyel.subagents.status_contract import (
     SUBAGENT_ERROR_KEY,
     SUBAGENT_METADATA_TEXT_MAX_CHARS,
     SUBAGENT_MODEL_NAME_KEY,

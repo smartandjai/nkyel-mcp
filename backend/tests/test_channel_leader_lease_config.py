@@ -6,14 +6,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config.channel_leader_lease_config import (
+from nkyel.config.channel_leader_lease_config import (
     CHANNEL_LEADER_LEASE_FIELD,
     ChannelLeaderLeaseConfig,
     ChannelLeaderLeaseConfigError,
     channel_leader_lease_config,
     channel_leader_lease_from_app_config,
 )
-from deerflow.config.reload_boundary import STARTUP_ONLY_FIELDS, is_startup_only_field
+from nkyel.config.reload_boundary import STARTUP_ONLY_FIELDS, is_startup_only_field
 
 
 def test_defaults_are_auto_30_10():

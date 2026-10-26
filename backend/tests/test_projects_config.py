@@ -9,10 +9,10 @@ import logging
 
 import pytest
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.projects_config import ProjectsConfig
+from nkyel.config.app_config import AppConfig
+from nkyel.config.projects_config import ProjectsConfig
 
-_MINIMAL_APP_CONFIG = {"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}
+_MINIMAL_APP_CONFIG = {"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}
 
 
 def test_defaults_when_section_absent():
@@ -120,7 +120,7 @@ def test_summary_fields_are_registered_startup_only():
     """The generator captures every summary knob at lifespan startup, so the
     fields must be registered restart-required and carry the standard prefix
     (config/AGENTS.md "Config Hot-Reload Boundary")."""
-    from deerflow.config.reload_boundary import STARTUP_ONLY_PREFIX, is_startup_only_field
+    from nkyel.config.reload_boundary import STARTUP_ONLY_PREFIX, is_startup_only_field
 
     for name in ("summaries_enabled", "summary_max_bytes", "summary_model_name", "summary_concurrency", "summary_queue_size", "summary_timeout_seconds"):
         assert is_startup_only_field(f"projects.{name}")

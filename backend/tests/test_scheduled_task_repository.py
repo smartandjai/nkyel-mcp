@@ -3,21 +3,21 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-import deerflow.runtime.events.terminal as terminal_module
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.scheduled_task_runs import (
+import nkyel.runtime.events.terminal as terminal_module
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.scheduled_task_runs import (
     ActiveScheduledRunConflict,
     ScheduledTaskAdmissionRejected,
     ScheduledTaskRunRepository,
 )
-from deerflow.persistence.scheduled_task_runs.finalization import AGENT_STOP_LAST_ERROR_PREFIX, AUTO_PAUSE_LAST_ERROR
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict, ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.runtime.events.terminal import RecoveryTerminalPublisher
+from nkyel.persistence.scheduled_task_runs.finalization import AGENT_STOP_LAST_ERROR_PREFIX, AUTO_PAUSE_LAST_ERROR
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict, ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.runtime.events.terminal import RecoveryTerminalPublisher
 
 
 @pytest.mark.asyncio
@@ -1201,7 +1201,7 @@ async def test_update_after_launch_rejects_stale_lease_owner(tmp_path, caplog):
             },
         )
 
-        with caplog.at_level("WARNING", logger="deerflow.persistence.scheduled_tasks.sql"):
+        with caplog.at_level("WARNING", logger="nkyel.persistence.scheduled_tasks.sql"):
             updated = await repo.update_after_launch(
                 "task-fenced",
                 status="enabled",
@@ -1283,7 +1283,7 @@ async def test_active_run_status_for_reports_running_recurring_tasks_in_one_quer
     from _scheduled_rows import create_task, occurrence
     from sqlalchemy import event
 
-    from deerflow.persistence.engine import get_engine
+    from nkyel.persistence.engine import get_engine
 
     sf, tasks, _runs = await _sql_repos(tmp_path)
     try:
@@ -1361,7 +1361,7 @@ async def test_list_manageable_from_thread_covers_origin_and_run_conversations(t
 async def test_reactivating_an_exhausted_task_raises_and_leaves_the_row_unchanged(tmp_path):
     from _scheduled_rows import create_task, occurrence
 
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskLimitsExhausted
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskLimitsExhausted
 
     sf, tasks, runs = await _sql_repos(tmp_path)
     try:
@@ -1387,7 +1387,7 @@ async def test_reactivating_an_exhausted_task_raises_and_leaves_the_row_unchange
 async def test_reactivating_after_the_end_time_reports_end_at(tmp_path):
     from _scheduled_rows import create_task
 
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskLimitsExhausted
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskLimitsExhausted
 
     _sf, tasks, _runs = await _sql_repos(tmp_path)
     try:

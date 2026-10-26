@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from deerflow.config.extensions_config import validate_raw_extensions_config
-from deerflow.mcp.lifecycle import (
+from nkyel.config.extensions_config import validate_raw_extensions_config
+from nkyel.mcp.lifecycle import (
     LIFECYCLE_KEY,
     InvalidMcpLifecycle,
     _stdio_fingerprints,

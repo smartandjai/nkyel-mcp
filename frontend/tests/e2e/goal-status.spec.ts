@@ -433,7 +433,7 @@ for (const chatPage of CHAT_PAGES) {
             content: `<goal_continuation>\nActive goal: ${objective}\n</goal_continuation>`,
             additional_kwargs: {
               hide_from_ui: true,
-              deerflow_goal_continuation: true,
+              nkyel_goal_continuation: true,
             },
           };
           const reply = {
@@ -660,7 +660,7 @@ for (const chatPage of CHAT_PAGES) {
       await textarea.press("Enter");
       await expect(bar).toContainText(objective);
       await expect(textarea).toHaveValue("");
-      await expect(page.getByText("Hello from DeerFlow!")).toBeVisible();
+      await expect(page.getByText("Hello from nkyel!")).toBeVisible();
       expect(runStreams).toBe(1);
 
       // Clearing it: the same. The set half's toast closes first, so the busy

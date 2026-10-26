@@ -93,7 +93,7 @@ def test_invalid_hidden_answer_remains_a_control_message(invalid_response):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failed", [False, True])
 async def test_card_answer_without_fresh_ai_preserves_terminal_result(tmp_path, monkeypatch, failed):
-    monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+    monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
     bus = MessageBus()
     store = JsonChannelStore(path=tmp_path / "routing.json")
     await store.set_thread_id("feishu", "chat-1", "thread-1", topic_id="topic-1")

@@ -10,9 +10,9 @@ from typing import Any
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater
 
 pytestmark = pytest.mark.asyncio
 

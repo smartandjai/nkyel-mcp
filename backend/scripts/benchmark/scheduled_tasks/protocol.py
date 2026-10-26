@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 import yaml
 
 from app.gateway.routers.console import _ModelPricing, _run_cost
-from deerflow.config.database_config import DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY
+from nkyel.config.database_config import DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY
 
 ROOT = Path(__file__).resolve().parent
 PROTOCOL = "scheduled-tasks-synthetic-v1"
@@ -85,7 +85,7 @@ def load_pilot_config(path: Path, model_alias: str) -> dict[str, Any]:
     if model.get("max_retries") != 0:
         raise ValueError("Set the pilot provider model's max_retries to zero")
     tools = {entry.get("use") for entry in raw.get("tools", [])}
-    required = {"scripts.benchmark.scheduled_tasks.fixture_tools:read_scheduled_fixture", "deerflow.sandbox.tools:write_file_tool"}
+    required = {"scripts.benchmark.scheduled_tasks.fixture_tools:read_scheduled_fixture", "nkyel.sandbox.tools:write_file_tool"}
     if not required <= tools:
         raise ValueError("Configure the synthetic fixture reader and production write_file")
     if raw.get("channels", {}).get("enabled"):
@@ -114,7 +114,7 @@ def load_pilot_config(path: Path, model_alias: str) -> dict[str, Any]:
         "pricing": {field: pricing[field] for field in ("currency", "input_per_million", "output_per_million")},
         "sqlite_dir": raw["database"]["sqlite_dir"],
         "scheduler_min_delay": raw["scheduler"].get("min_once_delay_seconds", 60),
-        "conversation_reader_enabled": "deerflow.tools.conversation:read_conversation" in tools,
+        "conversation_reader_enabled": "nkyel.tools.conversation:read_conversation" in tools,
     }
 
 
@@ -176,7 +176,7 @@ def goal_history_evidence(entries: list[dict[str, Any]], objective: str) -> dict
 
 
 def host_delivery_evidence(events: list[dict[str, Any]], filepath: str) -> dict[str, Any]:
-    from deerflow.runtime.runs.worker import _presented_path_covers_output
+    from nkyel.runtime.runs.worker import _presented_path_covers_output
 
     receipts = [event["content"] for event in events if event.get("event_type") == "run.delivery" and isinstance(event.get("content"), dict)]
     delivered = any(receipt.get("satisfied") is True and any(isinstance(path, str) and _presented_path_covers_output(path, filepath) for path in (receipt.get("by_tool") or {}).get("present_files", [])) for receipt in receipts)

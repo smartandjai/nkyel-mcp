@@ -13,8 +13,8 @@ pytestmark = [pytest.mark.live, pytest.mark.asyncio]
 
 
 async def test_qq_websocket_ready_and_heartbeat_acknowledgements():
-    if os.getenv("DEER_FLOW_RUN_LIVE_TESTS") != "1":
-        pytest.skip("Set DEER_FLOW_RUN_LIVE_TESTS=1 to enable live QQ verification")
+    if os.getenv("NKYEL_RUN_LIVE_TESTS") != "1":
+        pytest.skip("Set NKYEL_RUN_LIVE_TESTS=1 to enable live QQ verification")
     app_id = os.getenv("QQ_APP_ID")
     secret = os.getenv("QQ_CLIENT_SECRET")
     if not app_id or not secret:

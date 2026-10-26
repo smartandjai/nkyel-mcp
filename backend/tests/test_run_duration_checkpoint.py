@@ -8,14 +8,14 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.base import empty_checkpoint, uuid6
 from langgraph.checkpoint.memory import InMemorySaver
 
-import deerflow.runtime.runs.worker as worker
-from deerflow.runtime import ConflictError, ThreadOperationKind
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.goal import goal_thread_lock
-from deerflow.runtime.runs.manager import RunManager, RunStartOutcome
-from deerflow.runtime.runs.schemas import RunStatus
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.runs.worker import RunContext, _persist_run_duration, run_agent
+import nkyel.runtime.runs.worker as worker
+from nkyel.runtime import ConflictError, ThreadOperationKind
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.goal import goal_thread_lock
+from nkyel.runtime.runs.manager import RunManager, RunStartOutcome
+from nkyel.runtime.runs.schemas import RunStatus
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.runs.worker import RunContext, _persist_run_duration, run_agent
 
 
 class _YieldingSaver(InMemorySaver):

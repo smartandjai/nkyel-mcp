@@ -16,14 +16,14 @@ from typing import Any
 import acp
 import pytest
 
-from deerflow.config.acp_config import ACPAgentConfig
-from deerflow.tools.builtins import invoke_acp_agent_tool as acp_tool
+from nkyel.config.acp_config import ACPAgentConfig
+from nkyel.tools.builtins import invoke_acp_agent_tool as acp_tool
 
 pytestmark = pytest.mark.asyncio
 
 
 async def test_invoke_acp_agent_setup_does_not_block_event_loop(monkeypatch, tmp_path) -> None:
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     configured_paths = SimpleNamespace(
         base_dir=tmp_path,
@@ -36,7 +36,7 @@ async def test_invoke_acp_agent_setup_does_not_block_event_loop(monkeypatch, tmp
         '{"mcpServers": {"test-server": {"enabled": true, "type": "http", "url": "https://example.test/mcp"}}, "skills": {}}',
         encoding="utf-8",
     )
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
 
     shim_dir = tmp_path / "bin"
     shim_dir.mkdir()

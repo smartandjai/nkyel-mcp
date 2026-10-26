@@ -103,7 +103,7 @@ PR [#4127](https://github.com/bytedance/deer-flow/pull/4127) 于 2026-07-15
 - Layer 1 和 Layer 2 必须使用同一个 provider 和同一个 Principal。
 - Layer 1 必须在 `assemble_deferred_tools` 之前过滤；被移除的工具不能进入
   `DeferredToolCatalog`，也不能被 `tool_search` 再次提升。
-- Layer 1 必须覆盖 lead agent、native subagent 和 `DeerFlowClient` 三条装配路径。
+- Layer 1 必须覆盖 lead agent、native subagent 和 `NkyelClient` 三条装配路径。
 - Layer 2 复用 `GuardrailMiddleware`；不能在 adapter 中重复实现异常处理、审计、
   deny 消息或 fail-closed 逻辑。
 - ownership 检查和现有 `require_admin_user()` 管理端点保护必须保留。细粒度授权只能
@@ -144,7 +144,7 @@ Phase 1 最低验证要求：
 
 - [ ] 选择配置版本号前，已 fetch 并 rebase 最新 `upstream/main`。不能使用本地缓存的
       旧版本号——主线可能在此期间已被其他 PR bump 过。先 fetch、读最新值、+1，再在
-      `config.example.yaml` + `deploy/helm/deer-flow/values.yaml` + `deploy/helm/deer-flow/README.md`
+      `config.example.yaml` + `deploy/helm/nkyel/values.yaml` + `deploy/helm/nkyel/README.md`
       三处同步。
 - [ ] 已搜索 issue #4063 和当前阶段是否存在并行工作。
 - [ ] 每个新字段都已追踪到权威生产者，而不只是确认类型。
@@ -222,7 +222,7 @@ Phase 1 最低验证要求：
   回归测试）。
 - **兼容性：** 无运行时行为变化（`authorization.enabled: false`）。不修改
   `config.example.yaml`，不 bump `config_version`。
-- **延期：** Layer 1 工具过滤、Layer 2 自动接线、DeerFlowClient、RBAC 配置示例
+- **延期：** Layer 1 工具过滤、Layer 2 自动接线、NkyelClient、RBAC 配置示例
   移至 Phase 1B。
 - **Phase 1B 注意：** 已知角色缺少某个 resource policy 时语义是“不受限”，不是
   fail-closed。配置示例必须明确提醒，并枚举部署方希望限制的每种 resource。
@@ -278,7 +278,7 @@ Phase 1 最低验证要求：
   guardrail 仍会检查它，没有 deferred setup 的普通同名工具也不获得豁免。
 - 内置 RBAC provider 在解析时校验 `authorization.default_role` 属于已配置角色，配置
   错误直接阻止 agent 构建，不再表现为难以诊断的空工具集合。
-- `DeerFlowClient.stream()` 的调用方属于可信进程内边界，可通过关键字参数传入与
+- `NkyelClient.stream()` 的调用方属于可信进程内边界，可通过关键字参数传入与
   Gateway runtime context 相同的授权身份字段；这些字段同时进入真实执行 context。
   agent cache key 使用完整 Principal（包括 user/channel/oauth/internal/attributes），
   并深拷贝嵌套 attributes，防止调用方原地修改身份数据后复用旧工具集合。
@@ -328,7 +328,7 @@ Phase 1 最低验证要求：
   custom provider 在 `filter_resources`（action-agnostic）里可见但 `use` 被拒的模型被
   静默选中。
 - **决策（embedded/library 路径）：** `_authorize_model_name` 同样接入
-  `DeerFlowClient._ensure_agent`（client.py），与 Gateway runtime 路径 `_make_lead_agent`
+  `NkyelClient._ensure_agent`（client.py），与 Gateway runtime 路径 `_make_lead_agent`
   对称。否则 library/embedded 消费者启用 `authorization` + role-scoped model policy 时，
   tools 会被过滤但模型仍可绕过 `model:use`。调用前先把 `None` 默认解析为第一个配置模型
   （与 `create_chat_model(name=None)` 的语义一致），确保隐式默认模型也经过授权。
@@ -343,7 +343,7 @@ Phase 1 最低验证要求：
   RBAC allow/deny/wildcard/fail-closed/fail-open 路由场景（含 provider-resolution-error
   fail-closed/fail-open），disabled/allowed/
   graceful-fallback/all-denied-fail-closed/all-denied-fail-open/custom-provider-list-vs-use/
-  no-usable-fallback 运行时场景，以及 `DeerFlowClient._ensure_agent` 的 model:use 强制 +
+  no-usable-fallback 运行时场景，以及 `NkyelClient._ensure_agent` 的 model:use 强制 +
   None 默认解析 + disabled no-op 集成场景；
   `test_authorization_*.py` + `test_lead_agent_model_resolution.py` +
   `test_auth_middleware.py` 共 318 tests 全部通过。
@@ -368,7 +368,7 @@ Phase 1 最低验证要求：
   provider + principal + fail_closed），在 `_resolve_activation` 的成员检查之后调用
   `_activation_allowed()`；deny 返回与成员拒绝相同的用户文案（不泄露原因），provider
   异常按 fail_closed 拒绝 / fail_open 放行。三条链路（lead `build_middlewares`、
-  `DeerFlowClient._ensure_agent`、subagent `build_subagent_runtime_middlewares`）均接线。
+  `NkyelClient._ensure_agent`、subagent `build_subagent_runtime_middlewares`）均接线。
   修订原因：Layer 1 的 `filter_resources` 是动作无关的可见性层，动作感知的自定义
   provider 可以"可见但拒绝激活"——原设计（仅成员检查）对该类 provider 不闭合。
   ~~`describe_skill` 与 in-context 秘密绑定保持在可见性层~~（2026-09-04 再修订：
@@ -631,7 +631,7 @@ Phase 1 最低验证要求：
   切成三个 PR：PR1 = 插件管道（target 编码、provenance 展示、`plugin_authz`、action 检查、
   management 守卫、provider 生命周期、公开 helper + 一次契约版本提升），PR2 = 工具链路
   （middleware 声明工具、identity-bound exemption），PR3 = 页面切片。本条记录 PR1。
-- **决策（target 编码）：** 新增 `deerflow/authz/plugin_targets.py`，复合 target 一律
+- **决策（target 编码）：** 新增 `nkyel/authz/plugin_targets.py`，复合 target 一律
   `"{namespace}/{part}"`，由唯一 `_join` 校验器编码：namespace 字符集与
   `config/plugin_settings.py` 一致，action / surface id / management part 分别镜像 registry、
   浏览器 surface 规则和两个模块常量。三个构造器各带 kind 检查，调用点禁止字符串拼接；
@@ -641,7 +641,7 @@ Phase 1 最低验证要求：
   `resource`，右值是 `config.yaml` 键；把 `plugin_action` 当作 config 键会在构造期被拒
   （reserved request alias）。`plugin_page → plugin_pages` 随 PR3 落地——该 PR 才产生
   `plugin_page` 资源，缺 key = 不受限仍是不变的语义。
-- **决策（决策层）：** 新增 `deerflow/authz/plugin_authz.py`：六个决策函数 +
+- **决策（决策层）：** 新增 `nkyel/authz/plugin_authz.py`：六个决策函数 +
   `PluginAuthorizationError`（携带 resource / target / reason_code / fail_closed）。disabled →
   no-op；显式 deny 抛错；provider 异常、解析失败、malformed decision、无 principal 一律按
   `fail_closed` 抛错或 warning 放行（镜像 sandbox gate 的语义，而不是工具过滤器的静默集合
@@ -655,10 +655,10 @@ Phase 1 最低验证要求：
   `resolve_authorization_provider_spec` 在线程中执行，`construct_authorization_provider`
   保持在调用方 loop 上；无 single-flight 锁（允许并发冷启动重复构造，已文档化）；
   写入时清理已关闭 loop 的条目。
-- **决策（公开 helper + 契约版本）：** `deerflow_extension_api.auth` 新增
+- **决策（公开 helper + 契约版本）：** `nkyel_extension_api.auth` 新增
   `EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY`、`EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY` 与
   `require_plugin_management` / `arequire_plugin_management`（只读 `request.app.state`，保持
-  契约包不依赖 `deerflow`）。两者 fail closed：解析器缺失/失败/返回 `None`、未知 namespace、
+  契约包不依赖 `nkyel`）。两者 fail closed：解析器缺失/失败/返回 `None`、未知 namespace、
   非 `True` 答案都抛 `PermissionError`；`authorization.enabled: false` 时宿主回答 `True`
   （no-op），因此不会开始拒绝企业路由，需要无条件底线的企业仍叠加 `require_admin`。同步形式
   供 FastAPI `def` 端点（线程池）使用，异步端点使用 `a` 版本。契约版本 `0.2.3 → 0.2.4`
@@ -669,7 +669,7 @@ Phase 1 最低验证要求：
   无法占用 256 KiB 输入预算。
 - **证据：** 新增 `tests/test_plugin_targets.py`（字符集、跨 kind 同形 target、
   management part、非法输入）、`tests/test_tool_provenance.py`（plugin tag 往返、错配 tag 被丢弃、
-  MCP 优先级、`deerflow_tool_source` 与模块回退标签保持）、
+  MCP 优先级、`nkyel_tool_source` 与模块回退标签保持）、
   `tests/test_plugin_action_authorization.py`（allow/deny/未授权先于 body、
   fail_closed/fail_open、disabled no-op、未知 action 404、internal 身份）、
   `tests/test_plugin_management_guard.py`（helper 的 fail-closed 矩阵、宿主解析器安装与
@@ -718,7 +718,7 @@ Phase 1 最低验证要求：
   `test_no_config_at_all_keeps_todays_behavior`。全部 95 项插件套件在修复后通过。
 - **兼容性：** `authorization.enabled: false` 与「没有 config.yaml」两种情形行为不变；
   harness 内部函数签名由「可选 app_config」变为「必填快照」，属 PR1 内的内部契约调整，
-  不涉及 `deerflow_extension_api` 公开面（公开 helper 的 fail-closed 语义只在“宿主读不到配置”
+  不涉及 `nkyel_extension_api` 公开面（公开 helper 的 fail-closed 语义只在“宿主读不到配置”
   时更严格）。
 - **延期：** 不变（工具链路 PR2、页面切片 PR3）。
 
@@ -734,7 +734,7 @@ Phase 1 最低验证要求：
   `TypeError`，把一次拒绝变成未捕获错误，而不是配置好的授权失败（403）。
 - **决策（P1，采纳审查建议的第一种修法）：** 用「这个进程是否在跑一份配置」区分「不可用」与「未配置」，
   而不是用异常类型或无条件失败关闭：
-  - 读取失败且进程**从未加载过配置**（`peek_loaded_app_config() is None`；`deerflow.config.app_config`
+  - 读取失败且进程**从未加载过配置**（`peek_loaded_app_config() is None`；`nkyel.config.app_config`
     新增只读访问器，覆盖 `get_app_config()` 成功缓存与 `set_app_config()` 注入两种来源）：授权只能由
     配置开启，故**无门禁**放行——与同一文件里的 `_get_route_authorization_config()`
     （`(FileNotFoundError, RuntimeError)` → disabled）和 `sandbox_authz.safe_app_config()`
@@ -811,7 +811,7 @@ Phase 1 最低验证要求：
 - **兼容性：** 拒绝码提取的返回值域不变（`str`，无法读取时为 `authz.denied`）；只有「可迭代对象在
   遍历时抛错」这一种输入从 500 变为降级后的 403。
 - **延期：** 不变（工具链路 PR2、页面切片 PR3）。相邻同类风险已记录但未改：
-  `deerflow/authz/adapter.py` 的 `_to_guardrail` 仍直接遍历 `d.reasons`，而消费它的
+  `nkyel/authz/adapter.py` 的 `_to_guardrail` 仍直接遍历 `d.reasons`，而消费它的
   `GuardrailMiddleware` 把 provider 异常按 `fail_closed` 处理，因此 `fail_closed: false` 时
   「显式拒绝 + reasons 遍历抛错」可能被翻成放行；该文件不在本 PR 面内（工具链路），
   如需同样收敛应随 PR2 一并处理。
@@ -826,7 +826,7 @@ Phase 1 最低验证要求：
   「已从主线 48 升级过的 `config.yaml`」收不到缺 `authorization` 字段的提示。
 - **决策：** 按本文件「每次更新 PR 前的固定清单」执行：先 fetch 最新 `upstream/main`、读最新值
   （48），取下一个可用号 **49**，并在三处镜像同步（`config.example.yaml`、
-  `deploy/helm/deer-flow/values.yaml`、`deploy/helm/deer-flow/README.md`）；
+  `deploy/helm/nkyel/values.yaml`、`deploy/helm/nkyel/README.md`）；
   `frontend/src/content/{en,zh}/harness/checkpoints/reference.mdx` 里「current `config_version`」
   也一并改为 49（该文档由主线新增，写成时值为 47）。冲突块取主线；本 PR 的 `authorization:`
   段与 `peek_loaded_app_config()` 均在自动合并结果中保留。
@@ -852,7 +852,7 @@ Phase 1 最低验证要求：
   `_in_context_secret_sources` 查的是注册表解析出的 `skill.name`——map miss 回退
   worker 线程里的同步 `authorize()`（`_AsyncOnlyProvider` 下直接 fail-closed 丢工具，
   且破坏上一轮消除同步回落的成果）。
-- **决策（共享注册表解析）：** 新增 `deerflow/skills/container_registry.py`：
+- **决策（共享注册表解析）：** 新增 `nkyel/skills/container_registry.py`：
   `build_container_path_registry(storage)`（规范化容器 SKILL.md 路径 → live `Skill`，
   `enabled_only=False`）与 `canonical_skill_name(registry, path)`。三个中间件
   （activation / tool-policy / tool-error-handling）统一经它把路径解析为声明名。
@@ -1156,7 +1156,7 @@ Phase 1 最低验证要求：
   异步执行路径上决策 map 的 miss 静默回退 worker 线程里的同步 `authorize()`——
   对 loop-affine provider 是错误 API，`fail_closed=false` 时拒绝翻成放行。根因是
   载体契约（`dict | None`）由调用方自觉维持：`None` = 同步链，miss = 回退同步。
-- **决策（类型化载体）：** `deerflow/authz/activation_decisions.py` 的
+- **决策（类型化载体）：** `nkyel/authz/activation_decisions.py` 的
   `ActivationDecisions`：覆盖名返回批量决策；**miss 按配置的 provider-error 策略
   解析（fail-closed 拒 / fail-open 放）并以 WARNING 响亮记日志，从不触达
   provider**——miss 是构造 bug 不是策略问题。`None` 保留为同步链信号（同步

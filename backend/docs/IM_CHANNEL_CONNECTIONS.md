@@ -1,6 +1,6 @@
 # IM Channel Connections
 
-DeerFlow supports user-owned IM channel bindings for Telegram, Slack, Discord, Feishu/Lark, DingTalk, WeChat, WeCom, QQ, and Buzz. The feature reuses the existing `channels.*` runtime configuration, so it works in local and private deployments with the same outbound transports already supported by DeerFlow.
+nkyel supports user-owned IM channel bindings for Telegram, Slack, Discord, Feishu/Lark, DingTalk, WeChat, WeCom, QQ, and Buzz. The feature reuses the existing `channels.*` runtime configuration, so it works in local and private deployments with the same outbound transports already supported by nkyel.
 
 No public IP, OAuth callback URL, or provider webhook is required in this implementation.
 
@@ -10,15 +10,15 @@ This document covers both **architecture** (how the bind / dispatch / file pipel
 
 ## Architecture Overview
 
-A user-owned IM channel connection is a **per-DeerFlow-user bind layer** layered on top of the existing provider bot credentials in `channels.*`. The connection layer adds three things the bot credentials alone cannot give you:
+A user-owned IM channel connection is a **per-nkyel-user bind layer** layered on top of the existing provider bot credentials in `channels.*`. The connection layer adds three things the bot credentials alone cannot give you:
 
-1. **Owner identity** — each `(provider, external account, workspace)` maps to exactly one DeerFlow account (`owner_user_id`). Every run created from that connection runs in the owner's bucket (memory, uploads, outputs, custom agent).
+1. **Owner identity** — each `(provider, external account, workspace)` maps to exactly one nkyel account (`owner_user_id`). Every run created from that connection runs in the owner's bucket (memory, uploads, outputs, custom agent).
 2. **One-time bind codes** — the browser Connect flow mints a short-lived `secrets.token_urlsafe(16)` code (600 s TTL, single-use) and surfaces it only in the initiating user's browser. The platform worker consumes `/connect <code>` (Telegram uses `/start <code>` over a deep link) before applying any `allowed_users` filter, so a not-yet-allowlisted user can complete their first bind.
 3. **Strict ownership transfer** — the latest successful bind wins; `upsert_connection` revokes other owners' active rows for the same external identity. The DB-enforced partial unique index `uq_channel_connection_active_identity` (`WHERE status != 'revoked'`) makes the invariant race-free across concurrent writers.
 
 ### Conversation-scoped Custom Agents
 
-Connected users can run `/agent list` to inspect the Custom Agents in their own DeerFlow user bucket, then `/agent use <name>` to start a new conversation with one.
+Connected users can run `/agent list` to inspect the Custom Agents in their own nkyel user bucket, then `/agent use <name>` to start a new conversation with one.
 The selection is written to the new Gateway thread's channel metadata and, for a Custom Agent, to the canonical `agent_name` routing metadata used by the Web UI. It is cached by `ChannelManager` for subsequent turns; on restart, the manager reads the channel metadata before the first resumed turn. Opening that thread from Web search therefore continues under the same Custom Agent instead of falling back to the default runtime.
 Because selecting an agent always creates a new thread instead of mutating the current one, an existing conversation keeps its original runtime, prompt, skills, and checkpoint lineage.
 `/agent use lead_agent` starts a new conversation with the default agent.
@@ -142,7 +142,7 @@ Three top-level `channels` settings control the MessageBus/manager lifecycle: `i
 
 Admission never waits for queue space, because waiting producer coroutines would simply move the unbounded backlog outside the queue. At capacity:
 
-- Slack, Discord, Feishu/Lark, DingTalk, Telegram, WeChat, and WeCom drop the new message before DeerFlow sends its working acknowledgment. `MessageBus` emits a rate-limited warning with a cumulative rejection count.
+- Slack, Discord, Feishu/Lark, DingTalk, Telegram, WeChat, and WeCom drop the new message before nkyel sends its working acknowledgment. `MessageBus` emits a rate-limited warning with a cumulative rejection count.
 - Buzz leaves the per-channel replay watermark unchanged and reconnects, allowing relay history to replay the event.
 - GitHub webhook fan-out returns `503`. GitHub records the delivery as failed; an operator or recovery job can retry it through the Recent Deliveries UI or REST redelivery API (GitHub does not retry failed deliveries automatically).
 
@@ -187,7 +187,7 @@ For the special GitHub case (`fire_and_forget=True` channel policy), the manager
 
 The shared channel outbound path sends text before uploading attachments. Channels inheriting the default, unsupported `send_file` implementation explain the limitation in that first reply instead of attempting uploads. Supported channels continue trying the other attachments after an individual failure, then send one combined notice listing only unsent files. Successful uploads need no additional confirmation.
 
-The notice stays in the original conversation, preserves connection/owner routing, and carries no attachments or clarification-card payload. Built-in IM outbounds do not currently populate `metadata.locale`, so their notices choose Chinese or English from the first non-empty response line. This path does not read user language preferences; an explicitly supplied locale still overrides the heuristic. Files stay in the original DeerFlow conversation for download. If the platform no longer accepts the notice, the upload failures and notice failure remain in the logs; no proactive notification, regeneration, or new upload retry is started.
+The notice stays in the original conversation, preserves connection/owner routing, and carries no attachments or clarification-card payload. Built-in IM outbounds do not currently populate `metadata.locale`, so their notices choose Chinese or English from the first non-empty response line. This path does not read user language preferences; an explicitly supplied locale still overrides the heuristic. Files stay in the original nkyel conversation for download. If the platform no longer accepts the notice, the upload failures and notice failure remain in the logs; no proactive notification, regeneration, or new upload retry is started.
 
 WeCom reuses this shared processing, sends failure notices as text replies on the original inbound frame after the final stream, and retains its frame/stream cleanup after delivery. Provider-specific upload protocols, reply windows, and send ordering are unchanged.
 
@@ -214,7 +214,7 @@ flowchart TB
     Artifact["_prepare_artifact_delivery(user_id=OWNER)"]:::bucket
     Memory["_resolve_memory_user_id<br/>(make_safe_user_id match)"]:::bucket
 
-    Bucket["backend/.deer-flow/users/OWNER/.../user-data/{uploads,outputs}"]:::bucket
+    Bucket["backend/.nkyel/users/OWNER/.../user-data/{uploads,outputs}"]:::bucket
 
     Inbound --> Resolve --> UserID
     UserID --> RunID
@@ -284,7 +284,7 @@ sequenceDiagram
 - [AGENTS.md](../AGENTS.md) → "IM Channels System" — the index view in `backend/AGENTS.md` (configuration knobs, message flow, component list)
 - [GITHUB_AGENTS.md](GITHUB_AGENTS.md) — webhook-driven GitHub channel, agent bindings, fan-out, token lifecycle
 - `app/channels/manager.py` — dispatcher, `_channel_storage_user_id`, `_handle_chat`, `_handle_streaming_chat`
-- `deerflow.persistence.channel_connections` — SQL tables (`channel_connections`, `channel_oauth_states`, `channel_conversations`, `channel_credentials`) and `upsert_connection` / `consume_oauth_state` / `find_connection_by_external_identity`
+- `nkyel.persistence.channel_connections` — SQL tables (`channel_connections`, `channel_oauth_states`, `channel_conversations`, `channel_credentials`) and `upsert_connection` / `consume_oauth_state` / `find_connection_by_external_identity`
 
 ---
 
@@ -342,7 +342,7 @@ Then enable user bindings in `channel_connections`:
 channel_connections:
   enabled: true
   # Auth-enabled deployments require ordinary IM messages to come from a
-  # connected DeerFlow user by default. Set this to false only for legacy
+  # connected nkyel user by default. Set this to false only for legacy
   # operator-owned/open-bot deployments that intentionally route unbound
   # platform users to platform-ID user buckets.
   require_bound_identity: true
@@ -375,9 +375,9 @@ channel_connections:
 
 `channel_connections` does not duplicate provider secrets. It only controls the browser-facing connect UI and stores per-user binding records. Telegram needs `bot_username` only so the frontend can open a deep link.
 
-When `channel_connections.enabled` and `require_bound_identity` are true, auth-enabled deployments reject ordinary unbound IM messages before creating a DeerFlow thread or run. Users must connect the channel from DeerFlow Settings first. Auth-disabled local mode still routes channel messages to the auth-disabled default user, and legacy open-bot behavior can be restored explicitly with `require_bound_identity: false`.
+When `channel_connections.enabled` and `require_bound_identity` are true, auth-enabled deployments reject ordinary unbound IM messages before creating a nkyel thread or run. Users must connect the channel from nkyel Settings first. Auth-disabled local mode still routes channel messages to the auth-disabled default user, and legacy open-bot behavior can be restored explicitly with `require_bound_identity: false`.
 
-Upgrade note: existing auth-enabled deployments that already have `channel_connections.enabled: true` will start rejecting ordinary unbound IM messages after this field is introduced because `require_bound_identity` defaults to true. Legacy operator-owned/open-bot deployments that intentionally allow unbound platform users to create DeerFlow runs should set `require_bound_identity: false` before upgrading and restart the service.
+Upgrade note: existing auth-enabled deployments that already have `channel_connections.enabled: true` will start rejecting ordinary unbound IM messages after this field is introduced because `require_bound_identity` defaults to true. Legacy operator-owned/open-bot deployments that intentionally allow unbound platform users to create nkyel runs should set `require_bound_identity: false` before upgrading and restart the service.
 
 ## Connect Flow
 
@@ -385,29 +385,29 @@ Telegram:
 
 - The frontend creates a short one-time code.
 - The Connect button opens `https://t.me/<bot_username>?start=<code>`.
-- The existing Telegram long-polling worker receives `/start <code>` and binds that Telegram chat/user to the current DeerFlow user.
+- The existing Telegram long-polling worker receives `/start <code>` and binds that Telegram chat/user to the current nkyel user.
 
 Slack:
 
 - The frontend creates a short one-time code.
-- The UI shows `Send /connect <code> to the DeerFlow Slack bot.`
-- The existing Slack Socket Mode worker receives the message and binds the Slack user/team to the current DeerFlow user.
+- The UI shows `Send /connect <code> to the nkyel Slack bot.`
+- The existing Slack Socket Mode worker receives the message and binds the Slack user/team to the current nkyel user.
 
 Discord:
 
 - The frontend creates a short one-time code.
-- The UI shows `Send /connect <code> to the DeerFlow Discord bot.`
-- The existing Discord Gateway worker receives the message and binds the Discord user/guild to the current DeerFlow user.
+- The UI shows `Send /connect <code> to the nkyel Discord bot.`
+- The existing Discord Gateway worker receives the message and binds the Discord user/guild to the current nkyel user.
 
 Feishu/Lark, DingTalk, WeChat, and WeCom:
 
 - The frontend creates a short one-time code.
-- The UI shows `Send /connect <code> to the DeerFlow <Provider> bot.`
-- The already-running long-connection or polling worker receives the message and binds the platform user/workspace identity to the current DeerFlow user.
+- The UI shows `Send /connect <code> to the nkyel <Provider> bot.`
+- The already-running long-connection or polling worker receives the message and binds the platform user/workspace identity to the current nkyel user.
 
 Buzz:
 
-- Unlike the bot/app credentials above, Buzz has no separate developer console: DeerFlow joins the relay as an ordinary member identity. Generate a Nostr keypair for that identity — everything below refers to its **hex public key**.
+- Unlike the bot/app credentials above, Buzz has no separate developer console: nkyel joins the relay as an ordinary member identity. Generate a Nostr keypair for that identity — everything below refers to its **hex public key**.
 - **Onboarding takes two separate steps, and both are required.** Relay membership and channel membership are different things, and doing only the first produces a connector that connects and authenticates cleanly while receiving nothing:
 
   1. **Register the pubkey as a relay member** — `buzz-admin add-member --pubkey <hex>`. This is what lets the identity authenticate (NIP-42) and publish at all.
@@ -417,8 +417,8 @@ Buzz:
 - **Channels are auto-discovered — you do not list them in `config.yaml`.** On every connection the connector asks the relay which channels this identity belongs to and subscribes to each one individually. Adding it to a new channel later takes effect **live**, without a restart or reconnect: the relay sends a membership notification and the connector starts listening immediately (and stops listening when it is removed). If you see `channel discovery returned no channels` in the logs, step 2 above has not been done.
 - Configure `relay_url` and `private_key` (hex or `nsec1…`) under `channels.buzz`, then enable `channel_connections.buzz`.
 - The frontend creates a short one-time code.
-- The UI shows `Send /connect <code> to the DeerFlow Buzz bot.`
-- The already-running Buzz relay-loop worker receives the message — sent as a DM or an @mention in a channel both parties belong to — and binds the sender's Nostr pubkey to the current DeerFlow user.
+- The UI shows `Send /connect <code> to the nkyel Buzz bot.`
+- The already-running Buzz relay-loop worker receives the message — sent as a DM or an @mention in a channel both parties belong to — and binds the sender's Nostr pubkey to the current nkyel user.
 - Requires the `buzz` dependency extra (`uv sync --extra buzz`) for the `coincurve` library. `scripts/detect_uv_extras.py` (and Docker/production builds via `backend/Dockerfile`) auto-detect and preserve this extra when `channels.buzz.enabled: true` in `config.yaml`, the same way the `browser` extra is auto-detected for `browser_navigate`.
 
 ### Buzz subscription model
@@ -433,28 +433,28 @@ Buzz's relay only delivers chat events to **channel-scoped** subscriptions, whic
 
 Consequences worth knowing operationally:
 
-- **Replay is tracked per channel.** Each channel carries its own `since` watermark, advanced only by events DeerFlow actually processed. A single shared watermark would let a busy channel drag the cursor past a quiet channel's unread messages and skip them after a reconnect; per-channel cursors can only ever cost duplicate delivery (which the manager's inbound dedupe absorbs), never a miss.
+- **Replay is tracked per channel.** Each channel carries its own `since` watermark, advanced only by events nkyel actually processed. A single shared watermark would let a busy channel drag the cursor past a quiet channel's unread messages and skip them after a reconnect; per-channel cursors can only ever cost duplicate delivery (which the manager's inbound dedupe absorbs), never a miss.
 - **Membership is scoped to live events.** The relay *stores* 44100/44101 events, so without a `since` every connection replayed the whole membership history as if it had just happened — re-running channel discovery once per stored add (you would see several `channel discovery complete` lines for one connect, and channels logged as `<unnamed>`), re-subscribing channels you have since been removed from, and briefly unsubscribing channels you are still in. The subscription is therefore anchored at the moment the socket opened, minus 60s of slack so a membership change made *during* the connect/auth handshake — or a small relay clock skew — is still picked up.
 - **The number of channel subscriptions is capped** (256). The channel list comes off the wire, so it is bounded like any other remote-fed state. At the cap, new channels are refused and named in a `per-channel subscription limit reached` warning rather than an existing, working subscription being evicted.
-- **A subscription the relay closes is re-opened, up to 3 times per connection.** Every subscription on the socket fails *silently* when the relay drops it: a chat subscription deafens one channel, `buzz-membership` stops DeerFlow ever learning it was added to or removed from a channel, `buzz-discovery` kills the completeness sweep. So a `CLOSED` frame is recovered, not just noted, and the subscription that went quiet is always named at WARNING level. Recovery is skipped when the relay's stated reason says the subscription is not ours any more — a NIP-01/NIP-42 `auth-required:` / `restricted:` / `blocked:` / `invalid:` prefix, or buzz-relay's own revocation wording — because re-issuing the same REQ then just fights the relay. Any other reason (including a `CLOSED` with no reason at all) is treated as a hiccup and retried, with the 3-attempt budget as the backstop; after that it stays down until the next reconnect, which rebuilds everything from scratch.
-- **A backlog larger than the relay's 2000-per-subscription cap is now paged, not lost.** The relay serves at most 2000 stored events per subscription, newest-first, even with a `since`. When a channel's history page comes back *at* that cap, DeerFlow walks the history backwards with further `until`-bounded queries on a separate subscription until a page comes back under the cap or it reaches the point it had already read, so the oldest unread messages are fetched rather than skipped. The walk needs a read watermark to stop at, so it runs only for a channel DeerFlow has already read from; a channel's *first* connect (and any channel whose cursor was evicted) keeps the previous newest-2000 behaviour rather than paging back with nothing to reach. The walk is best-effort and additive. It stops with a warning at 50 pages or when a saturated page makes no timestamp progress. A full page of events at the inclusive `until` boundary cannot be advanced safely using timestamps alone: subtracting a second could skip unread events with that timestamp, so DeerFlow stops instead of repeatedly fetching the same page. Remaining history may be unfetched. Membership removal or a closed live subscription closes any open backlog page and clears its state; late backlog frames are ignored.
+- **A subscription the relay closes is re-opened, up to 3 times per connection.** Every subscription on the socket fails *silently* when the relay drops it: a chat subscription deafens one channel, `buzz-membership` stops nkyel ever learning it was added to or removed from a channel, `buzz-discovery` kills the completeness sweep. So a `CLOSED` frame is recovered, not just noted, and the subscription that went quiet is always named at WARNING level. Recovery is skipped when the relay's stated reason says the subscription is not ours any more — a NIP-01/NIP-42 `auth-required:` / `restricted:` / `blocked:` / `invalid:` prefix, or buzz-relay's own revocation wording — because re-issuing the same REQ then just fights the relay. Any other reason (including a `CLOSED` with no reason at all) is treated as a hiccup and retried, with the 3-attempt budget as the backstop; after that it stays down until the next reconnect, which rebuilds everything from scratch.
+- **A backlog larger than the relay's 2000-per-subscription cap is now paged, not lost.** The relay serves at most 2000 stored events per subscription, newest-first, even with a `since`. When a channel's history page comes back *at* that cap, nkyel walks the history backwards with further `until`-bounded queries on a separate subscription until a page comes back under the cap or it reaches the point it had already read, so the oldest unread messages are fetched rather than skipped. The walk needs a read watermark to stop at, so it runs only for a channel nkyel has already read from; a channel's *first* connect (and any channel whose cursor was evicted) keeps the previous newest-2000 behaviour rather than paging back with nothing to reach. The walk is best-effort and additive. It stops with a warning at 50 pages or when a saturated page makes no timestamp progress. A full page of events at the inclusive `until` boundary cannot be advanced safely using timestamps alone: subtracting a second could skip unread events with that timestamp, so nkyel stops instead of repeatedly fetching the same page. Remaining history may be unfetched. Membership removal or a closed live subscription closes any open backlog page and clears its state; late backlog frames are ignored.
 
 ### Buzz trust model
 
-On a team-run Buzz relay the relay operator is not necessarily the DeerFlow operator, so be precise about what the connector proves and what it takes on trust:
+On a team-run Buzz relay the relay operator is not necessarily the nkyel operator, so be precise about what the connector proves and what it takes on trust:
 
-**Verified (cryptographically, on every inbound event):** DeerFlow recomputes each event's NIP-01 id from the delivered payload and verifies its BIP-340 Schnorr signature against the claimed `pubkey` before the event can influence anything. A relay therefore cannot rewrite a member's message, replay one author's signature onto another payload, or claim an allowlisted author it does not hold the key for. This applies to `/connect` binds as well as ordinary chat, so a relay cannot bind someone else's pubkey to an attacker's DeerFlow account. Events that fail verification are dropped with a warning.
+**Verified (cryptographically, on every inbound event):** nkyel recomputes each event's NIP-01 id from the delivered payload and verifies its BIP-340 Schnorr signature against the claimed `pubkey` before the event can influence anything. A relay therefore cannot rewrite a member's message, replay one author's signature onto another payload, or claim an allowlisted author it does not hold the key for. This applies to `/connect` binds as well as ordinary chat, so a relay cannot bind someone else's pubkey to an attacker's nkyel account. Events that fail verification are dropped with a warning.
 
-**Trusted (not verified):** the *authorship* of kind-39000 channel metadata. Buzz publishes channel discovery events from the relay's own keypair, but nothing already configured identifies that key (`relay_url` is a network address, not a signing key), so DeerFlow only proves such an event was signed by *some* member. Because channel discovery and subscription are now driven by exactly these events, a forged kind-39000 has two effects, not one:
+**Trusted (not verified):** the *authorship* of kind-39000 channel metadata. Buzz publishes channel discovery events from the relay's own keypair, but nothing already configured identifies that key (`relay_url` is a network address, not a signing key), so nkyel only proves such an event was signed by *some* member. Because channel discovery and subscription are now driven by exactly these events, a forged kind-39000 has two effects, not one:
 
 1. It can mark a channel `type: "dm"`, which relaxes the `require_mention` requirement for that channel.
-2. It can make DeerFlow **open a chat subscription** for a channel of the forger's choosing, since the set of channels DeerFlow listens to is the set it holds metadata for.
+2. It can make nkyel **open a chat subscription** for a channel of the forger's choosing, since the set of channels nkyel listens to is the set it holds metadata for.
 
 Neither can make anything be *acted on*. The `allowed_users` allowlist and per-event signature verification are independent gates: an author who is not allowlisted is dropped regardless of channel type or how the subscription was opened. The blast radius of (2) is a relay reading its own traffic back to a subscriber that ignores it, bounded by the 256-subscription cap (which refuses new subscriptions rather than evicting working ones, so an induced subscription cannot displace a real channel). The same applies to a forged kind-44100 membership notification, except that its `p` tag is re-checked locally, so it must at least name this identity. If you need the mention requirement to be unforgeable on a relay whose members you do not all trust, keep those channels out of `mention_free_channels` and treat DM detection as convenience rather than a boundary.
 
-**Deny-by-default allowlist:** unlike other providers (where an empty `allowed_users` means "allow everyone"), `channels.buzz.allowed_users` is deliberately deny-by-default — an empty list means *nobody* can trigger a run, and DeerFlow logs a startup warning saying so. Add each member pubkey (hex or `npub1…`) that should be able to reach the agent. Individual drops are logged at DEBUG level.
+**Deny-by-default allowlist:** unlike other providers (where an empty `allowed_users` means "allow everyone"), `channels.buzz.allowed_users` is deliberately deny-by-default — an empty list means *nobody* can trigger a run, and nkyel logs a startup warning saying so. Add each member pubkey (hex or `npub1…`) that should be able to reach the agent. Individual drops are logged at DEBUG level.
 
-**Bound identity:** once a pubkey completes `/connect`, its inbound messages resolve to that connection and run under the bound DeerFlow user (memory, files, and artifacts land in that user's buckets). Bindings are scoped to the relay host, so the same pubkey on a different relay is a different identity and must bind separately.
+**Bound identity:** once a pubkey completes `/connect`, its inbound messages resolve to that connection and run under the bound nkyel user (memory, files, and artifacts land in that user's buckets). Bindings are scoped to the relay host, so the same pubkey on a different relay is a different identity and must bind separately.
 
 ### Feishu / Lark TLS troubleshooting
 
@@ -594,7 +594,7 @@ WebSocket access; availability should be checked for your bot.
    development settings. Enable the private-message and group @mention
    capabilities you intend to use. Configure permitted test accounts/groups in
    the console when the bot is in testing; publishing and platform approval
-   requirements are separate from DeerFlow configuration.
+   requirements are separate from nkyel configuration.
 2. Supply `QQ_APP_ID` and `QQ_CLIENT_SECRET` to the Gateway process, or save the
    App ID and Client secret through the administrator's Channels UI. Do not
    commit credentials. A frontend `.env.local` file is not a substitute for
@@ -652,7 +652,7 @@ truncated in the last permitted reply. Unknown or timezone-naive message
 timestamps use the full advisory window and emit a rate-limited warning without
 message content; QQ still enforces reply expiry server-side.
 Runs that finish after the platform's reply window remain available
-in DeerFlow but cannot be delivered through that source message. QQ may reject
+in nkyel but cannot be delivered through that source message. QQ may reject
 links that are not approved in the bot's URL allowlist.
 
 Use one active Gateway channel worker per bot for this MVP. Token refresh,
@@ -664,7 +664,7 @@ changes only the REST API host; test-account/group membership is controlled
 separately in the QQ console.
 
 For an opt-in transport check, supply the two QQ credential environment
-variables, set `DEER_FLOW_RUN_LIVE_TESTS=1`, and run
+variables, set `NKYEL_RUN_LIVE_TESTS=1`, and run
 `uv run pytest -m live tests/test_qq_channel_live.py` from `backend/`.
 It checks READY, two heartbeat acknowledgements and shutdown; it does not send
 chat messages or establish end-to-end agent or group-message compatibility.
@@ -678,14 +678,14 @@ For providers with an `allowed_users` allowlist (Telegram, Slack, DingTalk, WeCh
 
 ## Runtime Model
 
-Connection records live in SQL tables under `deerflow.persistence.channel_connections`:
+Connection records live in SQL tables under `nkyel.persistence.channel_connections`:
 
 - `channel_connections`: owner user, provider identity, workspace/guild/team, status, metadata.
 - `channel_oauth_states`: one-time connect codes and Telegram deep-link state.
-- `channel_conversations`: connection-scoped IM conversation to DeerFlow thread mapping.
-- `channel_credentials`: per-connection provider tokens for future provider-token flows, encrypted with `DEER_FLOW_CREDENTIALS_KEY` (see [CONFIGURATION.md](CONFIGURATION.md#credentials-encryption-key-deer_flow_credentials_key)); not written by the local/private binding flow.
+- `channel_conversations`: connection-scoped IM conversation to nkyel thread mapping.
+- `channel_credentials`: per-connection provider tokens for future provider-token flows, encrypted with `NKYEL_CREDENTIALS_KEY` (see [CONFIGURATION.md](CONFIGURATION.md#credentials-encryption-key-nkyel_credentials_key)); not written by the local/private binding flow.
 
-Incoming messages that resolve to a connection carry `connection_id`, `owner_user_id`, and `workspace_id`. `ChannelManager` uses `owner_user_id` as the DeerFlow run user id and preserves the raw platform user id as `channel_user_id`.
+Incoming messages that resolve to a connection carry `connection_id`, `owner_user_id`, and `workspace_id`. `ChannelManager` uses `owner_user_id` as the nkyel run user id and preserves the raw platform user id as `channel_user_id`.
 
 Runtime provider credentials are deployment-level bot secrets, not user-owned
 connection credentials. They can come from `channels.*` in `config.yaml` or
@@ -694,17 +694,17 @@ from the browser runtime setup flow (`POST` / `DELETE
 deployments can configure bots without editing YAML. With a `sqlite` or
 `postgres` database the flow stores one row per provider in
 `channel_runtime_configs`: the provider's config block encrypted with
-`DEER_FLOW_CREDENTIALS_KEY`, a plaintext disconnect flag (a disconnect keeps
+`NKYEL_CREDENTIALS_KEY`, a plaintext disconnect flag (a disconnect keeps
 suppressing the provider's `config.yaml` block, key or no key), and a
 `version` bumped on every save. Every request re-reads the table, so all
 Gateway instances serve the same providers. Without a usable key, saving
 credentials answers `503` rather than storing plaintext, and rows the key
 cannot decrypt read as not configured. The first start after the upgrade
-imports an existing `{DEER_FLOW_HOME}/channels/runtime-config.json` (a
+imports an existing `{NKYEL_HOME}/channels/runtime-config.json` (a
 provider already in the table keeps its row) and then deletes the plaintext
 file, so a downgrade to a build without the table must re-enter UI-configured
 bots. With `database.backend: memory` that file (mode `0600`, saves under an
-advisory sidecar lock) remains the store; use it only where the DeerFlow data
+advisory sidecar lock) remains the store; use it only where the nkyel data
 directory is already trusted as secret storage. WeChat QR login auth state
 follows the local-runtime model and may persist a QR-derived bot token in the
 channel state directory.
@@ -773,9 +773,9 @@ but lost the claim adopts the winner's thread and deletes its own, empty one;
   responses mask password fields, and mutating runtime/channel-worker APIs
   require an admin user.
 - Stored per-connection credentials use the `channel_credentials` encryption
-  path, keyed by `DEER_FLOW_CREDENTIALS_KEY` (or the generated
-  `{DEER_FLOW_HOME}/.credentials_key` on a single instance). If stored
-  credential material cannot be decrypted — a lost or changed key — DeerFlow
+  path, keyed by `NKYEL_CREDENTIALS_KEY` (or the generated
+  `{NKYEL_HOME}/.credentials_key` on a single instance). If stored
+  credential material cannot be decrypted — a lost or changed key — nkyel
   treats it as unavailable instead of using corrupt secrets. A declared
   multi-instance deployment with channel connections enabled must set the key.
 - Runtime bot credentials entered in the browser are encrypted with the same
@@ -783,9 +783,9 @@ but lost the claim adopts the winner's thread and deletes its own, empty one;
   plaintext JSON fallback documented above; prefer deployment-managed
   environment/config secrets there.
 - `allowed_users` is **not** a bind-time defense. Because connect codes are processed before the allowlist (see Connect Flow), anyone who possesses a valid code can consume it — not only allowlisted users. Bind security therefore rests entirely on the code's confidentiality: it is 128-bit random, expires after 10 minutes, is single-use, and is shown only in the initiating user's browser (never echoed back to chat). Treat connect codes like one-time passwords and do not forward them.
-- An external identity — `(provider, external account, workspace/team/guild)` — has at most one active owner. The most recent successful bind wins: connecting an identity that another DeerFlow user already holds transfers ownership and revokes the previous owner's binding (and its stored credentials). This is enforced at the database layer, so two users racing to bind the same identity cannot both end up connected.
+- An external identity — `(provider, external account, workspace/team/guild)` — has at most one active owner. The most recent successful bind wins: connecting an identity that another nkyel user already holds transfers ownership and revokes the previous owner's binding (and its stored credentials). This is enforced at the database layer, so two users racing to bind the same identity cannot both end up connected.
 - Provider bot tokens remain in `channels.*` and are never returned to the browser.
-- Stored per-connection credentials are encrypted. If stored credential material cannot be decrypted, DeerFlow treats it as unavailable instead of using corrupt secrets.
+- Stored per-connection credentials are encrypted. If stored credential material cannot be decrypted, nkyel treats it as unavailable instead of using corrupt secrets.
 - This implementation does not add public provider callback or webhook routes.
 
 ## Proactive notification settings
@@ -794,7 +794,7 @@ The shared outbox sends scheduled result/lifecycle notices to bound private
 identities on WeCom, Feishu/Lark, WeChat and QQ. **Settings → Notifications → IM
 notifications** lists connected, push-capable apps with the same per-provider
 control. The setting is durable and owner-scoped, and also works in local
-`DEER_FLOW_AUTH_DISABLED=1` mode. It does not disable chatting, disconnect an
+`NKYEL_AUTH_DISABLED=1` mode. It does not disable chatting, disconnect an
 account or stop a scheduled task. Browser notifications have a separate switch.
 
 Opting out stops new enqueueing and permanently closes pending/retrying notices

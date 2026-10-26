@@ -20,12 +20,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from deerflow.community import url_safety
-from deerflow.community.browser_automation import egress
-from deerflow.community.browser_automation import session as session_mod
-from deerflow.community.browser_automation import tools as browser_tools
-from deerflow.community.browser_automation.egress import BrowserEgressProxy
-from deerflow.community.browser_automation.session import BrowserSession
+from nkyel.community import url_safety
+from nkyel.community.browser_automation import egress
+from nkyel.community.browser_automation import session as session_mod
+from nkyel.community.browser_automation import tools as browser_tools
+from nkyel.community.browser_automation.egress import BrowserEgressProxy
+from nkyel.community.browser_automation.session import BrowserSession
 
 
 async def _start_echo_server() -> tuple[asyncio.Server, int]:

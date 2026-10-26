@@ -30,12 +30,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.gateway.authz import AuthContext, Permissions, SandboxRequestLease
 from app.gateway.deps import get_config
 from app.gateway.routers import project_documents, project_thread_files, projects, uploads
-from deerflow.config.paths import get_paths
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
-from deerflow.persistence.thread_meta import ThreadMetaRepository
-from deerflow.projects.documents import original_file_path
-from deerflow.runtime.user_context import reset_current_user, set_current_user
+from nkyel.config.paths import get_paths
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
+from nkyel.persistence.thread_meta import ThreadMetaRepository
+from nkyel.projects.documents import original_file_path
+from nkyel.runtime.user_context import reset_current_user, set_current_user
 
 _STUB_PERMISSIONS: list[str] = [
     Permissions.PROJECTS_READ,
@@ -91,9 +91,9 @@ def _as_user(user_id: str) -> dict[str, str]:
 
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path, monkeypatch):
-    import deerflow.config.paths as paths_mod
+    import nkyel.config.paths as paths_mod
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "home"))
     monkeypatch.setattr(paths_mod, "_paths", None)
     yield
     anyio.run(close_engine)
@@ -135,7 +135,7 @@ def _delete_thread(app: FastAPI, thread_id: str, *, user_id: str = _USER) -> Non
 
 def _thread_file(thread_id: str, kind: str, name: str, data: bytes, *, user_id: str = _USER) -> Path:
     """Write a file into a thread's uploads/outputs dir; return its path."""
-    from deerflow.config.paths import get_paths
+    from nkyel.config.paths import get_paths
 
     paths = get_paths()
     directory = paths.sandbox_uploads_dir(thread_id, user_id=user_id) if kind == "upload" else paths.sandbox_outputs_dir(thread_id, user_id=user_id)
@@ -769,7 +769,7 @@ class TestThreadFiles:
         with TestClient(app) as client:
             pid = _create_project(client)["id"]
             _seed_thread(app, "thread-live", project_id=pid)
-            _seed_thread(app, "thread-archived", project_id=pid, metadata={"deerflow_archived": True})
+            _seed_thread(app, "thread-archived", project_id=pid, metadata={"nkyel_archived": True})
             _seed_thread(app, "thread-deleted", project_id=pid)
             _thread_file("thread-live", "upload", "live.txt", b"x")
             _thread_file("thread-archived", "upload", "arch.txt", b"x")
@@ -819,7 +819,7 @@ class _SimulatedPurge:
             self.error = exc
 
     async def _purge(self) -> bool:
-        from deerflow.persistence.projects.model import ProjectDocumentRow
+        from nkyel.persistence.projects.model import ProjectDocumentRow
 
         token = set_current_user(SimpleNamespace(id=self.user_id))
         try:
@@ -1048,7 +1048,7 @@ class TestAttachVsPurgeSerialization:
 
             # Hold the attach's under-lock copy at a barrier while the purge
             # attempt starts; the purge then waits for the attach's commit.
-            import deerflow.projects.documents as documents_mod
+            import nkyel.projects.documents as documents_mod
 
             real_copy = documents_mod._copy_original_under_lock
             copy_entered = threading.Event()

@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock
 import pytest
 from test_terminal_store_contract import store as store
 
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.runtime import RunManager, RunStatus
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.runtime import RunManager, RunStatus
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ async def test_same_owner_atomic_replacement_does_not_fence_its_old_run(store, s
 
 @pytest.mark.anyio
 async def test_fast_renewal_exception_retains_deadline_fencing():
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = manager_for(store)
@@ -70,7 +70,7 @@ async def test_fast_renewal_exception_retains_deadline_fencing():
 
 @pytest.mark.anyio
 async def test_shutdown_does_not_join_uncooperative_orphan_io_past_budget():
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = manager_for(store)
@@ -118,7 +118,7 @@ async def test_cancelled_admission_compensation_cannot_write_after_expiry(store)
 
 @pytest.mark.anyio
 async def test_atomic_attempt_is_registered_until_its_actual_claim_ack():
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = manager_for(store)
@@ -154,7 +154,7 @@ async def test_atomic_attempt_is_registered_until_its_actual_claim_ack():
 
 @pytest.mark.anyio
 async def test_unclaimed_local_row_cannot_borrow_atomic_admission_ack():
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = manager_for(store)
@@ -176,7 +176,7 @@ async def test_unclaimed_local_row_cannot_borrow_atomic_admission_ack():
 
 @pytest.mark.anyio
 async def test_atomic_exception_settles_attempt_without_cancelling_old_worker():
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = manager_for(store)
@@ -198,7 +198,7 @@ async def test_atomic_exception_settles_attempt_without_cancelling_old_worker():
 
 @pytest.mark.anyio
 async def test_successful_renewal_invalidates_the_earlier_deadline_guard():
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = manager_for(store)
@@ -221,7 +221,7 @@ async def test_successful_renewal_invalidates_the_earlier_deadline_guard():
 
 @pytest.mark.anyio
 async def test_expiry_fences_even_while_atomic_ack_holds_the_manager_lock():
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = manager_for(store)
@@ -312,7 +312,7 @@ async def test_atomic_claim_ack_is_a_snapshot_of_the_committed_outcome(store):
 
 @pytest.mark.anyio
 async def test_atomic_replacement_rejects_live_peer_without_ack(store):
-    from deerflow.runtime.runs.manager import ConflictError
+    from nkyel.runtime.runs.manager import ConflictError
 
     manager = manager_for(store)
     old = await manager.create_or_reject("thread", user_id="review")
@@ -327,7 +327,7 @@ async def test_atomic_replacement_rejects_live_peer_without_ack(store):
 
 @pytest.mark.anyio
 async def test_pending_caller_cancellation_closes_admitted_replacement():
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = RunManager(store=store)
@@ -349,8 +349,8 @@ async def test_pending_caller_cancellation_closes_admitted_replacement():
 
 @pytest.mark.anyio
 async def test_delayed_atomic_interrupted_ack_cannot_restart_acknowledged_error():
-    from deerflow.runtime.runs.manager import TerminalCommitProof
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.manager import TerminalCommitProof
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = manager_for(store)
@@ -390,7 +390,7 @@ async def test_delayed_atomic_interrupted_ack_cannot_restart_acknowledged_error(
 @pytest.mark.anyio
 @pytest.mark.parametrize("action", ["interrupt", "rollback"])
 async def test_direct_cancel_keeps_terminal_confirmation_behind_rollback(store, action):
-    from deerflow.runtime.runs.manager import CancelOutcome
+    from nkyel.runtime.runs.manager import CancelOutcome
 
     manager = manager_for(store)
     record = await manager.create_or_reject("thread", user_id="review")

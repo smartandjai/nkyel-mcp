@@ -18,10 +18,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.paths import DEFAULT_AGENT_BUCKET, memory_file_path
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import DOCUMENT_VERSION, FileMemoryStorage
-from deerflow.config.runtime_paths import runtime_home
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.paths import DEFAULT_AGENT_BUCKET, memory_file_path
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import DOCUMENT_VERSION, FileMemoryStorage
+from nkyel.config.runtime_paths import runtime_home
 
 
 def discover_user_ids(storage_path: Path) -> list[str]:
@@ -95,7 +95,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--storage-path",
         type=Path,
         default=None,
-        help="DeerMem root directory; defaults to DeerFlow's runtime home.",
+        help="DeerMem root directory; defaults to nkyel's runtime home.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Report pending migrations without changing files.")
     return parser

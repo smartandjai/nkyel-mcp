@@ -13,21 +13,21 @@ import { Callout } from "nextra/components";
 
 | 别名 | 路径 |
 | --- | --- |
-| `dbcfg` | `backend/packages/harness/deerflow/config/database_config.py` |
-| `appcfg` | `backend/packages/harness/deerflow/config/app_config.py` |
-| `reload` | `backend/packages/harness/deerflow/config/reload_boundary.py` |
-| `cmode` | `backend/packages/harness/deerflow/runtime/checkpoint_mode.py` |
-| `cstate` | `backend/packages/harness/deerflow/runtime/checkpoint_state.py` |
-| `tstate` | `backend/packages/harness/deerflow/agents/thread_state.py` |
-| `factory` | `backend/packages/harness/deerflow/agents/factory.py` |
-| `client` | `backend/packages/harness/deerflow/client.py` |
-| `worker` | `backend/packages/harness/deerflow/runtime/runs/worker.py` |
-| `agent` | `backend/packages/harness/deerflow/agents/lead_agent/agent.py` |
-| `goalsrc` | `backend/packages/harness/deerflow/runtime/goal.py` |
-| `checkpoint_patches` | `backend/packages/harness/deerflow/checkpoint_patches.py` |
-| `syncprov` | `backend/packages/harness/deerflow/runtime/checkpointer/provider.py` |
-| `asyncprov` | `backend/packages/harness/deerflow/runtime/checkpointer/async_provider.py` |
-| `cacheprov` | `backend/packages/harness/deerflow/runtime/checkpoint_cache/provider.py` |
+| `dbcfg` | `backend/packages/harness/nkyel/config/database_config.py` |
+| `appcfg` | `backend/packages/harness/nkyel/config/app_config.py` |
+| `reload` | `backend/packages/harness/nkyel/config/reload_boundary.py` |
+| `cmode` | `backend/packages/harness/nkyel/runtime/checkpoint_mode.py` |
+| `cstate` | `backend/packages/harness/nkyel/runtime/checkpoint_state.py` |
+| `tstate` | `backend/packages/harness/nkyel/agents/thread_state.py` |
+| `factory` | `backend/packages/harness/nkyel/agents/factory.py` |
+| `client` | `backend/packages/harness/nkyel/client.py` |
+| `worker` | `backend/packages/harness/nkyel/runtime/runs/worker.py` |
+| `agent` | `backend/packages/harness/nkyel/agents/lead_agent/agent.py` |
+| `goalsrc` | `backend/packages/harness/nkyel/runtime/goal.py` |
+| `checkpoint_patches` | `backend/packages/harness/nkyel/checkpoint_patches.py` |
+| `syncprov` | `backend/packages/harness/nkyel/runtime/checkpointer/provider.py` |
+| `asyncprov` | `backend/packages/harness/nkyel/runtime/checkpointer/async_provider.py` |
+| `cacheprov` | `backend/packages/harness/nkyel/runtime/checkpoint_cache/provider.py` |
 | `threads` | `backend/app/gateway/routers/threads.py` |
 | `thread_runs` | `backend/app/gateway/routers/thread_runs.py` |
 | `runs` | `backend/app/gateway/routers/runs.py` |
@@ -50,7 +50,7 @@ import { Callout } from "nextra/components";
 | `database.checkpoint_graph_cache.accessor_graph_max` | `int` | `64` | `ge=1` | 否——热重载，每次淘汰检查时重读 | `dbcfg:96-99`、`services:1133-1138` |
 | `database.checkpoint_cache.type` | `Literal["memory", "redis"]` | `"memory"` | `memory` \| `redis`；`redis` 仅限异步/Gateway | 是——构造 checkpointer 时捕获 | `dbcfg:113-116`、`syncprov:181-182`、`asyncprov:250-254` |
 | `database.checkpoint_cache.max_entries` | `int` | `128` | `ge=0`；`0` 完全禁用缓存 | 是——构造 checkpointer 时捕获 | `dbcfg:117-121`、`cacheprov:76-84`、`deps:463` |
-| `database.checkpoint_cache.redis_url` | `str \| None` | `None` | 任意 redis URL；省略时依次取 `DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL`、`REDIS_URL`、`redis://localhost:6379/0` | 是——构造 checkpointer 时捕获 | `dbcfg:122-125`、`cacheprov:19-23` |
+| `database.checkpoint_cache.redis_url` | `str \| None` | `None` | 任意 redis URL；省略时依次取 `NKYEL_CHECKPOINT_CACHE_REDIS_URL`、`REDIS_URL`、`redis://localhost:6379/0` | 是——构造 checkpointer 时捕获 | `dbcfg:122-125`、`cacheprov:19-23` |
 | `database.checkpoint_cache.ttl_seconds` | `int` | `86400` | `ge=0`；`0` 显式关闭过期 | 是——构造 checkpointer 时捕获 | `dbcfg:126-135` |
 | `database.checkpoint_cache.key_prefix` | `str` | `""` | 任意字符串；空值则由数据库标识派生哈希 | 是——构造 checkpointer 时捕获 | `dbcfg:136-139`、`cacheprov:60-64` |
 | `database.checkpoint_delta_snapshot_frequency`（已废弃的扁平键） | `int` | 无——会迁移到嵌套键 | 迁移后为 `ge=1` | 不适用 | `dbcfg:218-254` |
@@ -99,7 +99,7 @@ sharing one checkpoint database must use the same value."
 
 ### 环境变量
 
-没有任何环境变量能选择检查点模式或快照节奏，两者只来自 `config.yaml`。本特性唯一相关的环境变量是历史缓存 redis URL 的回退链（`DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL`、`REDIS_URL`、`redis://localhost:6379/0`），见 `cacheprov:19-23`。配置值里的 `$VAR` 插值由 `AppConfig.resolve_env_variables()` 在构造 `DatabaseConfig` 之前统一处理，因此 `DatabaseConfig` 自身不做任何环境处理（`dbcfg:13-22`、`appcfg:442`）。
+没有任何环境变量能选择检查点模式或快照节奏，两者只来自 `config.yaml`。本特性唯一相关的环境变量是历史缓存 redis URL 的回退链（`NKYEL_CHECKPOINT_CACHE_REDIS_URL`、`REDIS_URL`、`redis://localhost:6379/0`），见 `cacheprov:19-23`。配置值里的 `$VAR` 插值由 `AppConfig.resolve_env_variables()` 在构造 `DatabaseConfig` 之前统一处理，因此 `DatabaseConfig` 自身不做任何环境处理（`dbcfg:13-22`、`appcfg:442`）。
 
 ### 配置版本
 
@@ -115,13 +115,13 @@ Your config.yaml (version %d) is outdated — the latest version is %d. Run `mak
 
 | 符号 | 取值 | 所在模块 | 证据 |
 | --- | --- | --- | --- |
-| `CheckpointChannelMode` | `Literal["full", "delta"]` | `deerflow.config.database_config` | `dbcfg:59` |
-| `DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY` | `10` | `deerflow.config.database_config` | `dbcfg:61` |
-| `INTERNAL_CHECKPOINT_MODE_KEY` | `"__deerflow_checkpoint_channel_mode"`（`RunnableConfig` 的 `configurable` 键） | `deerflow.runtime.checkpoint_mode` | `cmode:18` |
-| `CHECKPOINT_MODE_METADATA_KEY` | `"deerflow_checkpoint_channel_mode"`（检查点 metadata 键；写入的值为 `"delta"`） | `deerflow.runtime.checkpoint_mode` | `cmode:19`、`cmode:86` |
-| `counters_since_delta_snapshot` | LangGraph 自有的 metadata 键；只要其值是含 `"messages"` 的 dict，即使没有 DeerFlow 标记也按 delta 处理 | 上游 `langgraph-checkpoint`；检测位于 `deerflow.runtime.checkpoint_mode` | `cmode:97-98` |
+| `CheckpointChannelMode` | `Literal["full", "delta"]` | `nkyel.config.database_config` | `dbcfg:59` |
+| `DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY` | `10` | `nkyel.config.database_config` | `dbcfg:61` |
+| `INTERNAL_CHECKPOINT_MODE_KEY` | `"__nkyel_checkpoint_channel_mode"`（`RunnableConfig` 的 `configurable` 键） | `nkyel.runtime.checkpoint_mode` | `cmode:18` |
+| `CHECKPOINT_MODE_METADATA_KEY` | `"nkyel_checkpoint_channel_mode"`（检查点 metadata 键；写入的值为 `"delta"`） | `nkyel.runtime.checkpoint_mode` | `cmode:19`、`cmode:86` |
+| `counters_since_delta_snapshot` | LangGraph 自有的 metadata 键；只要其值是含 `"messages"` 的 dict，即使没有 nkyel 标记也按 delta 处理 | 上游 `langgraph-checkpoint`；检测位于 `nkyel.runtime.checkpoint_mode` | `cmode:97-98` |
 
-标记语义集中在一处：`inject_checkpoint_mode(config, mode)` 总是写入 `config["configurable"]["__deerflow_checkpoint_channel_mode"]`；delta 模式下还会写入 `config["metadata"]["deerflow_checkpoint_channel_mode"] = "delta"`，而 full 模式下会**移除**该 metadata 键，所以缺失即 full，特性上线前的检查点无需迁移（`cmode:81-88`）。快照节奏被刻意**不**写进检查点 metadata，因为模式标记契约与 full→delta 迁移语义都不随频率取值改变（`cmode:53-60`）。
+标记语义集中在一处：`inject_checkpoint_mode(config, mode)` 总是写入 `config["configurable"]["__nkyel_checkpoint_channel_mode"]`；delta 模式下还会写入 `config["metadata"]["nkyel_checkpoint_channel_mode"] = "delta"`，而 full 模式下会**移除**该 metadata 键，所以缺失即 full，特性上线前的检查点无需迁移（`cmode:81-88`）。快照节奏被刻意**不**写进检查点 metadata，因为模式标记契约与 full→delta 迁移语义都不随频率取值改变（`cmode:53-60`）。
 
 ## 异常与 HTTP 状态
 
@@ -140,7 +140,7 @@ Your config.yaml (version %d) is outdated — the latest version is %d. Run `mak
 | `Thread requires delta mode; materialize and convert its checkpoints before using full mode.` | `CheckpointModeMismatchError`，由 `raise_if_snapshot_incompatible` 与 `raise_if_checkpoint_tuple_incompatible` 抛出，并在降级网关访问器中重复 | `cmode:123`、`cmode:129`、`services:1229` |
 | `database.checkpoint_cache.type 'redis' is not supported on the sync checkpointer path (TUI/embedded); use 'memory'.` | `_wrap_sync_if_delta` 中的 `ValueError` | `syncprov:181-182` |
 | `f"Unknown checkpoint cache type: {config.type!r}"` | `make_checkpoint_cache` 中的 `ValueError` | `cacheprov:102` |
-| `create_deerflow_agent does not support checkpoint_channel_mode='delta' with a checkpointer: persisted graphs built here bypass checkpoint mode marker injection and the fail-closed compatibility gate (see deerflow.runtime.checkpoint_mode), so a mixed-mode store would silently corrupt thread state.  Use the guarded application paths (make_lead_agent or DeerFlowClient) for delta persistence; delta without a checkpointer is ephemeral and allowed.` | `create_deerflow_agent` 中的 `ValueError` | `factory:135-141` |
+| `create_nkyel_agent does not support checkpoint_channel_mode='delta' with a checkpointer: persisted graphs built here bypass checkpoint mode marker injection and the fail-closed compatibility gate (see nkyel.runtime.checkpoint_mode), so a mixed-mode store would silently corrupt thread state.  Use the guarded application paths (make_lead_agent or NkyelClient) for delta persistence; delta without a checkpointer is ephemeral and allowed.` | `create_nkyel_agent` 中的 `ValueError` | `factory:135-141` |
 
 ### HTTP 状态映射
 
@@ -197,44 +197,44 @@ wait 响应仍为 HTTP `200`。Python SDK 默认使用 `raise_error=True`，识�
 
 | 符号 | 导入路径 | 作用 | 证据 |
 | --- | --- | --- | --- |
-| `CheckpointChannelMode` | `deerflow.config.database_config` | 模式字面量 | `dbcfg:59` |
-| `DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY` | `deerflow.config.database_config` | 默认节奏 `10` | `dbcfg:61` |
-| `CheckpointDeltaConfig` | `deerflow.config.database_config` | delta 调优模型（`snapshot_frequency`） | `dbcfg:64` |
-| `CheckpointGraphCacheConfig` | `deerflow.config.database_config` | 图缓存上限模型（`accessor_graph_max`） | `dbcfg:86` |
-| `CheckpointCacheConfig` | `deerflow.config.database_config` | 历史缓存策略模型 | `dbcfg:103` |
-| `DatabaseConfig` | `deerflow.config.database_config` | 整个 `database:` 段 | `dbcfg:142` |
-| `resolve_checkpoint_graph_cache_max(database_config, field_name, default)` | `deerflow.config.database_config` | 容错的热重载上限读取器 | `dbcfg:45-57` |
-| `INTERNAL_CHECKPOINT_MODE_KEY` | `deerflow.runtime.checkpoint_mode` | `configurable` 键 | `cmode:18` |
-| `CHECKPOINT_MODE_METADATA_KEY` | `deerflow.runtime.checkpoint_mode` | 检查点 metadata 键 | `cmode:19` |
-| `CheckpointModeMismatchError` | `deerflow.runtime.checkpoint_mode` | 失败关闭的跨模式异常 | `cmode:22` |
-| `CheckpointModeReconfigurationError` | `deerflow.runtime.checkpoint_mode` | 需要重启却被改动的异常 | `cmode:26` |
-| `frozen_checkpoint_channel_mode()` | `deerflow.runtime.checkpoint_mode` | 读取已冻结的模式或 `None` | `cmode:34-36` |
-| `freeze_checkpoint_channel_mode(mode)` | `deerflow.runtime.checkpoint_mode` | 首次调用时冻结，之后拒绝变更 | `cmode:39-45` |
-| `frozen_checkpoint_snapshot_frequency()` | `deerflow.runtime.checkpoint_mode` | 读取已冻结的节奏或 `None` | `cmode:48-50` |
-| `freeze_checkpoint_snapshot_frequency(n)` | `deerflow.runtime.checkpoint_mode` | 冻结节奏；非正值抛 `ValueError` | `cmode:53-69` |
-| `resolve_checkpoint_snapshot_frequency(n=None)` | `deerflow.runtime.checkpoint_mode` | 显式参数 → 进程冻结值 → 默认值 | `cmode:72-78` |
-| `inject_checkpoint_mode(config, mode)` | `deerflow.runtime.checkpoint_mode` | 写入 `configurable` 键与 metadata 标记 | `cmode:81-88` |
-| `checkpoint_metadata_uses_delta(metadata)` | `deerflow.runtime.checkpoint_mode` | 标记/计数器识别 | `cmode:91-98` |
-| `checkpoint_tuple_uses_delta(tuple)` | `deerflow.runtime.checkpoint_mode` | 元组级识别 | `cmode:101-104` |
-| `state_snapshot_uses_delta(snapshot)` | `deerflow.runtime.checkpoint_mode` | 快照级识别 | `cmode:107-111` |
-| `raise_if_snapshot_incompatible(snapshot, mode)` | `deerflow.runtime.checkpoint_mode` | 读取门禁 | `cmode:114-123` |
-| `raise_if_checkpoint_tuple_incompatible(tuple, mode)` | `deerflow.runtime.checkpoint_mode` | 裸元组门禁 | `cmode:126-129` |
-| `ensure_checkpoint_mode_compatible(checkpointer, config, mode)` | `deerflow.runtime.checkpoint_mode` | 同步写前门禁 | `cmode:132-140` |
-| `aensure_checkpoint_mode_compatible(checkpointer, config, mode)` | `deerflow.runtime.checkpoint_mode` | 异步写前门禁 | `cmode:143-146` |
-| `ThreadState` | `deerflow.agents.thread_state` | full 模式状态 schema | `tstate:280` |
-| `DeltaThreadState` | `deerflow.agents.thread_state` | 默认节奏下的 delta schema | `tstate:396-397,423-426` |
-| `delta_messages_field(snapshot_frequency=DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY)` | `deerflow.agents.thread_state` | `Annotated[list[AnyMessage], DeltaChannel(merge_message_writes, snapshot_frequency=…)]` | `tstate:385-390` |
-| `DELTA_MESSAGES_FIELD` | `deerflow.agents.thread_state` | 模块级默认节奏 delta 字段 | `tstate:393` |
-| `merge_message_writes(state, writes)` | `deerflow.agents.thread_state` | 线性时间、等价 `add_messages` 的 delta 归并器 | `tstate:328-382` |
-| `get_thread_state_schema(mode, snapshot_frequency=None)` | `deerflow.agents.thread_state` | 非 delta 返回 `ThreadState`，delta 返回缓存 schema | `tstate:416-419` |
-| `adapt_state_schema_for_mode(schema, mode, snapshot_frequency=None)` | `deerflow.agents.thread_state` | 中间件/状态 schema 适配 | `tstate:437-440` |
-| `normalize_middleware_state_schemas(middleware, mode, snapshot_frequency=None)` | `deerflow.agents.thread_state` | 返回带适配 `state_schema` 副本的中间件列表 | `tstate:454-467` |
-| `THREAD_STATE_REDUCER_FIELDS` | `deerflow.agents.thread_state` | 归并器通道的 frozenset（含 `"messages"`），用于决定是否包 `Overwrite` | `tstate:400-413`、`threads:1065-1066` |
-| `create_deerflow_agent(..., checkpoint_channel_mode="full", checkpoint_snapshot_frequency=None, ...)` | `deerflow.agents.factory` | 对外 agent 工厂；delta 加 checkpointer 会被拒绝 | `factory:66-77`、`factory:135-141` |
-| `CheckpointStateAccessor`、`build_state_mutation_graph` | `deerflow.runtime`（包级再导出） | 访问器收口点与变更图 | `deerflow/runtime/__init__.py:8,21-22` |
-| `ThreadState`、`DeltaThreadState`、`SandboxState` | `deerflow.agents`（包级再导出） | 惰性导出的状态 schema | `agents/__init__.py:14-16,40-47` |
-| `CheckpointStateAccessor.bind(graph, checkpointer, *, store=None, mode="full")` | `deerflow.runtime.checkpoint_state` | 绑定 graph、saver 与模式 | `cstate:112-134` |
-| `build_state_mutation_graph(as_node, mode, state_schema=None, *, snapshot_frequency=None)` | `deerflow.runtime.checkpoint_state` | 面向 `Overwrite` 式写入的纯状态写入图 | `cstate:39-65` |
+| `CheckpointChannelMode` | `nkyel.config.database_config` | 模式字面量 | `dbcfg:59` |
+| `DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY` | `nkyel.config.database_config` | 默认节奏 `10` | `dbcfg:61` |
+| `CheckpointDeltaConfig` | `nkyel.config.database_config` | delta 调优模型（`snapshot_frequency`） | `dbcfg:64` |
+| `CheckpointGraphCacheConfig` | `nkyel.config.database_config` | 图缓存上限模型（`accessor_graph_max`） | `dbcfg:86` |
+| `CheckpointCacheConfig` | `nkyel.config.database_config` | 历史缓存策略模型 | `dbcfg:103` |
+| `DatabaseConfig` | `nkyel.config.database_config` | 整个 `database:` 段 | `dbcfg:142` |
+| `resolve_checkpoint_graph_cache_max(database_config, field_name, default)` | `nkyel.config.database_config` | 容错的热重载上限读取器 | `dbcfg:45-57` |
+| `INTERNAL_CHECKPOINT_MODE_KEY` | `nkyel.runtime.checkpoint_mode` | `configurable` 键 | `cmode:18` |
+| `CHECKPOINT_MODE_METADATA_KEY` | `nkyel.runtime.checkpoint_mode` | 检查点 metadata 键 | `cmode:19` |
+| `CheckpointModeMismatchError` | `nkyel.runtime.checkpoint_mode` | 失败关闭的跨模式异常 | `cmode:22` |
+| `CheckpointModeReconfigurationError` | `nkyel.runtime.checkpoint_mode` | 需要重启却被改动的异常 | `cmode:26` |
+| `frozen_checkpoint_channel_mode()` | `nkyel.runtime.checkpoint_mode` | 读取已冻结的模式或 `None` | `cmode:34-36` |
+| `freeze_checkpoint_channel_mode(mode)` | `nkyel.runtime.checkpoint_mode` | 首次调用时冻结，之后拒绝变更 | `cmode:39-45` |
+| `frozen_checkpoint_snapshot_frequency()` | `nkyel.runtime.checkpoint_mode` | 读取已冻结的节奏或 `None` | `cmode:48-50` |
+| `freeze_checkpoint_snapshot_frequency(n)` | `nkyel.runtime.checkpoint_mode` | 冻结节奏；非正值抛 `ValueError` | `cmode:53-69` |
+| `resolve_checkpoint_snapshot_frequency(n=None)` | `nkyel.runtime.checkpoint_mode` | 显式参数 → 进程冻结值 → 默认值 | `cmode:72-78` |
+| `inject_checkpoint_mode(config, mode)` | `nkyel.runtime.checkpoint_mode` | 写入 `configurable` 键与 metadata 标记 | `cmode:81-88` |
+| `checkpoint_metadata_uses_delta(metadata)` | `nkyel.runtime.checkpoint_mode` | 标记/计数器识别 | `cmode:91-98` |
+| `checkpoint_tuple_uses_delta(tuple)` | `nkyel.runtime.checkpoint_mode` | 元组级识别 | `cmode:101-104` |
+| `state_snapshot_uses_delta(snapshot)` | `nkyel.runtime.checkpoint_mode` | 快照级识别 | `cmode:107-111` |
+| `raise_if_snapshot_incompatible(snapshot, mode)` | `nkyel.runtime.checkpoint_mode` | 读取门禁 | `cmode:114-123` |
+| `raise_if_checkpoint_tuple_incompatible(tuple, mode)` | `nkyel.runtime.checkpoint_mode` | 裸元组门禁 | `cmode:126-129` |
+| `ensure_checkpoint_mode_compatible(checkpointer, config, mode)` | `nkyel.runtime.checkpoint_mode` | 同步写前门禁 | `cmode:132-140` |
+| `aensure_checkpoint_mode_compatible(checkpointer, config, mode)` | `nkyel.runtime.checkpoint_mode` | 异步写前门禁 | `cmode:143-146` |
+| `ThreadState` | `nkyel.agents.thread_state` | full 模式状态 schema | `tstate:280` |
+| `DeltaThreadState` | `nkyel.agents.thread_state` | 默认节奏下的 delta schema | `tstate:396-397,423-426` |
+| `delta_messages_field(snapshot_frequency=DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY)` | `nkyel.agents.thread_state` | `Annotated[list[AnyMessage], DeltaChannel(merge_message_writes, snapshot_frequency=…)]` | `tstate:385-390` |
+| `DELTA_MESSAGES_FIELD` | `nkyel.agents.thread_state` | 模块级默认节奏 delta 字段 | `tstate:393` |
+| `merge_message_writes(state, writes)` | `nkyel.agents.thread_state` | 线性时间、等价 `add_messages` 的 delta 归并器 | `tstate:328-382` |
+| `get_thread_state_schema(mode, snapshot_frequency=None)` | `nkyel.agents.thread_state` | 非 delta 返回 `ThreadState`，delta 返回缓存 schema | `tstate:416-419` |
+| `adapt_state_schema_for_mode(schema, mode, snapshot_frequency=None)` | `nkyel.agents.thread_state` | 中间件/状态 schema 适配 | `tstate:437-440` |
+| `normalize_middleware_state_schemas(middleware, mode, snapshot_frequency=None)` | `nkyel.agents.thread_state` | 返回带适配 `state_schema` 副本的中间件列表 | `tstate:454-467` |
+| `THREAD_STATE_REDUCER_FIELDS` | `nkyel.agents.thread_state` | 归并器通道的 frozenset（含 `"messages"`），用于决定是否包 `Overwrite` | `tstate:400-413`、`threads:1065-1066` |
+| `create_nkyel_agent(..., checkpoint_channel_mode="full", checkpoint_snapshot_frequency=None, ...)` | `nkyel.agents.factory` | 对外 agent 工厂；delta 加 checkpointer 会被拒绝 | `factory:66-77`、`factory:135-141` |
+| `CheckpointStateAccessor`、`build_state_mutation_graph` | `nkyel.runtime`（包级再导出） | 访问器收口点与变更图 | `nkyel/runtime/__init__.py:8,21-22` |
+| `ThreadState`、`DeltaThreadState`、`SandboxState` | `nkyel.agents`（包级再导出） | 惰性导出的状态 schema | `agents/__init__.py:14-16,40-47` |
+| `CheckpointStateAccessor.bind(graph, checkpointer, *, store=None, mode="full")` | `nkyel.runtime.checkpoint_state` | 绑定 graph、saver 与模式 | `cstate:112-134` |
+| `build_state_mutation_graph(as_node, mode, state_schema=None, *, snapshot_frequency=None)` | `nkyel.runtime.checkpoint_state` | 面向 `Overwrite` 式写入的纯状态写入图 | `cstate:39-65` |
 
 <Callout type="warning">
   delta 模式下裸读 saver 看到的是哨兵而不是消息。消费者必须通过
@@ -265,7 +265,7 @@ wait 响应仍为 HTTP `200`。Python SDK 默认使用 `raise_error=True`，识�
 
 ### 模式门禁、冻结与配置
 
-- `test_checkpoint_mode.py`（冻结、识别、门禁）——`backend/packages/harness/deerflow/runtime/AGENTS.md:133` 中列为模式门禁的模块
+- `test_checkpoint_mode.py`（冻结、识别、门禁）——`backend/packages/harness/nkyel/runtime/AGENTS.md:133` 中列为模式门禁的模块
 - `test_checkpoint_mode.py::test_yaml_mode_change_is_rejected_when_graph_is_reconstructed`
 - `test_checkpoint_mode.py::test_delta_mode_accepts_plain_full_checkpoint`
 - `test_checkpoint_mode.py::test_gateway_runtime_rejects_mode_different_from_frozen_process`
@@ -355,14 +355,14 @@ wait 响应仍为 HTTP `200`。Python SDK 默认使用 `raise_error=True`，识�
 
 | 编号 | 种类 / 状态 | 触发场景 | 本地应对 | 固定版本 | 证据 |
 | --- | --- | --- | --- | --- | --- |
-| `#4380` | DeerFlow issue；已在本地打补丁 | 向空的 Union 类型 `BinaryOperatorAggregate` 通道做替换式写入会把 `Overwrite` 包装器持久化；下一次读取以 `TypeError: 'Overwrite' object is not subscriptable` 崩溃 | `checkpoint_patches.py` 中的探针守卫补丁；补丁测试；`test_threads_router.py` 中的分支/状态更新锚点 | `langgraph 1.2.9` | `checkpoint_patches:91-107`、`backend/tests/test_checkpoint_patches.py:31-95` |
+| `#4380` | nkyel issue；已在本地打补丁 | 向空的 Union 类型 `BinaryOperatorAggregate` 通道做替换式写入会把 `Overwrite` 包装器持久化；下一次读取以 `TypeError: 'Overwrite' object is not subscriptable` 崩溃 | `checkpoint_patches.py` 中的探针守卫补丁；补丁测试；`test_threads_router.py` 中的分支/状态更新锚点 | `langgraph 1.2.9` | `checkpoint_patches:91-107`、`backend/tests/test_checkpoint_patches.py:31-95` |
 | `#8526`（修复上游 `#8384`），以及 postgres `#8535` | 上游 langgraph PR；2026-08-07 合并；`langgraph-checkpoint` 4.2.0 修复 | 线程从 `BinaryOperatorAggregate` 切换到 `DeltaChannel` 后，迁移后的第一次写入能从实时 `invoke` 返回值中看到，却从之后每次读取中消失；postgres 侧在没有 seed 时走到根并重放全部内容 | 删除本地 `InMemorySaver` 补丁；依赖下限 `langgraph-checkpoint>=4.2.0,<5.0`；回归门禁 `test_delta_channel_checkpointers.py::test_full_to_delta_migration_replays_on_same_thread`；禁止再引入版本守卫式 saver 补丁 | `langgraph-checkpoint 4.2.0` | `checkpoint_patches:11-17`、`backend/packages/harness/pyproject.toml:49-56`、`CHANGELOG.md:3040-3048` |
 | `#8382` | 上游 langgraph issue；**open**；修复 PR `#8544` 未合并，无发布版本 | 并行 super-step 写入的 delta 重放顺序与实时执行顺序不一致：实时 `invoke` 返回按路径排序的 `[a..h]`，`get_state` 重放为 `[f,b,g,h,a,c,d,e]`（纯置换）；在 memory、sqlite、postgres 上均可复现 | 触发 skip 并点名该 issue；`test_delta_channel_checkpointers.py::test_parallel_superstep_replay_matches_live_write_order` | `langgraph-checkpoint 4.2.0` | `test_delta_channel_checkpointers.py:419,440-460` |
 | `#8448` | 上游 langgraph issue；**open**；修复 PR `#8556` 未合并 | 目标检查点不在第一页分页结果中时，`PostgresSaver.get_delta_channel_history` 会永久污染游标，导致老检查点物化为空；只有 Postgres 会对 stage-1 扫描分页 | memory/sqlite 上断言保持生效（与 `InMemorySaver` 预言机做差分）；Postgres 触发 skip；`test_delta_channel_checkpointers.py::test_long_chain_history_survives_pagination` | `langgraph-checkpoint-postgres 3.1.2` | `test_delta_channel_checkpointers.py:459` |
 | `#8548` | 上游 langgraph PR；**open**；修复上游 `#8443`，相关 issue `#8551` 仍在等它 | 不把被放弃的分支重放进 `DeltaChannel` 分叉 | 未合并期间本地线性化不能移除：保留 `_linearize_delta_checkpoint_resume` | `langgraph 1.2.9` | `worker:2267-2279`、`test_run_worker_delta_resume.py::test_linearizes_a_delta_resume_onto_the_head` |
-| `#4458` | DeerFlow issue；分叉缺陷对用户可见的症状 | 在分叉线程中重新生成后，重载时旧助手消息会与新回答并排复活；在 postgres、sqlite 与内存 saver 上均可复现，且当种子行共用一个 run id 时还会破坏分支历史 | 线性化加按轮次播种的 run id；`test_run_worker_delta_resume.py::test_regenerating_in_a_branched_thread_does_not_resurrect_the_old_answer` | `langgraph 1.2.9` | `worker:2267-2289`、`test_run_worker_delta_resume.py:204` |
-| `#4189` 第 3 项 | DeerFlow 设计讨论 | 检查点行的保留与删除；哪些内容可以被删除 | `backend/docs/checkpoint-retention-contract.md`、`backend/tests/test_checkpoint_retention_contract.py`、`backend/app/gateway/checkpoint_retention.py`；目前没有接入生产触发点 | — | `checkpoint_retention.py:1-40`、`backend/docs/checkpoint-retention-contract.md:31-77` |
-| `#3859`（评审） | DeerFlow 评审参考 | 被中断的标题写入必须递增 `channel_versions["title"]` 并在 `new_versions` 中声明，否则数据库 saver 会丢弃该 blob | `backend/tests/test_run_worker_rollback.py:3501-3504` 固定了这一形状 | — | `backend/tests/test_run_worker_rollback.py:3501-3504` |
+| `#4458` | nkyel issue；分叉缺陷对用户可见的症状 | 在分叉线程中重新生成后，重载时旧助手消息会与新回答并排复活；在 postgres、sqlite 与内存 saver 上均可复现，且当种子行共用一个 run id 时还会破坏分支历史 | 线性化加按轮次播种的 run id；`test_run_worker_delta_resume.py::test_regenerating_in_a_branched_thread_does_not_resurrect_the_old_answer` | `langgraph 1.2.9` | `worker:2267-2289`、`test_run_worker_delta_resume.py:204` |
+| `#4189` 第 3 项 | nkyel 设计讨论 | 检查点行的保留与删除；哪些内容可以被删除 | `backend/docs/checkpoint-retention-contract.md`、`backend/tests/test_checkpoint_retention_contract.py`、`backend/app/gateway/checkpoint_retention.py`；目前没有接入生产触发点 | — | `checkpoint_retention.py:1-40`、`backend/docs/checkpoint-retention-contract.md:31-77` |
+| `#3859`（评审） | nkyel 评审参考 | 被中断的标题写入必须递增 `channel_versions["title"]` 并在 `new_versions` 中声明，否则数据库 saver 会丢弃该 blob | `backend/tests/test_run_worker_rollback.py:3501-3504` 固定了这一形状 | — | `backend/tests/test_run_worker_rollback.py:3501-3504` |
 
 补丁的内容与依赖下限的执行方式见[运维检查点](/docs/harness/checkpoints/operations)，每个缺陷对用户表现出的症状见[故障排查](/docs/harness/checkpoints/troubleshooting)。
 

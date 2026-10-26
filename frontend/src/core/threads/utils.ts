@@ -5,21 +5,21 @@ import { modelControlDisplayText } from "@/core/messages/model-control";
 
 import type { AgentThread, AgentThreadContext } from "./types";
 
-// Namespaced to match other internal metadata keys (``deerflow_sidecar``,
-// ``deerflow_branch``) so it cannot collide with a future feature or a
+// Namespaced to match other internal metadata keys (``nkyel_sidecar``,
+// ``nkyel_branch``) so it cannot collide with a future feature or a
 // client-supplied key. Keep in sync with the backend thread_meta constant and
 // the E2E mock-api constant.
-export const THREAD_PINNED_METADATA_KEY = "deerflow_pinned";
-export const THREAD_ARCHIVED_METADATA_KEY = "deerflow_archived";
+export const THREAD_PINNED_METADATA_KEY = "nkyel_pinned";
+export const THREAD_ARCHIVED_METADATA_KEY = "nkyel_archived";
 
 export function isThreadArchived(thread: Pick<AgentThread, "metadata">) {
   return thread.metadata?.[THREAD_ARCHIVED_METADATA_KEY] === true;
 }
 
 // Reserved metadata key recording a thread's project membership
-// (``metadata.deerflow_project_id``). Keep in sync with the backend
+// (``metadata.nkyel_project_id``). Keep in sync with the backend
 // thread_meta constant and the E2E mock-api constant.
-export const THREAD_PROJECT_METADATA_KEY = "deerflow_project_id";
+export const THREAD_PROJECT_METADATA_KEY = "nkyel_project_id";
 
 export type ChannelThreadSource = {
   type: "im_channel";

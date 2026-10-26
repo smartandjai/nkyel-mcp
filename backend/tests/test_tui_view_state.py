@@ -6,7 +6,7 @@ The reducer is the testable heart of the TUI: a pure function mapping
 
 import pytest
 
-from deerflow.tui.view_state import (
+from nkyel.tui.view_state import (
     AssistantDelta,
     AssistantError,
     ClearRows,
@@ -97,7 +97,7 @@ def test_tool_result_without_call_id_is_ignored():
     assert state.rows == ()
 
 
-# --- streaming: DeerFlowClient.stream emits only incremental text per id
+# --- streaming: NkyelClient.stream emits only incremental text per id
 # (no re-sends, replayed turns or cumulative snapshots), and partial
 # tool-call chunks. The reducer appends text and de-duplicates tool cards. ---
 

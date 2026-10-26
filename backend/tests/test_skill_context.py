@@ -1,6 +1,6 @@
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from deerflow.agents.middlewares.skill_context import (
+from nkyel.agents.middlewares.skill_context import (
     build_skill_entry_metadata_from_read,
     extract_skills,
     render_skill_context,
@@ -120,7 +120,7 @@ class TestExtractSkills:
             ToolMessage(content=_SKILL_BODY, tool_call_id="r1", id="tm1"),
         ]
 
-        with caplog.at_level("WARNING", logger="deerflow.agents.middlewares.skill_context"):
+        with caplog.at_level("WARNING", logger="nkyel.agents.middlewares.skill_context"):
             assert extract_skills(msgs, skills_root=_ROOT, read_tool_names=_READ) == []
 
         assert "missing skill read metadata" in caplog.text
@@ -287,7 +287,7 @@ class TestExtractSkills:
             ),
         ]
 
-        with caplog.at_level("WARNING", logger="deerflow.agents.middlewares.skill_context"):
+        with caplog.at_level("WARNING", logger="nkyel.agents.middlewares.skill_context"):
             assert extract_skills(msgs, skills_root=_ROOT, read_tool_names=_READ) == []
 
         assert "mismatched skill read metadata" in caplog.text

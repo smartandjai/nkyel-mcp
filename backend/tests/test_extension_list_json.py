@@ -9,16 +9,16 @@ from pathlib import Path
 import pytest
 import yaml
 
-from deerflow.tui.cli import main as deerflow_main
+from nkyel.tui.cli import main as nkyel_main
 
 
 @pytest.fixture
 def checkout(tmp_path: Path, monkeypatch) -> Path:
-    root = tmp_path / "deer-flow"
+    root = tmp_path / "nkyel"
     (root / "backend").mkdir(parents=True)
     (root / "backend" / "pyproject.toml").write_text('[project]\nname = "inventory-test"\n', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(root))
-    monkeypatch.delenv("DEER_FLOW_CONFIG_PATH", raising=False)
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(root))
+    monkeypatch.delenv("NKYEL_CONFIG_PATH", raising=False)
     return root
 
 
@@ -26,7 +26,7 @@ def test_json_inventory_preserves_order_defaults_and_only_public_fields(checkout
     plugins = [
         {
             "name": '演示 "extension"\nsecond line',
-            "package": "deerflow-extension-demo",
+            "package": "nkyel-extension-demo",
             "use": "not_installed_demo:install",
             "enabled": "false",
             "required": "true",
@@ -36,7 +36,7 @@ def test_json_inventory_preserves_order_defaults_and_only_public_fields(checkout
     ]
     (checkout / "config.yaml").write_text(yaml.safe_dump({"plugins": plugins}), encoding="utf-8")
 
-    assert deerflow_main(["extensions", "list", "--json"]) == 0
+    assert nkyel_main(["extensions", "list", "--json"]) == 0
 
     captured = capsys.readouterr()
     assert captured.err == ""
@@ -44,7 +44,7 @@ def test_json_inventory_preserves_order_defaults_and_only_public_fields(checkout
     assert inventory == [
         {
             "name": plugins[0]["name"],
-            "package": "deerflow-extension-demo",
+            "package": "nkyel-extension-demo",
             "entry_point": "not_installed_demo:install",
             "enabled": False,
             "required": True,
@@ -60,7 +60,7 @@ def test_json_inventory_preserves_order_defaults_and_only_public_fields(checkout
 def test_json_empty_inventory(checkout: Path, capsys, config: str) -> None:
     (checkout / "config.yaml").write_text(config, encoding="utf-8")
 
-    assert deerflow_main(["extensions", "list", "--json"]) == 0
+    assert nkyel_main(["extensions", "list", "--json"]) == 0
 
     captured = capsys.readouterr()
     assert json.loads(captured.out) == []
@@ -84,7 +84,7 @@ def test_list_config_errors_have_no_partial_stdout(checkout: Path, capsys, args:
     if config is not None:
         (checkout / "config.yaml").write_text(config, encoding="utf-8")
 
-    assert deerflow_main(["extensions", "list", *args]) == 1
+    assert nkyel_main(["extensions", "list", *args]) == 1
 
     captured = capsys.readouterr()
     assert captured.out == ""
@@ -98,7 +98,7 @@ def test_default_table_output_is_unchanged(checkout: Path, capsys) -> None:
         encoding="utf-8",
     )
 
-    assert deerflow_main(["extensions", "list"]) == 0
+    assert nkyel_main(["extensions", "list"]) == 0
 
     captured = capsys.readouterr()
     assert captured.out == "NAME\tSTATE\tPACKAGE\tENTRY POINT\ndemo\tenabled\tdemo-package\tdemo:install\nother:install\tdisabled\t-\tother:install\n"
@@ -115,8 +115,8 @@ def test_console_json_uses_selected_config_without_executing_plugins_or_writing_
         encoding="utf-8",
     )
     before = {path.relative_to(checkout): path.read_bytes() for path in checkout.rglob("*") if path.is_file()}
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(selected), "PYTHONPATH": str(checkout)}
-    console = Path(sys.executable).parent / ("deerflow.exe" if os.name == "nt" else "deerflow")
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(selected), "PYTHONPATH": str(checkout)}
+    console = Path(sys.executable).parent / ("nkyel.exe" if os.name == "nt" else "nkyel")
 
     result = subprocess.run([str(console), "extensions", "list", "--json"], cwd=checkout, env=env, capture_output=True, text=True, encoding="utf-8", timeout=30)
 

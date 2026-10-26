@@ -1,6 +1,6 @@
 """Regression tests for graceful run-task drain on Gateway shutdown.
 
-Guards bytedance/deer-flow issue #3373:
+Guards bytedance/nkyel issue #3373:
 
     psycopg_pool.PoolClosed: the pool 'pool-1' is already closed
 
@@ -32,8 +32,8 @@ from unittest.mock import AsyncMock
 import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.runtime import RunManager, RunStatus
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime import RunManager, RunStatus
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 # Module-level so langgraph's get_type_hints (which resolves annotations against
@@ -161,7 +161,7 @@ async def test_langgraph_runtime_drains_runs_before_closing_checkpointer(monkeyp
     from fastapi import FastAPI
 
     from app.gateway.deps import langgraph_runtime
-    from deerflow.extensions.registry import ExtensionRegistry
+    from nkyel.extensions.registry import ExtensionRegistry
 
     events: list[str] = []
 
@@ -206,17 +206,17 @@ async def test_langgraph_runtime_drains_runs_before_closing_checkpointer(monkeyp
     def spy_reset_extension_notify_loop():
         events.append("extension_loop_reset")
 
-    monkeypatch.setattr("deerflow.runtime.checkpointer.async_provider.make_checkpointer", probe_checkpointer)
-    monkeypatch.setattr("deerflow.runtime.make_stream_bridge", fake_stream_bridge)
-    monkeypatch.setattr("deerflow.runtime.make_store", fake_store)
-    monkeypatch.setattr("deerflow.persistence.engine.init_engine_from_config", fake_init_engine)
-    monkeypatch.setattr("deerflow.persistence.engine.close_engine", fake_close_engine)
-    monkeypatch.setattr("deerflow.persistence.engine.get_session_factory", fake_session_factory)
-    monkeypatch.setattr("deerflow.runtime.events.store.make_run_event_store", lambda _cfg: object())
-    monkeypatch.setattr("deerflow.persistence.thread_meta.make_thread_store", lambda _sf, _store: object())
+    monkeypatch.setattr("nkyel.runtime.checkpointer.async_provider.make_checkpointer", probe_checkpointer)
+    monkeypatch.setattr("nkyel.runtime.make_stream_bridge", fake_stream_bridge)
+    monkeypatch.setattr("nkyel.runtime.make_store", fake_store)
+    monkeypatch.setattr("nkyel.persistence.engine.init_engine_from_config", fake_init_engine)
+    monkeypatch.setattr("nkyel.persistence.engine.close_engine", fake_close_engine)
+    monkeypatch.setattr("nkyel.persistence.engine.get_session_factory", fake_session_factory)
+    monkeypatch.setattr("nkyel.runtime.events.store.make_run_event_store", lambda _cfg: object())
+    monkeypatch.setattr("nkyel.persistence.thread_meta.make_thread_store", lambda _sf, _store: object())
     monkeypatch.setattr(RunManager, "shutdown", spy_shutdown, raising=False)
-    monkeypatch.setattr("deerflow.extensions.notify.set_extension_notify_loop", spy_set_extension_notify_loop)
-    monkeypatch.setattr("deerflow.extensions.notify.reset_extension_notify_loop", spy_reset_extension_notify_loop)
+    monkeypatch.setattr("nkyel.extensions.notify.set_extension_notify_loop", spy_set_extension_notify_loop)
+    monkeypatch.setattr("nkyel.extensions.notify.reset_extension_notify_loop", spy_reset_extension_notify_loop)
 
     app = FastAPI()
     registry = ExtensionRegistry()
@@ -273,9 +273,9 @@ async def test_langgraph_runtime_resets_extension_loop_when_startup_exits_early(
     def spy_reset_extension_notify_loop():
         events.append("extension_loop_reset")
 
-    monkeypatch.setattr("deerflow.runtime.make_stream_bridge", failing_stream_bridge)
-    monkeypatch.setattr("deerflow.extensions.notify.set_extension_notify_loop", spy_set_extension_notify_loop)
-    monkeypatch.setattr("deerflow.extensions.notify.reset_extension_notify_loop", spy_reset_extension_notify_loop)
+    monkeypatch.setattr("nkyel.runtime.make_stream_bridge", failing_stream_bridge)
+    monkeypatch.setattr("nkyel.extensions.notify.set_extension_notify_loop", spy_set_extension_notify_loop)
+    monkeypatch.setattr("nkyel.extensions.notify.reset_extension_notify_loop", spy_reset_extension_notify_loop)
 
     app = FastAPI()
     startup_config = SimpleNamespace(
@@ -371,7 +371,7 @@ async def test_shutdown_preserves_status_of_run_completed_during_drain():
     """A run that finishes (e.g. success) during the drain window must keep its
     real terminal status — shutdown must not blanket-overwrite it to
     ``interrupted`` in memory or in the store (Copilot review on PR #3381)."""
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     rm = RunManager(store=store)
@@ -481,7 +481,7 @@ async def test_shutdown_preserves_staged_terminal_status_after_drain_timeout(mon
     record.task = asyncio.create_task(finalizer())
     try:
         await asyncio.wait_for(started.wait(), timeout=1.0)
-        with caplog.at_level(logging.WARNING, logger="deerflow.runtime.runs.manager"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.runtime.runs.manager"):
             await asyncio.wait_for(rm.shutdown(timeout=0.01), timeout=1.0)
 
         assert not record.task.done()
@@ -536,7 +536,7 @@ async def test_shutdown_warns_when_staged_terminal_finalization_fails(monkeypatc
     healthy.task = asyncio.create_task(finalizer(healthy))
     shutdown_task = None
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.runtime.runs.manager"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.runtime.runs.manager"):
             shutdown_task = asyncio.create_task(rm.shutdown(timeout=1.0))
             await asyncio.wait_for(drain_started.wait(), timeout=1.0)
             allow_finish.set()
@@ -572,7 +572,7 @@ async def test_shutdown_surfaces_failed_interrupted_persist(caplog):
     PR #3381)."""
     import logging
 
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     class _FailingStore(MemoryRunStore):
         async def update_status(self, *args, **kwargs):
@@ -591,7 +591,7 @@ async def test_shutdown_surfaces_failed_interrupted_persist(caplog):
     record.task = asyncio.create_task(worker())
     try:
         await asyncio.wait_for(started.wait(), timeout=1.0)
-        with caplog.at_level(logging.WARNING, logger="deerflow.runtime.runs.manager"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.runtime.runs.manager"):
             await rm.shutdown(timeout=5.0)
         assert "Could not persist interrupted status for run" in caplog.text, caplog.text
     finally:

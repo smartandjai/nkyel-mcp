@@ -18,12 +18,12 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.gateway.auth.models import User
 from app.gateway.deps import get_config
 from app.gateway.routers import features, thread_activity, threads
-from deerflow.persistence.base import Base
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunChangeClockRow, RunRow
-from deerflow.persistence.thread_reads import ThreadReadMarkerRow, ThreadReadRepository, ThreadReadVersionRow
-from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY, make_origin
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.persistence.base import Base
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunChangeClockRow, RunRow
+from nkyel.persistence.thread_reads import ThreadReadMarkerRow, ThreadReadRepository, ThreadReadVersionRow
+from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY, make_origin
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 _ALICE = User(id=UUID("2a8c4f53-6a0b-4a51-9f5e-0c1d2e3f4a51"), email="alice@example.com", password_hash="unused", system_role="user")
 _BOB = User(id=UUID("7d1e2f30-4b5c-4d6e-8f70-81a2b3c4d5e6"), email="bob@example.com", password_hash="unused", system_role="user")
@@ -55,7 +55,7 @@ async def client_for(run_store, read_repo, *, user=_ALICE):
 
 
 async def put_run(runs, run_id, thread_id, *, user_id=ALICE, origin=None, status="success"):
-    metadata = {DEERFLOW_ORIGIN_KEY: make_origin(origin)} if origin else {}
+    metadata = {NKYEL_ORIGIN_KEY: make_origin(origin)} if origin else {}
     await runs.put(run_id, thread_id=thread_id, user_id=user_id, status=status, metadata=metadata)
 
 

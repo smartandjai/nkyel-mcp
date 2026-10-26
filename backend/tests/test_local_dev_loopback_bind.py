@@ -1,6 +1,6 @@
 """Regression test for the local (non-Docker) launch bind addresses.
 
-``README.md`` documents DeerFlow as deployed by default "in a local trusted
+``README.md`` documents nkyel as deployed by default "in a local trusted
 environment (accessible only via the 127.0.0.1 loopback interface)", and the
 Docker stack publishes only its nginx entry, on ``${BIND_HOST:-127.0.0.1}``
 (``test_compose_default_bind_host.py``). ``make dev`` / ``make start`` instead
@@ -139,8 +139,8 @@ def _normalize_rendered_path(rendered: str) -> str:
     if os.name != "nt" or not rendered.startswith("/"):
         return rendered
     result = subprocess.run(
-        [require_script_bash(), "-c", 'cygpath -w "$DEERFLOW_TEST_RENDERED_PATH"'],
-        env={**os.environ, "DEERFLOW_TEST_RENDERED_PATH": rendered},
+        [require_script_bash(), "-c", 'cygpath -w "$NKYEL_TEST_RENDERED_PATH"'],
+        env={**os.environ, "NKYEL_TEST_RENDERED_PATH": rendered},
         capture_output=True,
         text=True,
         encoding="utf-8",

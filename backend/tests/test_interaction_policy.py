@@ -1,6 +1,6 @@
 import pytest
 
-from deerflow.agents.interaction_policy import (
+from nkyel.agents.interaction_policy import (
     ASK_CLARIFICATION_TOOL_NAME,
     RunInteractionMode,
     RunInteractionPolicy,

@@ -23,9 +23,9 @@ MCP 工具在 `ToolMessage.content` 中返回文件路径、task_id、资源 URI
 
 ### 现有机制的断点（代码级）
 
-1. **`ToolMessage.artifact` 只存 `structuredContent`** — `backend/packages/harness/deerflow/mcp/tools.py:429-432` 中，仅 MCP 的 `structuredContent` 字段被保存为 artifact；普通文本返回的文件路径、`ResourceLink` 的 URL、`ImageContent` 的 base64 数据都不进入 artifact，只存在于 `content` 列表中。
-2. **上下文压缩不保留 tool_call_id 链** — `backend/packages/harness/deerflow/agents/middlewares/summarization_middleware.py:603-613` 中，压缩后 `messages` 被 `RemoveMessage(id=REMOVE_ALL_MESSAGES)` 清空重建，旧的 `ToolMessage`（含 `tool_call_id`）被删除，结构化映射丢失。
-3. **`DurableContextMiddleware` 只捕获 `task` 委托** — `backend/packages/harness/deerflow/agents/middlewares/durable_context_middleware.py:225-235` 中，`extract_delegations()` 只匹配 `tool_name == "task"` 的调用；普通 MCP 工具的产物不在捕获范围内。
+1. **`ToolMessage.artifact` 只存 `structuredContent`** — `backend/packages/harness/nkyel/mcp/tools.py:429-432` 中，仅 MCP 的 `structuredContent` 字段被保存为 artifact；普通文本返回的文件路径、`ResourceLink` 的 URL、`ImageContent` 的 base64 数据都不进入 artifact，只存在于 `content` 列表中。
+2. **上下文压缩不保留 tool_call_id 链** — `backend/packages/harness/nkyel/agents/middlewares/summarization_middleware.py:603-613` 中，压缩后 `messages` 被 `RemoveMessage(id=REMOVE_ALL_MESSAGES)` 清空重建，旧的 `ToolMessage`（含 `tool_call_id`）被删除，结构化映射丢失。
+3. **`DurableContextMiddleware` 只捕获 `task` 委托** — `backend/packages/harness/nkyel/agents/middlewares/durable_context_middleware.py:225-235` 中，`extract_delegations()` 只匹配 `tool_name == "task"` 的调用；普通 MCP 工具的产物不在捕获范围内。
 
 ## 2. 目标
 
@@ -113,7 +113,7 @@ THREAD_STATE_REDUCER_FIELDS = frozenset({
 格式：`art_` + 8位 hex，由 `(thread_id, tool_call_id, call_index)` 确定性派生：
 
 ```python
-# 新模块: backend/packages/harness/deerflow/tools/artifact_registry.py
+# 新模块: backend/packages/harness/nkyel/tools/artifact_registry.py
 
 import hashlib
 
@@ -253,7 +253,7 @@ def _detect_refs_in_text(text: str) -> list[dict]:
 ### 7.1 在中间件链中的位置
 
 ```
-ToolErrorHandlingMiddleware      （包装异常，盖章 deerflow_tool_meta）
+ToolErrorHandlingMiddleware      （包装异常，盖章 nkyel_tool_meta）
     ↓
 ArtifactCaptureMiddleware        ← 新增（从结果中捕获产物）
     ↓
@@ -269,7 +269,7 @@ ToolResultSanitizationMiddleware （中和注入标签）
 **关键决策**：不在 `wrap_tool_call` 中用 `Command(update=...)` 包装结果（会替换 ToolMessage）。改用 `before_model` hook，与 `DurableContextMiddleware._capture_delegations()` 完全一致的模式：
 
 ```python
-# 新模块: backend/packages/harness/deerflow/agents/middlewares/artifact_capture_middleware.py
+# 新模块: backend/packages/harness/nkyel/agents/middlewares/artifact_capture_middleware.py
 
 class ArtifactCaptureMiddleware(AgentMiddleware[AgentState]):
     """从工具结果中捕获产物引用到 ThreadState.tool_artifacts。
@@ -371,7 +371,7 @@ def _build_artifact_section(self, state: AgentState) -> str | None:
 在工具执行**之前**，将参数中的句柄解析为真实引用：
 
 ```python
-# 新模块: backend/packages/harness/deerflow/agents/middlewares/artifact_resolution_middleware.py
+# 新模块: backend/packages/harness/nkyel/agents/middlewares/artifact_resolution_middleware.py
 
 class ArtifactResolutionMiddleware(AgentMiddleware[AgentState]):
     """将工具参数中的产物句柄解析为真实引用。"""
@@ -494,7 +494,7 @@ tool_artifacts:
 ```
 
 ```python
-# deerflow/config/tool_artifact_config.py
+# nkyel/config/tool_artifact_config.py
 
 class ToolArtifactConfig(BaseModel):
     enabled: bool = Field(default=True)
@@ -583,15 +583,15 @@ if (producedArtifacts.length > 0) {
 
 | 新增/修改 | 路径 | 用途 |
 |---|---|---|
-| **新增** | `backend/packages/harness/deerflow/tools/artifact_registry.py` | 句柄生成、提取、文本检测 |
-| **新增** | `backend/packages/harness/deerflow/config/tool_artifact_config.py` | 配置 schema |
-| **新增** | `backend/packages/harness/deerflow/agents/middlewares/artifact_capture_middleware.py` | 捕获 + 消费追踪 |
-| **新增** | `backend/packages/harness/deerflow/agents/middlewares/artifact_resolution_middleware.py` | 工具参数句柄解析 |
-| **修改** | `backend/packages/harness/deerflow/agents/thread_state.py` | 新增 `ArtifactEntry`、`tool_artifacts` 字段、reducer |
-| **修改** | `backend/packages/harness/deerflow/agents/middlewares/durable_context_middleware.py` | 注入产物句柄到模型上下文 |
-| **修改** | `backend/packages/harness/deerflow/agents/middlewares/tool_error_handling_middleware.py` | 追加中间件到链 |
-| **修改** | `backend/packages/harness/deerflow/agents/lead_agent/agent.py` | 接入配置 + 中间件 |
-| **修改** | `backend/packages/harness/deerflow/config/app_config.py` | 注册 `tool_artifacts` 配置 |
+| **新增** | `backend/packages/harness/nkyel/tools/artifact_registry.py` | 句柄生成、提取、文本检测 |
+| **新增** | `backend/packages/harness/nkyel/config/tool_artifact_config.py` | 配置 schema |
+| **新增** | `backend/packages/harness/nkyel/agents/middlewares/artifact_capture_middleware.py` | 捕获 + 消费追踪 |
+| **新增** | `backend/packages/harness/nkyel/agents/middlewares/artifact_resolution_middleware.py` | 工具参数句柄解析 |
+| **修改** | `backend/packages/harness/nkyel/agents/thread_state.py` | 新增 `ArtifactEntry`、`tool_artifacts` 字段、reducer |
+| **修改** | `backend/packages/harness/nkyel/agents/middlewares/durable_context_middleware.py` | 注入产物句柄到模型上下文 |
+| **修改** | `backend/packages/harness/nkyel/agents/middlewares/tool_error_handling_middleware.py` | 追加中间件到链 |
+| **修改** | `backend/packages/harness/nkyel/agents/lead_agent/agent.py` | 接入配置 + 中间件 |
+| **修改** | `backend/packages/harness/nkyel/config/app_config.py` | 注册 `tool_artifacts` 配置 |
 | **修改** | `frontend/src/core/threads/types.ts` | 新增 `ArtifactEntry` 类型 |
 | **修改** | `frontend/src/components/workspace/messages/message-group.tsx` | 渲染产物徽章 |
 | **新增** | `backend/tests/test_artifact_registry.py` | 单元测试 |

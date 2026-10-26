@@ -26,7 +26,7 @@ from app.channels.message_bus import (
     ResolvedAttachment,
 )
 from app.channels.store import JsonChannelStore
-from deerflow.skills.types import Skill, SkillCategory
+from nkyel.skills.types import Skill, SkillCategory
 
 
 def test_known_channel_command_detection_only_matches_control_commands():
@@ -83,7 +83,7 @@ def test_channel_policy_explicit_interaction_mode_overrides_legacy_flag(tmp_path
         context: dict[str, object] = {}
         asyncio.run(manager._apply_channel_policy(msg, context))
         from app.gateway.services import merge_run_context_overrides
-        from deerflow.agents.interaction_policy import resolve_run_interaction_policy
+        from nkyel.agents.interaction_policy import resolve_run_interaction_policy
 
         config = {}
         merge_run_context_overrides(config, context, internal=True)
@@ -660,8 +660,8 @@ def _make_allowlist_exc(model: str):
 
 
 async def _make_channel_connection_repo(tmp_path: Path):
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-    from deerflow.persistence.engine import get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+    from nkyel.persistence.engine import get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'channel-connections.db'}", sqlite_dir=str(tmp_path))
     return ChannelConnectionRepository(
@@ -716,7 +716,7 @@ class TestChannelManager:
         csrf_token = headers["X-CSRF-Token"]
         assert csrf_token
         assert headers["Cookie"] == f"csrf_token={csrf_token}"
-        assert headers["X-DeerFlow-Internal-Token"]
+        assert headers["X-nkyel-Internal-Token"]
 
     def test_concurrent_inbound_for_same_chat_reuses_single_thread(self):
         # Each inbound message is dispatched on its own task, so two messages
@@ -905,7 +905,7 @@ class TestChannelManager:
             assert reply == "Memory contains 1 fact(s)."
             assert calls[0]["url"] == "http://gateway:8001/api/memory"
             assert calls[0]["timeout"] == 10
-            assert calls[0]["headers"]["X-DeerFlow-Internal-Token"]
+            assert calls[0]["headers"]["X-nkyel-Internal-Token"]
 
         _run(go())
 
@@ -945,7 +945,7 @@ class TestChannelManager:
                 channel_name="slack",
                 chat_id="C123",
                 user_id="U-platform",
-                owner_user_id="deerflow-user-1",
+                owner_user_id="nkyel-user-1",
                 connection_id="connection-1",
                 text="/memory",
                 msg_type=InboundMessageType.COMMAND,
@@ -954,7 +954,7 @@ class TestChannelManager:
             reply = await manager._fetch_gateway("/api/memory", "memory", msg=msg)
 
             assert reply == "Memory contains 1 fact(s)."
-            assert calls[0]["headers"][INTERNAL_OWNER_USER_ID_HEADER_NAME] == "deerflow-user-1"
+            assert calls[0]["headers"][INTERNAL_OWNER_USER_ID_HEADER_NAME] == "nkyel-user-1"
 
         _run(go())
 
@@ -1020,10 +1020,10 @@ class TestChannelManager:
 
     def test_ingest_inbound_files_uses_explicit_owner_bucket(self, tmp_path, monkeypatch):
         from app.channels.manager import INBOUND_FILE_READERS, _ingest_inbound_files
-        from deerflow.config.paths import Paths
+        from nkyel.config.paths import Paths
 
         paths = Paths(tmp_path)
-        monkeypatch.setattr("deerflow.uploads.manager.get_paths", lambda: paths)
+        monkeypatch.setattr("nkyel.uploads.manager.get_paths", lambda: paths)
 
         async def read_file(file_info, client):
             del file_info, client
@@ -1943,7 +1943,7 @@ class TestChannelManager:
         """Conversation should continue after ask_clarification instead of resetting history."""
         from app.channels.manager import ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -3394,13 +3394,13 @@ class TestChannelManager:
                     channel_name="test",
                     chat_id="chat1",
                     user_id="platform-user",
-                    owner_user_id="deerflow-user-1",
+                    owner_user_id="nkyel-user-1",
                     text="/agent list",
                     msg_type=InboundMessageType.COMMAND,
                 )
             )
 
-            assert seen_user_ids == ["deerflow-user-1"]
+            assert seen_user_ids == ["nkyel-user-1"]
             assert outbound_received[0].text == ("Available agents:\n• lead_agent — Default agent\n• researcher — Researches sources\n• writer")
 
         _run(go())
@@ -3427,14 +3427,14 @@ class TestChannelManager:
                 channel_name="test",
                 chat_id="chat1",
                 user_id="platform-user",
-                owner_user_id="deerflow-user-1",
+                owner_user_id="nkyel-user-1",
                 text="/agent use Researcher",
                 msg_type=InboundMessageType.COMMAND,
             )
 
             reply = await manager._handle_agent_command(msg, "use Researcher")
 
-            assert loaded == [("researcher", "deerflow-user-1")]
+            assert loaded == [("researcher", "nkyel-user-1")]
             assert await store.get_thread_id("test", "chat1") == "research-thread"
             create_kwargs = mock_client.threads.create.call_args.kwargs
             assert create_kwargs["metadata"]["channel_agent_name"] == "researcher"
@@ -3456,7 +3456,7 @@ class TestChannelManager:
         """
         from app.channels.manager import ChannelManager
         from app.gateway.services import build_run_config, merge_run_context_overrides
-        from deerflow.agents.lead_agent.agent import _get_runtime_config
+        from nkyel.agents.lead_agent.agent import _get_runtime_config
 
         monkeypatch.setattr(
             "app.channels.manager.load_agent_config",
@@ -3478,7 +3478,7 @@ class TestChannelManager:
                 channel_name="test",
                 chat_id="chat1",
                 user_id="platform-user",
-                owner_user_id="deerflow-user-1",
+                owner_user_id="nkyel-user-1",
                 text="/agent use researcher",
                 msg_type=InboundMessageType.COMMAND,
             )
@@ -3524,7 +3524,7 @@ class TestChannelManager:
                 channel_name="test",
                 chat_id="chat1",
                 user_id="platform-user",
-                owner_user_id="deerflow-user-1",
+                owner_user_id="nkyel-user-1",
                 text="Continue",
             )
 
@@ -3571,7 +3571,7 @@ class TestChannelManager:
         """Resetting to lead_agent must remove every inherited custom-agent pin."""
         from app.channels.manager import ChannelManager
         from app.gateway.services import build_run_config, merge_run_context_overrides
-        from deerflow.agents.lead_agent.agent import _get_runtime_config
+        from nkyel.agents.lead_agent.agent import _get_runtime_config
 
         async def go():
             manager = ChannelManager(
@@ -3624,7 +3624,7 @@ class TestChannelManager:
                 channel_name="test",
                 chat_id="chat1",
                 user_id="platform-user",
-                owner_user_id="deerflow-user-1",
+                owner_user_id="nkyel-user-1",
                 text="/model model-b",
                 msg_type=InboundMessageType.COMMAND,
             )
@@ -3634,7 +3634,7 @@ class TestChannelManager:
             assert reply == "Model 'model-b' selected. It applies to this conversation from the next message."
             update_kwargs = mock_client.threads.update.call_args.kwargs
             assert update_kwargs["metadata"]["channel_model_name"] == "model-b"
-            assert update_kwargs["headers"][INTERNAL_OWNER_USER_ID_HEADER_NAME] == "deerflow-user-1"
+            assert update_kwargs["headers"][INTERNAL_OWNER_USER_ID_HEADER_NAME] == "nkyel-user-1"
             _, _, run_context = manager._resolve_run_params(msg, "thread-1")
             assert run_context["model_name"] == "model-b"
 
@@ -3651,7 +3651,7 @@ class TestChannelManager:
         """
         from app.channels.manager import ChannelManager
         from app.gateway.services import build_run_config, merge_run_context_overrides
-        from deerflow.agents.lead_agent.agent import _get_runtime_config
+        from nkyel.agents.lead_agent.agent import _get_runtime_config
 
         _mock_gateway_models(monkeypatch, ["model-a", "model-b"])
 
@@ -4186,7 +4186,7 @@ class TestChannelManager:
         """The /model status reply must equal the model in the real merged runtime config."""
         from app.channels.manager import ChannelManager
         from app.gateway.services import build_run_config, merge_run_context_overrides
-        from deerflow.agents.lead_agent.agent import _get_runtime_config
+        from nkyel.agents.lead_agent.agent import _get_runtime_config
 
         async def go():
             store = JsonChannelStore(path=Path(tempfile.mkdtemp()) / "store.json")
@@ -4222,7 +4222,7 @@ class TestChannelManager:
         (shallow merge); the status must not resurrect the replaced value."""
         from app.channels.manager import ChannelManager
         from app.gateway.services import build_run_config, merge_run_context_overrides
-        from deerflow.agents.lead_agent.agent import _get_runtime_config
+        from nkyel.agents.lead_agent.agent import _get_runtime_config
 
         async def go():
             store = JsonChannelStore(path=Path(tempfile.mkdtemp()) / "store.json")
@@ -4753,7 +4753,7 @@ class TestChannelManager:
         _run(go())
 
     def test_each_topic_creates_new_thread(self):
-        """Messages with distinct topic_ids should each create a new DeerFlow thread."""
+        """Messages with distinct topic_ids should each create a new nkyel thread."""
         from app.channels.manager import ChannelManager
 
         async def go():
@@ -4805,10 +4805,10 @@ class TestChannelManager:
         _run(go())
 
     def test_same_topic_reuses_thread(self, monkeypatch):
-        """Messages with the same topic_id should reuse the same DeerFlow thread."""
+        """Messages with the same topic_id should reuse the same nkyel thread."""
         from app.channels.manager import ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -5190,7 +5190,7 @@ class TestResolveRunParamsUserId:
 
     def test_safe_user_id_is_passed_through(self, monkeypatch):
         manager = self._manager()
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
         msg = InboundMessage(channel_name="telegram", chat_id="c", user_id="123456", text="hi")
 
         _, _, run_context = manager._resolve_run_params(msg, "thread-1")
@@ -5221,7 +5221,7 @@ class TestResolveRunParamsUserId:
     @pytest.mark.parametrize(
         "kwargs",
         [
-            {"user_id": "U-platform", "owner_user_id": "deerflow-user-1"},  # bound
+            {"user_id": "U-platform", "owner_user_id": "nkyel-user-1"},  # bound
             {"user_id": "U-platform"},  # unbound auth-enabled
             {"user_id": "feishu|ou_AbC/123"},  # unbound needing sanitization
         ],
@@ -5236,7 +5236,7 @@ class TestResolveRunParamsUserId:
         from app.channels.manager import _channel_storage_user_id
 
         manager = self._manager()
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
         msg = InboundMessage(channel_name="slack", chat_id="C123", text="hi", **kwargs)
 
         _, _, run_context = manager._resolve_run_params(msg, "thread-1")
@@ -5245,19 +5245,19 @@ class TestResolveRunParamsUserId:
 
     def test_connection_owner_user_id_takes_precedence_over_platform_user_id(self, monkeypatch):
         manager = self._manager()
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
         msg = InboundMessage(
             channel_name="slack",
             chat_id="C123",
             user_id="U-platform",
-            owner_user_id="deerflow-user-1",
+            owner_user_id="nkyel-user-1",
             connection_id="connection-1",
             text="hi",
         )
 
         _, _, run_context = manager._resolve_run_params(msg, "thread-1")
 
-        assert run_context["user_id"] == "deerflow-user-1"
+        assert run_context["user_id"] == "nkyel-user-1"
         assert run_context["channel_user_id"] == "U-platform"
 
     def test_github_channel_gets_raised_recursion_limit(self):
@@ -5278,9 +5278,9 @@ class TestResolveRunParamsUserId:
         """An IM run without a session value gets the operator's top-level
         ``recursion_limit``, like Gateway API runs, instead of a fixed 100."""
         from app.gateway.services import build_run_config
-        from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
+        from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
 
-        set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "recursion_limit": 700}))
+        set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "recursion_limit": 700}))
         try:
             manager = self._manager()
             msg = InboundMessage(channel_name="telegram", chat_id="c", user_id="u", text="hi")
@@ -5390,7 +5390,7 @@ class TestResolveRunParamsUserId:
         from app.gateway.internal_auth import INTERNAL_OWNER_USER_ID_HEADER_NAME
 
         manager = self._manager()
-        monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+        monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
         msg = InboundMessage(channel_name="slack", chat_id="C123", user_id="U-platform", text="hi")
 
         _, _, run_context = manager._resolve_run_params(msg, "thread-1")
@@ -5408,7 +5408,7 @@ class TestResolveRunParamsUserId:
         from app.gateway.auth_disabled import AUTH_DISABLED_USER_ID
 
         manager = self._manager()
-        monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+        monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
         msg = InboundMessage(
             channel_name="slack",
             chat_id="C123",
@@ -5426,7 +5426,7 @@ class TestResolveRunParamsUserId:
         from app.channels.manager import _owner_headers
 
         manager = self._manager()
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
         msg = InboundMessage(channel_name="slack", chat_id="C123", user_id="U-platform", text="hi")
 
         _, _, run_context = manager._resolve_run_params(msg, "thread-1")
@@ -5436,10 +5436,10 @@ class TestResolveRunParamsUserId:
         assert _owner_headers(msg) is None
 
     def test_unsafe_user_id_is_normalized_but_raw_preserved(self, monkeypatch):
-        from deerflow.config.paths import make_safe_user_id
+        from nkyel.config.paths import make_safe_user_id
 
         manager = self._manager()
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
         raw = "user@example.com"
         msg = InboundMessage(channel_name="feishu", chat_id="c", user_id=raw, text="hi")
 
@@ -5450,16 +5450,16 @@ class TestResolveRunParamsUserId:
         assert run_context["channel_user_id"] == raw
 
     def test_unsafe_user_id_migrates_unique_legacy_bucket(self, tmp_path, monkeypatch):
-        from deerflow.config.paths import Paths, make_safe_user_id
+        from nkyel.config.paths import Paths, make_safe_user_id
 
         paths = Paths(tmp_path)
         legacy_dir = paths.base_dir / "users" / "user-example-com-63a710569261a24b"
         legacy_dir.mkdir(parents=True)
         (legacy_dir / "memory.json").write_text('{"legacy": true}\n', encoding="utf-8")
-        monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: paths)
+        monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: paths)
 
         manager = self._manager()
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
         raw = "user@example.com"
         msg = InboundMessage(channel_name="feishu", chat_id="c", user_id=raw, text="hi")
 
@@ -5474,7 +5474,7 @@ class TestResolveRunParamsUserId:
     @pytest.mark.parametrize("raw_user_id", ["", None])
     def test_empty_or_none_user_id_is_not_injected(self, raw_user_id, monkeypatch):
         manager = self._manager()
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
         msg = InboundMessage(channel_name="feishu", chat_id="c", user_id=raw_user_id, text="hi")
 
         _, _, run_context = manager._resolve_run_params(msg, "thread-1")
@@ -6582,7 +6582,7 @@ class TestGithubFollowupBuffer:
 
         import app.gateway.github.run_policy  # noqa: F401 — register policy
         from app.channels.manager import FOLLOWUP_BLOCK_TAG, ChannelManager
-        from deerflow.runtime import MemoryStreamBridge
+        from nkyel.runtime import MemoryStreamBridge
 
         async def go():
             bus = MessageBus()
@@ -6656,7 +6656,7 @@ class TestGithubFollowupBuffer:
         shutdown would still fire a brand new runs.create() into a manager
         that has already been stopped."""
         from app.channels.manager import ChannelManager
-        from deerflow.runtime import MemoryStreamBridge
+        from nkyel.runtime import MemoryStreamBridge
 
         async def go():
             bus = MessageBus()
@@ -6856,7 +6856,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_unbound_auth_enabled_chat_is_rejected_before_thread_or_run_creation(self, monkeypatch):
         from app.channels.manager import BOUND_IDENTITY_REQUIRED_MESSAGE, ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -6893,7 +6893,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_bound_identity_repo_unavailable_uses_transient_failure_message(self, monkeypatch):
         from app.channels.manager import BOUND_IDENTITY_UNAVAILABLE_MESSAGE, ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -6912,7 +6912,7 @@ class TestChannelManagerBoundIdentityPolicy:
                     channel_name="slack",
                     chat_id="C123",
                     user_id="U-platform",
-                    owner_user_id="deerflow-user-1",
+                    owner_user_id="nkyel-user-1",
                     connection_id="connection-1",
                     workspace_id="T123",
                     text="hi",
@@ -6931,7 +6931,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_unbound_auth_enabled_chat_is_rejected_before_run_creation(self, monkeypatch):
         from app.channels.manager import BOUND_IDENTITY_REQUIRED_MESSAGE, ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -6969,7 +6969,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_bound_auth_enabled_chat_is_allowed_when_bound_identity_is_required(self, monkeypatch):
         from app.channels.manager import ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -6978,7 +6978,7 @@ class TestChannelManagerBoundIdentityPolicy:
                 [
                     {
                         "id": "connection-1",
-                        "owner_user_id": "deerflow-user-1",
+                        "owner_user_id": "nkyel-user-1",
                         "provider": "slack",
                         "external_account_id": "U-platform",
                         "workspace_id": "T123",
@@ -6994,7 +6994,7 @@ class TestChannelManagerBoundIdentityPolicy:
                     channel_name="slack",
                     chat_id="C123",
                     user_id="U-platform",
-                    owner_user_id="deerflow-user-1",
+                    owner_user_id="nkyel-user-1",
                     connection_id="connection-1",
                     workspace_id="T123",
                     text="hi",
@@ -7004,7 +7004,7 @@ class TestChannelManagerBoundIdentityPolicy:
             mock_client.threads.create.assert_called_once()
             mock_client.runs.wait.assert_called_once()
             run_context = mock_client.runs.wait.call_args.kwargs["context"]
-            assert run_context["user_id"] == "deerflow-user-1"
+            assert run_context["user_id"] == "nkyel-user-1"
             assert run_context["channel_user_id"] == "U-platform"
 
         _run(go())
@@ -7012,7 +7012,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_bound_auth_enabled_message_checks_bound_identity_once_on_hot_path(self, monkeypatch):
         from app.channels.manager import ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -7021,7 +7021,7 @@ class TestChannelManagerBoundIdentityPolicy:
                 [
                     {
                         "id": "connection-1",
-                        "owner_user_id": "deerflow-user-1",
+                        "owner_user_id": "nkyel-user-1",
                         "provider": "slack",
                         "external_account_id": "U-platform",
                         "workspace_id": "T123",
@@ -7038,7 +7038,7 @@ class TestChannelManagerBoundIdentityPolicy:
                         channel_name="slack",
                         chat_id="C123",
                         user_id="U-platform",
-                        owner_user_id="deerflow-user-1",
+                        owner_user_id="nkyel-user-1",
                         connection_id="connection-1",
                         workspace_id="T123",
                         text="hi",
@@ -7062,7 +7062,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_auth_enabled_chat_rejects_unverified_bound_identity(self, monkeypatch):
         from app.channels.manager import BOUND_IDENTITY_REQUIRED_MESSAGE, ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -7111,7 +7111,7 @@ class TestChannelManagerBoundIdentityPolicy:
         from app.channels.manager import ChannelManager
         from app.gateway.auth_disabled import AUTH_DISABLED_USER_ID
 
-        monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+        monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
 
         async def go():
             bus = MessageBus()
@@ -7140,7 +7140,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_legacy_open_bot_mode_allows_unbound_auth_enabled_chat(self, monkeypatch):
         from app.channels.manager import ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -7169,7 +7169,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_unbound_auth_enabled_new_command_is_rejected_before_thread_creation(self, monkeypatch):
         from app.channels.manager import BOUND_IDENTITY_REQUIRED_MESSAGE, ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -7206,7 +7206,7 @@ class TestChannelManagerBoundIdentityPolicy:
     def test_bound_auth_enabled_new_command_creates_thread(self, monkeypatch):
         from app.channels.manager import ChannelManager
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             bus = MessageBus()
@@ -7215,7 +7215,7 @@ class TestChannelManagerBoundIdentityPolicy:
                 [
                     {
                         "id": "connection-1",
-                        "owner_user_id": "deerflow-user-1",
+                        "owner_user_id": "nkyel-user-1",
                         "provider": "slack",
                         "external_account_id": "U-platform",
                         "workspace_id": "T123",
@@ -7231,7 +7231,7 @@ class TestChannelManagerBoundIdentityPolicy:
                     channel_name="slack",
                     chat_id="C123",
                     user_id="U-platform",
-                    owner_user_id="deerflow-user-1",
+                    owner_user_id="nkyel-user-1",
                     connection_id="connection-1",
                     workspace_id="T123",
                     text="/new",
@@ -7248,14 +7248,14 @@ class TestChannelManagerBoundIdentityPolicy:
         is exempt from the per-sender bound-identity gate, even when
         ``require_bound_identity=True`` is on for interactive IM channels in the
         same deployment. This is what lets GitHub webhook deliveries reach the
-        agent: they are HMAC-authenticated at the route, and the sender→DeerFlow
+        agent: they are HMAC-authenticated at the route, and the sender→nkyel
         binding lives in the agent's config.yaml ownership, not in the
         channel-connections table.
         """
         from app.channels.manager import ChannelManager
         from app.channels.run_policy import CHANNEL_RUN_POLICY, ChannelRunPolicy
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         # Save+restore so test parallelism / re-import side effects from
         # app.gateway.github.run_policy don't leak across tests.
@@ -7303,9 +7303,9 @@ class TestChannelManagerConnectionRouting:
     def test_connection_scoped_conversations_do_not_share_threads(self, tmp_path, monkeypatch):
         from app.channels.manager import ChannelManager
         from app.gateway.internal_auth import INTERNAL_OWNER_USER_ID_HEADER_NAME
-        from deerflow.persistence.engine import close_engine
+        from nkyel.persistence.engine import close_engine
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             repo = await _make_channel_connection_repo(tmp_path)
@@ -7518,10 +7518,10 @@ class TestFormatArtifactText:
 class TestHandleChatWithArtifacts:
     def test_bound_owner_artifacts_resolve_from_owner_outputs_bucket(self, tmp_path, monkeypatch):
         from app.channels.manager import ChannelManager
-        from deerflow.config.paths import Paths
+        from nkyel.config.paths import Paths
 
         paths = Paths(tmp_path)
-        monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: paths)
+        monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: paths)
         # Attachment resolution goes through the shared outputs-confinement
         # helper, which binds ``get_paths`` at import like the other consumers.
         monkeypatch.setattr("app.gateway.path_utils.get_paths", lambda: paths)
@@ -9494,7 +9494,7 @@ class TestChannelService:
         the retained one — returning True while the first instance's outbound
         listener stayed subscribed forever.
         """
-        import deerflow.reflection as reflection_module
+        import nkyel.reflection as reflection_module
         from app.channels.base import Channel
         from app.channels.service import ChannelService
 
@@ -9606,7 +9606,7 @@ class TestChannelService:
         bus — repeated readiness attempts would otherwise accumulate dead
         listeners the service can no longer clean up.
         """
-        import deerflow.reflection as reflection_module
+        import nkyel.reflection as reflection_module
         from app.channels.base import Channel
         from app.channels.service import ChannelService
 
@@ -9668,7 +9668,7 @@ class TestChannelService:
         subscribed outbound listener owned by nobody — stop count stuck at
         one and the listener still registered after ``service.stop()``.
         """
-        import deerflow.reflection as reflection_module
+        import nkyel.reflection as reflection_module
         from app.channels.base import Channel
         from app.channels.service import ChannelService
 
@@ -9743,7 +9743,7 @@ class TestChannelService:
 
     def test_start_channel_exception_stops_and_discards(self, monkeypatch):
         """A start() that raises mid-way must also stop the half-started channel."""
-        import deerflow.reflection as reflection_module
+        import nkyel.reflection as reflection_module
         from app.channels.base import Channel
         from app.channels.service import ChannelService
 
@@ -9817,8 +9817,8 @@ class TestChannelService:
     def test_service_urls_fall_back_to_env(self, monkeypatch):
         from app.channels.service import ChannelService
 
-        monkeypatch.setenv("DEER_FLOW_CHANNELS_LANGGRAPH_URL", "http://gateway:8001/api")
-        monkeypatch.setenv("DEER_FLOW_CHANNELS_GATEWAY_URL", "http://gateway:8001")
+        monkeypatch.setenv("NKYEL_CHANNELS_LANGGRAPH_URL", "http://gateway:8001/api")
+        monkeypatch.setenv("NKYEL_CHANNELS_GATEWAY_URL", "http://gateway:8001")
 
         service = ChannelService(channels_config={})
 
@@ -9828,8 +9828,8 @@ class TestChannelService:
     def test_config_service_urls_override_env(self, monkeypatch):
         from app.channels.service import ChannelService
 
-        monkeypatch.setenv("DEER_FLOW_CHANNELS_LANGGRAPH_URL", "http://gateway:8001/api")
-        monkeypatch.setenv("DEER_FLOW_CHANNELS_GATEWAY_URL", "http://gateway:8001")
+        monkeypatch.setenv("NKYEL_CHANNELS_LANGGRAPH_URL", "http://gateway:8001/api")
+        monkeypatch.setenv("NKYEL_CHANNELS_GATEWAY_URL", "http://gateway:8001")
 
         service = ChannelService(
             channels_config={
@@ -9852,7 +9852,7 @@ class TestChannelService:
             }
         )
 
-        with patch("deerflow.config.app_config.get_app_config", side_effect=AssertionError("should not read global config")):
+        with patch("nkyel.config.app_config.get_app_config", side_effect=AssertionError("should not read global config")):
             service = ChannelService.from_app_config(app_config)
 
         assert service._config == {"telegram": {"enabled": False}}
@@ -9863,17 +9863,17 @@ class TestChannelService:
         tmp_path,
     ):
         from app.channels.service import ChannelService
-        from deerflow.config import paths as paths_module
-        from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+        from nkyel.config import paths as paths_module
+        from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
-        monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+        monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
         monkeypatch.setattr(paths_module, "_paths", None)
         app_config = SimpleNamespace(
             model_extra={},
             channel_connections=ChannelConnectionsConfig.model_validate(
                 {
                     "enabled": True,
-                    "telegram": {"enabled": True, "bot_username": "deerflow_bot"},
+                    "telegram": {"enabled": True, "bot_username": "nkyel_bot"},
                     "slack": {"enabled": True},
                     "discord": {"enabled": True},
                 }
@@ -9891,10 +9891,10 @@ class TestChannelService:
     ):
         from app.channels.runtime_config_store import ChannelRuntimeConfigStore
         from app.channels.service import ChannelService
-        from deerflow.config import paths as paths_module
-        from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+        from nkyel.config import paths as paths_module
+        from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
-        monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+        monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
         monkeypatch.setattr(paths_module, "_paths", None)
         ChannelRuntimeConfigStore().set_provider_config(
             "slack",
@@ -9915,7 +9915,7 @@ class TestChannelService:
             channel_connections=ChannelConnectionsConfig.model_validate(
                 {
                     "enabled": True,
-                    "telegram": {"enabled": True, "bot_username": "deerflow_bot"},
+                    "telegram": {"enabled": True, "bot_username": "nkyel_bot"},
                     "slack": {"enabled": True},
                     "discord": {"enabled": True},
                 }
@@ -9932,10 +9932,10 @@ class TestChannelService:
     def test_from_app_config_loads_persisted_runtime_channel_config(self, monkeypatch, tmp_path):
         from app.channels.runtime_config_store import ChannelRuntimeConfigStore
         from app.channels.service import ChannelService
-        from deerflow.config import paths as paths_module
-        from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+        from nkyel.config import paths as paths_module
+        from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
-        monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+        monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
         monkeypatch.setattr(paths_module, "_paths", None)
         ChannelRuntimeConfigStore().set_provider_config(
             "slack",
@@ -9966,10 +9966,10 @@ class TestChannelService:
     def test_from_app_config_runtime_disconnect_suppresses_file_channel_config(self, monkeypatch, tmp_path):
         from app.channels.runtime_config_store import ChannelRuntimeConfigStore
         from app.channels.service import ChannelService
-        from deerflow.config import paths as paths_module
-        from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+        from nkyel.config import paths as paths_module
+        from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
-        monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+        monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
         monkeypatch.setattr(paths_module, "_paths", None)
         ChannelRuntimeConfigStore().set_provider_config(
             "feishu",
@@ -10020,7 +10020,7 @@ class TestChannelService:
                 return None
 
         monkeypatch.setattr(
-            "deerflow.reflection.resolve_class",
+            "nkyel.reflection.resolve_class",
             lambda import_path, base_class=None: FlakyReadyChannel,
         )
 
@@ -10160,7 +10160,7 @@ class TestChannelService:
         def mock_get_app_config():
             return SimpleNamespace(model_extra={"channels": updated_config})
 
-        monkeypatch.setattr("deerflow.config.app_config.get_app_config", mock_get_app_config)
+        monkeypatch.setattr("nkyel.config.app_config.get_app_config", mock_get_app_config)
 
         started_configs = {}
 
@@ -10192,7 +10192,7 @@ class TestChannelService:
         def fail_get_app_config():
             raise AssertionError("configure_channel must not reload file config")
 
-        monkeypatch.setattr("deerflow.config.app_config.get_app_config", fail_get_app_config)
+        monkeypatch.setattr("nkyel.config.app_config.get_app_config", fail_get_app_config)
 
         service = ChannelService(channels_config={})
         service._running = True
@@ -10219,10 +10219,10 @@ class TestChannelService:
         channels that have no config.yaml entry."""
         from app.channels.runtime_config_store import ChannelRuntimeConfigStore
         from app.channels.service import ChannelService
-        from deerflow.config import paths as paths_module
-        from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+        from nkyel.config import paths as paths_module
+        from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
-        monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+        monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
         monkeypatch.setattr(paths_module, "_paths", None)
         ChannelRuntimeConfigStore().set_provider_config(
             "telegram",
@@ -10232,10 +10232,10 @@ class TestChannelService:
         def mock_get_app_config():
             return SimpleNamespace(
                 model_extra={"channels": {}},
-                channel_connections=ChannelConnectionsConfig.model_validate({"enabled": True, "telegram": {"enabled": True, "bot_username": "deerflow_bot"}}),
+                channel_connections=ChannelConnectionsConfig.model_validate({"enabled": True, "telegram": {"enabled": True, "bot_username": "nkyel_bot"}}),
             )
 
-        monkeypatch.setattr("deerflow.config.app_config.get_app_config", mock_get_app_config)
+        monkeypatch.setattr("nkyel.config.app_config.get_app_config", mock_get_app_config)
 
         service = ChannelService(channels_config={})
 
@@ -10264,7 +10264,7 @@ class TestChannelService:
         def _raise():
             raise RuntimeError("config missing")
 
-        monkeypatch.setattr("deerflow.config.app_config.get_app_config", _raise)
+        monkeypatch.setattr("nkyel.config.app_config.get_app_config", _raise)
 
         started_configs = {}
 
@@ -10347,7 +10347,7 @@ class TestChannelService:
         def mock_get_app_config():
             return SimpleNamespace(model_extra={"channels": disabled_config})
 
-        monkeypatch.setattr("deerflow.config.app_config.get_app_config", mock_get_app_config)
+        monkeypatch.setattr("nkyel.config.app_config.get_app_config", mock_get_app_config)
 
         started = []
 
@@ -10781,7 +10781,7 @@ class TestSlackAllowedUsers:
         event = {
             "type": "app_mention",
             "user": "U123456",
-            "text": "<@UBOT|deerflow> /help",
+            "text": "<@UBOT|nkyel> /help",
             "channel": "C123",
             "ts": "1710000000.000100",
         }
@@ -12149,9 +12149,9 @@ class TestTelegramInboundMessages:
             update = _make_telegram_update(
                 "group",
                 message_id=13,
-                text="/data-analysis@DeerFlowBot analyze uploads/foo.csv",
+                text="/data-analysis@nkyelBot analyze uploads/foo.csv",
             )
-            context = SimpleNamespace(bot=SimpleNamespace(username="DeerFlowBot"))
+            context = SimpleNamespace(bot=SimpleNamespace(username="nkyelBot"))
             await ch._on_text(update, context)
 
             msg = await asyncio.wait_for(bus.get_inbound(), timeout=2)
@@ -12284,8 +12284,8 @@ class TestTelegramInboundMessages:
             ch = TelegramChannel(bus=bus, config={"bot_token": "test-token"})
             ch._main_loop = asyncio.get_running_loop()
 
-            update = _make_telegram_update("group", message_id=33, text="/status@DeerFlowBot")
-            context = SimpleNamespace(bot=SimpleNamespace(username="DeerFlowBot"))
+            update = _make_telegram_update("group", message_id=33, text="/status@nkyelBot")
+            context = SimpleNamespace(bot=SimpleNamespace(username="nkyelBot"))
             await ch._cmd_generic(update, context)
 
             msg = await asyncio.wait_for(bus.get_inbound(), timeout=2)
@@ -12771,8 +12771,8 @@ class TestSlackTextEscaping:
         # syntax for a real markdown link must survive untouched -- if
         # escaping ran after conversion instead, this would corrupt into
         # `&lt;url|label&gt;` and Slack would render a dead link.
-        sent = self._sent_text("See [DeerFlow docs](https://example.com/docs) for more.")
-        assert "<https://example.com/docs|DeerFlow docs>" in sent
+        sent = self._sent_text("See [nkyel docs](https://example.com/docs) for more.")
+        assert "<https://example.com/docs|nkyel docs>" in sent
         assert "&lt;" not in sent
         assert "&gt;" not in sent
 
@@ -13617,7 +13617,7 @@ class TestHandleGoalCommand:
 
         from app.gateway.auth_middleware import AuthMiddleware
         from app.gateway.csrf_middleware import CSRFMiddleware
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         # Same order as app.gateway.app: AuthMiddleware inside CSRFMiddleware.
         gateway = FastAPI()
@@ -13719,7 +13719,7 @@ def test_merge_stream_text_normal_append():
 # ---------------------------------------------------------------------------
 # LIVE-TEST FINDING 1 (critical, data disclosure): _accumulate_stream_text
 # decided what streamed payloads become displayable assistant text by REJECTING
-# only payloads whose ``type`` contained "tool".  DeerFlow injects hidden
+# only payloads whose ``type`` contained "tool".  nkyel injects hidden
 # context -- memory facts (DynamicContextMiddleware) and durable context
 # (DurableContextMiddleware) -- as hidden HumanMessages whose ``type`` is
 # "human", and DynamicContextMiddleware also rewrites the user's own turn into
@@ -13742,7 +13742,7 @@ def _get_accumulate_stream_text():
     return _accumulate_stream_text
 
 
-_MEMORY_LEAK_TEXT = "<memory>\nFacts:\n- [context | 0.70] User interacts with the assistant through the DeerFlow chat channel.\n</memory>"
+_MEMORY_LEAK_TEXT = "<memory>\nFacts:\n- [context | 0.70] User interacts with the assistant through the nkyel chat channel.\n</memory>"
 
 
 def test_accumulate_stream_text_rejects_hidden_memory_human_message():

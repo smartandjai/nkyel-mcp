@@ -44,13 +44,13 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.types import Overwrite
 
-from deerflow.agents.goal_state import GoalState
-from deerflow.agents.thread_state import DeltaThreadState, merge_message_writes
-from deerflow.config.database_config import DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY
-from deerflow.runtime.checkpoint_mode import CHECKPOINT_MODE_METADATA_KEY, checkpoint_tuple_uses_delta
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
-from deerflow.runtime.goal import write_thread_goal
-from deerflow.runtime.runs.worker import _ensure_interrupted_title, persist_run_durations
+from nkyel.agents.goal_state import GoalState
+from nkyel.agents.thread_state import DeltaThreadState, merge_message_writes
+from nkyel.config.database_config import DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY
+from nkyel.runtime.checkpoint_mode import CHECKPOINT_MODE_METADATA_KEY, checkpoint_tuple_uses_delta
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.runtime.goal import write_thread_goal
+from nkyel.runtime.runs.worker import _ensure_interrupted_title, persist_run_durations
 
 
 class FullState(TypedDict):

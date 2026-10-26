@@ -13,7 +13,7 @@ export type RunErrorKey =
   | "failed";
 
 /**
- * Host-written run errors (backend `deerflow/scheduler/host_notes.py`), pinned
+ * Host-written run errors (backend `nkyel/scheduler/host_notes.py`), pinned
  * by `host_run_errors` in contracts/scheduled_goal_notes_contract.json.
  */
 export const HOST_RUN_ERRORS: Readonly<Record<string, RunErrorKey>> = {

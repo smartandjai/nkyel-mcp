@@ -27,8 +27,8 @@ from app.channels.dingtalk import (
     _parse_allowed_users,
 )
 from app.channels.message_bus import InboundMessageType, MessageBus, OutboundMessage
-from deerflow.config.paths import VIRTUAL_PATH_PREFIX
-from deerflow.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
+from nkyel.config.paths import VIRTUAL_PATH_PREFIX
+from nkyel.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
 
 
 def _run(coro):

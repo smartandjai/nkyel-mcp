@@ -15,14 +15,14 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
+from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
 
 pytestmark = pytest.mark.anyio
 
 
 @pytest.fixture
 async def repos(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -146,7 +146,7 @@ async def _stamp_updated_at(docs: ProjectDocumentRepository, stamps: dict[str, d
     """
     import sqlalchemy as sa
 
-    from deerflow.persistence.projects.model import ProjectDocumentRow
+    from nkyel.persistence.projects.model import ProjectDocumentRow
 
     async with docs._sf() as session:
         for doc_id, updated_at in stamps.items():
@@ -306,8 +306,8 @@ async def _trashed(docs: ProjectDocumentRepository, projects: ProjectRepository,
 async def _set_trashed_at(document_id: str, when: datetime) -> None:
     from sqlalchemy import update as sa_update
 
-    from deerflow.persistence.engine import get_session_factory
-    from deerflow.persistence.projects.model import ProjectDocumentRow
+    from nkyel.persistence.engine import get_session_factory
+    from nkyel.persistence.projects.model import ProjectDocumentRow
 
     sf = get_session_factory()
     async with sf() as session:

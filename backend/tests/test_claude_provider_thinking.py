@@ -7,7 +7,7 @@ import anthropic
 import httpx
 import pytest
 
-from deerflow.models.claude_provider import ClaudeChatModel
+from nkyel.models.claude_provider import ClaudeChatModel
 
 INTERLEAVED_BETA = "interleaved-thinking-2025-05-14"
 TOOLS = [{"name": "lookup", "description": "Look up a value", "input_schema": {"type": "object", "properties": {}}}]

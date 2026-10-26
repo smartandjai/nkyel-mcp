@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from deerflow.community.serper import tools
+from nkyel.community.serper import tools
 
 
 @pytest.fixture

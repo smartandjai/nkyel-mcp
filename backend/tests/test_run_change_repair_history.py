@@ -12,8 +12,8 @@ from alembic import command
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.persistence.bootstrap import _MIGRATIONS_DIR, _get_alembic_config, bootstrap_schema
-from deerflow.persistence.run import RunRepository
+from nkyel.persistence.bootstrap import _MIGRATIONS_DIR, _get_alembic_config, bootstrap_schema
+from nkyel.persistence.run import RunRepository
 
 pytestmark = pytest.mark.asyncio
 PREVIOUS = "0024_project_documents"

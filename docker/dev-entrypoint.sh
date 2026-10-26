@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# DeerFlow gateway dev entrypoint — runs inside the docker-compose-dev gateway
+# nkyel gateway dev entrypoint — runs inside the docker-compose-dev gateway
 # container. Extracted from docker/docker-compose-dev.yaml's inline `command:`
 # (PR #2767, addressing review on Issue #2754).
 #
@@ -10,7 +10,7 @@
 #   2. Validate each extra against [A-Za-z][A-Za-z0-9_-]* so a stray shell
 #      metacharacter in `.env` cannot reach `uv sync`.
 #   3. `uv sync --locked --all-packages` so the declared extension group and
-#      workspace member extras (deerflow-harness's
+#      workspace member extras (nkyel-harness's
 #      postgres extra in particular) are installed — see PR #2584.
 #   4. Self-heal: if the first sync fails, recreate .venv and retry once. The
 #      retry stays `--locked`, so it repairs a broken .venv but not a stale
@@ -70,12 +70,12 @@ if [ -n "${UV_EXTRAS:-}" ]; then
 fi
 
 # Docker dev mounts the host checkout at /app/project while
-# DEER_FLOW_PROJECT_ROOT points at /app for runtime path translation. Prefer
+# NKYEL_PROJECT_ROOT points at /app for runtime path translation. Prefer
 # both locations, then the checkout-relative path used by direct invocations.
 ENTRYPOINT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 DETECTOR_PATH=""
 for candidate in \
-    "${DEER_FLOW_PROJECT_ROOT:+$DEER_FLOW_PROJECT_ROOT/scripts/detect_uv_extras.py}" \
+    "${NKYEL_PROJECT_ROOT:+$NKYEL_PROJECT_ROOT/scripts/detect_uv_extras.py}" \
     /app/project/scripts/detect_uv_extras.py \
     "$ENTRYPOINT_DIR/../scripts/detect_uv_extras.py"
 do
@@ -128,17 +128,17 @@ fi
 # must exist before uvicorn starts so watchfiles treats it as an excluded
 # directory, not as a plain glob pattern — on Python 3.12, globbing an absolute
 # pattern raises NotImplementedError and crashes startup (#3459 / #3454). That
-# means `sandbox` must be created here too, not just `.deer-flow`.
-: "${DEER_FLOW_HOME:=/app/backend/.deer-flow}"
-export DEER_FLOW_HOME
-mkdir -p "$DEER_FLOW_HOME" /app/backend/.deer-flow /app/backend/sandbox
+# means `sandbox` must be created here too, not just `.nkyel`.
+: "${NKYEL_HOME:=/app/backend/.nkyel}"
+export NKYEL_HOME
+mkdir -p "$NKYEL_HOME" /app/backend/.nkyel /app/backend/sandbox
 
 # ── Sync dependencies (with self-heal) ──────────────────────────────────────
 
 cd /app/backend
 
 # `--all-packages` propagates extras into workspace members (PR #2584).
-# docker-compose-dev's default DEER_FLOW_STREAM_BRIDGE_REDIS_URL is translated
+# docker-compose-dev's default NKYEL_STREAM_BRIDGE_REDIS_URL is translated
 # to `--extra redis` by the shared detector, alongside config and UV_EXTRAS.
 # `$EXTRAS_FLAGS` intentionally unquoted so each `--extra X` becomes its own arg.
 # shellcheck disable=SC2086 # word-splitting is intentional here
@@ -173,5 +173,5 @@ PYTHONPATH=. exec uv run --no-sync uvicorn app.gateway.app:app \
     --reload-include='*.yaml' \
     --reload-include='.env' \
     --reload-exclude=/app/backend/sandbox \
-    --reload-exclude="$DEER_FLOW_HOME" \
-    --reload-exclude=/app/backend/.deer-flow
+    --reload-exclude="$NKYEL_HOME" \
+    --reload-exclude=/app/backend/.nkyel

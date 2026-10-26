@@ -18,8 +18,8 @@ from support.postgres import asyncpg_test_url
 
 from app.channels.message_bus import MessageBus
 from app.channels.wechat import WechatChannel
-from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher, ChannelCredentialRow
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher, ChannelCredentialRow
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 
 @pytest_asyncio.fixture(params=["sqlite", "postgres"])
@@ -28,8 +28,8 @@ async def repo(tmp_path, request):
         uri = os.environ.get("TEST_POSTGRES_URI")
         if not uri:
             pytest.skip("requires TEST_POSTGRES_URI (real Postgres connection-context guards)")
-        import deerflow.persistence.models  # noqa: F401 -- production ORM registration
-        from deerflow.persistence.base import Base
+        import nkyel.persistence.models  # noqa: F401 -- production ORM registration
+        from nkyel.persistence.base import Base
 
         schema = f"channel_context_{uuid.uuid4().hex}"
         engine = create_async_engine(asyncpg_test_url(uri), connect_args=build_asyncpg_connect_args(schema))
@@ -50,7 +50,7 @@ async def repo(tmp_path, request):
                 await engine.dispose()
         return
 
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'channels.db'}", sqlite_dir=str(tmp_path))
     try:

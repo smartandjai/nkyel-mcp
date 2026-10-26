@@ -13,14 +13,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from deerflow.agents.middlewares.view_image_middleware import ViewImageMiddleware
-from deerflow.community.aio_sandbox.aio_sandbox import AioSandbox
-from deerflow.community.boxlite.box import BoxliteBox
-from deerflow.community.e2b_sandbox.e2b_sandbox import E2BSandbox
-from deerflow.community.opensandbox.sandbox import OpenSandboxSandbox
-from deerflow.community.tenki.sandbox import TenkiSandbox
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
-from deerflow.tools.builtins.view_image_tool import _MAX_IMAGE_BYTES, _view_image_authorized
+from nkyel.agents.middlewares.view_image_middleware import ViewImageMiddleware
+from nkyel.community.aio_sandbox.aio_sandbox import AioSandbox
+from nkyel.community.boxlite.box import BoxliteBox
+from nkyel.community.e2b_sandbox.e2b_sandbox import E2BSandbox
+from nkyel.community.opensandbox.sandbox import OpenSandboxSandbox
+from nkyel.community.tenki.sandbox import TenkiSandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.tools.builtins.view_image_tool import _MAX_IMAGE_BYTES, _view_image_authorized
 
 PATH = "/mnt/user-data/outputs/image.png"
 
@@ -96,7 +96,7 @@ def test_tool_rejects_21_mib_without_consuming_the_complete_stream(tmp_path, mon
     stream = Stream([b"x" * 65536] * (21 * 16))
     box = provider("aio", stream)
     thread_data = {f"{name}_path": str(tmp_path / name) for name in ("workspace", "uploads", "outputs")}
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda _: box))
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda _: box))
     runtime = SimpleNamespace(state={"thread_data": thread_data, "sandbox": {"sandbox_id": "remote"}}, context={"thread_id": "thread"}, config={})
     result = _view_image_authorized(runtime, PATH, "call")
     assert "Error" in result.update["messages"][0].content
@@ -178,7 +178,7 @@ def test_boxlite_bounds_actual_shell_read(tmp_path, size):
 def test_model_injection_limits_remote_download(tmp_path, monkeypatch, source):
     stream = Stream([b"x" * 65536] * (21 * 16))
     box = provider("aio", stream)
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda _: box))
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda _: box))
     result = ViewImageMiddleware._read_image_as_data_url({"sandbox": {"sandbox_id": "remote"}}, PATH, "", "image/png", 1, "digest", source)
     assert result is None
     assert stream.consumed <= _MAX_IMAGE_BYTES + 65536
@@ -193,7 +193,7 @@ def test_custom_provider_without_limit_fails_closed(tmp_path, monkeypatch):
             calls.append(path)
             return b"legacy"
 
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda _: Legacy()))
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda _: Legacy()))
     runtime = SimpleNamespace(
         state={"thread_data": {f"{name}_path": str(tmp_path / name) for name in ("workspace", "uploads", "outputs")}, "sandbox": {"sandbox_id": "remote"}},
         context={"thread_id": "thread"},
@@ -207,7 +207,7 @@ def test_custom_provider_without_limit_fails_closed(tmp_path, monkeypatch):
 @pytest.mark.parametrize("kind", ["aio", "e2b", "opensandbox", "tenki"])
 @pytest.mark.parametrize("max_bytes", [None, 100 * 1024 * 1024 + 1])
 def test_caller_cannot_raise_default_provider_ceiling(kind, max_bytes):
-    from deerflow.sandbox.download import DEFAULT_DOWNLOAD_LIMIT
+    from nkyel.sandbox.download import DEFAULT_DOWNLOAD_LIMIT
 
     class OversizedChunk:
         def __len__(self):
@@ -224,7 +224,7 @@ def test_caller_cannot_raise_default_provider_ceiling(kind, max_bytes):
 
 @pytest.mark.parametrize("max_bytes", [None, 100 * 1024 * 1024 + 1])
 def test_local_caller_cannot_raise_default_provider_ceiling(monkeypatch, max_bytes):
-    from deerflow.sandbox.download import DEFAULT_DOWNLOAD_LIMIT
+    from nkyel.sandbox.download import DEFAULT_DOWNLOAD_LIMIT
 
     box = object.__new__(LocalSandbox)
     box._resolve_path = lambda path: path

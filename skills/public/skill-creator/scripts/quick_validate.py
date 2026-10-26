@@ -27,7 +27,7 @@ def validate_skill(skill_path):
         return False, "No YAML frontmatter found"
 
     # Extract frontmatter. Allow trailing whitespace on the delimiters, like
-    # the runtime parser in backend/packages/harness/deerflow/skills/frontmatter.py.
+    # the runtime parser in backend/packages/harness/nkyel/skills/frontmatter.py.
     match = re.match(r'^---[ \t]*\n(.*?)\n---[ \t]*(?:\n|$)', content, re.DOTALL)
     if not match:
         return False, "Invalid frontmatter format"
@@ -45,8 +45,8 @@ def validate_skill(skill_path):
         return False, f"Invalid YAML in frontmatter: {e}"
 
     # Define allowed properties. Keep this in sync with the runtime schema in
-    # backend/packages/harness/deerflow/skills/frontmatter.py and the field
-    # rules in backend/packages/harness/deerflow/skills/validation.py: a skill
+    # backend/packages/harness/nkyel/skills/frontmatter.py and the field
+    # rules in backend/packages/harness/nkyel/skills/validation.py: a skill
     # that the runtime accepts must not be rejected here before packaging.
     ALLOWED_PROPERTIES = {
         'name', 'description', 'license', 'allowed-tools', 'argument-hint',
@@ -102,7 +102,7 @@ def validate_skill(skill_path):
     # coerces it), so this script must not reject values the runtime accepts.
 
     # Validate allowed-tools with the same shape rules as the runtime parser
-    # (backend/packages/harness/deerflow/skills/parser.py).
+    # (backend/packages/harness/nkyel/skills/parser.py).
     allowed_tools = frontmatter.get('allowed-tools')
     if allowed_tools is not None:
         if isinstance(allowed_tools, str):
@@ -142,7 +142,7 @@ def validate_skill(skill_path):
         else:
             return False, "allowed-tools must be a space-separated string or list of strings"
 
-    # Validate the DeerFlow-specific declarations with the same shapes the
+    # Validate the nkyel-specific declarations with the same shapes the
     # runtime validator enforces, so a malformed skill fails before packaging.
     required_secrets = frontmatter.get('required-secrets')
     if required_secrets is not None and not isinstance(required_secrets, list):

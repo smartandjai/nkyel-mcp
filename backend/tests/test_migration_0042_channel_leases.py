@@ -15,10 +15,10 @@ from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_leases import ChannelLeaseRow
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence import bootstrap
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_leases import ChannelLeaseRow
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 REVISION = "0042_channel_leases"
 PREVIOUS = "0041_im_notice_preferences"

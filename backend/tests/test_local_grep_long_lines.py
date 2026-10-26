@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
-from deerflow.sandbox.search import GrepMatch, find_grep_matches, truncate_line
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.sandbox.search import GrepMatch, find_grep_matches, truncate_line
 
 
 @pytest.mark.parametrize("single_file", [False, True])
@@ -142,7 +142,7 @@ def test_case_insensitive_literal_repeated_prefix_finishes_within_deadline(tmp_p
     script = """
 import sys
 from pathlib import Path
-from deerflow.sandbox.search import find_grep_matches
+from nkyel.sandbox.search import find_grep_matches
 pattern = "a" * 10_000 + "b"
 assert find_grep_matches(Path(sys.argv[1]), pattern, literal=True) == ([], False)
 matches, truncated = find_grep_matches(Path(sys.argv[2]), pattern, literal=True)

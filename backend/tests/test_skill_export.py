@@ -4,8 +4,8 @@ import zipfile
 import pytest
 from support.skill_export_platform import requires_safe_capture
 
-from deerflow.skills import export
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.skills import export
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def test_snapshot_revision_and_zip_roundtrip(package, tmp_path):
     try:
         with zipfile.ZipFile(archive.file) as z:
             assert z.read("sample/SKILL.md") == (root / "SKILL.md").read_bytes()
-            from deerflow.skills.installer import safe_extract_skill_archive
+            from nkyel.skills.installer import safe_extract_skill_archive
 
             safe_extract_skill_archive(z, tmp_path / "imported")
         assert (tmp_path / "imported/sample/empty").is_dir()
@@ -112,7 +112,7 @@ def test_root_link_and_missing_ownership(package):
 def test_local_writer_waits_for_export_lock(package):
     import threading
 
-    from deerflow.skills.projection import skill_projection_read_lock
+    from nkyel.skills.projection import skill_projection_read_lock
 
     storage, root = package
     started = threading.Event()
@@ -231,7 +231,7 @@ def test_public_skill_real_install_roundtrip(tmp_path, monkeypatch, skill_name):
     from types import SimpleNamespace
     from unittest.mock import AsyncMock
 
-    from deerflow.skills import installer
+    from nkyel.skills import installer
 
     public = Path(__file__).resolve().parents[2] / "skills/public" / skill_name
     storage = LocalSkillStorage(host_path=str(tmp_path / "source"))
@@ -267,7 +267,7 @@ def test_public_skill_real_install_roundtrip(tmp_path, monkeypatch, skill_name):
 def test_import_permissions_from_independent_zip(tmp_path, mode, expected):
     import io
 
-    from deerflow.skills.installer import safe_extract_skill_archive
+    from nkyel.skills.installer import safe_extract_skill_archive
 
     raw = io.BytesIO()
     with zipfile.ZipFile(raw, "w") as archive:
@@ -304,11 +304,11 @@ def test_cross_process_lock_timeout(package, monkeypatch):
 
 @requires_safe_capture
 def test_user_read_lock_no_projection_mutation_and_owned_only(tmp_path, monkeypatch):
-    from deerflow.config.paths import Paths
-    from deerflow.skills.projection import get_skill_projection_paths
-    from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+    from nkyel.config.paths import Paths
+    from nkyel.skills.projection import get_skill_projection_paths
+    from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
     storage = UserScopedSkillStorage("one", host_path=str(tmp_path / "global"))
     legacy = tmp_path / "global/custom/sample"
     legacy.mkdir(parents=True)
@@ -331,10 +331,10 @@ def test_user_read_lock_no_projection_mutation_and_owned_only(tmp_path, monkeypa
 def test_temp_creation_and_cleanup_within_mutation(tmp_path, monkeypatch, user_scoped):
     from contextlib import contextmanager
 
-    from deerflow.config.paths import Paths
-    from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+    from nkyel.config.paths import Paths
+    from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
     storage = UserScopedSkillStorage("one", host_path=str(tmp_path)) if user_scoped else LocalSkillStorage(host_path=str(tmp_path))
     root = storage.get_custom_skill_dir("sample")
     active = False
@@ -351,7 +351,7 @@ def test_temp_creation_and_cleanup_within_mutation(tmp_path, monkeypatch, user_s
             active = False
 
     monkeypatch.setattr(storage, "_skill_projection_mutation", locked)
-    from deerflow.skills.storage import local_skill_storage
+    from nkyel.skills.storage import local_skill_storage
 
     original = local_skill_storage.tempfile.NamedTemporaryFile
 

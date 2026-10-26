@@ -1,6 +1,6 @@
 """Regression anchor: SubagentDateContextMiddleware must not block the event loop.
 
-``_inject`` can resolve ``DEER_FLOW_DATE_TIMEZONE`` through ``ZoneInfo``, which
+``_inject`` can resolve ``NKYEL_DATE_TIMEZONE`` through ``ZoneInfo``, which
 reads the OS timezone database (or the bundled ``tzdata`` wheel) on a cold
 cache. ``abefore_agent`` runs on the async subagent path with no guarantee that
 an assembly observer warmed that resolution first, so it offloads the call via
@@ -22,7 +22,7 @@ from langchain.agents import create_agent
 from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from deerflow.agents.middlewares.dynamic_context_middleware import (
+from nkyel.agents.middlewares.dynamic_context_middleware import (
     _DYNAMIC_CONTEXT_REMINDER_KEY,
     SubagentDateContextMiddleware,
 )
@@ -38,8 +38,8 @@ class _FakeModel(FakeMessagesListChatModel):
 
 
 async def test_subagent_abefore_agent_does_not_block_event_loop_with_timezone_enabled(monkeypatch) -> None:
-    """A cold DEER_FLOW_DATE_TIMEZONE resolution must stay off the event loop."""
-    monkeypatch.setenv("DEER_FLOW_DATE_TIMEZONE", "Asia/Shanghai")
+    """A cold NKYEL_DATE_TIMEZONE resolution must stay off the event loop."""
+    monkeypatch.setenv("NKYEL_DATE_TIMEZONE", "Asia/Shanghai")
     middleware = SubagentDateContextMiddleware()
 
     agent = await asyncio.to_thread(

@@ -1,7 +1,7 @@
 """Tests for request-scoped project context injection (Projects Phase 2, spec §7.2).
 
 The pinned admission snapshot is rendered by pure helpers in
-``deerflow/projects/context.py`` and delivered through
+``nkyel/projects/context.py`` and delivered through
 ``DynamicContextMiddleware.wrap_model_call`` as at most one transient,
 request-only HumanMessage — never persisted, never a state update, never a
 correction chain.
@@ -14,11 +14,11 @@ from unittest import mock
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
-from deerflow.agents.middlewares.dynamic_context_middleware import (
+from nkyel.agents.middlewares.dynamic_context_middleware import (
     _DYNAMIC_CONTEXT_REMINDER_KEY,
     DynamicContextMiddleware,
 )
-from deerflow.projects.context import (
+from nkyel.projects.context import (
     PROJECT_CONTEXT_MESSAGE_ID_PREFIX,
     PROJECT_CONTEXT_MESSAGE_MARKER,
     build_project_context_message,
@@ -26,9 +26,9 @@ from deerflow.projects.context import (
     project_context_insertion_index,
     render_project_block,
 )
-from deerflow.runtime.context_keys import CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY, PROJECT_CONTEXT_KEY
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.runtime.context_keys import CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY, PROJECT_CONTEXT_KEY
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 _SNAPSHOT = {"project_id": "p-1", "name": "Roadmap", "instructions": "Prefer boring solutions."}
 
@@ -411,8 +411,8 @@ def test_no_correction_or_update_messages_appear_anywhere():
 def test_before_agent_update_is_identical_with_and_without_pinned_snapshot():
     state = {"messages": [HumanMessage(content="Hi", id="msg-1")]}
     with (
-        mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value="<memory>\nPrefs.\n</memory>"),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value="<memory>\nPrefs.\n</memory>"),
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         with_snapshot = DynamicContextMiddleware().before_agent(state, _runtime())
@@ -439,7 +439,7 @@ def test_midnight_update_is_identical_with_and_without_pinned_snapshot():
             ]
         }
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-09, Saturday"
         with_snapshot = DynamicContextMiddleware().before_agent(state(), _runtime())
         without_snapshot = DynamicContextMiddleware().before_agent(state(), _runtime(snapshot=None))
@@ -479,8 +479,8 @@ def test_journal_memory_only_run_records_null_project_revision():
     runtime = _runtime(snapshot=None, journal=journal, pre_existing_message_ids=set())
 
     with (
-        mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=memory),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=memory),
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         update = mw.before_agent(state, runtime)

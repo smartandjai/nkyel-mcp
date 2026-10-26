@@ -4,11 +4,11 @@ import asyncio
 from types import SimpleNamespace
 
 import pytest
-from deerflow_extension_api import ExtensionPrincipal, InvalidRunEvidenceCursor, require_run_evidence_reader, resolve_run_evidence_reader
+from nkyel_extension_api import ExtensionPrincipal, InvalidRunEvidenceCursor, require_run_evidence_reader, resolve_run_evidence_reader
 
-from deerflow.extensions.run_evidence import StoreRunEvidenceReader, StoreRunEvidenceReaderFactory
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.extensions.run_evidence import StoreRunEvidenceReader, StoreRunEvidenceReaderFactory
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 async def _put_run(store: MemoryRunStore, run_id: str, thread_id: str, *, user_id: str = "user-1") -> None:
@@ -87,14 +87,14 @@ async def test_event_views_detach_nested_payloads_from_store(tmp_path, event_bac
     if event_backend == "memory":
         events = MemoryRunEventStore()
     elif event_backend == "jsonl":
-        from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
+        from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
 
         events = JsonlRunEventStore(tmp_path / "events")
     else:
         from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-        from deerflow.persistence.base import Base
-        from deerflow.runtime.events.store.db import DbRunEventStore
+        from nkyel.persistence.base import Base
+        from nkyel.runtime.events.store.db import DbRunEventStore
 
         engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'events.db'}")
         async with engine.begin() as connection:
@@ -132,10 +132,10 @@ async def test_event_views_detach_nested_payloads_from_store(tmp_path, event_bac
 async def test_db_event_reads_use_reader_scope_not_ambient_user(tmp_path):
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from deerflow.persistence.base import Base
-    from deerflow.persistence.run import RunRepository
-    from deerflow.runtime import user_context
-    from deerflow.runtime.events.store.db import DbRunEventStore
+    from nkyel.persistence.base import Base
+    from nkyel.persistence.run import RunRepository
+    from nkyel.runtime import user_context
+    from nkyel.runtime.events.store.db import DbRunEventStore
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'scoped-events.db'}")
     try:
@@ -204,7 +204,7 @@ def test_request_resolver_binds_reader_to_principal_and_fails_when_unavailable()
     runs = MemoryRunStore()
     events = MemoryRunEventStore()
     factory = StoreRunEvidenceReaderFactory(runs, events)
-    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(deerflow_extension_run_evidence_reader_resolver=lambda _request: factory.for_principal(ExtensionPrincipal(user_id="user-1")))))
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(nkyel_extension_run_evidence_reader_resolver=lambda _request: factory.for_principal(ExtensionPrincipal(user_id="user-1")))))
 
     reader = resolve_run_evidence_reader(request)
     assert isinstance(reader, StoreRunEvidenceReader)
@@ -233,8 +233,8 @@ async def test_memory_progress_updates_do_not_advance_changed_run_cursor():
 
 @pytest.mark.asyncio
 async def test_sql_changed_run_cursor_survives_repository_restart(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.persistence.run import RunRepository
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.run import RunRepository
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'evidence.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -265,8 +265,8 @@ async def test_sql_changed_run_cursor_survives_repository_restart(tmp_path):
 async def test_sql_progress_updates_do_not_advance_changed_run_cursor(tmp_path):
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from deerflow.persistence.base import Base
-    from deerflow.persistence.run import RunRepository
+    from nkyel.persistence.base import Base
+    from nkyel.persistence.run import RunRepository
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'progress.db'}")
     try:
@@ -292,8 +292,8 @@ async def test_sql_atomic_interrupt_allocates_before_run_lock_and_shares_positio
     from sqlalchemy import event
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from deerflow.persistence.base import Base
-    from deerflow.persistence.run import RunRepository
+    from nkyel.persistence.base import Base
+    from nkyel.persistence.run import RunRepository
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'atomic.db'}")
     try:
@@ -335,8 +335,8 @@ async def test_sql_atomic_interrupt_allocates_before_run_lock_and_shares_positio
 async def test_sql_change_positions_are_unique_across_concurrent_threads(tmp_path):
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from deerflow.persistence.base import Base
-    from deerflow.persistence.run import RunRepository
+    from nkyel.persistence.base import Base
+    from nkyel.persistence.run import RunRepository
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'concurrent.db'}")
     try:

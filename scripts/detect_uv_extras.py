@@ -19,8 +19,8 @@ Order of resolution:
    - channel_connections.enabled and channel_connections.buzz.enabled    -> buzz
    - models[].use == langchain_ollama:*  -> ollama
 3. Runtime environment toggles that enable optional backends:
-   - DEER_FLOW_STREAM_BRIDGE_REDIS_URL   -> redis
-   - DEER_FLOW_SANDBOX_OWNERSHIP_REDIS_URL -> redis
+   - NKYEL_STREAM_BRIDGE_REDIS_URL   -> redis
+   - NKYEL_SANDBOX_OWNERSHIP_REDIS_URL -> redis
 
 Each extra name is validated against ``^[A-Za-z][A-Za-z0-9_-]*$`` (the same
 shape uv enforces for `[project.optional-dependencies]` keys). Anything else
@@ -68,12 +68,12 @@ def parse_env_extras(value: str) -> list[str]:
 
 def find_config_file() -> Path | None:
     """Prefer explicit config and project-root settings before legacy locations."""
-    explicit = os.environ.get("DEER_FLOW_CONFIG_PATH")
+    explicit = os.environ.get("NKYEL_CONFIG_PATH")
     if explicit:
         candidate = Path(explicit)
         if candidate.is_file():
             return candidate
-    if project_root := os.environ.get("DEER_FLOW_PROJECT_ROOT"):
+    if project_root := os.environ.get("NKYEL_PROJECT_ROOT"):
         candidate = Path(project_root) / "config.yaml"
         if candidate.is_file():
             return candidate
@@ -133,7 +133,7 @@ def _unquote(value: str) -> str:
 def section_value(lines: list[str], section: str, key: str) -> str | None:
     """Return the value of `section.key` from a flat-ish YAML, or None.
 
-    Only handles the shallow shape DeerFlow uses for these settings:
+    Only handles the shallow shape nkyel uses for these settings:
         database:
           backend: postgres
     Nested mappings deeper than the immediate child level are ignored on
@@ -383,9 +383,9 @@ def detect_from_config(path: Path) -> list[str]:
 
 def detect_from_runtime_env() -> list[str]:
     extras: set[str] = set()
-    if os.environ.get("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", "").strip():
+    if os.environ.get("NKYEL_STREAM_BRIDGE_REDIS_URL", "").strip():
         extras.add("redis")
-    if os.environ.get("DEER_FLOW_SANDBOX_OWNERSHIP_REDIS_URL", "").strip():
+    if os.environ.get("NKYEL_SANDBOX_OWNERSHIP_REDIS_URL", "").strip():
         extras.add("redis")
     return sorted(extras)
 

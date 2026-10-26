@@ -11,8 +11,8 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.tools import StructuredTool
 
-from deerflow.agents.lead_agent import prompt as prompt_module
-from deerflow.config.subagents_config import SubagentsAppConfig
+from nkyel.agents.lead_agent import prompt as prompt_module
+from nkyel.config.subagents_config import SubagentsAppConfig
 
 SCRIPT_GUIDANCE = "When writing scripts or commands that create/read files from the workspace"
 NO_BASH_GUIDANCE = "No `bash` tool is bound: work out results directly and write them with `write_file` instead of saving helper scripts"
@@ -22,8 +22,8 @@ NO_BASH_ROUTINE_EXAMPLE = "- Do a routine file read, search, or edit directly. N
 
 def _app_config(*, allow_host_bash=False, acp_agents=None):
     return SimpleNamespace(
-        sandbox=SimpleNamespace(use="deerflow.sandbox.local:LocalSandboxProvider", allow_host_bash=allow_host_bash, mounts=[]),
-        skills=SimpleNamespace(container_path="/mnt/skills", use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage", get_skills_path=lambda: Path("/tmp/skills")),
+        sandbox=SimpleNamespace(use="nkyel.sandbox.local:LocalSandboxProvider", allow_host_bash=allow_host_bash, mounts=[]),
+        skills=SimpleNamespace(container_path="/mnt/skills", use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage", get_skills_path=lambda: Path("/tmp/skills")),
         skill_evolution=SimpleNamespace(enabled=False),
         tool_search=SimpleNamespace(enabled=False),
         memory=SimpleNamespace(enabled=False, injection_enabled=True, max_injection_tokens=2000),
@@ -39,7 +39,7 @@ def render(monkeypatch):
 
     def _render(config=None, **kwargs):
         config = config or _app_config()
-        monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
+        monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
         return prompt_module.apply_prompt_template(app_config=config, **kwargs)
 
     return _render
@@ -147,11 +147,11 @@ def test_has_bash_tool_matches_the_bash_tool_by_exact_name():
     ],
 )
 def test_lead_agent_tells_the_prompt_whether_it_binds_bash(monkeypatch, bootstrap, tool_names, authorization_denies_bash, expected):
-    from deerflow.agents.lead_agent import agent as lead_agent_module
-    from deerflow.agents.lead_agent.agent import assemble_lead_agent
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.model_config import ModelConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.agents.lead_agent import agent as lead_agent_module
+    from nkyel.agents.lead_agent.agent import assemble_lead_agent
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.model_config import ModelConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     app_config = AppConfig(
         models=[
@@ -165,12 +165,12 @@ def test_lead_agent_tells_the_prompt_whether_it_binds_bash(monkeypatch, bootstra
                 supports_vision=False,
             )
         ],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
     )
     monkeypatch.setattr(lead_agent_module, "get_app_config", lambda: app_config)
     monkeypatch.setattr(lead_agent_module, "create_chat_model", lambda **kwargs: object())
     monkeypatch.setattr(lead_agent_module, "create_agent", lambda **kwargs: kwargs)
-    monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **kwargs: [_tool(name) for name in tool_names])
+    monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **kwargs: [_tool(name) for name in tool_names])
     if authorization_denies_bash:
         monkeypatch.setattr(lead_agent_module, "apply_tool_authorization", lambda tools, **kwargs: ([tool for tool in tools if tool.name != "bash"], None))
     prompt_calls = []

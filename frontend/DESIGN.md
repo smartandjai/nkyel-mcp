@@ -1,6 +1,6 @@
 # DESIGN.md
 
-The visual system of the DeerFlow frontend, as it ships today. It records what the
+The visual system of the nkyel frontend, as it ships today. It records what the
 code already does so new UI matches it. The source of truth stays in code:
 tokens in `src/styles/globals.css`, primitives in `src/components/ui/`. When this
 file and the code disagree, fix one of them in the same change.
@@ -54,7 +54,7 @@ Rules:
 
 - **Sans** (`--font-sans`): the platform UI stack (`ui-sans-serif, system-ui`).
   Used for all UI and body text.
-- **Serif** (Tailwind `font-serif`): reserved for the **DeerFlow wordmark** and
+- **Serif** (Tailwind `font-serif`): reserved for the **nkyel wordmark** and
   a few brand moments (header, footer quote, auth pages, workspace header).
   Don't use it for UI labels or body text.
 - **Mono** (`font-mono`): code, paths, IDs, token counts.

@@ -1,8 +1,8 @@
 """Runs endpoints — create, stream, wait, cancel.
 
 Implements the LangGraph Platform runs API on top of
-:class:`deerflow.agents.runs.RunManager` and
-:class:`deerflow.agents.stream_bridge.StreamBridge`.
+:class:`nkyel.agents.runs.RunManager` and
+:class:`nkyel.agents.stream_bridge.StreamBridge`.
 
 SSE format is aligned with the LangGraph Platform protocol so that
 the ``useStream`` React hook from ``@langchain/langgraph-sdk/react``
@@ -65,19 +65,19 @@ from app.gateway.services import (
 )
 from app.gateway.sse_headers import sse_response_headers
 from app.gateway.utils import sanitize_log_param
-from deerflow.agents.human_input import read_human_input_response
-from deerflow.agents.middlewares.dynamic_context_middleware import strip_injected_user_message_id_suffix
-from deerflow.authz.sandbox_authz import safe_app_config_async
-from deerflow.config.paths import get_paths, make_safe_user_id
-from deerflow.runtime import CancelOutcome, ConflictError, RunRecord, RunStatus, ThreadOperationKind, serialize_channel_values_for_api
-from deerflow.runtime.goal import is_active_goal
-from deerflow.runtime.runs.store.base import format_run_cursor_created_at, normalize_run_created_at_iso
-from deerflow.runtime.secret_context import redact_config_secrets, redact_metadata_secrets
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.utils.llm_text import strip_leading_think_blocks
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY, get_original_user_content_text, message_to_text
-from deerflow.utils.thread_id import ThreadId
-from deerflow.workspace_changes import get_workspace_changes_response
+from nkyel.agents.human_input import read_human_input_response
+from nkyel.agents.middlewares.dynamic_context_middleware import strip_injected_user_message_id_suffix
+from nkyel.authz.sandbox_authz import safe_app_config_async
+from nkyel.config.paths import get_paths, make_safe_user_id
+from nkyel.runtime import CancelOutcome, ConflictError, RunRecord, RunStatus, ThreadOperationKind, serialize_channel_values_for_api
+from nkyel.runtime.goal import is_active_goal
+from nkyel.runtime.runs.store.base import format_run_cursor_created_at, normalize_run_created_at_iso
+from nkyel.runtime.secret_context import redact_config_secrets, redact_metadata_secrets
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.utils.llm_text import strip_leading_think_blocks
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY, get_original_user_content_text, message_to_text
+from nkyel.utils.thread_id import ThreadId
+from nkyel.workspace_changes import get_workspace_changes_response
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/threads", tags=["runs"])

@@ -100,7 +100,7 @@ Older versions released the shared sandbox when any subagent finished. Since [#5
 
 **Cause**: summarization compacted the completed `task` results out of context, so the Lead Agent lost the evidence that the work was done. [#3877](https://github.com/bytedance/deer-flow/pull/3877) introduced the system-maintained delegation ledger, re-injected before every call, and [#3887](https://github.com/bytedance/deer-flow/pull/3887) moved it into thread state so it survives compaction.
 
-**Fix**: when building the graph directly with `create_deerflow_agent`, make sure your version includes [#5488](https://github.com/bytedance/deer-flow/pull/5488); before it the factory chain lacked `DurableContextMiddleware` and the ledger was never written.
+**Fix**: when building the graph directly with `create_nkyel_agent`, make sure your version includes [#5488](https://github.com/bytedance/deer-flow/pull/5488); before it the factory chain lacked `DurableContextMiddleware` and the ledger was never written.
 
 ### After stopping, the Lead Agent keeps being told the task is "already delegated, do not repeat"
 
@@ -126,7 +126,7 @@ Older versions read the global skill catalog only. Since [#4356](https://github.
 
 ### A subagent does not know today's date, or is a day off
 
-Subagents receive a `current_date` reminder from `SubagentDateContextMiddleware` ([#4797](https://github.com/bytedance/deer-flow/pull/4797)). The date is formatted in the server timezone, and containers default to UTC; set the `DEER_FLOW_DATE_TIMEZONE` environment variable to an IANA zone such as `Asia/Shanghai` ([#5154](https://github.com/bytedance/deer-flow/pull/5154)).
+Subagents receive a `current_date` reminder from `SubagentDateContextMiddleware` ([#4797](https://github.com/bytedance/deer-flow/pull/4797)). The date is formatted in the server timezone, and containers default to UTC; set the `NKYEL_DATE_TIMEZONE` environment variable to an IANA zone such as `Asia/Shanghai` ([#5154](https://github.com/bytedance/deer-flow/pull/5154)).
 
 ### A subagent cannot find a file I uploaded earlier
 

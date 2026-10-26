@@ -17,8 +17,8 @@ from app.channels.message_bus import InboundMessage, MessageBus
 
 @pytest.fixture
 async def repo(tmp_path):
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'discord.db'}", sqlite_dir=str(tmp_path))
     try:
@@ -61,7 +61,7 @@ async def test_discord_inbound_attaches_owner_identity_from_user_level_connectio
 async def test_discord_connect_command_binds_gateway_identity(repo):
     state = "discord-bind-code"
     await repo.create_oauth_state(
-        owner_user_id="deerflow-user-1",
+        owner_user_id="nkyel-user-1",
         provider="discord",
         state=state,
         expires_at=datetime.now(UTC) + timedelta(minutes=5),
@@ -85,7 +85,7 @@ async def test_discord_connect_command_binds_gateway_identity(repo):
 
     handled = await channel._bind_connection_from_connect_code_on_main(message, state)
 
-    connections = await repo.list_connections("deerflow-user-1")
+    connections = await repo.list_connections("nkyel-user-1")
     assert handled is True
     assert len(connections) == 1
     assert connections[0]["provider"] == "discord"
@@ -208,7 +208,7 @@ async def test_discord_message_resolves_identity_on_gateway_loop(repo):
 async def test_discord_connect_code_binds_on_gateway_loop_and_replies_on_discord_loop(repo):
     state = "discord-bind-code"
     await repo.create_oauth_state(
-        owner_user_id="deerflow-user-1",
+        owner_user_id="nkyel-user-1",
         provider="discord",
         state=state,
         expires_at=datetime.now(UTC) + timedelta(minutes=5),
@@ -231,7 +231,7 @@ async def test_discord_connect_code_binds_on_gateway_loop_and_replies_on_discord
     finally:
         _stop_discord_loop(discord_loop, thread)
 
-    connections = await repo.list_connections("deerflow-user-1")
+    connections = await repo.list_connections("nkyel-user-1")
     assert [c["external_account_id"] for c in connections] == ["987"]
     assert [name for name, _loop in recording.calls] == ["consume_oauth_state", "upsert_connection"]
     assert all(loop is main_loop for _name, loop in recording.calls)
@@ -272,7 +272,7 @@ async def test_discord_stop_cancels_pending_identity_lookup_and_releases_intake(
 async def test_discord_unscheduled_bind_is_handled_but_leaves_code_unconsumed(repo):
     state = "discord-bind-code"
     await repo.create_oauth_state(
-        owner_user_id="deerflow-user-1",
+        owner_user_id="nkyel-user-1",
         provider="discord",
         state=state,
         expires_at=datetime.now(UTC) + timedelta(minutes=5),

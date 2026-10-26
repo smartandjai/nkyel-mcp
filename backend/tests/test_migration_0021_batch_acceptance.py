@@ -9,7 +9,7 @@ from alembic.script import ScriptDirectory
 from alembic.util.exc import CommandError
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from deerflow.persistence import bootstrap
+from nkyel.persistence import bootstrap
 
 
 @pytest.mark.asyncio

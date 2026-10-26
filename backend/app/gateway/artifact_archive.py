@@ -14,7 +14,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import BinaryIO
 
-from deerflow.constants import BROWSER_FRAMES_DIRNAME, TOOL_RESULTS_DIRNAME
+from nkyel.constants import BROWSER_FRAMES_DIRNAME, TOOL_RESULTS_DIRNAME
 
 _VIRTUAL_PREFIX = "mnt/user-data/outputs/"
 _EDIT_TEMP_PREFIX = ".artifact-edit-"

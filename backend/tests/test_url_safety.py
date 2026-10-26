@@ -4,7 +4,7 @@ import ipaddress
 
 import pytest
 
-from deerflow.community.url_safety import is_blocked_address, validate_delegated_backend_url, validate_public_http_url
+from nkyel.community.url_safety import is_blocked_address, validate_delegated_backend_url, validate_public_http_url
 
 
 @pytest.mark.parametrize(

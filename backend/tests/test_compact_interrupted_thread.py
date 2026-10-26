@@ -33,11 +33,11 @@ from langgraph.types import Command
 
 from app.gateway.auth.models import User
 from app.gateway.routers import threads
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.runtime import RunManager, context_compaction
-from deerflow.runtime.checkpoint_mode import inject_checkpoint_mode
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.runtime import RunManager, context_compaction
+from nkyel.runtime.checkpoint_mode import inject_checkpoint_mode
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
 
 THREAD_ID = "thread-compact-interrupted"
 TOOL_CALL_ID = "call_probe_1"
@@ -92,7 +92,7 @@ def _summarization_app_config():
     set_app_config(
         AppConfig.model_validate(
             {
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "summarization": {"enabled": True},
             }
         )
@@ -106,7 +106,7 @@ def _fake_summary_model(monkeypatch: pytest.MonkeyPatch):
     def fake_create_chat_model(*args: Any, **kwargs: Any) -> FakeMessagesListChatModel:
         return FakeMessagesListChatModel(responses=[AIMessage(content="Summary of prior turns.")])
 
-    monkeypatch.setattr("deerflow.agents.middlewares.summarization_middleware.create_chat_model", fake_create_chat_model)
+    monkeypatch.setattr("nkyel.agents.middlewares.summarization_middleware.create_chat_model", fake_create_chat_model)
 
 
 def _make_compact_app(mode: str, checkpointer: Any) -> Any:

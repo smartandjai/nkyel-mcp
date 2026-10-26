@@ -1,7 +1,7 @@
 """Tests for Session thread resolution (id-or-title) and lifecycle."""
 
-from deerflow.tui.cli import LaunchPlan
-from deerflow.tui.session import Session
+from nkyel.tui.cli import LaunchPlan
+from nkyel.tui.session import Session
 
 
 class _Client:
@@ -50,7 +50,7 @@ def test_close_is_a_noop_without_a_loop():
 
 
 def test_close_stops_the_background_loop():
-    from deerflow.tui.persistence import ThreadMetaWriter, _LoopThread
+    from nkyel.tui.persistence import ThreadMetaWriter, _LoopThread
 
     loop = _LoopThread()
     session = Session(client=_Client(THREADS), writer=ThreadMetaWriter(loop, None), _loop=loop)

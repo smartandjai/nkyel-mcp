@@ -9,8 +9,8 @@ from fastapi import BackgroundTasks
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from app.gateway.routers import threads
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.goal import build_goal_state, write_thread_goal
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.goal import build_goal_state, write_thread_goal
 from scripts.benchmark.scheduled_tasks.protocol import goal_history_evidence
 
 
@@ -25,7 +25,7 @@ async def test_public_history_projection_omits_older_goals_but_native_accessor_r
     (tmp_path / ".scheduled-benchmark-disposable").write_text("synthetic test", encoding="utf-8")
     graph = build_state_mutation_graph("evidence", mode, snapshot_frequency=7)
     config = {"configurable": {"thread_id": "budget-thread", "checkpoint_ns": ""}}
-    async with AsyncSqliteSaver.from_conn_string(str(tmp_path / "deerflow.db")) as saver:
+    async with AsyncSqliteSaver.from_conn_string(str(tmp_path / "nkyel.db")) as saver:
         await saver.setup()
         accessor = CheckpointStateAccessor.bind(graph, saver, mode=mode)
         goal = build_goal_state(objective)
@@ -62,7 +62,7 @@ async def test_missing_native_goal_evidence_cannot_be_fabricated_as_zero(tmp_pat
     from scripts.benchmark.scheduled_tasks.budget_evidence import read_native_goal_evidence
 
     (tmp_path / ".scheduled-benchmark-disposable").write_text("synthetic test", encoding="utf-8")
-    async with AsyncSqliteSaver.from_conn_string(str(tmp_path / "deerflow.db")) as saver:
+    async with AsyncSqliteSaver.from_conn_string(str(tmp_path / "nkyel.db")) as saver:
         await saver.setup()
     result = await read_native_goal_evidence(tmp_path, thread_id="absent", objective="Missing")
     assert result["maximum_observed_continuation_count"] is None

@@ -52,7 +52,7 @@ checkpointer = PostgresSaver.from_conn_string(
 ```json
 {
   "graphs": {
-    "lead_agent": "deerflow.agents:lead_agent"
+    "lead_agent": "nkyel.agents:lead_agent"
   },
   "checkpointer": "checkpointer:checkpointer"
 }
@@ -73,7 +73,7 @@ title:
 或在代码中配置：
 
 ```python
-from deerflow.config.title_config import TitleConfig, set_title_config
+from nkyel.config.title_config import TitleConfig, set_title_config
 
 set_title_config(TitleConfig(
     enabled=True,
@@ -247,11 +247,11 @@ async def _agenerate_title_result(self, state: TitleMiddlewareState) -> dict | N
 
 ## 相关文件
 
-- [`packages/harness/deerflow/agents/thread_state.py`](../packages/harness/deerflow/agents/thread_state.py) - ThreadState 定义
-- [`packages/harness/deerflow/agents/middlewares/title_middleware.py`](../packages/harness/deerflow/agents/middlewares/title_middleware.py) - TitleMiddleware 实现
-- [`packages/harness/deerflow/config/title_config.py`](../packages/harness/deerflow/config/title_config.py) - 配置管理
+- [`packages/harness/nkyel/agents/thread_state.py`](../packages/harness/nkyel/agents/thread_state.py) - ThreadState 定义
+- [`packages/harness/nkyel/agents/middlewares/title_middleware.py`](../packages/harness/nkyel/agents/middlewares/title_middleware.py) - TitleMiddleware 实现
+- [`packages/harness/nkyel/config/title_config.py`](../packages/harness/nkyel/config/title_config.py) - 配置管理
 - [`config.yaml`](../../config.example.yaml) - 配置文件
-- [`packages/harness/deerflow/agents/lead_agent/agent.py`](../packages/harness/deerflow/agents/lead_agent/agent.py) - Middleware 注册
+- [`packages/harness/nkyel/agents/lead_agent/agent.py`](../packages/harness/nkyel/agents/lead_agent/agent.py) - Middleware 注册
 
 ## 参考资料
 

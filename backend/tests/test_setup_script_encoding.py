@@ -73,7 +73,7 @@ def test_doctor_report_survives_restricted_stdout(setup_checkout: Path, encoding
 
     assert result.returncode == int(has_failure), result.stderr
     assert result.stderr == ""
-    assert "DeerFlow Health Check" in result.stdout
+    assert "nkyel Health Check" in result.stdout
     assert "Skipped check" in result.stdout
     assert "Run make setup" in result.stdout
     assert "Status: " in result.stdout

@@ -7,12 +7,12 @@ import httpx
 import pytest
 from agent_sandbox.core.api_error import ApiError
 
-from deerflow.community.aio_sandbox.aio_sandbox import AioSandbox, _ScopedShellSession
+from nkyel.community.aio_sandbox.aio_sandbox import AioSandbox, _ScopedShellSession
 
 
 @pytest.fixture
 def sandbox():
-    with patch("deerflow.community.aio_sandbox.aio_sandbox.AioSandboxClient"):
+    with patch("nkyel.community.aio_sandbox.aio_sandbox.AioSandboxClient"):
         yield AioSandbox(id="recovery-test", base_url="http://localhost:8080")
 
 

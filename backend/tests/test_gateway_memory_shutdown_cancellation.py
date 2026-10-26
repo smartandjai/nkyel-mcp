@@ -79,12 +79,12 @@ def test_lifespan_cancellation_drains_memory_flush_and_close(config_outcome: str
             patch("app.gateway.app.get_app_config", return_value=startup_config) as get_config,
             patch("app.gateway.app.get_gateway_config", return_value=MagicMock(host="x", port=0)),
             patch("app.gateway.app.langgraph_runtime", _noop_langgraph_runtime),
-            patch("deerflow.skills.projection.ensure_public_skill_projection"),
+            patch("nkyel.skills.projection.ensure_public_skill_projection"),
             patch("app.gateway.app.auth.close_oidc_service", AsyncMock()),
             patch("app.channels.service.start_channel_service", side_effect=fake_start),
             patch("app.channels.service.stop_channel_service", AsyncMock()),
-            patch("deerflow.agents.memory.get_memory_manager", return_value=manager),
-            patch("deerflow.extensions.notify.suspend_extension_system_observations"),
+            patch("nkyel.agents.memory.get_memory_manager", return_value=manager),
+            patch("nkyel.extensions.notify.suspend_extension_system_observations"),
         ):
             context = lifespan(app)
             await context.__aenter__()

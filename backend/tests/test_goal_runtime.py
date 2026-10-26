@@ -6,8 +6,8 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.runtime import goal
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime import goal
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
 
 
 def test_build_goal_state_defaults_to_claude_stop_hook_cap():
@@ -531,7 +531,7 @@ def test_evaluate_goal_completion_uses_non_thinking_model(monkeypatch):
     assert captured["thinking_enabled"] is False
     # The goal evaluator runs from runtime/runs/worker.py after the main graph
     # run has already finished, so there is no graph root for it to inherit
-    # tracing callbacks from (unlike make_lead_agent/DeerFlowClient.stream,
+    # tracing callbacks from (unlike make_lead_agent/NkyelClient.stream,
     # which attach build_tracing_callbacks() at the graph root and correctly
     # pass attach_tracing=False to avoid double-attaching). It must attach its
     # own model-level tracing callbacks, same as the other standalone,
@@ -567,7 +567,7 @@ def test_evaluate_goal_completion_injects_langfuse_metadata(monkeypatch):
     a standalone, non-graph model call must inject Langfuse trace-attribute
     metadata itself since there is no graph root to lift it from.
     """
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     for name in ("LANGFUSE_TRACING", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL"):
         monkeypatch.delenv(name, raising=False)
@@ -593,7 +593,7 @@ def test_evaluate_goal_completion_injects_langfuse_metadata(monkeypatch):
                 app_config=object(),
                 thread_id="thread-xyz",
                 user_id="alice",
-                deerflow_trace_id="gateway-trace-1",
+                nkyel_trace_id="gateway-trace-1",
             )
         )
     finally:
@@ -607,7 +607,7 @@ def test_evaluate_goal_completion_injects_langfuse_metadata(monkeypatch):
     assert metadata.get("langfuse_session_id") == "thread-xyz", "goal evaluator trace must group under the thread's session"
     assert metadata.get("langfuse_user_id") == "alice"
     assert metadata.get("langfuse_trace_name") == "goal_evaluator"
-    assert metadata.get("deerflow_trace_id") == "gateway-trace-1"
+    assert metadata.get("nkyel_trace_id") == "gateway-trace-1"
     tags = metadata.get("langfuse_tags") or []
     assert "model:gpt-4o" in tags
 

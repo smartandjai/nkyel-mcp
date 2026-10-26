@@ -9,7 +9,7 @@ import pytest
 @pytest.fixture
 def mock_app_config():
     """Mock the app config to return tool configurations."""
-    with patch("deerflow.community.exa.tools.get_app_config") as mock_config:
+    with patch("nkyel.community.exa.tools.get_app_config") as mock_config:
         tool_config = MagicMock()
         tool_config.model_extra = {
             "max_results": 5,
@@ -24,7 +24,7 @@ def mock_app_config():
 @pytest.fixture
 def mock_exa_client():
     """Mock the Exa client."""
-    with patch("deerflow.community.exa.tools.Exa") as mock_exa_cls:
+    with patch("nkyel.community.exa.tools.Exa") as mock_exa_cls:
         mock_client = MagicMock()
         mock_exa_cls.return_value = mock_client
         yield mock_client
@@ -47,7 +47,7 @@ class TestWebSearchTool:
         mock_response.results = [mock_result_1, mock_result_2]
         mock_exa_client.search.return_value = mock_response
 
-        from deerflow.community.exa.tools import web_search_tool
+        from nkyel.community.exa.tools import web_search_tool
 
         result = web_search_tool.invoke({"query": "test query"})
         parsed = json.loads(result)
@@ -67,7 +67,7 @@ class TestWebSearchTool:
 
     def test_search_with_custom_config(self, mock_exa_client):
         """Test search respects custom configuration values."""
-        with patch("deerflow.community.exa.tools.get_app_config") as mock_config:
+        with patch("nkyel.community.exa.tools.get_app_config") as mock_config:
             tool_config = MagicMock()
             tool_config.model_extra = {
                 "max_results": 10,
@@ -81,7 +81,7 @@ class TestWebSearchTool:
             mock_response.results = []
             mock_exa_client.search.return_value = mock_response
 
-            from deerflow.community.exa.tools import web_search_tool
+            from nkyel.community.exa.tools import web_search_tool
 
             web_search_tool.invoke({"query": "neural search"})
 
@@ -103,7 +103,7 @@ class TestWebSearchTool:
         mock_response.results = [mock_result]
         mock_exa_client.search.return_value = mock_response
 
-        from deerflow.community.exa.tools import web_search_tool
+        from nkyel.community.exa.tools import web_search_tool
 
         result = web_search_tool.invoke({"query": "test"})
         parsed = json.loads(result)
@@ -116,7 +116,7 @@ class TestWebSearchTool:
         mock_response.results = []
         mock_exa_client.search.return_value = mock_response
 
-        from deerflow.community.exa.tools import web_search_tool
+        from nkyel.community.exa.tools import web_search_tool
 
         result = web_search_tool.invoke({"query": "nothing"})
         parsed = json.loads(result)
@@ -127,7 +127,7 @@ class TestWebSearchTool:
         """Test search returns error string on exception."""
         mock_exa_client.search.side_effect = Exception("API rate limit exceeded")
 
-        from deerflow.community.exa.tools import web_search_tool
+        from nkyel.community.exa.tools import web_search_tool
 
         result = web_search_tool.invoke({"query": "error"})
 
@@ -137,7 +137,7 @@ class TestWebSearchTool:
         """``$VAR`` config references resolve to strings; exa-py rejects a string num_results."""
         from exa_py import Exa
 
-        with patch("deerflow.community.exa.tools.get_app_config") as mock_config:
+        with patch("nkyel.community.exa.tools.get_app_config") as mock_config:
             tool_config = MagicMock()
             tool_config.model_extra = {"max_results": "10", "contents_max_characters": "2000", "api_key": "test-key"}
             mock_config.return_value.get_tool_config.return_value = tool_config
@@ -150,7 +150,7 @@ class TestWebSearchTool:
 
             # The real SDK does the type check, so only its HTTP layer is replaced.
             with patch.object(Exa, "request", fake_request):
-                from deerflow.community.exa.tools import web_search_tool
+                from nkyel.community.exa.tools import web_search_tool
 
                 result = web_search_tool.invoke({"query": "test query"})
 
@@ -161,13 +161,13 @@ class TestWebSearchTool:
     @pytest.mark.parametrize("raw", [None, "", "many", "3.5", 3.5, 10.0, True, False, 0, -2, "-2"])
     def test_search_invalid_limits_fall_back_to_defaults(self, mock_exa_client, raw):
         """An unusable value warns and keeps the default instead of failing the search."""
-        with patch("deerflow.community.exa.tools.get_app_config") as mock_config:
+        with patch("nkyel.community.exa.tools.get_app_config") as mock_config:
             tool_config = MagicMock()
             tool_config.model_extra = {"max_results": raw, "contents_max_characters": raw, "api_key": "test-key"}
             mock_config.return_value.get_tool_config.return_value = tool_config
             mock_exa_client.search.return_value = MagicMock(results=[])
 
-            from deerflow.community.exa.tools import web_search_tool
+            from nkyel.community.exa.tools import web_search_tool
 
             result = web_search_tool.invoke({"query": "test query"})
 
@@ -191,7 +191,7 @@ class TestWebFetchTool:
         mock_response.results = [mock_result]
         mock_exa_client.get_contents.return_value = mock_response
 
-        from deerflow.community.exa.tools import web_fetch_tool
+        from nkyel.community.exa.tools import web_fetch_tool
 
         result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -211,7 +211,7 @@ class TestWebFetchTool:
         mock_response.results = [mock_result]
         mock_exa_client.get_contents.return_value = mock_response
 
-        from deerflow.community.exa.tools import web_fetch_tool
+        from nkyel.community.exa.tools import web_fetch_tool
 
         result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -223,7 +223,7 @@ class TestWebFetchTool:
         mock_response.results = []
         mock_exa_client.get_contents.return_value = mock_response
 
-        from deerflow.community.exa.tools import web_fetch_tool
+        from nkyel.community.exa.tools import web_fetch_tool
 
         result = web_fetch_tool.invoke({"url": "https://example.com/404"})
 
@@ -233,7 +233,7 @@ class TestWebFetchTool:
         """Test fetch returns error string on exception."""
         mock_exa_client.get_contents.side_effect = Exception("Connection timeout")
 
-        from deerflow.community.exa.tools import web_fetch_tool
+        from nkyel.community.exa.tools import web_fetch_tool
 
         result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -241,7 +241,7 @@ class TestWebFetchTool:
 
     def test_fetch_reads_web_fetch_config(self, mock_exa_client):
         """Test that web_fetch_tool reads 'web_fetch' config, not 'web_search'."""
-        with patch("deerflow.community.exa.tools.get_app_config") as mock_config:
+        with patch("nkyel.community.exa.tools.get_app_config") as mock_config:
             tool_config = MagicMock()
             tool_config.model_extra = {"api_key": "exa-fetch-key"}
             mock_config.return_value.get_tool_config.return_value = tool_config
@@ -253,7 +253,7 @@ class TestWebFetchTool:
             mock_response.results = [mock_result]
             mock_exa_client.get_contents.return_value = mock_response
 
-            from deerflow.community.exa.tools import web_fetch_tool
+            from nkyel.community.exa.tools import web_fetch_tool
 
             web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -261,8 +261,8 @@ class TestWebFetchTool:
 
     def test_fetch_uses_independent_api_key(self, mock_exa_client):
         """Test mixed-provider config: web_fetch uses its own api_key, not web_search's."""
-        with patch("deerflow.community.exa.tools.get_app_config") as mock_config:
-            with patch("deerflow.community.exa.tools.Exa") as mock_exa_cls:
+        with patch("nkyel.community.exa.tools.get_app_config") as mock_config:
+            with patch("nkyel.community.exa.tools.Exa") as mock_exa_cls:
                 mock_exa_cls.return_value = mock_exa_client
                 fetch_config = MagicMock()
                 fetch_config.model_extra = {"api_key": "exa-fetch-key"}
@@ -281,7 +281,7 @@ class TestWebFetchTool:
                 mock_response.results = [mock_result]
                 mock_exa_client.get_contents.return_value = mock_response
 
-                from deerflow.community.exa.tools import web_fetch_tool
+                from nkyel.community.exa.tools import web_fetch_tool
 
                 web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -297,7 +297,7 @@ class TestWebFetchTool:
         mock_response.results = [mock_result]
         mock_exa_client.get_contents.return_value = mock_response
 
-        from deerflow.community.exa.tools import web_fetch_tool
+        from nkyel.community.exa.tools import web_fetch_tool
 
         result = web_fetch_tool.invoke({"url": "https://example.com"})
 
@@ -312,7 +312,7 @@ def _no_exa_base_url_env(monkeypatch):
 
 
 def _patch_tool_config(extra):
-    patcher = patch("deerflow.community.exa.tools.get_app_config")
+    patcher = patch("nkyel.community.exa.tools.get_app_config")
     mock_config = patcher.start()
     tool_config = MagicMock()
     tool_config.model_extra = extra
@@ -324,9 +324,9 @@ class TestBaseUrl:
     def _search(self, extra):
         patcher = _patch_tool_config(extra)
         try:
-            with patch("deerflow.community.exa.tools.Exa") as mock_exa_cls:
+            with patch("nkyel.community.exa.tools.Exa") as mock_exa_cls:
                 mock_exa_cls.return_value.search.return_value = MagicMock(results=[])
-                from deerflow.community.exa.tools import web_search_tool
+                from nkyel.community.exa.tools import web_search_tool
 
                 result = web_search_tool.invoke({"query": "q"})
                 return result, mock_exa_cls
@@ -365,9 +365,9 @@ class TestBaseUrl:
     def _fetch(self, extra):
         patcher = _patch_tool_config(extra)
         try:
-            with patch("deerflow.community.exa.tools.Exa") as mock_exa_cls:
+            with patch("nkyel.community.exa.tools.Exa") as mock_exa_cls:
                 mock_exa_cls.return_value.get_contents.return_value = MagicMock(results=[MagicMock(title="Page", text="Body")])
-                from deerflow.community.exa.tools import web_fetch_tool
+                from nkyel.community.exa.tools import web_fetch_tool
 
                 result = web_fetch_tool.invoke({"url": "https://example.com"})
                 return result, mock_exa_cls

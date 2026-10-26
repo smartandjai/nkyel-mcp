@@ -78,7 +78,7 @@ function aiMessage(
     content: text,
     ...(extra?.run_id ? { run_id: extra.run_id } : {}),
     ...(extra?.seq !== undefined
-      ? { additional_kwargs: { deerflow_seq: extra.seq } }
+      ? { additional_kwargs: { nkyel_seq: extra.seq } }
       : {}),
   } as Message;
 }
@@ -194,7 +194,7 @@ function checkpointMessages(): Message[] {
       id: "recent-human",
       type: "human",
       content: [{ type: "text", text: "The recent request" }],
-      additional_kwargs: { deerflow_seq: 3 },
+      additional_kwargs: { nkyel_seq: 3 },
     } as Message,
     aiMessage("recent-answer", "The recent answer", { seq: 4 }),
   ];
@@ -495,7 +495,7 @@ test("keeps a pre-submit older-turn rescue above the submitted human", async () 
     type: "human",
     content: "Older request",
     run_id: "run-old",
-    additional_kwargs: { deerflow_seq: 1 },
+    additional_kwargs: { nkyel_seq: 1 },
   } as Message;
   const rescuedOldAnswer = aiMessage("rescued-old-answer", "Older answer", {
     run_id: "run-old",
@@ -506,7 +506,7 @@ test("keeps a pre-submit older-turn rescue above the submitted human", async () 
     type: "human",
     content: "Recent request",
     run_id: "run-recent",
-    additional_kwargs: { deerflow_seq: 3 },
+    additional_kwargs: { nkyel_seq: 3 },
   } as Message;
   const recentAnswer = aiMessage("recent-answer", "Recent answer", {
     run_id: "run-recent",
@@ -537,7 +537,7 @@ test("keeps a pre-submit older-turn rescue above the submitted human", async () 
   act(() => {
     streamMockState.onUpdateEvent?.(
       {
-        "DeerFlowSummarizationMiddleware.before_model": {
+        "NkyelSummarizationMiddleware.before_model": {
           messages: [removeAll, hiddenSummary, recentHuman, recentAnswer],
         },
       },
@@ -654,7 +654,7 @@ test("keeps a transiently rescued current-turn step behind its submitted human",
   act(() => {
     streamMockState.onUpdateEvent?.(
       {
-        "DeerFlowSummarizationMiddleware.before_model": {
+        "NkyelSummarizationMiddleware.before_model": {
           messages: [removeAll, hiddenSummary, serverHuman, retainedStep],
         },
       },

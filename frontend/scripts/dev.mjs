@@ -9,11 +9,11 @@ import { fileURLToPath } from "node:url";
  * @param {Record<string, string | undefined>} env
  */
 export function getDevBundler(_platform = process.platform, env = process.env) {
-  const override = env.DEER_FLOW_DEV_BUNDLER?.trim();
+  const override = env.NKYEL_DEV_BUNDLER?.trim();
   if (override) {
     if (override !== "turbo" && override !== "webpack") {
       throw new Error(
-        'DEER_FLOW_DEV_BUNDLER must be either "turbo" or "webpack"',
+        'NKYEL_DEV_BUNDLER must be either "turbo" or "webpack"',
       );
     }
     return override;

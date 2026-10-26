@@ -21,17 +21,17 @@ import pytest
 
 # Same cycle-breaking parent mocks as tests/test_subagent_executor.py: the real
 # executor must be imported behind them (conftest.py keeps a mock in
-# sys.modules["deerflow.subagents.executor"] for collection).
+# sys.modules["nkyel.subagents.executor"] for collection).
 _MOCKED_MODULE_NAMES = [
-    "deerflow.agents",
-    "deerflow.agents.thread_state",
-    "deerflow.agents.middlewares",
-    "deerflow.agents.middlewares.thread_data_middleware",
-    "deerflow.sandbox",
-    "deerflow.sandbox.middleware",
-    "deerflow.sandbox.security",
-    "deerflow.models",
-    "deerflow.skills.storage",
+    "nkyel.agents",
+    "nkyel.agents.thread_state",
+    "nkyel.agents.middlewares",
+    "nkyel.agents.middlewares.thread_data_middleware",
+    "nkyel.sandbox",
+    "nkyel.sandbox.middleware",
+    "nkyel.sandbox.security",
+    "nkyel.models",
+    "nkyel.skills.storage",
 ]
 
 
@@ -39,24 +39,24 @@ def _import_real_executor():
     """Import the real SubagentExecutor at module scope (imports do one-time IO
     that must not run inside a gated test item), then restore sys.modules."""
     original_modules = {name: sys.modules.get(name) for name in _MOCKED_MODULE_NAMES}
-    original_executor = sys.modules.get("deerflow.subagents.executor")
+    original_executor = sys.modules.get("nkyel.subagents.executor")
     # Preload the real leafs the executor imports at runtime so no import IO
     # happens inside the gated test either.
-    tool_declarations_module = importlib.import_module("deerflow.agents.middlewares.tool_declarations")
-    audit_context_module = importlib.import_module("deerflow.agents.middlewares.audit_context")
+    tool_declarations_module = importlib.import_module("nkyel.agents.middlewares.tool_declarations")
+    audit_context_module = importlib.import_module("nkyel.agents.middlewares.audit_context")
 
-    sys.modules.pop("deerflow.subagents.executor", None)
-    subagents_pkg = sys.modules.get("deerflow.subagents")
+    sys.modules.pop("nkyel.subagents.executor", None)
+    subagents_pkg = sys.modules.get("nkyel.subagents")
     had_executor_attr = subagents_pkg is not None and hasattr(subagents_pkg, "executor")
     if had_executor_attr:
         delattr(subagents_pkg, "executor")
 
     for name in _MOCKED_MODULE_NAMES:
         sys.modules[name] = MagicMock()
-    sys.modules["deerflow.agents.middlewares.tool_declarations"] = tool_declarations_module
-    sys.modules["deerflow.agents.middlewares.audit_context"] = audit_context_module
+    sys.modules["nkyel.agents.middlewares.tool_declarations"] = tool_declarations_module
+    sys.modules["nkyel.agents.middlewares.audit_context"] = audit_context_module
     try:
-        module = importlib.import_module("deerflow.subagents.executor")
+        module = importlib.import_module("nkyel.subagents.executor")
     finally:
         for name, original in original_modules.items():
             if original is None:
@@ -64,15 +64,15 @@ def _import_real_executor():
             else:
                 sys.modules[name] = original
         if original_executor is not None:
-            sys.modules["deerflow.subagents.executor"] = original_executor
+            sys.modules["nkyel.subagents.executor"] = original_executor
     return module
 
 
 executor_module = _import_real_executor()
 SubagentExecutor = executor_module.SubagentExecutor
-SubagentConfig = importlib.import_module("deerflow.subagents.config").SubagentConfig
-LayerOneOutcome = importlib.import_module("deerflow.agents.middlewares.tool_declarations").LayerOneOutcome
-tool_declarations = sys.modules["deerflow.agents.middlewares.tool_declarations"]
+SubagentConfig = importlib.import_module("nkyel.subagents.config").SubagentConfig
+LayerOneOutcome = importlib.import_module("nkyel.agents.middlewares.tool_declarations").LayerOneOutcome
+tool_declarations = sys.modules["nkyel.agents.middlewares.tool_declarations"]
 
 pytestmark = pytest.mark.asyncio
 
@@ -93,7 +93,7 @@ def _app_config():
 
 def _blocking_probe_provider(probe_file, observed_threads: list):
     """An AuthorizationProvider whose filter_resources performs real blocking file IO."""
-    from deerflow.authz.provider import AuthzDecision
+    from nkyel.authz.provider import AuthzDecision
 
     class _Provider:
         name = "blocking-probe"
@@ -127,9 +127,9 @@ def _executor_with_declaration(monkeypatch, declaring):
     monkeypatch.setattr(executor_module, "create_agent", fake_create_agent)
     monkeypatch.setitem(
         sys.modules,
-        "deerflow.agents.middlewares.tool_error_handling_middleware",
+        "nkyel.agents.middlewares.tool_error_handling_middleware",
         _leaf_module(
-            "deerflow.agents.middlewares.tool_error_handling_middleware",
+            "nkyel.agents.middlewares.tool_error_handling_middleware",
             build_subagent_runtime_middlewares=fake_build_subagent_runtime_middlewares,
         ),
     )
@@ -198,7 +198,7 @@ async def test_inline_decision_trips_the_gate(tmp_path):
         name = "blocking-probe"
 
         def authorize(self, request):
-            from deerflow.authz.provider import AuthzDecision
+            from nkyel.authz.provider import AuthzDecision
 
             return AuthzDecision(allow=True)
 
@@ -221,5 +221,5 @@ async def test_inline_decision_trips_the_gate(tmp_path):
         authorization_provider=_Provider(),
     )
 
-    assert len(caught) == 1  # the gate fired through the deerflow decision frame
+    assert len(caught) == 1  # the gate fired through the nkyel decision frame
     assert authorized == frozenset()  # … and fail_closed converted it to a denial

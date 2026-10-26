@@ -23,8 +23,8 @@ Two mode keys exist, and only one of them can reach a client.
 
 | Key | Where it is written | On the wire |
 | --- | --- | --- |
-| `INTERNAL_CHECKPOINT_MODE_KEY` = `"__deerflow_checkpoint_channel_mode"` | `config["configurable"]`, always, both modes | Never. Server-side only. |
-| `CHECKPOINT_MODE_METADATA_KEY` = `"deerflow_checkpoint_channel_mode"` | `config["metadata"]`, **only** in delta mode; removed in full mode | Can pass through inside response `metadata` objects |
+| `INTERNAL_CHECKPOINT_MODE_KEY` = `"__nkyel_checkpoint_channel_mode"` | `config["configurable"]`, always, both modes | Never. Server-side only. |
+| `CHECKPOINT_MODE_METADATA_KEY` = `"nkyel_checkpoint_channel_mode"` | `config["metadata"]`, **only** in delta mode; removed in full mode | Can pass through inside response `metadata` objects |
 
 Because the marker is only written in delta mode, a stored delta checkpoint carries it and a stored full checkpoint does not; absence means full.
 
@@ -107,13 +107,13 @@ Nothing prints either value at startup. In practice:
 
 1. Read `database.checkpoint_channel_mode` (and `database.checkpoint_delta.snapshot_frequency`) from `config.yaml`.
 2. Confirm the process started after the last edit — an edit without a restart has no effect and fails loudly once a new graph is built (see [Troubleshooting](/docs/harness/checkpoints/troubleshooting)).
-3. Remember that every process sharing the checkpoint database must use the same value, and that a client-supplied `configurable.__deerflow_checkpoint_channel_mode` cannot change a process's mode.
+3. Remember that every process sharing the checkpoint database must use the same value, and that a client-supplied `configurable.__nkyel_checkpoint_channel_mode` cannot change a process's mode.
 
 ### A thread
 
 A thread's mode is recorded in its stored checkpoints:
 
-- A delta checkpoint carries `deerflow_checkpoint_channel_mode: "delta"` in its metadata; a full checkpoint does not.
+- A delta checkpoint carries `nkyel_checkpoint_channel_mode: "delta"` in its metadata; a full checkpoint does not.
 - LangGraph's own `counters_since_delta_snapshot` metadata is a second delta signal.
 - Through HTTP, the marker can be read from the `metadata` objects of `GET /api/threads/{thread_id}` (when no `threads_meta` row exists) and of each entry in `POST /api/threads/{thread_id}/history`.
 - Or open the thread in a process you believe is `full`: a delta thread answers with `409`.

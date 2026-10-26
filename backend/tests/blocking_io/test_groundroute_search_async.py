@@ -29,7 +29,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from deerflow.community.groundroute import tools as groundroute_tools
+from nkyel.community.groundroute import tools as groundroute_tools
 
 pytestmark = pytest.mark.asyncio
 

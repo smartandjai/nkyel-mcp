@@ -22,7 +22,7 @@ from dataclasses import replace
 from types import SimpleNamespace
 from typing import Any
 
-from deerflow_extension_api import PROVENANCE_KEYS
+from nkyel_extension_api import PROVENANCE_KEYS
 from fastapi import HTTPException, Request
 from langchain_core.messages import BaseMessage, ChatMessage, HumanMessage, SystemMessage
 from langchain_core.messages.utils import convert_to_messages
@@ -42,27 +42,27 @@ from app.gateway.run_models import RunCreateRequest
 from app.gateway.run_origin import resolve_request_origin
 from app.gateway.utils import sanitize_log_param
 from app.mcp_tasks.errors import PermanentNotificationError
-from deerflow.agents.human_input import read_human_input_response
-from deerflow.agents.interaction_policy import resolve_run_interaction_policy
-from deerflow.agents.language import ui_locale
-from deerflow.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY, _REMINDER_DATE_KEY
-from deerflow.agents.middlewares.input_sanitization_middleware import frame_untrusted_text
-from deerflow.agents.middlewares.message_utils import _SUMMARY_MESSAGE_NAME, is_genuine_user_message
-from deerflow.agents.middlewares.skill_usage import SKILL_USAGE_KEY, SKILL_USAGES_KEY
-from deerflow.agents.middlewares.tool_output_budget_middleware import TOOL_OUTPUT_BLOB_KEY
-from deerflow.agents.middlewares.tool_receipt import TOOL_RECEIPT_KEY, TOOL_RECEIPT_LEDGER_KEY
-from deerflow.agents.middlewares.tool_transform_meta import TOOL_TRANSFORMS_KEY
-from deerflow.agents.middlewares.view_image_middleware import _IMAGE_CONTEXT_MESSAGE_MARKER_KEY
-from deerflow.config.agents_config import load_agent_config
-from deerflow.config.app_config import get_app_config
-from deerflow.config.database_config import resolve_checkpoint_graph_cache_max
-from deerflow.knowledge_scope import KNOWLEDGE_SCOPE_KEY, KNOWLEDGE_SCOPE_RUNTIME_KEY
-from deerflow.mcp_scope import (
+from nkyel.agents.human_input import read_human_input_response
+from nkyel.agents.interaction_policy import resolve_run_interaction_policy
+from nkyel.agents.language import ui_locale
+from nkyel.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY, _REMINDER_DATE_KEY
+from nkyel.agents.middlewares.input_sanitization_middleware import frame_untrusted_text
+from nkyel.agents.middlewares.message_utils import _SUMMARY_MESSAGE_NAME, is_genuine_user_message
+from nkyel.agents.middlewares.skill_usage import SKILL_USAGE_KEY, SKILL_USAGES_KEY
+from nkyel.agents.middlewares.tool_output_budget_middleware import TOOL_OUTPUT_BLOB_KEY
+from nkyel.agents.middlewares.tool_receipt import TOOL_RECEIPT_KEY, TOOL_RECEIPT_LEDGER_KEY
+from nkyel.agents.middlewares.tool_transform_meta import TOOL_TRANSFORMS_KEY
+from nkyel.agents.middlewares.view_image_middleware import _IMAGE_CONTEXT_MESSAGE_MARKER_KEY
+from nkyel.config.agents_config import load_agent_config
+from nkyel.config.app_config import get_app_config
+from nkyel.config.database_config import resolve_checkpoint_graph_cache_max
+from nkyel.knowledge_scope import KNOWLEDGE_SCOPE_KEY, KNOWLEDGE_SCOPE_RUNTIME_KEY
+from nkyel.mcp_scope import (
     THREAD_INCARNATION_METADATA_GUARD_KEY,
     is_valid_thread_incarnation,
 )
-from deerflow.projects.context import PROJECT_CONTEXT_MESSAGE_MARKER, resolve_project_context
-from deerflow.runtime import (
+from nkyel.projects.context import PROJECT_CONTEXT_MESSAGE_MARKER, resolve_project_context
+from nkyel.runtime import (
     END_SENTINEL,
     HEARTBEAT_SENTINEL,
     ORPHAN_RECOVERY_STOP_REASON,
@@ -83,39 +83,39 @@ from deerflow.runtime import (
     build_state_mutation_graph,
     run_agent,
 )
-from deerflow.runtime.checkpoint_mode import (
+from nkyel.runtime.checkpoint_mode import (
     INTERNAL_CHECKPOINT_MODE_KEY,
     CheckpointModeMismatchError,
     checkpoint_tuple_uses_delta,
     inject_checkpoint_mode,
 )
-from deerflow.runtime.checkpoint_state import graph_state_schema
-from deerflow.runtime.client_context import sanitize_client_context
-from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
-from deerflow.runtime.events.message_identity import MESSAGE_SEQ_KEY
-from deerflow.runtime.goal import goal_thread_lock
-from deerflow.runtime.journal import build_checkpoint_history_seed_events
-from deerflow.runtime.keyed_lock import KeyedLockTable
-from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY, make_origin
-from deerflow.runtime.runs.naming import resolve_root_run_name
-from deerflow.runtime.runs.schemas import EVIDENCE_ORIGINS
-from deerflow.runtime.secret_context import (
+from nkyel.runtime.checkpoint_state import graph_state_schema
+from nkyel.runtime.client_context import sanitize_client_context
+from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
+from nkyel.runtime.events.message_identity import MESSAGE_SEQ_KEY
+from nkyel.runtime.goal import goal_thread_lock
+from nkyel.runtime.journal import build_checkpoint_history_seed_events
+from nkyel.runtime.keyed_lock import KeyedLockTable
+from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY, make_origin
+from nkyel.runtime.runs.naming import resolve_root_run_name
+from nkyel.runtime.runs.schemas import EVIDENCE_ORIGINS
+from nkyel.runtime.secret_context import (
     LegacyRunMetadataSecretError,
     redact_config_secrets,
     validate_run_metadata_secrets,
 )
-from deerflow.runtime.stream_modes import normalize_stream_modes
-from deerflow.runtime.user_context import reset_current_user, set_current_user
-from deerflow.sandbox.lease import SANDBOX_SERVER_OWNED_CONTEXT_KEYS
-from deerflow.scheduler.runtime import scheduler_tools_enabled
-from deerflow.scheduler.schedules import validate_timezone
-from deerflow.subagents.status_contract import SUBAGENT_ACCEPTANCE_VERDICT_KEY, SUBAGENT_RECEIPT_VERDICT_KEY, SUBAGENT_TOOL_RECEIPTS_KEY
-from deerflow.trace_context import DEERFLOW_TRACE_METADATA_KEY, ensure_trace_context, ensure_trace_id
-from deerflow.utils.assembly_io import run_assembly
-from deerflow.utils.file_io import await_drained
-from deerflow.utils.goal_objective import normalize_goal_objective
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY, UNTRUSTED_INPUT_KEY
-from deerflow.utils.thread_id import validate_thread_id
+from nkyel.runtime.stream_modes import normalize_stream_modes
+from nkyel.runtime.user_context import reset_current_user, set_current_user
+from nkyel.sandbox.lease import SANDBOX_SERVER_OWNED_CONTEXT_KEYS
+from nkyel.scheduler.runtime import scheduler_tools_enabled
+from nkyel.scheduler.schedules import validate_timezone
+from nkyel.subagents.status_contract import SUBAGENT_ACCEPTANCE_VERDICT_KEY, SUBAGENT_RECEIPT_VERDICT_KEY, SUBAGENT_TOOL_RECEIPTS_KEY
+from nkyel.trace_context import NKYEL_TRACE_METADATA_KEY, ensure_trace_context, ensure_trace_id
+from nkyel.utils.assembly_io import run_assembly
+from nkyel.utils.file_io import await_drained
+from nkyel.utils.goal_objective import normalize_goal_objective
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY, UNTRUSTED_INPUT_KEY
+from nkyel.utils.thread_id import validate_thread_id
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ _THREAD_METADATA_SETUP_TIMEOUT_SECONDS = 5.0
 # user-language parts (instructions, stop condition, notes) the run thread shows
 # instead of the launched text. A cross-language contract
 # (contracts/scheduled_goal_notes_contract.json "scheduled_origin_key").
-SCHEDULED_ORIGIN_KEY = "deerflow_scheduled_origin"
+SCHEDULED_ORIGIN_KEY = "nkyel_scheduled_origin"
 
 _SERVER_OWNED_MESSAGE_METADATA_KEYS = (
     frozenset(
@@ -272,7 +272,7 @@ async def _ensure_thread_metadata(
     if existing is None:
         if require_existing_thread:
             raise LookupError(f"Thread {record.thread_id} was deleted during run admission")
-        from deerflow.persistence.thread_meta import THREAD_PROJECT_METADATA_KEY
+        from nkyel.persistence.thread_meta import THREAD_PROJECT_METADATA_KEY
 
         run_metadata = record.metadata or {}
         metadata = {
@@ -282,7 +282,7 @@ async def _ensure_thread_metadata(
             # membership key: run admission never modifies project membership —
             # the column is written only by POST /api/threads and
             # /threads/{id}/move — so the key must not persist either.
-            if key not in (DEERFLOW_TRACE_METADATA_KEY, THREAD_PROJECT_METADATA_KEY)
+            if key not in (NKYEL_TRACE_METADATA_KEY, THREAD_PROJECT_METADATA_KEY)
         }
         # A run that names its thread in the input (a scheduled run) creates it
         # named: the worker copies the title to the thread list only when the
@@ -511,7 +511,7 @@ def _strip_external_message_metadata(message: Any) -> Any:
     additional_kwargs.pop(ORIGINAL_USER_CONTENT_KEY, None)
     for key in _SERVER_OWNED_MESSAGE_METADATA_KEYS:
         additional_kwargs.pop(key, None)
-    from deerflow.knowledge.sources import strip_source_artifact
+    from nkyel.knowledge.sources import strip_source_artifact
 
     artifact = getattr(message, "artifact", None)
     clean_artifact = strip_source_artifact(artifact)
@@ -538,7 +538,7 @@ def _strip_external_metadata_from_message_like(item: Any) -> Any:
         return _strip_external_message_metadata(item)
     if not isinstance(item, dict):
         return item
-    from deerflow.knowledge.sources import strip_source_artifact
+    from nkyel.knowledge.sources import strip_source_artifact
 
     artifact = item.get("artifact")
     clean_artifact = strip_source_artifact(artifact)
@@ -769,7 +769,7 @@ def _assign_missing_run_input_message_ids(graph_input: dict[str, Any], *, thread
             if idempotency_key is None:
                 message_id = str(uuid.uuid4())
             else:
-                name = f"deerflow:run-input:{thread_id}:{idempotency_key}:{index}:{attempt}"
+                name = f"nkyel:run-input:{thread_id}:{idempotency_key}:{index}:{attempt}"
                 message_id = str(uuid.uuid5(uuid.NAMESPACE_URL, name))
             if message_id not in used_ids:
                 break
@@ -1099,7 +1099,7 @@ def merge_run_context_overrides(config: dict[str, Any], context: Mapping[str, An
 
 
 async def resolve_trusted_internal_owner_for_attribution(request: Request, owner_user_id: str | None) -> Any | None:
-    """Resolve the DeerFlow user used only for trusted internal attribution."""
+    """Resolve the nkyel user used only for trusted internal attribution."""
 
     if not owner_user_id:
         return None
@@ -1207,7 +1207,7 @@ def resolve_agent_factory(assistant_id: str | None):
     consumer must unwrap ``.graph``. A third-party factory that still returns a
     bare graph keeps working: the unwrap sites are type-checked, not assumed.
     """
-    from deerflow.agents.lead_agent.agent import assemble_lead_agent
+    from nkyel.agents.lead_agent.agent import assemble_lead_agent
 
     return assemble_lead_agent
 
@@ -1538,7 +1538,7 @@ def _cache_state_accessor_graph(key: tuple[str | None, str, int | None], agent_f
 def _build_state_accessor_graph(agent_factory: Any, config: dict[str, Any]) -> Any:
     agent_result = agent_factory(config=config)
     try:
-        from deerflow.agents.lead_agent.agent import unwrap_agent_graph
+        from nkyel.agents.lead_agent.agent import unwrap_agent_graph
 
         return unwrap_agent_graph(agent_result)
     except Exception:
@@ -2206,7 +2206,7 @@ async def start_run(
     # via check_access; only a thread already owned by another user is rejected
     # with 404, matching thread_runs.py's anti-enumeration behaviour. Internal
     # channel runs act on behalf of the connection owner carried in
-    # X-DeerFlow-Owner-User-Id, so they are scoped to that owner instead of
+    # X-nkyel-Owner-User-Id, so they are scoped to that owner instead of
     # bypassing the check -- a leaked internal token must not grant cross-user
     # thread access.
     user = getattr(request.state, "user", None)
@@ -2260,7 +2260,7 @@ async def start_run(
         knowledge_default_request_hash = hashlib.sha256(json.dumps(request_input, sort_keys=True, ensure_ascii=False).encode()).hexdigest() if idempotency_key else None
         if isinstance(graph_input, dict):
             graph_input = _assign_missing_run_input_message_ids(graph_input, thread_id=thread_id, idempotency_key=idempotency_key)
-        # deerflow_trace_id is server-issued, so the caller's value is replaced
+        # nkyel_trace_id is server-issued, so the caller's value is replaced
         # here at the trust boundary. body.metadata forks two ways -- through
         # build_run_config into config["metadata"], which the run worker
         # restamps, and through create_or_reject into the run record, which the
@@ -2268,17 +2268,17 @@ async def start_run(
         # without this the run record is the one surface that persists a forged
         # id, disagreeing with the response header, the logs, and the
         # checkpoint. The caller's own metadata keys are preserved.
-        # deerflow_origin is server-owned as well: only a server-side launcher
+        # nkyel_origin is server-owned as well: only a server-side launcher
         # (request.state.run_origin) or the internal channel caller may set it,
         # and both metadata forks drop any client copy. build_run_config merges
         # body.config["metadata"] into the live config, so the second pop below
         # is what keeps a forged value out of the live run config.
         origin = resolve_request_origin(request, body.metadata)
         run_metadata = _admit_scheduler_metadata(body.metadata, trusted=scheduled_task_runtime is not None)
-        run_metadata.pop(DEERFLOW_ORIGIN_KEY, None)
+        run_metadata.pop(NKYEL_ORIGIN_KEY, None)
         if origin is not None:
-            run_metadata[DEERFLOW_ORIGIN_KEY] = origin
-        run_metadata[DEERFLOW_TRACE_METADATA_KEY] = ensure_trace_id()
+            run_metadata[NKYEL_ORIGIN_KEY] = origin
+        run_metadata[NKYEL_TRACE_METADATA_KEY] = ensure_trace_id()
 
         try:
             config = build_run_config(thread_id, body.config, run_metadata, assistant_id=body.assistant_id)
@@ -2287,12 +2287,12 @@ async def start_run(
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         if isinstance(config.get("metadata"), dict):
             config["metadata"] = _admit_scheduler_metadata(config["metadata"], trusted=scheduled_task_runtime is not None)
-            config["metadata"].pop(DEERFLOW_ORIGIN_KEY, None)
+            config["metadata"].pop(NKYEL_ORIGIN_KEY, None)
             if origin is not None:
-                config["metadata"][DEERFLOW_ORIGIN_KEY] = origin
+                config["metadata"][NKYEL_ORIGIN_KEY] = origin
         await apply_checkpoint_to_run_config(config, body=body, thread_id=thread_id, request=request)
 
-        # Merge DeerFlow-specific context overrides into both ``configurable`` and ``context``.
+        # Merge nkyel-specific context overrides into both ``configurable`` and ``context``.
         # The ``context`` field is a custom extension for the langgraph-compat layer
         # that carries agent configuration (model_name, thinking_enabled, etc.).
         # Only agent-relevant keys are forwarded; unknown keys (e.g. thread_id) are ignored.
@@ -2854,7 +2854,7 @@ def _mcp_task_notification_prompt(event: dict[str, Any]) -> str:
         "Explain the update clearly and concisely. Do not expose or ask for a remote task ID. "
         "When status is input_required, show the question but explain that this MCP integration "
         "cannot resume the remote task with user input yet. When tracking_degraded is true, explain "
-        "that DeerFlow will continue retrying at a lower frequency."
+        "that nkyel will continue retrying at a lower frequency."
     )
     return f"{instruction}\n\n{payload}"
 

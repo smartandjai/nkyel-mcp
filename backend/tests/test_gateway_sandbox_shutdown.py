@@ -22,15 +22,15 @@ def _runtime(monkeypatch, events):
 
     monkeypatch.setattr("app.gateway.app.langgraph_runtime", runtime)
     pool = SimpleNamespace(close_all=AsyncMock(side_effect=lambda: events.append("mcp_closed")))
-    monkeypatch.setattr("deerflow.mcp.session_pool.get_session_pool", lambda: pool)
+    monkeypatch.setattr("nkyel.mcp.session_pool.get_session_pool", lambda: pool)
     return pool
 
 
 def test_shutdown_closes_provider_created_by_lazy_first_write_after_run_drain(monkeypatch):
     from app.gateway.app import _runtime_with_mcp_pool_shutdown
-    from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-    from deerflow.runtime import RunManager, RunStatus
-    from deerflow.sandbox import sandbox_provider as registry
+    from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+    from nkyel.runtime import RunManager, RunStatus
+    from nkyel.sandbox import sandbox_provider as registry
 
     async def scenario():
         events = []
@@ -107,7 +107,7 @@ def test_shutdown_closes_provider_created_by_lazy_first_write_after_run_drain(mo
 
 def test_shutdown_without_provider_does_not_allocate_one(monkeypatch):
     from app.gateway.app import _runtime_with_mcp_pool_shutdown
-    from deerflow.sandbox import sandbox_provider as registry
+    from nkyel.sandbox import sandbox_provider as registry
 
     async def scenario():
         events = []
@@ -124,7 +124,7 @@ def test_shutdown_without_provider_does_not_allocate_one(monkeypatch):
 
 def test_sandbox_shutdown_failure_is_logged_and_remains_retryable(monkeypatch, caplog):
     from app.gateway.app import _runtime_with_mcp_pool_shutdown
-    from deerflow.sandbox import sandbox_provider as registry
+    from nkyel.sandbox import sandbox_provider as registry
 
     async def scenario():
         events = []
@@ -147,7 +147,7 @@ def test_sandbox_shutdown_failure_is_logged_and_remains_retryable(monkeypatch, c
 @pytest.mark.parametrize("cancel_during", ["mcp", "sandbox"])
 def test_shutdown_drains_sandbox_worker_across_cancellation(monkeypatch, cancel_during):
     from app.gateway.app import _runtime_with_mcp_pool_shutdown
-    from deerflow.sandbox import sandbox_provider as registry
+    from nkyel.sandbox import sandbox_provider as registry
 
     async def scenario():
         events = []
@@ -170,7 +170,7 @@ def test_shutdown_drains_sandbox_worker_across_cancellation(monkeypatch, cancel_
             assert release_worker.wait(5.0)
             worker_finished.set()
 
-        monkeypatch.setattr("deerflow.mcp.session_pool.get_session_pool", lambda: SimpleNamespace(close_all=close_pool))
+        monkeypatch.setattr("nkyel.mcp.session_pool.get_session_pool", lambda: SimpleNamespace(close_all=close_pool))
         monkeypatch.setattr(registry, "_default_sandbox_provider", SimpleNamespace(shutdown=close_sandbox))
         context = _runtime_with_mcp_pool_shutdown(FastAPI(), SimpleNamespace())
         await context.__aenter__()

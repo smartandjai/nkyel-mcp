@@ -50,19 +50,19 @@ test("re-staging the same document refreshes its entry instead of duplicating it
 
 test("a corrupt staged payload is dropped, not thrown", () => {
   window.sessionStorage.setItem(
-    "deerflow.project-attachment.thread-1",
+    "nkyel.project-attachment.thread-1",
     "{not json",
   );
   expect(readProjectAttachments("thread-1")).toEqual([]);
   // The corrupt entry was cleared along the way.
   expect(
-    window.sessionStorage.getItem("deerflow.project-attachment.thread-1"),
+    window.sessionStorage.getItem("nkyel.project-attachment.thread-1"),
   ).toBeNull();
 });
 
 test("the pre-list single-object payload shape reads as a one-element list", () => {
   window.sessionStorage.setItem(
-    "deerflow.project-attachment.thread-1",
+    "nkyel.project-attachment.thread-1",
     JSON.stringify(ATTACHMENT),
   );
 

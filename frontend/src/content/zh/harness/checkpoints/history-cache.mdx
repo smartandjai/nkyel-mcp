@@ -86,13 +86,13 @@ import { Callout } from "nextra/components";
 
 ## 配置
 
-缓存是**随 checkpointer 一起、每个进程构造一次**的。`langgraph_runtime()` 用启动时的 `AppConfig` 快照构造 checkpointer（`backend/app/gateway/deps.py:463`），当时 `make_checkpoint_cache()` 返回什么，delta saver 就被 `CachedHistorySaver` 包住什么（`backend/packages/harness/deerflow/runtime/checkpointer/async_provider.py:250-254`）。运行期不会再读本节，因此下表每个字段在整个进程生命周期内都保持启动时的取值。
+缓存是**随 checkpointer 一起、每个进程构造一次**的。`langgraph_runtime()` 用启动时的 `AppConfig` 快照构造 checkpointer（`backend/app/gateway/deps.py:463`），当时 `make_checkpoint_cache()` 返回什么，delta saver 就被 `CachedHistorySaver` 包住什么（`backend/packages/harness/nkyel/runtime/checkpointer/async_provider.py:250-254`）。运行期不会再读本节，因此下表每个字段在整个进程生命周期内都保持启动时的取值。
 
 | 配置键 | 类型 | 默认值 | 范围 | 是否需重启才生效 | 说明 |
 | --- | --- | --- | --- | --- | --- |
 | `database.checkpoint_cache.type` | `memory` \| `redis` | `memory` | — | 是 | `memory` 是进程内 LRU；`redis` 供多 worker 共享，仅异步/Gateway 路径 |
 | `database.checkpoint_cache.max_entries` | `int` | `128` | `ge=0` | 是 | 内存后端 LRU 容量；`0` 表示禁用缓存 |
-| `database.checkpoint_cache.redis_url` | `str` 或 null | `null` | 任意 redis URL | 是 | 依次回退到 `DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL`、`REDIS_URL`、`redis://localhost:6379/0` |
+| `database.checkpoint_cache.redis_url` | `str` 或 null | `null` | 任意 redis URL | 是 | 依次回退到 `NKYEL_CHECKPOINT_CACHE_REDIS_URL`、`REDIS_URL`、`redis://localhost:6379/0` |
 | `database.checkpoint_cache.ttl_seconds` | `int` | `86400` | `ge=0` | 是 | redis 条目 TTL，是防泄漏网而非正确性机制；`0` 表示显式关闭过期 |
 | `database.checkpoint_cache.key_prefix` | `str` | `""` | 任意字符串 | 是 | 为空表示使用数据库身份派生的哈希 |
 
@@ -106,7 +106,7 @@ database:
   checkpoint_cache:
     type: memory            # memory | redis（redis 仅 Gateway/异步可用）
     max_entries: 128        # 0 表示禁用缓存
-    redis_url: null         # 也可用 DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL / REDIS_URL
+    redis_url: null         # 也可用 NKYEL_CHECKPOINT_CACHE_REDIS_URL / REDIS_URL
     ttl_seconds: 86400      # redis 防泄漏网；清理本身是即时的
     key_prefix: ""          # 默认：数据库身份的哈希
 ```

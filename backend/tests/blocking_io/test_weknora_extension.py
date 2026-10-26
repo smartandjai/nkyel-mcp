@@ -10,8 +10,8 @@ import pytest
 
 @pytest.fixture
 def weknora_provider(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[3] / "examples/deerflow-extension-weknora"))
-    from deerflow_extension_weknora import WeKnoraProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[3] / "examples/nkyel-extension-weknora"))
+    from nkyel_extension_weknora import WeKnoraProvider
 
     monkeypatch.setenv("WEKNORA_BLOCKING_TEST_KEY", "synthetic")
     return WeKnoraProvider({"spaces": [{"base_url": "https://weknora.invalid", "tenant_id": "1", "api_key_env": "WEKNORA_BLOCKING_TEST_KEY", "user_ids": ["alice"]}]})
@@ -19,7 +19,7 @@ def weknora_provider(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_weknora_ssl_setup_is_off_loop(weknora_provider, monkeypatch):
-    from deerflow.knowledge import KnowledgeRequestContext
+    from nkyel.knowledge import KnowledgeRequestContext
 
     async def send(self, request, **kwargs):
         assert request.headers["X-Tenant-ID"] == "1"
@@ -42,10 +42,10 @@ async def test_weknora_ssl_setup_is_off_loop(weknora_provider, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_lightrag_relation_ssl_setup_is_off_loop(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[3] / "examples/deerflow-extension-lightrag"))
-    from deerflow_extension_lightrag import LightRAGProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[3] / "examples/nkyel-extension-lightrag"))
+    from nkyel_extension_lightrag import LightRAGProvider
 
-    from deerflow.knowledge import KnowledgeRequestContext
+    from nkyel.knowledge import KnowledgeRequestContext
 
     monkeypatch.setenv("LR_BLOCKING_KEY", "synthetic")
     provider = LightRAGProvider({"base_url": "https://lightrag.invalid", "api_key_env": "LR_BLOCKING_KEY", "user_ids": ["alice"]})

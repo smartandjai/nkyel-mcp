@@ -21,7 +21,7 @@ _STALE_AFTER_SECONDS = 24 * 60 * 60
 
 def credential_staging_prefix(target: Path) -> str:
     """Reserve a namespace for this target without changing tempfile's 0600 mode."""
-    return f".{target.name}.deerflow-"
+    return f".{target.name}.nkyel-"
 
 
 def cleanup_stale_credential_staging(target: Path) -> None:

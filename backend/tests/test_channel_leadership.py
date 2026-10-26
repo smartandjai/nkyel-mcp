@@ -14,7 +14,7 @@ import asyncio
 import pytest
 
 from app.channels.leadership import ChannelLeadership, RenewOutcome
-from deerflow.persistence.channel_leases import ChannelLeaseGrant, ChannelLeaseState
+from nkyel.persistence.channel_leases import ChannelLeaseGrant, ChannelLeaseState
 
 pytestmark = pytest.mark.asyncio
 

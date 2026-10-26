@@ -4,13 +4,13 @@ import logging
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 
-import deerflow.utils.llm_text as llm_text
+import nkyel.utils.llm_text as llm_text
 from app.gateway.authz import _is_internal_caller, authorize_model_use, require_permission
 from app.gateway.deps import get_config, get_current_user_from_request
-from deerflow.config.app_config import AppConfig
-from deerflow.config.suggestions_config import DEFAULT_MAX_SUGGESTIONS, MAX_SUGGESTIONS_LIMIT
-from deerflow.utils.oneshot_llm import run_oneshot_llm
-from deerflow.utils.thread_id import ThreadId
+from nkyel.config.app_config import AppConfig
+from nkyel.config.suggestions_config import DEFAULT_MAX_SUGGESTIONS, MAX_SUGGESTIONS_LIMIT
+from nkyel.utils.oneshot_llm import run_oneshot_llm
+from nkyel.utils.thread_id import ThreadId
 
 logger = logging.getLogger(__name__)
 

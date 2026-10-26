@@ -28,19 +28,19 @@ from langgraph.store.memory import InMemoryStore
 from app.gateway import context_usage
 from app.gateway import services as gateway_services
 from app.gateway.routers import threads
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-from deerflow.runtime import RunManager
-from deerflow.runtime.checkpoint_mode import checkpoint_metadata_uses_delta, inject_checkpoint_mode
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+from nkyel.runtime import RunManager
+from nkyel.runtime.checkpoint_mode import checkpoint_metadata_uses_delta, inject_checkpoint_mode
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 _THREAD_ID = "thread-gateway-parity"
 
 
 @pytest.fixture
 def _stub_app_config():
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     yield
     reset_app_config()
 

@@ -10,8 +10,8 @@ import pytest
 from langchain_core.messages import ToolMessage
 from test_conversation_access import _put, _setup
 
-from deerflow.agents.middlewares.tool_output_budget_middleware import _tool_message_over_budget
-from deerflow.config.tool_output_config import ToolOutputConfig
+from nkyel.agents.middlewares.tool_output_budget_middleware import _tool_message_over_budget
+from nkyel.config.tool_output_config import ToolOutputConfig
 
 
 def _inline(raw: str, config: ToolOutputConfig) -> bool:

@@ -47,12 +47,12 @@ def test_serve_config_presence_reaches_dependency_sync(tmp_path: Path, mode: str
 
     env = os.environ.copy()
     for key in (
-        "DEER_FLOW_CONFIG_PATH",
-        "DEER_FLOW_PROJECT_ROOT",
-        "DEER_FLOW_HOME",
-        "DEER_FLOW_ENV_FILE",
-        "DEER_FLOW_STREAM_BRIDGE_REDIS_URL",
-        "DEER_FLOW_SANDBOX_OWNERSHIP_REDIS_URL",
+        "NKYEL_CONFIG_PATH",
+        "NKYEL_PROJECT_ROOT",
+        "NKYEL_HOME",
+        "NKYEL_ENV_FILE",
+        "NKYEL_STREAM_BRIDGE_REDIS_URL",
+        "NKYEL_SANDBOX_OWNERSHIP_REDIS_URL",
         "UV_EXTRAS",
         "BASH_ENV",
         "ENV",
@@ -60,21 +60,21 @@ def test_serve_config_presence_reaches_dependency_sync(tmp_path: Path, mode: str
         env.pop(key, None)
     project = tmp_path / "external project"
     project.mkdir()
-    env["DEER_FLOW_PROJECT_ROOT"] = project.as_posix()
+    env["NKYEL_PROJECT_ROOT"] = project.as_posix()
     expected_extras = []
     if config_source in {"project-env", "project-dotenv"}:
         (project / "config.yaml").write_text("models:\n  - use: langchain_ollama:ChatOllama\n", encoding="utf-8")
         expected_extras = ["--extra", "ollama"]
         if config_source == "project-dotenv":
-            env.pop("DEER_FLOW_PROJECT_ROOT")
-            (checkout / ".env").write_text(f"DEER_FLOW_PROJECT_ROOT={shlex.quote(project.as_posix())}\n", encoding="utf-8")
+            env.pop("NKYEL_PROJECT_ROOT")
+            (checkout / ".env").write_text(f"NKYEL_PROJECT_ROOT={shlex.quote(project.as_posix())}\n", encoding="utf-8")
     elif config_source == "project-directory":
         (project / "config.yaml").mkdir()
     elif config_source != "missing":
         config = {"explicit": tmp_path / "explicit.yaml", "checkout": checkout / "config.yaml", "legacy": checkout / "backend" / "config.yaml"}[config_source]
         config.write_text("database:\n  backend: sqlite\n", encoding="utf-8")
         if config_source == "explicit":
-            env["DEER_FLOW_CONFIG_PATH"] = config.as_posix()
+            env["NKYEL_CONFIG_PATH"] = config.as_posix()
 
     marker = tmp_path / "upgrade.txt"
     uv_args = tmp_path / "uv-args.txt"
@@ -92,11 +92,11 @@ def test_serve_config_presence_reaches_dependency_sync(tmp_path: Path, mode: str
 
     assert result.returncode == 1, result.stdout + result.stderr
     if config_source in {"missing", "project-directory"}:
-        assert "No DeerFlow config file found" in result.stdout
+        assert "No nkyel config file found" in result.stdout
         assert not marker.exists()
         assert not uv_args.exists()
     else:
-        assert "No DeerFlow config file found" not in result.stdout, result.stdout + result.stderr
+        assert "No nkyel config file found" not in result.stdout, result.stdout + result.stderr
         assert marker.read_text(encoding="utf-8") == "upgraded"
         assert uv_args.read_text(encoding="utf-8").splitlines() == ["sync", "--locked", "--quiet", "--all-packages", *expected_extras]
         assert "Backend dependency install failed" in result.stdout

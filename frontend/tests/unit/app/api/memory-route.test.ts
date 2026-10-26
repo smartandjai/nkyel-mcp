@@ -14,7 +14,7 @@ describe("memory API proxy", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}", { status: 200 }));
     const request = new NextRequest(
-      "http://deer-flow.test/api/memory?agent_name=Research-Agent",
+      "http://nkyel.test/api/memory?agent_name=Research-Agent",
       { method: "DELETE" },
     );
 
@@ -35,7 +35,7 @@ describe("memory API proxy", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}", { status: 200 }));
     const request = new NextRequest(
-      "http://deer-flow.test/api/memory/import?agent_name=Research-Agent&mode=facts%2Bmetadata",
+      "http://nkyel.test/api/memory/import?agent_name=Research-Agent&mode=facts%2Bmetadata",
       {
         method: "POST",
         body: JSON.stringify({ facts: [] }),

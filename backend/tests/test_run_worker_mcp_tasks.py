@@ -1,6 +1,6 @@
 """MCP task projection tests for the run worker."""
 
-from deerflow.runtime.runs.worker import _project_background_tasks
+from nkyel.runtime.runs.worker import _project_background_tasks
 
 
 def test_project_background_tasks_neutralizes_task_names():

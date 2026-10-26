@@ -7,8 +7,8 @@ from copy import deepcopy
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
-from deerflow.subagents.context_snapshot import ParentContextSnapshot
-from deerflow.utils.messages import message_content_to_text
+from nkyel.subagents.context_snapshot import ParentContextSnapshot
+from nkyel.utils.messages import message_content_to_text
 
 
 @pytest.mark.parametrize("dispatch_id", ["dispatch", "earlier-delegation"])
@@ -275,10 +275,10 @@ def test_snapshot_warns_about_non_string_types_but_keeps_deliberate_exclusions_q
         {"type": "reasoning", "reasoning": "deliberately excluded"},
         {"type": "text", "text": "kept answer"},
     ]
-    with caplog.at_level(logging.WARNING, logger="deerflow.subagents.context_snapshot"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.subagents.context_snapshot"):
         snapshot = ParentContextSnapshot.from_state({"messages": [HumanMessage(content=content)]})
 
-    warnings = [record for record in caplog.records if record.name == "deerflow.subagents.context_snapshot"]
+    warnings = [record for record in caplog.records if record.name == "nkyel.subagents.context_snapshot"]
     assert len(warnings) == 1
     assert "non-string type" in warnings[0].getMessage()
     assert "[]" in warnings[0].getMessage()
@@ -297,8 +297,8 @@ def test_snapshot_keeps_tool_content_normalized_by_message_constructor(content, 
 
 @pytest.mark.parametrize("injection", ["memory", "todo"])
 def test_snapshot_excludes_real_framework_injections(injection):
-    from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
-    from deerflow.agents.middlewares.todo_middleware import TodoMiddleware
+    from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+    from nkyel.agents.middlewares.todo_middleware import TodoMiddleware
 
     original = HumanMessage(content="VISIBLE_USER_REQUEST", id="user-turn")
     if injection == "memory":

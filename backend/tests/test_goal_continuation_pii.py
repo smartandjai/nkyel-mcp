@@ -9,14 +9,14 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.checkpoint.base import empty_checkpoint
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.agents.middlewares import pii_redaction_middleware
-from deerflow.agents.middlewares.pii_redaction_middleware import redact_text
-from deerflow.config.app_config import AppConfig
-from deerflow.config.pii_redaction_config import PiiRedactionConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.runtime import goal
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.runs import worker
+from nkyel.agents.middlewares import pii_redaction_middleware
+from nkyel.agents.middlewares.pii_redaction_middleware import redact_text
+from nkyel.config.app_config import AppConfig
+from nkyel.config.pii_redaction_config import PiiRedactionConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.runtime import goal
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.runs import worker
 
 _PII = PiiRedactionConfig(enabled=True, token_secret="unit-test-deployment-secret-0123456789")
 _ENABLED = AppConfig(sandbox=SandboxConfig(use="test"), pii_redaction=_PII)
@@ -50,7 +50,7 @@ def test_continuation_redacts_the_objective_reason_and_evidence():
     for value in ("carol@example.com", "13800138000"):
         expected = expected.replace(value, redact_text(value, _PII))
     assert message.content == expected
-    assert message.additional_kwargs == {"hide_from_ui": True, "deerflow_goal_continuation": True}
+    assert message.additional_kwargs == {"hide_from_ui": True, "nkyel_goal_continuation": True}
 
 
 @pytest.mark.parametrize("pii_redaction", [None, PiiRedactionConfig(enabled=False)], ids=["no config", "disabled"])

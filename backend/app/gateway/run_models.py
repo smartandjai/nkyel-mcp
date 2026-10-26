@@ -8,8 +8,8 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, ValidationInfo, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 
-from deerflow.runtime.stream_modes import RunStreamMode, UnsupportedStreamModeError, normalize_stream_modes
-from deerflow.utils.thread_id import validate_thread_id
+from nkyel.runtime.stream_modes import RunStreamMode, UnsupportedStreamModeError, normalize_stream_modes
+from nkyel.utils.thread_id import validate_thread_id
 
 # Upper bound on explicit conversation references per run; ``/api/features``
 # reports it so a UI can cap its selection to the same number.
@@ -36,7 +36,7 @@ class RunCreateRequest(BaseModel):
     command: dict[str, Any] | None = Field(default=None, description="LangGraph Command")
     metadata: dict[str, Any] | None = Field(default=None, description="Run metadata")
     config: dict[str, Any] | None = Field(default=None, description="RunnableConfig overrides")
-    context: dict[str, Any] | None = Field(default=None, description="DeerFlow context overrides (model_name, thinking_enabled, etc.). May include client capabilities under context.client.")
+    context: dict[str, Any] | None = Field(default=None, description="nkyel context overrides (model_name, thinking_enabled, etc.). May include client capabilities under context.client.")
     conversation_references: list[ConversationReference] = Field(
         default_factory=list,
         max_length=MAX_CONVERSATION_REFERENCES,
@@ -159,7 +159,7 @@ class RunCreateRequest(BaseModel):
         if not is_supported:
             raise PydanticCustomError(
                 "unsupported_run_option",
-                "Run option '{option}' is not supported by DeerFlow",
+                "Run option '{option}' is not supported by nkyel",
                 {"option": info.field_name},
             )
         return value
@@ -169,12 +169,12 @@ class RunCreateRequest(BaseModel):
     def reject_resumable_streams(cls, value: Any) -> Any:
         # LangGraph SDK clients always send this field (its default is ``False``, which the
         # payload's ``None`` filter keeps). ``False`` asks for the non-resumable stream
-        # DeerFlow already serves, so only an explicit ``True`` requests the unsupported feature.
+        # nkyel already serves, so only an explicit ``True`` requests the unsupported feature.
         if value is None or value is False:
             return value
         raise PydanticCustomError(
             "unsupported_run_option",
-            "Run option '{option}' is not supported by DeerFlow",
+            "Run option '{option}' is not supported by nkyel",
             {"option": "stream_resumable"},
         )
 

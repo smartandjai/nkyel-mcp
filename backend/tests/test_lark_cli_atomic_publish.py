@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.integrations.lark_cli import _publish_bytes_atomically
+from nkyel.integrations.lark_cli import _publish_bytes_atomically
 
 
 def test_publishes_the_content_and_leaves_no_temp_file(tmp_path):
@@ -68,10 +68,10 @@ def test_publish_preserves_original_error_when_cleanup_fails(tmp_path, monkeypat
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             with pytest.raises(primary_type) as raised:
                 _publish_bytes_atomically(target, b"new runtime")
 
@@ -127,7 +127,7 @@ def test_truncating_write_would_have_destroyed_it(tmp_path):
 def test_the_install_path_uses_the_atomic_publish():
     import inspect
 
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     source = inspect.getsource(lark_cli)
 

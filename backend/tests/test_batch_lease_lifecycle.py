@@ -10,14 +10,14 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.subagent_batches import SubagentBatchRepository
-from deerflow.persistence.subagent_batches.model import SubagentBatchItemRow, SubagentBatchRow
-from deerflow.subagents import batch_service as service_module
-from deerflow.subagents.batch_service import SubagentBatchService
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.subagent_batches import SubagentBatchRepository
+from nkyel.persistence.subagent_batches.model import SubagentBatchItemRow, SubagentBatchRow
+from nkyel.subagents import batch_service as service_module
+from nkyel.subagents.batch_service import SubagentBatchService
 
 
 class SubagentStatus(Enum):
@@ -209,7 +209,7 @@ def setup_executor(monkeypatch, started, release):
             return "execution-1"
 
     result = SimpleNamespace(status=SubagentStatus.COMPLETED, result="correct source result", error=None, stop_reason=None, token_usage_records=None, ai_messages=[])
-    monkeypatch.setattr("deerflow.tools.get_available_tools", assemble)
+    monkeypatch.setattr("nkyel.tools.get_available_tools", assemble)
     monkeypatch.setattr(service_module, "resolve_subagent_model_name", lambda *_a, **_kw: "test-model")
     monkeypatch.setattr(service_module, "SubagentExecutor", Executor)
     monkeypatch.setattr(service_module, "get_background_task_result", lambda _id: result)
@@ -383,7 +383,7 @@ async def test_lost_heartbeat_cancels_execution_before_a_long_poll_interval(repo
 
 @pytest.mark.asyncio
 async def test_heartbeat_exit_drains_an_in_flight_renewal_across_repeated_cancellation():
-    from deerflow.subagents.batch_lease import BatchItemLease
+    from nkyel.subagents.batch_lease import BatchItemLease
 
     renewing, finish_renewal, exit_context = asyncio.Event(), asyncio.Event(), asyncio.Event()
     calls = 0

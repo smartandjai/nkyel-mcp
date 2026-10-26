@@ -24,10 +24,10 @@ from pydantic import BaseModel
 from app.gateway.authz import require_permission
 from app.gateway.deps import get_project_document_repo, get_project_repo
 from app.gateway.routers.project_documents import ProjectDocumentResponse, _to_response
-from deerflow.config.paths import get_paths
-from deerflow.config.projects_config import ProjectsConfig
-from deerflow.projects.trash import make_purge_file_remover, purge_all_trashed, restore_document, run_trash_retention_sweep
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.config.paths import get_paths
+from nkyel.config.projects_config import ProjectsConfig
+from nkyel.projects.trash import make_purge_file_remover, purge_all_trashed, restore_document, run_trash_retention_sweep
+from nkyel.runtime.user_context import get_effective_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ class PurgeResponse(BaseModel):
 
 def _projects_config() -> ProjectsConfig:
     """Projects config, falling back to defaults when the app config is unavailable."""
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     try:
         return get_app_config().projects

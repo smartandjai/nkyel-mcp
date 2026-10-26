@@ -8,15 +8,15 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
-from deerflow.uploads.companions import (
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.uploads.companions import (
     companion_names,
     invalidate_overwritten_upload,
     register_companion,
     resolve_companion,
     unregister_companion,
 )
-from deerflow.utils.file_outline import extract_outline_for_file
+from nkyel.utils.file_outline import extract_outline_for_file
 
 
 @pytest.fixture
@@ -95,7 +95,7 @@ def test_each_source_timestamp_invalidates_companion(converted_upload, monkeypat
     # Model mtime-only updates (e.g. Windows creation-time ctime) and ctime-only
     # updates (e.g. POSIX writes followed by restoring the old mtime).
     monkeypatch.setattr(Path, "stat", changed_stat)
-    with caplog.at_level("DEBUG", logger="deerflow.uploads.companions"):
+    with caplog.at_level("DEBUG", logger="nkyel.uploads.companions"):
         assert resolve_companion(original) is None
     assert "source identity or version timestamps do not match" in caplog.text
 
@@ -114,7 +114,7 @@ def test_same_size_markdown_edit_invalidates_companion_on_windows(converted_uplo
         return result
 
     monkeypatch.setattr(Path, "stat", changed_markdown_stat)
-    with caplog.at_level("DEBUG", logger="deerflow.uploads.companions"):
+    with caplog.at_level("DEBUG", logger="nkyel.uploads.companions"):
         assert resolve_companion(original) is None
     assert "Markdown identity or version timestamp does not match" in caplog.text
     assert "legacy Markdown identity" not in caplog.text
@@ -128,7 +128,7 @@ def test_legacy_source_record_requires_reregistration(converted_upload, caplog):
     record.write_text(json.dumps(data), encoding="utf-8")
     legacy = record.read_bytes()
 
-    with caplog.at_level("DEBUG", logger="deerflow.uploads.companions"):
+    with caplog.at_level("DEBUG", logger="nkyel.uploads.companions"):
         assert resolve_companion(original) is None
     assert "legacy source identity lacks version timestamps" in caplog.text
     assert extract_outline_for_file(original) == ([], [])
@@ -147,7 +147,7 @@ def test_legacy_markdown_record_requires_reregistration(converted_upload, caplog
     record.write_text(json.dumps(data), encoding="utf-8")
     legacy = record.read_bytes()
 
-    with caplog.at_level("DEBUG", logger="deerflow.uploads.companions"):
+    with caplog.at_level("DEBUG", logger="nkyel.uploads.companions"):
         assert resolve_companion(original) is None
     assert "legacy Markdown identity lacks modification timestamp; re-register companion" in caplog.text
     assert "Markdown identity or version timestamp does not match" not in caplog.text
@@ -190,7 +190,7 @@ def test_unregister_tolerates_a_record_that_cannot_be_removed(converted_upload, 
     record = next((original.parent.parent.parent / "upload-companions").glob("*.json"))
     _fail_record_unlink(monkeypatch)
 
-    with caplog.at_level("WARNING", logger="deerflow.uploads.companions"):
+    with caplog.at_level("WARNING", logger="nkyel.uploads.companions"):
         unregister_companion(original)
 
     assert "Failed to remove upload companion record" in caplog.text
@@ -202,7 +202,7 @@ def test_overwrite_invalidation_tolerates_a_record_that_cannot_be_removed(conver
     original, _ = converted_upload
     _fail_record_unlink(monkeypatch)
 
-    with caplog.at_level("WARNING", logger="deerflow.uploads.companions"):
+    with caplog.at_level("WARNING", logger="nkyel.uploads.companions"):
         invalidate_overwritten_upload(original)
 
     assert "Failed to remove upload companion record" in caplog.text
@@ -210,7 +210,7 @@ def test_overwrite_invalidation_tolerates_a_record_that_cannot_be_removed(conver
 
 def test_record_removal_survives_a_broken_log_handler(converted_upload, monkeypatch):
     """Diagnostics are best-effort too: a raising handler cannot fail the caller."""
-    from deerflow.uploads import companions as companions_module
+    from nkyel.uploads import companions as companions_module
 
     original, _ = converted_upload
     _fail_record_unlink(monkeypatch)

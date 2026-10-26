@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.skills.package_paths import is_eval_fixture_path, is_eval_fixture_skill_md
-from deerflow.skills.skillscan.orchestrator import scan_skill_dir
+from nkyel.skills.package_paths import is_eval_fixture_path, is_eval_fixture_skill_md
+from nkyel.skills.skillscan.orchestrator import scan_skill_dir
 
 _MINIMAL_SKILL_MD = "---\nname: demo\ndescription: A demo skill\n---\n\nBody.\n"
 

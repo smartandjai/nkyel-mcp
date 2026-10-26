@@ -7,8 +7,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.community.tenki.provider import TenkiSandboxProvider
-from deerflow.community.tenki.sandbox import TenkiSandbox
+from nkyel.community.tenki.provider import TenkiSandboxProvider
+from nkyel.community.tenki.sandbox import TenkiSandbox
 
 
 class Remote:
@@ -33,7 +33,7 @@ class Remote:
 @pytest.fixture
 def exit_callbacks(monkeypatch):
     callbacks = []
-    monkeypatch.setattr("deerflow.community.tenki.provider.atexit.register", callbacks.append)
+    monkeypatch.setattr("nkyel.community.tenki.provider.atexit.register", callbacks.append)
     return callbacks
 
 

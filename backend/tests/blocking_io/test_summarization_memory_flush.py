@@ -18,14 +18,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.honcho.honcho_manager import HonchoMemoryManager
-from deerflow.agents.memory.backends.mem0.mem0_manager import Mem0Manager
-from deerflow.agents.memory.backends.openviking.openviking_manager import OpenVikingMemoryManager
-from deerflow.agents.memory.summarization_hook import memory_flush_hook
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.config.memory_config import MemoryConfig
+from nkyel.agents.memory.backends.honcho.honcho_manager import HonchoMemoryManager
+from nkyel.agents.memory.backends.mem0.mem0_manager import Mem0Manager
+from nkyel.agents.memory.backends.openviking.openviking_manager import OpenVikingMemoryManager
+from nkyel.agents.memory.summarization_hook import memory_flush_hook
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.config.memory_config import MemoryConfig
 
-HOOK_MODULE = "deerflow.agents.memory.summarization_hook"
+HOOK_MODULE = "nkyel.agents.memory.summarization_hook"
 
 
 class _BlockingWrites:
@@ -122,7 +122,7 @@ def _honcho(writes: _BlockingWrites, monkeypatch: pytest.MonkeyPatch) -> HonchoM
 
 
 def _openviking(writes: _BlockingWrites, monkeypatch: pytest.MonkeyPatch) -> OpenVikingMemoryManager:
-    import deerflow.agents.memory.backends.openviking.openviking_manager as module
+    import nkyel.agents.memory.backends.openviking.openviking_manager as module
 
     monkeypatch.setenv("OPENVIKING_API_KEY", "user-key")
     monkeypatch.setattr(
@@ -151,11 +151,11 @@ def _openviking(writes: _BlockingWrites, monkeypatch: pytest.MonkeyPatch) -> Ope
 _BACKENDS = [pytest.param(_mem0, id="mem0"), pytest.param(_honcho, id="honcho"), pytest.param(_openviking, id="openviking")]
 
 
-def _middleware() -> DeerFlowSummarizationMiddleware:
+def _middleware() -> NkyelSummarizationMiddleware:
     model = MagicMock()
     model.ainvoke = AsyncMock(return_value=SimpleNamespace(text="compressed summary"))
     model.with_config.return_value = model
-    return DeerFlowSummarizationMiddleware(
+    return NkyelSummarizationMiddleware(
         model=model,
         trigger=("messages", 4),
         keep=("messages", 2),

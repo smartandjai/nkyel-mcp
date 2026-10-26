@@ -11,15 +11,15 @@ from langchain.agents import AgentState as _AgentState
 from langchain_core.tools import ToolException
 from langchain_mcp_adapters.interceptors import MCPToolCallRequest
 
-from deerflow.config.extensions_config import (
+from nkyel.config.extensions_config import (
     ExtensionsConfig,
     McpContextHeadersConfig,
     McpServerConfig,
     McpTaskToolsetConfig,
     McpUserScopedAuthConfig,
 )
-from deerflow.mcp.context_headers import build_context_headers_interceptor
-from deerflow.mcp.interceptors import build_mcp_tool_interceptors
+from nkyel.mcp.context_headers import build_context_headers_interceptor
+from nkyel.mcp.interceptors import build_mcp_tool_interceptors
 
 TENANT_TOKEN = "Bearer tenant-scoped-token"
 
@@ -100,7 +100,7 @@ def test_stdio_server_is_skipped_with_warning(caplog):
         },
         skills={},
     )
-    with caplog.at_level(logging.WARNING, logger="deerflow.mcp.context_headers"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.mcp.context_headers"):
         assert build_context_headers_interceptor(config) is None
     assert "stdio" in caplog.text
 
@@ -155,7 +155,7 @@ def test_other_server_passes_through_untouched():
 def test_falls_back_to_ambient_runtime_when_request_runtime_is_missing():
     interceptor = build_context_headers_interceptor(_config(headers={"X-Tenant-Token": "tenant_token"}))
     with patch(
-        "deerflow.mcp.context_headers._current_runtime",
+        "nkyel.mcp.context_headers._current_runtime",
         return_value=_runtime_with_secrets(tenant_token=TENANT_TOKEN),
     ):
         result = asyncio.run(interceptor(_request(runtime=None), _echo_handler))
@@ -223,7 +223,7 @@ def _connection_headers_for_adapter_call(config: ExtensionsConfig) -> dict[str, 
     from mcp.types import CallToolResult, TextContent
     from mcp.types import Tool as MCPTool
 
-    from deerflow.mcp.client import build_server_params
+    from nkyel.mcp.client import build_server_params
 
     opened: dict[str, str] = {}
 
@@ -318,7 +318,7 @@ def test_empty_secret_value_is_denied():
 
 def test_absent_run_context_is_denied():
     interceptor = build_context_headers_interceptor(_config(headers={"X-Tenant-Token": "tenant_token"}))
-    with patch("deerflow.mcp.context_headers._current_runtime", return_value=None), pytest.raises(ToolException):
+    with patch("nkyel.mcp.context_headers._current_runtime", return_value=None), pytest.raises(ToolException):
         asyncio.run(interceptor(_request(runtime=None), AsyncMock()))
 
 
@@ -374,7 +374,7 @@ def test_illegal_value_deny_message_does_not_contain_the_value():
 
 def test_illegal_value_warning_log_does_not_contain_the_value(caplog):
     interceptor = build_context_headers_interceptor(_config(headers={"X-Tenant-Token": "tenant_token"}))
-    with caplog.at_level(logging.WARNING, logger="deerflow.mcp.context_headers"), pytest.raises(ToolException):
+    with caplog.at_level(logging.WARNING, logger="nkyel.mcp.context_headers"), pytest.raises(ToolException):
         asyncio.run(interceptor(_request(runtime=_runtime_with_secrets(tenant_token="sk-secret-value\n")), AsyncMock()))
     assert "sk-secret-value" not in caplog.text
     assert "tenant_token" in caplog.text
@@ -524,7 +524,7 @@ def test_shared_assembly_skips_when_not_configured():
 def _run_adapter_tool_in_graph(*, isolate_request_runtime: bool = False) -> dict[str, Any]:
     """Drive a real adapter tool through a real graph; return the headers it sent.
 
-    DeerFlow does not wrap HTTP/SSE MCP tools, so the tool under test here is the
+    nkyel does not wrap HTTP/SSE MCP tools, so the tool under test here is the
     one ``langchain_mcp_adapters`` builds, invoked by LangGraph's own tool node.
 
     With *isolate_request_runtime* the ambient-runtime fallback is disabled, so
@@ -573,7 +573,7 @@ def _run_adapter_tool_in_graph(*, isolate_request_runtime: bool = False) -> dict
         )
 
     if isolate_request_runtime:
-        with patch("deerflow.mcp.context_headers._current_runtime", return_value=None):
+        with patch("nkyel.mcp.context_headers._current_runtime", return_value=None):
             _invoke()
     else:
         _invoke()
@@ -620,7 +620,7 @@ def _task_config() -> ExtensionsConfig:
 
 def _task_caller(config: ExtensionsConfig) -> tuple[Any, dict[str, str], Any]:
     """Build a task caller whose remote session records the headers it opened with."""
-    from deerflow.mcp.task_tool_caller import McpTaskToolCaller
+    from nkyel.mcp.task_tool_caller import McpTaskToolCaller
 
     opened: dict[str, str] = {}
     result = SimpleNamespace(structuredContent={"task_id": "remote-1", "status": "running"}, isError=False)
@@ -658,8 +658,8 @@ def test_durable_submit_carries_the_request_scoped_headers():
     from langgraph.graph import END, START, StateGraph
     from langgraph.prebuilt import ToolNode
 
-    from deerflow.mcp.tasks import TaskSubmitRequest
-    from deerflow.mcp.tasks.ordinary import OrdinaryMcpTaskDriver
+    from nkyel.mcp.tasks import TaskSubmitRequest
+    from nkyel.mcp.tasks.ordinary import OrdinaryMcpTaskDriver
 
     caller, opened, session_context = _task_caller(_task_config())
     driver = OrdinaryMcpTaskDriver(caller)
@@ -701,8 +701,8 @@ def test_durable_submit_carries_the_request_scoped_headers():
 @pytest.mark.asyncio
 async def test_durable_status_poll_keeps_the_server_credential():
     """The poller runs after the Agent run ended: no run context, no deny."""
-    from deerflow.mcp.tasks.models import TaskReference
-    from deerflow.mcp.tasks.ordinary import OrdinaryMcpTaskDriver
+    from nkyel.mcp.tasks.models import TaskReference
+    from nkyel.mcp.tasks.ordinary import OrdinaryMcpTaskDriver
 
     caller, opened, session_context = _task_caller(_task_config())
     driver = OrdinaryMcpTaskDriver(caller)
@@ -727,7 +727,7 @@ def test_declaring_both_request_headers_and_task_toolsets_warns(caplog):
     """Background polls run outside the Agent run that carried the secrets."""
     config = _config(headers={"X-Tenant-Token": "tenant_token"})
     config.mcp_servers["shared-http"].task_toolsets = [McpTaskToolsetConfig(name="reports", submit_tool="submit", status_tool="status", cancel_tool="cancel")]
-    with caplog.at_level(logging.WARNING, logger="deerflow.mcp.context_headers"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.mcp.context_headers"):
         assert build_context_headers_interceptor(config) is not None
     assert "task_toolsets" in caplog.text
 
@@ -737,7 +737,7 @@ async def test_durable_task_calls_are_not_denied_for_a_missing_run_context():
     """The task runtime must keep polling on server-level auth, not fail closed."""
     from unittest.mock import MagicMock
 
-    from deerflow.mcp.task_tool_caller import McpTaskToolCaller
+    from nkyel.mcp.task_tool_caller import McpTaskToolCaller
 
     config = ExtensionsConfig.model_validate(
         {

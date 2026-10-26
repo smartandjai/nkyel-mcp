@@ -7,13 +7,13 @@ from pathlib import Path
 import httpx
 import pytest
 
-from deerflow.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
+from nkyel.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
 
 
 @pytest.fixture
 def graph(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-lightrag"))
-    from deerflow_extension_lightrag import LightRAGProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-lightrag"))
+    from nkyel_extension_lightrag import LightRAGProvider
 
     monkeypatch.setenv("LR_TEST_KEY", "synthetic-key")
     state = {

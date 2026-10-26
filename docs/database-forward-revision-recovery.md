@@ -29,10 +29,10 @@ are not required before their migration runs.
    or data backfills. Neither `projects` nor `threads_meta.project_id` may already
    exist for this recovery path. If the shape differs, use a migration reviewed
    for that deployment; do not use the commands below.
-3. From this checkout's `backend/`, set `DEERFLOW_RECOVERY_DATABASE_URL` to the
+3. From this checkout's `backend/`, set `NKYEL_RECOVERY_DATABASE_URL` to the
    target async SQLAlchemy URL (`sqlite+aiosqlite:////absolute/path/database.db`
    or `postgresql+asyncpg://…`). For Postgres, also set
-   `DEERFLOW_RECOVERY_POSTGRES_SCHEMA` to the configured application schema, if
+   `NKYEL_RECOVERY_POSTGRES_SCHEMA` to the configured application schema, if
    one is used. Keep credentials out of shell history.
 4. Rebase the version marker to the verified common parent and run the normal
    migrations. `purge=True` replaces the version row, not application data;
@@ -47,12 +47,12 @@ are not required before their migration runs.
    from alembic import command
    from sqlalchemy.ext.asyncio import create_async_engine
 
-   from deerflow.persistence.bootstrap import _get_alembic_config
+   from nkyel.persistence.bootstrap import _get_alembic_config
 
-   engine = create_async_engine(os.environ["DEERFLOW_RECOVERY_DATABASE_URL"])
+   engine = create_async_engine(os.environ["NKYEL_RECOVERY_DATABASE_URL"])
    cfg = _get_alembic_config(
        engine,
-       postgres_schema=os.environ.get("DEERFLOW_RECOVERY_POSTGRES_SCHEMA", ""),
+       postgres_schema=os.environ.get("NKYEL_RECOVERY_POSTGRES_SCHEMA", ""),
    )
    command.stamp(cfg, "0018_oauth_identity_pg_partial", purge=True)
    command.upgrade(cfg, "head")

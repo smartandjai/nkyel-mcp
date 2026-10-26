@@ -7,7 +7,7 @@ import httpx
 import pytest
 from fastapi import FastAPI, Request
 
-from deerflow.skills.mutations.workers import MutationWorkers
+from nkyel.skills.mutations.workers import MutationWorkers
 
 
 @pytest.mark.asyncio
@@ -69,7 +69,7 @@ async def test_admin_recovery_auth_and_off_loop(role, source, status):
 
 @pytest.mark.asyncio
 async def test_admin_errors_do_not_return_database_or_candidate_content():
-    from deerflow_extension_api import HostCapabilityError
+    from nkyel_extension_api import HostCapabilityError
 
     from app.gateway.routers.skill_mutations import router
 

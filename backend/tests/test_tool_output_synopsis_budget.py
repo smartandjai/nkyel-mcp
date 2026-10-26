@@ -7,10 +7,10 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 
-from deerflow.agents.middlewares import tool_output_synopsis as synopsis_module
-from deerflow.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware, _build_preview, _patch_model_messages
-from deerflow.agents.middlewares.tool_output_synopsis import ToolOutputSynopsis, build_tool_output_synopsis
-from deerflow.config.tool_output_config import ToolOutputConfig
+from nkyel.agents.middlewares import tool_output_synopsis as synopsis_module
+from nkyel.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware, _build_preview, _patch_model_messages
+from nkyel.agents.middlewares.tool_output_synopsis import ToolOutputSynopsis, build_tool_output_synopsis
+from nkyel.config.tool_output_config import ToolOutputConfig
 
 
 @pytest.mark.parametrize("key", ["x" * 20000, "字段🙂" * 5000, '"\\\n' * 5000], ids=["ascii", "unicode", "escaped"])

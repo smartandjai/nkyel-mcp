@@ -10,13 +10,13 @@ from langchain_core.messages import AIMessage, HumanMessage, messages_from_dict,
 from langchain_openai.chat_models.base import _convert_dict_to_message
 from langgraph.runtime import Runtime
 
-from deerflow.agents.memory import summarization_hook
-from deerflow.agents.middlewares import memory_middleware
-from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-from deerflow.agents.middlewares.pii_redaction_middleware import redact_text
-from deerflow.agents.middlewares.summarization_middleware import SummarizationEvent
-from deerflow.config.memory_config import MemoryConfig
-from deerflow.config.pii_redaction_config import PiiRedactionConfig
+from nkyel.agents.memory import summarization_hook
+from nkyel.agents.middlewares import memory_middleware
+from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+from nkyel.agents.middlewares.pii_redaction_middleware import redact_text
+from nkyel.agents.middlewares.summarization_middleware import SummarizationEvent
+from nkyel.config.memory_config import MemoryConfig
+from nkyel.config.pii_redaction_config import PiiRedactionConfig
 
 _EMAIL = "alice@example.com"
 _SECRET = "memory-regression-deployment-secret"

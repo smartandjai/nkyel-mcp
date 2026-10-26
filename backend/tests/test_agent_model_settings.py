@@ -14,7 +14,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from deerflow.config.agents_config import (
+from nkyel.config.agents_config import (
     MANAGED_AGENT_CONFIG_FIELDS,
     MAX_AGENT_OUTPUT_TOKENS,
     AgentConfig,
@@ -115,8 +115,8 @@ def _write_agent(base: Path, user_id: str, name: str, body: dict) -> None:
 
 
 def test_load_agent_config_round_trips_model_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    from deerflow.config import paths as paths_module
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "_paths", None)
 
@@ -141,8 +141,8 @@ def test_load_agent_config_round_trips_model_settings(tmp_path: Path, monkeypatc
 
 
 def test_load_agent_config_without_model_settings_is_none(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    from deerflow.config import paths as paths_module
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "_paths", None)
 

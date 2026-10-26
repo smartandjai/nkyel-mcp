@@ -4,13 +4,13 @@
 #
 # Starts throwaway Postgres and Redis containers, renders a multi-instance
 # config.yaml from your own config (or config.example.yaml), and runs Gateway A
-# and Gateway B on one shared DEER_FLOW_HOME with shared auth secrets, plus an
+# and Gateway B on one shared NKYEL_HOME with shared auth secrets, plus an
 # optional round-robin nginx in front of both. Run with --help for commands.
 #
 # Config rendering, secrets, the nginx config and the checks live in
 # dev_multi_instance.py (unit-tested); this file owns containers and processes.
-# Everything lives under DEERFLOW_MI_STATE_DIR so it never collides with
-# `make dev` state in backend/.deer-flow.
+# Everything lives under NKYEL_MI_STATE_DIR so it never collides with
+# `make dev` state in backend/.nkyel.
 
 set -euo pipefail
 
@@ -18,29 +18,29 @@ REPO_ROOT="$(builtin cd "$(dirname "${BASH_SOURCE[0]}")/.." >/dev/null 2>&1 && p
 BACKEND_DIR="$REPO_ROOT/backend"
 HELPER="$REPO_ROOT/scripts/dev_multi_instance.py"
 
-STATE_DIR="${DEERFLOW_MI_STATE_DIR:-$REPO_ROOT/.deer-flow/multi-instance}"
+STATE_DIR="${NKYEL_MI_STATE_DIR:-$REPO_ROOT/.nkyel/multi-instance}"
 # Gateways run from backend/, so every path handed to them must be absolute.
 case "$STATE_DIR" in
     /*) ;;
     *) STATE_DIR="$PWD/$STATE_DIR" ;;
 esac
-GATEWAY_A_PORT="${DEERFLOW_MI_GATEWAY_A_PORT:-8001}"
-GATEWAY_B_PORT="${DEERFLOW_MI_GATEWAY_B_PORT:-8011}"
-NGINX_PORT="${DEERFLOW_MI_NGINX_PORT:-2027}"
-FRONTEND_PORT="${DEERFLOW_MI_FRONTEND_PORT:-3000}"
-PG_PORT="${DEERFLOW_MI_POSTGRES_PORT:-55432}"
-REDIS_PORT="${DEERFLOW_MI_REDIS_PORT:-56379}"
-PG_CONTAINER="${DEERFLOW_MI_POSTGRES_CONTAINER:-deerflow-mi-postgres}"
-REDIS_CONTAINER="${DEERFLOW_MI_REDIS_CONTAINER:-deerflow-mi-redis}"
-PG_IMAGE="${DEERFLOW_MI_POSTGRES_IMAGE:-postgres:17-alpine}"
-REDIS_IMAGE="${DEERFLOW_MI_REDIS_IMAGE:-redis:7-alpine}"
-HEALTH_TIMEOUT="${DEERFLOW_MI_HEALTH_TIMEOUT:-180}"
+GATEWAY_A_PORT="${NKYEL_MI_GATEWAY_A_PORT:-8001}"
+GATEWAY_B_PORT="${NKYEL_MI_GATEWAY_B_PORT:-8011}"
+NGINX_PORT="${NKYEL_MI_NGINX_PORT:-2027}"
+FRONTEND_PORT="${NKYEL_MI_FRONTEND_PORT:-3000}"
+PG_PORT="${NKYEL_MI_POSTGRES_PORT:-55432}"
+REDIS_PORT="${NKYEL_MI_REDIS_PORT:-56379}"
+PG_CONTAINER="${NKYEL_MI_POSTGRES_CONTAINER:-nkyel-mi-postgres}"
+REDIS_CONTAINER="${NKYEL_MI_REDIS_CONTAINER:-nkyel-mi-redis}"
+PG_IMAGE="${NKYEL_MI_POSTGRES_IMAGE:-postgres:17-alpine}"
+REDIS_IMAGE="${NKYEL_MI_REDIS_IMAGE:-redis:7-alpine}"
+HEALTH_TIMEOUT="${NKYEL_MI_HEALTH_TIMEOUT:-180}"
 
-LABEL_KEY="deerflow.harness"
+LABEL_KEY="nkyel.harness"
 LABEL_VALUE="dev-multi-instance"
 # Container names are global, so each container also records the state dir
 # that created it; only that state dir may remove it.
-STATE_LABEL_KEY="deerflow.harness.state-dir"
+STATE_LABEL_KEY="nkyel.harness.state-dir"
 STATE_MARKER=".dev-multi-instance"
 RUN_DIR="$STATE_DIR/run"
 LOG_DIR="$STATE_DIR/logs"
@@ -52,8 +52,8 @@ usage() {
     cat <<EOF
 Usage: scripts/dev_multi_instance.sh <command> [options]
 
-Run two DeerFlow Gateways (A and B) on shared Postgres, Redis and
-DEER_FLOW_HOME: the topology that deployment.multi_instance: true targets.
+Run two nkyel Gateways (A and B) on shared Postgres, Redis and
+NKYEL_HOME: the topology that deployment.multi_instance: true targets.
 
 Commands:
   up [--skip-install] [--no-nginx]  Start containers, render the config, start A, then B, then nginx
@@ -73,15 +73,15 @@ Defaults:
   State      $STATE_DIR
 
 Environment overrides:
-  DEERFLOW_MI_BASE_CONFIG     base config (default: \$DEER_FLOW_CONFIG_PATH, config.yaml,
+  NKYEL_MI_BASE_CONFIG     base config (default: \$NKYEL_CONFIG_PATH, config.yaml,
                               backend/config.yaml, then config.example.yaml)
-  DEERFLOW_MI_STATE_DIR       state directory
-  DEERFLOW_MI_GATEWAY_A_PORT, DEERFLOW_MI_GATEWAY_B_PORT, DEERFLOW_MI_NGINX_PORT,
-  DEERFLOW_MI_FRONTEND_PORT, DEERFLOW_MI_POSTGRES_PORT, DEERFLOW_MI_REDIS_PORT
-  DEERFLOW_MI_POSTGRES_CONTAINER, DEERFLOW_MI_REDIS_CONTAINER,
-  DEERFLOW_MI_POSTGRES_IMAGE, DEERFLOW_MI_REDIS_IMAGE
-  DEERFLOW_MI_KEEP_CHANNELS=1 keep IM channels enabled (the leader lease gives each bot to one Gateway)
-  DEERFLOW_MI_HEALTH_TIMEOUT  seconds to wait for each Gateway's /health (default 180)
+  NKYEL_MI_STATE_DIR       state directory
+  NKYEL_MI_GATEWAY_A_PORT, NKYEL_MI_GATEWAY_B_PORT, NKYEL_MI_NGINX_PORT,
+  NKYEL_MI_FRONTEND_PORT, NKYEL_MI_POSTGRES_PORT, NKYEL_MI_REDIS_PORT
+  NKYEL_MI_POSTGRES_CONTAINER, NKYEL_MI_REDIS_CONTAINER,
+  NKYEL_MI_POSTGRES_IMAGE, NKYEL_MI_REDIS_IMAGE
+  NKYEL_MI_KEEP_CHANNELS=1 keep IM channels enabled (the leader lease gives each bot to one Gateway)
+  NKYEL_MI_HEALTH_TIMEOUT  seconds to wait for each Gateway's /health (default 180)
 
 'make stop' and 'make dev' reclaim port 8001 and this checkout's Gateways, so
 do not run them while the harness is up.
@@ -162,14 +162,14 @@ load_secrets() {
 
 ensure_state_dir() {
     if [ -d "$STATE_DIR" ] && [ ! -f "$STATE_DIR/$STATE_MARKER" ] && [ -n "$(ls -A "$STATE_DIR" 2>/dev/null)" ]; then
-        die "$STATE_DIR is not empty and was not created by this harness; set DEERFLOW_MI_STATE_DIR to another directory."
+        die "$STATE_DIR is not empty and was not created by this harness; set NKYEL_MI_STATE_DIR to another directory."
     fi
     mkdir -p "$STATE_DIR" "$RUN_DIR" "$LOG_DIR"
     touch "$STATE_DIR/$STATE_MARKER"
 }
 
 # Delete everything the harness created except logs. Guarded by the marker so
-# a mistyped DEERFLOW_MI_STATE_DIR can never point this at someone's data.
+# a mistyped NKYEL_MI_STATE_DIR can never point this at someone's data.
 wipe_runtime_data() {
     [ -f "$STATE_DIR/$STATE_MARKER" ] || return 0
     find "$STATE_DIR" -mindepth 1 -maxdepth 1 ! -name logs ! -name "$STATE_MARKER" -exec rm -rf {} +
@@ -226,16 +226,16 @@ redis_pong() {
 
 start_containers() {
     echo "Starting Postgres ($PG_IMAGE) on 127.0.0.1:$PG_PORT..."
-    POSTGRES_PASSWORD="$DEERFLOW_MI_POSTGRES_PASSWORD" docker run -d --name "$PG_CONTAINER" \
+    POSTGRES_PASSWORD="$NKYEL_MI_POSTGRES_PASSWORD" docker run -d --name "$PG_CONTAINER" \
         --label "$LABEL_KEY=$LABEL_VALUE" --label "$STATE_LABEL_KEY=$STATE_DIR" \
-        -e POSTGRES_USER=deerflow -e POSTGRES_DB=deerflow -e POSTGRES_PASSWORD \
+        -e POSTGRES_USER=nkyel -e POSTGRES_DB=nkyel -e POSTGRES_PASSWORD \
         -p "127.0.0.1:$PG_PORT:5432" "$PG_IMAGE" >/dev/null || return 1
     echo "Starting Redis ($REDIS_IMAGE) on 127.0.0.1:$REDIS_PORT..."
     docker run -d --name "$REDIS_CONTAINER" --label "$LABEL_KEY=$LABEL_VALUE" --label "$STATE_LABEL_KEY=$STATE_DIR" \
         -p "127.0.0.1:$REDIS_PORT:6379" "$REDIS_IMAGE" >/dev/null || return 1
 
     # TCP readiness: the image's init-time server listens on the Unix socket only.
-    if ! wait_until 90 docker exec "$PG_CONTAINER" pg_isready -h 127.0.0.1 -U deerflow -d deerflow; then
+    if ! wait_until 90 docker exec "$PG_CONTAINER" pg_isready -h 127.0.0.1 -U nkyel -d nkyel; then
         docker logs --tail 30 "$PG_CONTAINER" >&2 || true
         echo "✗ Postgres did not become ready" >&2
         return 1
@@ -260,7 +260,7 @@ start_gateway() {
         return 1
     fi
     if port_in_use "$port"; then
-        echo "✗ Port $port is in use; free it or set DEERFLOW_MI_GATEWAY_$(upper "$name")_PORT." >&2
+        echo "✗ Port $port is in use; free it or set NKYEL_MI_GATEWAY_$(upper "$name")_PORT." >&2
         return 1
     fi
     if [ ! -f "$CONFIG_OUT" ]; then
@@ -279,17 +279,17 @@ start_gateway() {
     (
         cd "$BACKEND_DIR"
         # One worker per Gateway: the pid file must name the process that serves.
-        export DEER_FLOW_CONFIG_PATH="$CONFIG_OUT" \
-            DEER_FLOW_EXTENSIONS_CONFIG_PATH="$EXTENSIONS_OUT" \
-            DEER_FLOW_HOME="$STATE_DIR/home" \
-            DEER_FLOW_PROJECT_ROOT="$REPO_ROOT" \
-            DEERFLOW_MI_RETRIEVAL_INDEX_PATH="$STATE_DIR/index/$name" \
-            DEERFLOW_MI_DATABASE_URL="postgresql://deerflow:$DEERFLOW_MI_POSTGRES_PASSWORD@127.0.0.1:$PG_PORT/deerflow" \
-            DEERFLOW_MI_REDIS_URL="redis://127.0.0.1:$REDIS_PORT/0" \
-            DEER_FLOW_CHANNELS_LANGGRAPH_URL="http://127.0.0.1:$port/api" \
-            DEER_FLOW_CHANNELS_GATEWAY_URL="http://127.0.0.1:$port" \
+        export NKYEL_CONFIG_PATH="$CONFIG_OUT" \
+            NKYEL_EXTENSIONS_CONFIG_PATH="$EXTENSIONS_OUT" \
+            NKYEL_HOME="$STATE_DIR/home" \
+            NKYEL_PROJECT_ROOT="$REPO_ROOT" \
+            NKYEL_MI_RETRIEVAL_INDEX_PATH="$STATE_DIR/index/$name" \
+            NKYEL_MI_DATABASE_URL="postgresql://nkyel:$NKYEL_MI_POSTGRES_PASSWORD@127.0.0.1:$PG_PORT/nkyel" \
+            NKYEL_MI_REDIS_URL="redis://127.0.0.1:$REDIS_PORT/0" \
+            NKYEL_CHANNELS_LANGGRAPH_URL="http://127.0.0.1:$port/api" \
+            NKYEL_CHANNELS_GATEWAY_URL="http://127.0.0.1:$port" \
             GATEWAY_WORKERS=1 WEB_CONCURRENCY=1 PYTHONPATH=. \
-            AUTH_JWT_SECRET DEER_FLOW_INTERNAL_AUTH_TOKEN DEER_FLOW_CREDENTIALS_KEY
+            AUTH_JWT_SECRET NKYEL_INTERNAL_AUTH_TOKEN NKYEL_CREDENTIALS_KEY
         exec nohup "$PYTHON_BIN" -m uvicorn app.gateway.app:app --host 127.0.0.1 --port "$port" </dev/null
     ) >>"$log" 2>&1 &
     pid=$!
@@ -341,7 +341,7 @@ start_nginx() {
         return 0
     fi
     if port_in_use "$NGINX_PORT"; then
-        echo "  ! port $NGINX_PORT is in use; skipping nginx (set DEERFLOW_MI_NGINX_PORT)" >&2
+        echo "  ! port $NGINX_PORT is in use; skipping nginx (set NKYEL_MI_NGINX_PORT)" >&2
         return 0
     fi
     mkdir -p "$STATE_DIR/nginx/temp"
@@ -401,12 +401,12 @@ absolute_path() {
 
 resolve_base_config() {
     local candidate
-    if [ -n "${DEERFLOW_MI_BASE_CONFIG:-}" ]; then
-        [ -f "$DEERFLOW_MI_BASE_CONFIG" ] || die "DEERFLOW_MI_BASE_CONFIG=$DEERFLOW_MI_BASE_CONFIG does not exist."
-        BASE_CONFIG="$(absolute_path "$DEERFLOW_MI_BASE_CONFIG")"
+    if [ -n "${NKYEL_MI_BASE_CONFIG:-}" ]; then
+        [ -f "$NKYEL_MI_BASE_CONFIG" ] || die "NKYEL_MI_BASE_CONFIG=$NKYEL_MI_BASE_CONFIG does not exist."
+        BASE_CONFIG="$(absolute_path "$NKYEL_MI_BASE_CONFIG")"
         return 0
     fi
-    for candidate in "${DEER_FLOW_CONFIG_PATH:-}" "$REPO_ROOT/config.yaml" "$REPO_ROOT/backend/config.yaml" "$REPO_ROOT/config.example.yaml"; do
+    for candidate in "${NKYEL_CONFIG_PATH:-}" "$REPO_ROOT/config.yaml" "$REPO_ROOT/backend/config.yaml" "$REPO_ROOT/config.example.yaml"; do
         [ -n "$candidate" ] && [ -f "$candidate" ] || continue
         candidate="$(absolute_path "$candidate")"
         [ "$candidate" != "$CONFIG_OUT" ] || continue
@@ -418,7 +418,7 @@ resolve_base_config() {
 
 copy_extensions_config() {
     local candidate
-    for candidate in "${DEER_FLOW_EXTENSIONS_CONFIG_PATH:-}" "$REPO_ROOT/extensions_config.json" "$REPO_ROOT/backend/extensions_config.json"; do
+    for candidate in "${NKYEL_EXTENSIONS_CONFIG_PATH:-}" "$REPO_ROOT/extensions_config.json" "$REPO_ROOT/backend/extensions_config.json"; do
         [ -n "$candidate" ] && [ -f "$candidate" ] && [ "$candidate" != "$EXTENSIONS_OUT" ] || continue
         cp "$candidate" "$EXTENSIONS_OUT"
         chmod 600 "$EXTENSIONS_OUT"
@@ -434,7 +434,7 @@ copy_extensions_config() {
 uv_extra_flags() {
     local detected="" token previous="" flags="--extra postgres --extra redis"
     if command -v python3 >/dev/null 2>&1; then
-        detected="$(DEER_FLOW_CONFIG_PATH="$BASE_CONFIG" python3 "$REPO_ROOT/scripts/detect_uv_extras.py" 2>/dev/null || true)"
+        detected="$(NKYEL_CONFIG_PATH="$BASE_CONFIG" python3 "$REPO_ROOT/scripts/detect_uv_extras.py" 2>/dev/null || true)"
     fi
     for token in $detected; do
         if [ "$previous" = "--extra" ] && [ "$token" != postgres ] && [ "$token" != redis ]; then
@@ -470,8 +470,8 @@ cmd_up() {
 
     # A previous session of this state dir that was not taken down: clear it
     # before the port checks. Containers of any other owner are refused.
-    remove_container "$PG_CONTAINER" || die "Container name $PG_CONTAINER is taken; set DEERFLOW_MI_POSTGRES_CONTAINER (and the ports) to run a second harness."
-    remove_container "$REDIS_CONTAINER" || die "Container name $REDIS_CONTAINER is taken; set DEERFLOW_MI_REDIS_CONTAINER (and the ports) to run a second harness."
+    remove_container "$PG_CONTAINER" || die "Container name $PG_CONTAINER is taken; set NKYEL_MI_POSTGRES_CONTAINER (and the ports) to run a second harness."
+    remove_container "$REDIS_CONTAINER" || die "Container name $REDIS_CONTAINER is taken; set NKYEL_MI_REDIS_CONTAINER (and the ports) to run a second harness."
     for port in "$GATEWAY_A_PORT" "$GATEWAY_B_PORT" "$PG_PORT" "$REDIS_PORT"; do
         if port_in_use "$port"; then
             die "Port $port is in use. Stop whatever holds it ('make stop' for make dev) or override the port (see --help)."
@@ -497,14 +497,14 @@ cmd_up() {
     load_secrets
     echo "Rendering $CONFIG_OUT..."
     local keep_channels=""
-    if [ "${DEERFLOW_MI_KEEP_CHANNELS:-}" = "1" ]; then
+    if [ "${NKYEL_MI_KEEP_CHANNELS:-}" = "1" ]; then
         keep_channels="--keep-channels"
     fi
     # The URLs stay $VAR references so the file holds no harness secret; each
     # Gateway process exports them (see start_gateway).
     # shellcheck disable=SC2016
     run_helper render-config --base "$BASE_CONFIG" --out "$CONFIG_OUT" --state-dir "$STATE_DIR" \
-        --database-url '$DEERFLOW_MI_DATABASE_URL' --redis-url '$DEERFLOW_MI_REDIS_URL' $keep_channels ||
+        --database-url '$NKYEL_MI_DATABASE_URL' --redis-url '$NKYEL_MI_REDIS_URL' $keep_channels ||
         die "Could not render the multi-instance config."
     copy_extensions_config
 
@@ -531,7 +531,7 @@ cmd_up() {
     if nginx_pid >/dev/null; then
         echo "  nginx       http://localhost:$NGINX_PORT  (round-robin; start the frontend on :$FRONTEND_PORT for the UI)"
     fi
-    echo "  Postgres    127.0.0.1:$PG_PORT  ($PG_CONTAINER, user/db deerflow, password in $SECRETS_FILE)"
+    echo "  Postgres    127.0.0.1:$PG_PORT  ($PG_CONTAINER, user/db nkyel, password in $SECRETS_FILE)"
     echo "  Redis       127.0.0.1:$REDIS_PORT  ($REDIS_CONTAINER)"
     echo "  Shared home $STATE_DIR/home"
     echo "  Config      $CONFIG_OUT"

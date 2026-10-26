@@ -12,9 +12,9 @@ import logging
 
 import pytest
 
-from deerflow.persistence import engine as engine_mod
+from nkyel.persistence import engine as engine_mod
 
-_TARGET_URL = "postgresql+asyncpg://deerflow:secret@127.0.0.1:5432/deerflow_target"
+_TARGET_URL = "postgresql+asyncpg://nkyel:secret@127.0.0.1:5432/nkyel_target"
 
 
 class _SqlstateError(Exception):
@@ -67,12 +67,12 @@ def maintenance(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.mark.asyncio
 async def test_duplicate_database_from_a_peer_continues_the_boot(maintenance, caplog) -> None:
-    engine = maintenance(_SqlstateError("42P04", 'database "deerflow_target" already exists'))
+    engine = maintenance(_SqlstateError("42P04", 'database "nkyel_target" already exists'))
 
     with caplog.at_level(logging.INFO):
         await engine_mod._auto_create_postgres_db(_TARGET_URL)
 
-    assert 'CREATE DATABASE "deerflow_target"' in engine.statements[0]
+    assert 'CREATE DATABASE "nkyel_target"' in engine.statements[0]
     assert "was created by a peer process" in caplog.text
     assert engine.disposed, "the throwaway maintenance engine must still be disposed"
 
@@ -81,7 +81,7 @@ async def test_duplicate_database_from_a_peer_continues_the_boot(maintenance, ca
 async def test_wrapped_duplicate_database_is_recognised(maintenance) -> None:
     """SQLSTATE lives on the driver exception, which reaches us wrapped in ``orig``."""
     wrapper = RuntimeError("bootstrap failed")
-    wrapper.__cause__ = _SqlstateError("42P04", 'database "deerflow_target" already exists')
+    wrapper.__cause__ = _SqlstateError("42P04", 'database "nkyel_target" already exists')
     engine = maintenance(wrapper)
 
     await engine_mod._auto_create_postgres_db(_TARGET_URL)

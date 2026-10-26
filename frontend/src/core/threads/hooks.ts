@@ -424,7 +424,7 @@ const EMPTY_THREAD_VALUES: AgentThreadState = {
 
 const SUMMARIZATION_MIDDLEWARE_UPDATE_KEYS = new Set([
   "SummarizationMiddleware.before_model",
-  "DeerFlowSummarizationMiddleware.before_model",
+  "NkyelSummarizationMiddleware.before_model",
 ]);
 
 function maxMessageSeq(messages: Message[]): number | undefined {

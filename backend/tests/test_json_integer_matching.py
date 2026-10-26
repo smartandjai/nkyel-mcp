@@ -7,15 +7,15 @@ import pytest
 from sqlalchemy import JSON, Column, MetaData, String, Table, select, text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from deerflow.persistence.json_compat import json_match
+from nkyel.persistence.json_compat import json_match
 
 
 @pytest.fixture(params=["sqlite", "postgresql"])
 async def json_table(request):
     if request.param == "postgresql":
-        url = os.getenv("DEERFLOW_TEST_POSTGRES_URL")
+        url = os.getenv("NKYEL_TEST_POSTGRES_URL")
         if not url:
-            pytest.skip("set DEERFLOW_TEST_POSTGRES_URL to exercise real PostgreSQL integer matching")
+            pytest.skip("set NKYEL_TEST_POSTGRES_URL to exercise real PostgreSQL integer matching")
         if url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
     else:

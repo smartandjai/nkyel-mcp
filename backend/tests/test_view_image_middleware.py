@@ -37,21 +37,21 @@ from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemM
 from PIL import Image
 from support.symlinks import symlink_or_skip
 
-from deerflow.agents.middlewares.view_image_middleware import (
+from nkyel.agents.middlewares.view_image_middleware import (
     _IMAGE_CONTEXT_MESSAGE_MARKER_KEY,
     ViewImageMiddleware,
 )
-from deerflow.agents.thread_state import merge_viewed_images
-from deerflow.config.paths import Paths
-from deerflow.storage import BlobRef
-from deerflow.tools.builtins.view_image_tool import view_image_tool
+from nkyel.agents.thread_state import merge_viewed_images
+from nkyel.config.paths import Paths
+from nkyel.storage import BlobRef
+from nkyel.tools.builtins.view_image_tool import view_image_tool
 
 
 @pytest.fixture
 def budget_image_runtime(tmp_path, monkeypatch):
     paths = Paths(tmp_path)
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: paths)
-    monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", lambda: None)
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", lambda: None)
     outputs = paths.sandbox_outputs_dir("thread-test", user_id="user-test")
     outputs.mkdir(parents=True)
     payloads = {}
@@ -101,7 +101,7 @@ async def _capture_budget_request(request, use_async):
 @pytest.mark.parametrize("use_async", [False, True])
 @pytest.mark.parametrize("budget_delta", [0, -1], ids=["exact-fit", "one-byte-short"])
 async def test_cumulative_image_bytes_reach_model_within_budget(budget_image_runtime, monkeypatch, use_async, budget_delta):
-    from deerflow.agents.middlewares import view_image_middleware as module
+    from nkyel.agents.middlewares import view_image_middleware as module
 
     runtime, payloads = budget_image_runtime
     selected_paths = list(payloads)[:3]
@@ -196,7 +196,7 @@ def _make_viewed_image(tmp_path, filename="img.png", mime_type="image/png", data
 
 def _authorized_host_view(tmp_path, monkeypatch):
     paths = Paths(tmp_path)
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: paths)
     outputs = paths.sandbox_outputs_dir("thread-test", user_id="user-test")
     outputs.mkdir(parents=True)
     virtual_path = "/mnt/user-data/outputs/img.png"
@@ -204,7 +204,7 @@ def _authorized_host_view(tmp_path, monkeypatch):
 
 
 def _blob_backed_request(monkeypatch):
-    from deerflow.authz import sandbox_authz
+    from nkyel.authz import sandbox_authz
 
     image_bytes = b"\x89PNG\r\n\x1a\nshared-model-image"
     ref = BlobRef(
@@ -219,7 +219,7 @@ def _blob_backed_request(monkeypatch):
             assert requested == ref
             return image_bytes
 
-    monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", lambda: SharedStore())
+    monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", lambda: SharedStore())
     monkeypatch.setattr(sandbox_authz, "authorize_sandbox_execution", lambda **kwargs: None)
     virtual_path = "/mnt/user-data/outputs/shared.png"
     assistant = AIMessage(content="", tool_calls=[_view_image_call("c1", virtual_path)])
@@ -351,7 +351,7 @@ class TestAllToolsCompleted:
 
 class TestCreateImageDetailsMessage:
     def test_keeps_recent_images_within_count_and_byte_budget(self, tmp_path, monkeypatch):
-        from deerflow.agents.middlewares import view_image_middleware as module
+        from nkyel.agents.middlewares import view_image_middleware as module
 
         monkeypatch.setattr(module, "_MAX_CONTEXT_IMAGES", 2)
         monkeypatch.setattr(module, "_MAX_CONTEXT_BASE64_BYTES", 16)
@@ -371,7 +371,7 @@ class TestCreateImageDetailsMessage:
 
     @pytest.mark.parametrize("omitted_count", [1, 2])
     def test_skips_oversized_image_without_reading_it(self, tmp_path, monkeypatch, omitted_count):
-        from deerflow.agents.middlewares import view_image_middleware as module
+        from nkyel.agents.middlewares import view_image_middleware as module
 
         monkeypatch.setattr(module, "_MAX_CONTEXT_BASE64_BYTES", 8)
         viewed = {f"/large-{i}.png": _make_viewed_image(tmp_path, f"large-{i}.png", data=b"1234567") for i in range(omitted_count)}
@@ -385,7 +385,7 @@ class TestCreateImageDetailsMessage:
         assert f"Omitted viewed images: {omitted_count}." in str(blocks)
 
     def test_omission_notice_does_not_assume_omitted_image_is_older(self, tmp_path, monkeypatch):
-        from deerflow.agents.middlewares import view_image_middleware as module
+        from nkyel.agents.middlewares import view_image_middleware as module
 
         monkeypatch.setattr(module, "_MAX_CONTEXT_BASE64_BYTES", 8)
         viewed = {
@@ -460,7 +460,7 @@ class TestCreateImageDetailsMessage:
                 reads.append(requested)
                 return image_bytes
 
-        monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", lambda: SharedStore())
+        monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", lambda: SharedStore())
         state = {
             "viewed_images": {
                 "/mnt/user-data/outputs/shared.png": {
@@ -494,7 +494,7 @@ class TestCreateImageDetailsMessage:
         def fail_to_resolve_store():
             raise ValueError("misconfigured backend")
 
-        monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", fail_to_resolve_store)
+        monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", fail_to_resolve_store)
         state = {
             "viewed_images": {
                 "/mnt/user-data/outputs/fallback.png": {
@@ -531,7 +531,7 @@ class TestCreateImageDetailsMessage:
             def get_bytes(self, requested: BlobRef) -> bytes:
                 raise RuntimeError("raw SDK failure")
 
-        monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", lambda: FailingStore())
+        monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", lambda: FailingStore())
         state = {
             "viewed_images": {
                 "/mnt/user-data/outputs/fallback.png": {
@@ -589,7 +589,7 @@ class TestCreateImageDetailsMessage:
             def get_bytes(self, requested: BlobRef) -> bytes:
                 raise AssertionError(f"unexpected blob read: {requested}")
 
-        monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", lambda: StoreMustNotBeRead())
+        monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", lambda: StoreMustNotBeRead())
         state = {
             "viewed_images": {
                 "/mnt/user-data/outputs/shared.png": {
@@ -926,7 +926,7 @@ class TestWrapModelCall:
 
     @pytest.mark.anyio
     async def test_blob_backed_image_reaches_async_model_without_writer_disk(self, monkeypatch):
-        from deerflow.authz import sandbox_authz
+        from nkyel.authz import sandbox_authz
 
         request, expected = _blob_backed_request(monkeypatch)
         seen: list[ModelRequest] = []
@@ -1044,12 +1044,12 @@ class TestGraphIntegration:
 
 def test_host_image_copy_is_scoped_to_current_user_and_thread(tmp_path, monkeypatch):
     """A stale viewed_images entry must not open another user's host copy."""
-    from deerflow.authz import sandbox_authz
+    from nkyel.authz import sandbox_authz
 
     monkeypatch.setattr(sandbox_authz, "authorize_sandbox_execution", lambda **kwargs: None)
     paths = Paths(tmp_path)
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: paths)
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: None))
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: None))
 
     image_bytes = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
     virtual_path = "/mnt/user-data/outputs/canary.png"
@@ -1079,11 +1079,11 @@ def test_host_image_copy_is_scoped_to_current_user_and_thread(tmp_path, monkeypa
 
 def _custom_base_view_request(tmp_path, monkeypatch):
     """Use the real tool to record a host copy under a non-global Paths base."""
-    from deerflow.authz import sandbox_authz
-    from deerflow.tools.builtins.view_image_tool import _view_image_authorized
+    from nkyel.authz import sandbox_authz
+    from nkyel.tools.builtins.view_image_tool import _view_image_authorized
 
     monkeypatch.setattr(sandbox_authz, "authorize_sandbox_execution", lambda **kwargs: None)
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: None))
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: None))
 
     paths = Paths(tmp_path / "custom-base")
     virtual_path = "/mnt/user-data/outputs/canary.png"

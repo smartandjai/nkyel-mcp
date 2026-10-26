@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { format, resolveConfig } from "prettier";
 
 const source = new URL(
-  "../../backend/packages/harness/deerflow/capabilities/builtin.json",
+  "../../backend/packages/harness/nkyel/capabilities/builtin.json",
   import.meta.url,
 );
 const destination = new URL(

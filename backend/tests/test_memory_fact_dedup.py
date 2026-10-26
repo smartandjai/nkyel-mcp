@@ -19,9 +19,9 @@ import logging
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import MemoryStorage
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater, _fact_content_similarity, _fact_content_tokens
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import MemoryStorage
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater, _fact_content_similarity, _fact_content_tokens
 
 
 def _memory(facts: list[dict[str, object]] | None = None) -> dict[str, object]:

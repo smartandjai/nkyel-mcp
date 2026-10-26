@@ -2,13 +2,13 @@
 
 import pytest
 
-from deerflow.runtime.checkpoint_cache.base import (
+from nkyel.runtime.checkpoint_cache.base import (
     CACHE_FORMAT_VERSION,
     CheckpointCacheStats,
     make_history_key,
     thread_key_stem,
 )
-from deerflow.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
+from nkyel.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
 
 
 def _entry(tag: str) -> dict:

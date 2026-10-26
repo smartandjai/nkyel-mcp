@@ -1,4 +1,4 @@
-"""Migration 0038: the shared ``channel_thread_bindings`` table (IM chat -> DeerFlow thread)."""
+"""Migration 0038: the shared ``channel_thread_bindings`` table (IM chat -> nkyel thread)."""
 
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_thread_bindings import ChannelThreadBindingRow
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence import bootstrap
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_thread_bindings import ChannelThreadBindingRow
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 REVISION = "0038_channel_thread_bindings"
 PREVIOUS = "0037_project_document_summaries"

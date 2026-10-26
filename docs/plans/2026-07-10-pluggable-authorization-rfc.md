@@ -9,7 +9,7 @@
 # RFC: Pluggable Fine-Grained Authorization
 
 **Status:** Draft for feedback (responds to [#3462](https://github.com/bytedance/deer-flow/issues/3462)).
-**Affects:** `backend/packages/harness/deerflow/authz/` (new), `backend/app/gateway/authz.py`, `backend/packages/harness/deerflow/guardrails/`, `backend/packages/harness/deerflow/agents/lead_agent/agent.py`, `backend/packages/harness/deerflow/client.py`, `backend/packages/harness/deerflow/subagents/executor.py`, `backend/app/gateway/services.py`, `config.example.yaml`.
+**Affects:** `backend/packages/harness/nkyel/authz/` (new), `backend/app/gateway/authz.py`, `backend/packages/harness/nkyel/guardrails/`, `backend/packages/harness/nkyel/agents/lead_agent/agent.py`, `backend/packages/harness/nkyel/client.py`, `backend/packages/harness/nkyel/subagents/executor.py`, `backend/app/gateway/services.py`, `config.example.yaml`.
 
 > Maintainer guidance from the issue ([@WillemJiang](https://github.com/bytedance/deer-flow/issues/3462)):
 > *"在开始实现之前，我们需要梳理相关的资源与权限的管理映射关系。具体工具调用和资源访问这块可以结合现有的 GuardrailProvider 来进行整合。另外建议在实现之前，做一个 RFC 的设计，方便大家的提反馈建议。"*
@@ -18,7 +18,7 @@
 
 ## TL;DR
 
-DeerFlow's authorization today is **authentication + ownership**: every authenticated user gets every API permission (`authz.py:144` hands all users `_ALL_PERMISSIONS`), and the only real authorization beyond login is thread ownership (`owner_check`) and a handful of hard-coded `require_admin_user()` routes. There is **no resource-level authorization** — no role can be told "you may not call `write_file`", "you may not use model X", or "you may not run sandbox code".
+nkyel's authorization today is **authentication + ownership**: every authenticated user gets every API permission (`authz.py:144` hands all users `_ALL_PERMISSIONS`), and the only real authorization beyond login is thread ownership (`owner_check`) and a handful of hard-coded `require_admin_user()` routes. There is **no resource-level authorization** — no role can be told "you may not call `write_file`", "you may not use model X", or "you may not run sandbox code".
 
 This RFC proposes a **single pluggable `AuthorizationProvider` Protocol** that is the policy brain for all fine-grained authz, enforced at **two layers** from one policy:
 
@@ -40,7 +40,7 @@ The two hard problems raised in the thread — **dynamic resources** and the **f
 | Source | `system_role` | When |
 |---|---|---|
 | Session (JWT cookie → `User`) | `"admin"` or `"user"` | Browser / API callers |
-| Internal (`X-DeerFlow-Internal-Token`) | `"internal"` | IM channel workers, scheduler |
+| Internal (`X-nkyel-Internal-Token`) | `"internal"` | IM channel workers, scheduler |
 | Auth-disabled | `"admin"` | `auth_disabled` mode |
 
 The `User` model (`backend/app/gateway/auth/models.py:15`) carries `system_role: Literal["admin", "user"]`; the DB column is `String(16)` *deliberately*, with a comment: *"kept as plain string to avoid ALTER TABLE pain when new roles are introduced"* (`persistence/user/model.py:33`). **The schema is already forward-compatible with new roles.**
@@ -54,7 +54,7 @@ The `User` model (`backend/app/gateway/auth/models.py:15`) carries `system_role:
 
 ### 1.3 The GuardrailProvider (the integration point)
 
-The maintainer pointed here for good reason. `GuardrailProvider` (`deerflow/guardrails/provider.py:46`) is already a pluggable, class-path-loaded, per-call authorization hook:
+The maintainer pointed here for good reason. `GuardrailProvider` (`nkyel/guardrails/provider.py:46`) is already a pluggable, class-path-loaded, per-call authorization hook:
 
 ```python
 @runtime_checkable
@@ -70,7 +70,7 @@ class GuardrailProvider(Protocol):
 
 ### 1.4 The tool assembly pipeline (where visibility is decided)
 
-All tools are merged in `get_available_tools()` (`deerflow/tools/tools.py:44`): config tools + built-ins + MCP (cached, hot-reloadable by mtime) + ACP, deduped by name. In the lead agent (`agents/lead_agent/agent.py:561`):
+All tools are merged in `get_available_tools()` (`nkyel/tools/tools.py:44`): config tools + built-ins + MCP (cached, hot-reloadable by mtime) + ACP, deduped by name. In the lead agent (`agents/lead_agent/agent.py:561`):
 
 ```python
 raw_tools = get_available_tools(...)
@@ -88,9 +88,9 @@ Three agent build paths assemble tools, and they must all apply the same filter 
 |---|---|---|
 | Lead agent | `agents/lead_agent/agent.py:562` | ✅ |
 | Subagent | `subagents/executor.py:578` (`_apply_skill_allowed_tools`) | ✅ |
-| `DeerFlowClient` | `client.py:259` | ❌ *(passes `tools` straight to `assemble_deferred_tools`)* |
+| `NkyelClient` | `client.py:259` | ❌ *(passes `tools` straight to `assemble_deferred_tools`)* |
 
-The `DeerFlowClient` gap is a pre-existing inconsistency; any new authz filter must be applied on all three.
+The `NkyelClient` gap is a pre-existing inconsistency; any new authz filter must be applied on all three.
 
 ### 1.5 Identity flow into the run — reliable for the web, gap for channels
 
@@ -185,10 +185,10 @@ The maintainer's first ask: *“梳理相关的资源与权限的管理映射关
 
 ## 5. The `AuthorizationProvider` Protocol
 
-Lives in a new package `deerflow/authz/` (harness), mirroring `deerflow/guardrails/`.
+Lives in a new package `nkyel/authz/` (harness), mirroring `nkyel/guardrails/`.
 
 ```python
-# deerflow/authz/provider.py
+# nkyel/authz/provider.py
 from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
@@ -264,7 +264,7 @@ class AuthorizationProvider(Protocol):
 We do **not** write a new middleware. `GuardrailMiddleware` already does everything Layer 2 needs: per-call hook, fail-closed, audit, error `ToolMessage`, sync+async. We add one thin adapter that presents an `AuthorizationProvider` as a `GuardrailProvider`:
 
 ```python
-# deerflow/authz/adapter.py
+# nkyel/authz/adapter.py
 class GuardrailAuthorizationAdapter:
     """Adapt an AuthorizationProvider to the GuardrailProvider Protocol.
 
@@ -357,7 +357,7 @@ Role-based authz is only as good as the role reaching the provider. Today `user_
 Each phase is independently shippable and behind `authorization.enabled` (default `false` = today's behavior).
 
 **Phase 0 — Foundations (no behavior change).**
-- New `deerflow/authz/` package: `provider.py` (Protocol + dataclasses), `principal.py` (builder), `adapter.py`.
+- New `nkyel/authz/` package: `provider.py` (Protocol + dataclasses), `principal.py` (builder), `adapter.py`.
 - `Principal` built in `services.py`, stored on run context.
 - `default_role` config; close the `user_role=None` gap.
 - `RbacAuthorizationProvider` skeleton + `AuthorizationConfig` (AppConfig section, singleton, live-reload — mirrors `guardrails_config.py`; **not** in `STARTUP_ONLY_FIELDS`).
@@ -400,7 +400,7 @@ authorization:
   fail_closed: true            # block on provider error / unresolved identity
   default_role: user           # applied when user_role is None (unbound IM channels)
   provider:
-    use: deerflow.authz.rbac:RbacAuthorizationProvider
+    use: nkyel.authz.rbac:RbacAuthorizationProvider
     config:
       # role -> resource policy. "*" = all. Omitted resource type = unaffected.
       roles:
@@ -477,7 +477,7 @@ Backend tests in `backend/tests/`. Minimum coverage for Phase 1:
 
 - `test_authz_provider_protocol.py` — Protocol conformance, `@runtime_checkable`, default `filter_resources` delegates to `authorize`.
 - `test_rbac_authorization_provider.py` — per-role allow/deny, `*` wildcard, `deny` wins, unknown role → `default_role` → `fail_closed`, all resource types.
-- `test_authz_tool_filter.py` — Layer 1: tools removed at assembly on all three build paths (lead / subagent / `DeerFlowClient`); filtered tools absent from `DeferredToolCatalog` (fail-closed promotion).
+- `test_authz_tool_filter.py` — Layer 1: tools removed at assembly on all three build paths (lead / subagent / `NkyelClient`); filtered tools absent from `DeferredToolCatalog` (fail-closed promotion).
 - `test_authz_guardrail_adapter.py` — Layer 2: adapter deny → `GuardrailMiddleware` returns error `ToolMessage`; `user_role` flows from context; `fail_closed` on provider error.
 - `test_authz_prompt_injection.py` — a tool removed at assembly cannot be invoked even when the prompt tries to call it (the security-boundary guarantee).
 - `test_authz_principal.py` — `user_role=None` → `default_role`; internal caller; subagent inherits principal.
@@ -489,19 +489,19 @@ Backend tests in `backend/tests/`. Minimum coverage for Phase 1:
 
 - Issue: [#3462](https://github.com/bytedance/deer-flow/issues/3462)
 - Existing design: `backend/docs/AUTH_DESIGN.md`, `backend/docs/GUARDRAILS.md`
-- Guardrail provider: `backend/packages/harness/deerflow/guardrails/provider.py`
-- Guardrail middleware: `backend/packages/harness/deerflow/guardrails/middleware.py`
-- Tool assembly: `backend/packages/harness/deerflow/agents/lead_agent/agent.py:561`, `deerflow/tools/tools.py:44`, `deerflow/tools/builtins/tool_search.py:190`
-- Skill filter pattern: `backend/packages/harness/deerflow/skills/tool_policy.py:42`
+- Guardrail provider: `backend/packages/harness/nkyel/guardrails/provider.py`
+- Guardrail middleware: `backend/packages/harness/nkyel/guardrails/middleware.py`
+- Tool assembly: `backend/packages/harness/nkyel/agents/lead_agent/agent.py:561`, `nkyel/tools/tools.py:44`, `nkyel/tools/builtins/tool_search.py:190`
+- Skill filter pattern: `backend/packages/harness/nkyel/skills/tool_policy.py:42`
 - Identity injection: `backend/app/gateway/services.py:278`
-- Config resolution: `backend/packages/harness/deerflow/reflection/resolvers.py`, `deerflow/config/guardrails_config.py`, `deerflow/config/reload_boundary.py`
-- Middleware wiring: `backend/packages/harness/deerflow/agents/middlewares/tool_error_handling_middleware.py:154`
+- Config resolution: `backend/packages/harness/nkyel/reflection/resolvers.py`, `nkyel/config/guardrails_config.py`, `nkyel/config/reload_boundary.py`
+- Middleware wiring: `backend/packages/harness/nkyel/agents/middlewares/tool_error_handling_middleware.py:154`
 
 ---
 
 ## 15. Related work & prior art (upstream issues & PRs)
 
-A search of `bytedance/deer-flow` confirms **no RBAC implementation exists**; RBAC is a recognized but unowned roadmap item. This RFC situates itself in the prior work below.
+A search of `bytedance/nkyel` confirms **no RBAC implementation exists**; RBAC is a recognized but unowned roadmap item. This RFC situates itself in the prior work below.
 
 ### Direct lineage - what this RFC builds on
 

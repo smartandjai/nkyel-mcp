@@ -65,7 +65,7 @@ database:
 
 节奏被**刻意**不写入检查点元数据：模式标记契约（缺失即 `full`）以及 full → delta 的迁移语义都不随频率值改变。正因为它不在任何检查点里，运行着不同节奏的进程会静默地把自己的节奏套用到同一批线程上——所以这是一个写进配置字段说明的运维责任，运行时无法检测。
 
-对比一下**会**写入的模式标记：delta 检查点的元数据里带有 `deerflow_checkpoint_channel_mode: "delta"`，缺失即表示 `full`。节奏没有对应的标记。
+对比一下**会**写入的模式标记：delta 检查点的元数据里带有 `nkyel_checkpoint_channel_mode: "delta"`，缺失即表示 `full`。节奏没有对应的标记。
 
 ## 存储形态契约
 
@@ -79,7 +79,7 @@ database:
 
 ## 默认值变更：1000 改为 10
 
-节奏原本位于扁平键 `database.checkpoint_delta_snapshot_frequency`，默认值 `1000`。现在它迁到嵌套键 `database.checkpoint_delta.snapshot_frequency`，默认值 `10`——同一个字段，但默认情况下线程落快照的频率提高了 **100 倍**。上游 `DeltaChannel` 的参数默认值仍是 1000；DeerFlow 始终显式传值，因此由 DeerFlow 构建的线程不会使用上游默认值。想恢复旧节奏，显式写出该值即可：
+节奏原本位于扁平键 `database.checkpoint_delta_snapshot_frequency`，默认值 `1000`。现在它迁到嵌套键 `database.checkpoint_delta.snapshot_frequency`，默认值 `10`——同一个字段，但默认情况下线程落快照的频率提高了 **100 倍**。上游 `DeltaChannel` 的参数默认值仍是 1000；nkyel 始终显式传值，因此由 nkyel 构建的线程不会使用上游默认值。想恢复旧节奏，显式写出该值即可：
 
 ```yaml
 database:

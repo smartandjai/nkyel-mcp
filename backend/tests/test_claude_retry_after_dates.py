@@ -9,7 +9,7 @@ import anthropic
 import httpx
 import pytest
 
-from deerflow.models import claude_provider as provider
+from nkyel.models import claude_provider as provider
 
 
 @pytest.fixture

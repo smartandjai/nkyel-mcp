@@ -6,12 +6,12 @@ import pytest
 
 
 def test_evidence_projects_actual_assembly_without_credentials():
-    from deerflow_extension_api import AgentAssemblyDescriptor
+    from nkyel_extension_api import AgentAssemblyDescriptor
 
-    from deerflow.runtime.assembly_evidence import project_assembly_evidence
+    from nkyel.runtime.assembly_evidence import project_assembly_evidence
 
     descriptor = AgentAssemblyDescriptor(
-        namespace="deerflow",
+        namespace="nkyel",
         agent_name="reviewer",
         requested_model="old",
         effective_model="actual",
@@ -39,8 +39,8 @@ def test_evidence_projects_actual_assembly_without_credentials():
 def test_artifact_versions_are_append_only_and_owner_scoped(tmp_path, monkeypatch):
     from pathlib import Path
 
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-workflows"))
-    from deerflow_extension_workflows.store import Store
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-workflows"))
+    from nkyel_extension_workflows.store import Store
 
     store = Store(tmp_path / "workflows.sqlite")
     one = store.capture_artifact("alice", "workflow", "step", "report.pdf", b"original")
@@ -57,7 +57,7 @@ def test_artifact_versions_are_append_only_and_owner_scoped(tmp_path, monkeypatc
 def test_host_output_capture_rejects_unsafe_files(tmp_path, monkeypatch):
     from types import SimpleNamespace
 
-    from deerflow_extension_api import AgentRunError
+    from nkyel_extension_api import AgentRunError
     from fastapi import HTTPException
 
     from app.gateway.extension_artifacts import MAX_BYTES, read_output_snapshot
@@ -83,7 +83,7 @@ def test_host_output_capture_rejects_unsafe_files(tmp_path, monkeypatch):
 @pytest.mark.parametrize("admit", ["create", "create_or_reject"])
 @pytest.mark.parametrize("evidence_key", [None, "renamed_host_evidence"])
 async def test_client_cannot_supply_host_evidence(admit, evidence_key, monkeypatch):
-    from deerflow.runtime import RunManager, assembly_evidence
+    from nkyel.runtime import RunManager, assembly_evidence
 
     if evidence_key is not None:
         monkeypatch.setattr(assembly_evidence, "EVIDENCE_KEY", evidence_key)

@@ -11,10 +11,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from deerflow.utils import output_names
+from nkyel.utils import output_names
 
-browser_automation_tools = importlib.import_module("deerflow.community.browser_automation.tools")
-browserless_tools = importlib.import_module("deerflow.community.browserless.tools")
+browser_automation_tools = importlib.import_module("nkyel.community.browser_automation.tools")
+browserless_tools = importlib.import_module("nkyel.community.browserless.tools")
 
 
 class _StepClock(datetime):

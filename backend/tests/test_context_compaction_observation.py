@@ -11,7 +11,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from deerflow_extension_api import CompactionEvent, canonical_hash
+from nkyel_extension_api import CompactionEvent, canonical_hash
 
 
 def test_event_records_both_ends_of_the_transform():
@@ -54,7 +54,7 @@ def _observed_extensions(observer=None):
     """
     from dataclasses import replace
 
-    from deerflow.extensions import get_agent_build_extensions
+    from nkyel.extensions import get_agent_build_extensions
 
     return replace(get_agent_build_extensions(), context_compaction_observers=(("test-source", observer or (lambda event, context=None: None)),))
 
@@ -68,12 +68,12 @@ def test_source_hashes_are_computed_on_content_directly_not_a_stringified_copy()
     """
     from langchain_core.messages import HumanMessage
 
-    from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
+    from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
 
     a = HumanMessage(content=[{"type": "text", "text": "hi"}, {"b": 1, "a": 2}])
     b = HumanMessage(content=[{"type": "text", "text": "hi"}, {"a": 2, "b": 1}])
 
-    middleware = DeerFlowSummarizationMiddleware(model=MagicMock(), extensions=_observed_extensions())
+    middleware = NkyelSummarizationMiddleware(model=MagicMock(), extensions=_observed_extensions())
     hashes = middleware._freeze_compaction_sources([a, b])
     assert hashes[0] == hashes[1]
     assert hashes[0] == canonical_hash(a.content)
@@ -109,13 +109,13 @@ def _runtime(thread_id: str | None = "thread-1") -> SimpleNamespace:
 
 
 def _middleware(*, trigger=("messages", 4), keep=("messages", 2), extensions=_UNOBSERVED):
-    from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
+    from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
 
     model = MagicMock()
     model.invoke.return_value = SimpleNamespace(text="compressed summary")
     model.ainvoke = AsyncMock(return_value=SimpleNamespace(text="compressed summary"))
     model.with_config.return_value = model
-    return DeerFlowSummarizationMiddleware(
+    return NkyelSummarizationMiddleware(
         model=model,
         trigger=trigger,
         keep=keep,
@@ -127,7 +127,7 @@ def _middleware(*, trigger=("messages", 4), keep=("messages", 2), extensions=_UN
 class TestSummarizationEmitsTheEvent:
     @pytest.mark.asyncio
     async def test_a_compaction_notifies_observers_once(self, monkeypatch):
-        from deerflow.agents.middlewares import summarization_middleware
+        from nkyel.agents.middlewares import summarization_middleware
 
         events = []
         monkeypatch.setattr(
@@ -153,7 +153,7 @@ class TestSummarizationEmitsTheEvent:
 
     @pytest.mark.asyncio
     async def test_no_event_is_emitted_when_the_trigger_does_not_fire(self, monkeypatch):
-        from deerflow.agents.middlewares import summarization_middleware
+        from nkyel.agents.middlewares import summarization_middleware
 
         events = []
         monkeypatch.setattr(
@@ -183,7 +183,7 @@ class TestAnInstallWithNoObserverPaysNothing:
     def test_the_sources_are_not_hashed_when_nothing_observes(self):
         from dataclasses import replace
 
-        from deerflow.extensions import get_agent_build_extensions
+        from nkyel.extensions import get_agent_build_extensions
 
         unobserved = replace(get_agent_build_extensions(), context_compaction_observers=())
         middleware = _middleware(extensions=unobserved)
@@ -200,8 +200,8 @@ class TestAnInstallWithNoObserverPaysNothing:
         """The skip must cost the run nothing but the hashes."""
         from dataclasses import replace
 
-        from deerflow.agents.middlewares import summarization_middleware
-        from deerflow.extensions import get_agent_build_extensions
+        from nkyel.agents.middlewares import summarization_middleware
+        from nkyel.extensions import get_agent_build_extensions
 
         events = []
         monkeypatch.setattr(summarization_middleware, "notify_context_compacted", lambda event, extensions=None: events.append(event))

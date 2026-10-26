@@ -20,15 +20,15 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 from pydantic import Field
 
-from deerflow.agents.middlewares.deferred_tool_filter_middleware import DeferredToolFilterMiddleware
-from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
-from deerflow.agents.middlewares.tool_promotion_audit_middleware import DeferredToolPromotionAuditMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.runtime.serialization import serialize
-from deerflow.skills.describe import build_skill_search_setup
-from deerflow.skills.types import Skill, SkillCategory
-from deerflow.tools.builtins.tool_search import build_deferred_tool_setup
-from deerflow.tools.mcp_metadata import tag_mcp_tool
+from nkyel.agents.middlewares.deferred_tool_filter_middleware import DeferredToolFilterMiddleware
+from nkyel.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+from nkyel.agents.middlewares.tool_promotion_audit_middleware import DeferredToolPromotionAuditMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.runtime.serialization import serialize
+from nkyel.skills.describe import build_skill_search_setup
+from nkyel.skills.types import Skill, SkillCategory
+from nkyel.tools.builtins.tool_search import build_deferred_tool_setup
+from nkyel.tools.mcp_metadata import tag_mcp_tool
 
 _SLASH_SOURCE_OWNER_TOKEN = "test-slash-source-owner"
 _CALC_CALLS: list[str] = []

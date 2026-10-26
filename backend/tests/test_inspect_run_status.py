@@ -5,8 +5,8 @@ import json
 
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from deerflow.runtime.context_keys import CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY
-from deerflow.tools.builtins.inspect_run_status_tool import build_inspect_run_status_tool, snapshot_run_status
+from nkyel.runtime.context_keys import CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY
+from nkyel.tools.builtins.inspect_run_status_tool import build_inspect_run_status_tool, snapshot_run_status
 
 
 def test_snapshot_counts_only_the_current_run_and_uses_reported_usage():
@@ -99,7 +99,7 @@ def test_tool_reads_live_graph_state_without_exposing_message_content():
     from langchain.agents import create_agent
     from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 
-    from deerflow.agents.thread_state import ThreadState
+    from nkyel.agents.thread_state import ThreadState
 
     class FakeModel(GenericFakeChatModel):
         def bind_tools(self, tools, **kwargs):
@@ -131,14 +131,14 @@ def test_tool_reads_live_graph_state_without_exposing_message_content():
 
 
 def test_available_tools_registers_introspection_with_model_context_window():
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.model_config import ModelConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.tools import get_available_tools
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.model_config import ModelConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.tools import get_available_tools
 
     config = AppConfig(
         models=[ModelConfig(name="status-model", display_name="status-model", description=None, use="langchain_openai:ChatOpenAI", model="status-model", context_window=8192)],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
     )
     tools = get_available_tools(include_mcp=False, model_name="status-model", app_config=config)
 

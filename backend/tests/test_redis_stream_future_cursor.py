@@ -2,8 +2,8 @@
 
 import pytest
 
-from deerflow.runtime import StreamGap
-from deerflow.runtime.stream_bridge.redis import RedisStreamBridge
+from nkyel.runtime import StreamGap
+from nkyel.runtime.stream_bridge.redis import RedisStreamBridge
 
 
 class _SnapshotPipeline:

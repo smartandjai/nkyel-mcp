@@ -10,9 +10,9 @@ from types import SimpleNamespace
 
 import pytest
 
-import deerflow
-from deerflow.skills.skillscan import enforce_static_scan, scan_skill_dir
-from deerflow.skills.skillscan.models import ScanResult, StaticScanBlockedError
+import nkyel
+from nkyel.skills.skillscan import enforce_static_scan, scan_skill_dir
+from nkyel.skills.skillscan.models import ScanResult, StaticScanBlockedError
 
 
 def _scan(tmp_path: Path, body: str) -> ScanResult:
@@ -119,10 +119,10 @@ def test_split_exhaustion_preserves_critical_block(tmp_path: Path, critical_firs
 
 
 def _scan_with_deadline(payload_expression: str) -> None:
-    harness = Path(deerflow.__file__).resolve().parents[1]
+    harness = Path(nkyel.__file__).resolve().parents[1]
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(filter(None, (str(harness), env.get("PYTHONPATH", ""))))
-    script = "from deerflow.skills.skillscan.orchestrator import _scan_shell\n" + f"assert _scan_shell('run.sh', {payload_expression}) == []\n"
+    script = "from nkyel.skills.skillscan.orchestrator import _scan_shell\n" + f"assert _scan_shell('run.sh', {payload_expression}) == []\n"
     result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=10, env=env)
     assert result.returncode == 0, result.stderr
 

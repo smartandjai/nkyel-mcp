@@ -3,8 +3,8 @@
 from fastapi import APIRouter, Header, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
-from deerflow.persistence.engine import get_session_factory
-from deerflow.persistence.user.im_notifications import ImNotificationPreferencesRepository
+from nkyel.persistence.engine import get_session_factory
+from nkyel.persistence.user.im_notifications import ImNotificationPreferencesRepository
 
 router = APIRouter(prefix="/api/channels/notification-preferences", tags=["channel-connections"])
 

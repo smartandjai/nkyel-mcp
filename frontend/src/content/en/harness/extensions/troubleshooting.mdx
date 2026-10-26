@@ -7,7 +7,7 @@ import { Callout } from "nextra/components";
 
 # Troubleshooting
 
-Every extension diagnostic in the Gateway log starts with `Extension <use>:`, where `<use>` is the record's entry point, for example `Extension deerflow_extension_hello:install:`. Search the log for that prefix first. Under `make dev` the Gateway writes to `logs/gateway.log`; in Docker, use `make docker-logs` or `docker compose logs gateway`.
+Every extension diagnostic in the Gateway log starts with `Extension <use>:`, where `<use>` is the record's entry point, for example `Extension nkyel_extension_hello:install:`. Search the log for that prefix first. Under `make dev` the Gateway writes to `logs/gateway.log`; in Docker, use `make docker-logs` or `docker compose logs gateway`.
 
 Manager commands report failures on stderr as `extension command failed: <reason>` with exit status 1.
 
@@ -18,7 +18,7 @@ Manager commands report failures on stderr as `extension command failed: <reason
 The Gateway logs `Extensions loaded: N/M (...)` at INFO whenever `plugins:` has at least one entry. Without that line the Gateway read no `plugins:` list:
 
 - **The Gateway was not restarted.** Extensions load only at startup.
-- **The Gateway reads a different `config.yaml`.** The manager and the Gateway both honor `DEER_FLOW_CONFIG_PATH`; if one process has it set and the other does not, they use different files. See [Operating Extensions](/docs/harness/extensions/operations).
+- **The Gateway reads a different `config.yaml`.** The manager and the Gateway both honor `NKYEL_CONFIG_PATH`; if one process has it set and the other does not, they use different files. See [Operating Extensions](/docs/harness/extensions/operations).
 - **The record was put in `extensions_config.json`.** `plugins:` is read only from `config.yaml`.
 
 ### `Extensions loaded: 0/1 (none)`
@@ -27,7 +27,7 @@ The entry was read but did not load. The error line just above says why; the ent
 
 ### `could not resolve extension entry point: Could not import module <module>. Missing dependency '<module>'...`
 
-The module is not installed in the Gateway's environment. Install the package through the manager instead of `pip install`, so that it lands in `backend/uv.lock` and in images built from it. If you installed it and still see this, check that the `use` value spells the import path, not the distribution name: `deerflow_extension_hello:install`, not `deerflow-extension-hello:install`.
+The module is not installed in the Gateway's environment. Install the package through the manager instead of `pip install`, so that it lands in `backend/uv.lock` and in images built from it. If you installed it and still see this, check that the `use` value spells the import path, not the distribution name: `nkyel_extension_hello:install`, not `nkyel-extension-hello:install`.
 
 ### `could not resolve extension entry point: Module <module> does not define a <name> attribute/class`
 
@@ -45,15 +45,15 @@ The module imports, but the function after the colon does not exist. Correct `us
 
 The `@extension(api=...)` marker is outside what this host accepts. Before 1.0 the host accepts the same `0.minor` at a patch equal to or lower than its own.
 
-- Declared version **newer** than the host (for example `0.3.0` on a `0.2.1` host): upgrade DeerFlow, or install an extension release built for this host.
-- Declared version with a **newer patch** than the host (for example `0.2.2` on a `0.2.1` host): upgrade DeerFlow, or install the extension release that declares `0.2.1` or lower.
+- Declared version **newer** than the host (for example `0.3.0` on a `0.2.1` host): upgrade nkyel, or install an extension release built for this host.
+- Declared version with a **newer patch** than the host (for example `0.2.2` on a `0.2.1` host): upgrade nkyel, or install the extension release that declares `0.2.1` or lower.
 - Declared version on an **older** minor (for example `0.1.0` on a `0.2.1` host): upgrade the extension to a release written against the host's minor.
 
-The message suggests `pip install 'deerflow-extension-api>=<declared>,<...'`. The host's contract version is fixed by its own `uv.lock`, so for an older extension that suggestion does not apply: fix the extension, not the host.
+The message suggests `pip install 'nkyel-extension-api>=<declared>,<...'`. The host's contract version is fixed by its own `uv.lock`, so for an older extension that suggestion does not apply: fix the extension, not the host.
 
 ### `extension declares invalid extension-api version marker of type <type>; expected a dotted numeric string such as '0.1'`
 
-`__deerflow_api__` was set to something other than a string like `"0.2.0"`. Use the `@extension(api="0.2.0")` decorator.
+`__nkyel_api__` was set to something other than a string like `"0.2.0"`. Use the `@extension(api="0.2.0")` decorator.
 
 ### `install() failed: <error>`
 
@@ -71,7 +71,7 @@ A record with `required: true` failed. The same message ends in `is not callable
 
 ### `extension table_prefix '<prefix>' would hide host-owned table(s) [...] from alembic autogenerate`
 
-The record's `table_prefix` is a prefix of a DeerFlow table name. This always aborts startup, even for a disabled or optional record. Choose a more specific prefix, such as `acme_audit_`.
+The record's `table_prefix` is a prefix of a nkyel table name. This always aborts startup, even for a disabled or optional record. Choose a more specific prefix, such as `acme_audit_`.
 
 ### A validation error for `plugins` when loading `config.yaml`
 
@@ -84,9 +84,9 @@ For example `Extra inputs are not permitted` or `String should have at least 1 c
 | `extension installation requires uv 0.8.0 or newer`                                                        | Upgrade uv, ideally to the version pinned in `backend/Dockerfile`                                                |
 | `extension has no pyproject.toml: <path>`                                                                  | The directory is not a package root                                                                             |
 | `extension pyproject.toml must declare project.name`                                                       | Add `[project] name = ...`                                                                                      |
-| `extension must declare exactly one 'deerflow.extensions' entry point`                                     | Declare one entry under `[project.entry-points."deerflow.extensions"]`                                          |
-| `invalid 'deerflow.extensions' entry point target`                                                         | The entry-point value must be `module.path:function`                                                            |
-| `distribution '<name>' must expose exactly one 'deerflow.extensions' entry point`                          | A package from an index or Git declares none or several entry points in that group                              |
+| `extension must declare exactly one 'nkyel.extensions' entry point`                                     | Declare one entry under `[project.entry-points."nkyel.extensions"]`                                          |
+| `invalid 'nkyel.extensions' entry point target`                                                         | The entry-point value must be `module.path:function`                                                            |
+| `distribution '<name>' must expose exactly one 'nkyel.extensions' entry point`                          | A package from an index or Git declares none or several entry points in that group                              |
 | `distribution '<name>' extension entry point could not be loaded`                                          | Importing the entry point raised in the synced environment, or it is not callable. Test `import` locally       |
 | `local extension snapshot contains a likely sensitive file: <name>`                                        | Delete the `.env`, key, or credential file from the directory, or build from a clean copy                       |
 | `local extension snapshots cannot contain symbolic links or junctions`                                     | Replace links with real files                                                                                   |
@@ -102,11 +102,11 @@ For example `Extra inputs are not permitted` or `String should have at least 1 c
 | `configured extension '<name>' has no managed package metadata`                                            | A hand-written record without `package`; delete it from `config.yaml` yourself                                   |
 | `multiple configured plugins conflict with extension '<name>'`                                             | Another record already uses this `name` or `package` with a different `use`. Remove the stale record. During `upgrade`, this also means the new version changed its entry-point target: remove and reinstall |
 | `config.yaml contains duplicate top-level plugins keys`                                                    | Merge the two `plugins:` blocks                                                                                 |
-| `DeerFlow config not found: <path>`                                                                         | Run `make config`, or point `DEER_FLOW_CONFIG_PATH` at the right file                                           |
+| `nkyel config not found: <path>`                                                                         | Run `make config`, or point `NKYEL_CONFIG_PATH` at the right file                                           |
 | `extension installation recovery preserved a concurrent dependency-file edit` (or `removal`, `config edit`) | Someone else changed the files mid-operation. Review `git diff` and retry                                       |
 | `extension operation failed and the restored environment could not be synchronized; original failure: ...` | The rollback restored the files but `uv sync` failed. Run `cd backend && uv sync --locked --all-packages`         |
 
-A manager command that seems to hang is usually waiting for another command holding `.deer-flow/extension-manager.lock`.
+A manager command that seems to hang is usually waiting for another command holding `.nkyel/extension-manager.lock`.
 
 ## Middleware problems
 

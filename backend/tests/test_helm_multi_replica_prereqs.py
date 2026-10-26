@@ -5,7 +5,7 @@ long-closed issue #3948, while its rendered config lacked the two settings a
 second Pod actually needs: run-ownership heartbeats (without a lease, a
 starting Pod writes every peer's live run off as an orphan) and
 database-backed run events. These tests pin the config block, the
-``DEER_FLOW_MULTI_INSTANCE`` declaration the Gateway's startup gate reads
+``NKYEL_MULTI_INSTANCE`` declaration the Gateway's startup gate reads
 (derived from ``gateway.replicas`` or declared with ``gateway.multiInstance``
 for deployments scaled by kubectl/HPA), the shared ``AUTH_JWT_SECRET`` that is
 required once more than one instance runs, the ``existingAppSecret`` wiring,
@@ -27,7 +27,7 @@ import yaml
 from _gateway_shutdown_budget import lifespan_shutdown_seconds
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CHART = REPO_ROOT / "deploy" / "helm" / "deer-flow"
+CHART = REPO_ROOT / "deploy" / "helm" / "nkyel"
 VALUES = CHART / "values.yaml"
 APP_SECRET_TEMPLATE = CHART / "templates" / "secret-app.yaml"
 README = CHART / "README.md"
@@ -45,7 +45,7 @@ def _render_chart(*settings: str) -> list[dict]:
     helm = shutil.which("helm")
     if helm is None:
         pytest.skip("helm is unavailable")
-    command = [helm, "template", "deer-flow", str(CHART)]
+    command = [helm, "template", "nkyel", str(CHART)]
     for setting in settings:
         command.extend(["--set", setting])
     rendered = subprocess.run(command, check=True, capture_output=True, text=True).stdout
@@ -111,7 +111,7 @@ def test_app_secret_template_preserves_the_jwt_secret_across_upgrades() -> None:
 def test_readme_documents_the_multi_instance_knobs() -> None:
     readme = README.read_text(encoding="utf-8")
     assert re.search(r"do not raise\s+`gateway\.replicas` past 1", readme) is None
-    for needle in ("DEER_FLOW_MULTI_INSTANCE", "AUTH_JWT_SECRET", "gateway.multiInstance", "existingAppSecret", ".jwt_secret"):
+    for needle in ("NKYEL_MULTI_INSTANCE", "AUTH_JWT_SECRET", "gateway.multiInstance", "existingAppSecret", ".jwt_secret"):
         assert needle in readme, needle
 
 
@@ -122,7 +122,7 @@ def test_rendered_declaration_follows_the_replica_count(replicas: int) -> None:
     gateway = _container(documents, "-gateway", "gateway")
     multi_instance = replicas > 1
 
-    assert _env(gateway)["DEER_FLOW_MULTI_INSTANCE"]["value"] == str(multi_instance).lower()
+    assert _env(gateway)["NKYEL_MULTI_INSTANCE"]["value"] == str(multi_instance).lower()
     jwt = _secret_ref(gateway, "AUTH_JWT_SECRET")
     assert jwt["name"].endswith("-app")
     assert jwt["key"] == "AUTH_JWT_SECRET"
@@ -142,7 +142,7 @@ def test_explicit_multi_instance_declaration_wins_over_the_replica_count() -> No
     """kubectl scale and HPAs change the count without a Helm upgrade, so the operator declares it."""
     documents = _render_chart("gateway.replicas=1", "gateway.multiInstance=true")
     gateway = _container(documents, "-gateway", "gateway")
-    assert _env(gateway)["DEER_FLOW_MULTI_INSTANCE"]["value"] == "true"
+    assert _env(gateway)["NKYEL_MULTI_INSTANCE"]["value"] == "true"
     assert _secret_ref(gateway, "AUTH_JWT_SECRET")["optional"] is False
     assert _has_kind(documents, "PodDisruptionBudget")
 
@@ -158,7 +158,7 @@ def test_existing_app_secret_is_honored_by_every_consumer() -> None:
     documents = _render_chart("existingAppSecret=my-app-secret", "gateway.replicas=2")
     assert not any(document.get("kind") == "Secret" and document["metadata"]["name"].endswith("-app") for document in documents)
     gateway = _container(documents, "-gateway", "gateway")
-    assert _secret_ref(gateway, "DEER_FLOW_INTERNAL_AUTH_TOKEN")["name"] == "my-app-secret"
+    assert _secret_ref(gateway, "NKYEL_INTERNAL_AUTH_TOKEN")["name"] == "my-app-secret"
     assert _secret_ref(gateway, "AUTH_JWT_SECRET")["name"] == "my-app-secret"
     frontend = _container(documents, "-frontend", "frontend")
     assert _secret_ref(frontend, "BETTER_AUTH_SECRET")["name"] == "my-app-secret"

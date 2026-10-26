@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from deerflow.community.infoquest import tools
+from nkyel.community.infoquest import tools
 
 _URL = "https://example.com"
 _FETCH_PAYLOAD = {"reader_result": "<p>Content</p>"}
@@ -47,7 +47,7 @@ def _mock_transport(monkeypatch, payload):
     )
     cls = MagicMock()
     cls.return_value = client
-    monkeypatch.setattr("deerflow.community.infoquest.infoquest_client.httpx.AsyncClient", cls)
+    monkeypatch.setattr("nkyel.community.infoquest.infoquest_client.httpx.AsyncClient", cls)
     monkeypatch.setenv("INFOQUEST_API_KEY", "test-placeholder")
     return client
 

@@ -1,4 +1,4 @@
-"""Server-owned ``deerflow_origin`` on runs and threads.
+"""Server-owned ``nkyel_origin`` on runs and threads.
 
 Only server-side launchers (scheduler, MCP notifications, extension handles,
 via ``request.state.run_origin``) and the internal channel caller (via
@@ -27,10 +27,10 @@ from app.gateway.extension_agent_runs import GatewayAgentRunsHost
 from app.gateway.internal_auth import INTERNAL_OWNER_USER_ID_HEADER_NAME, get_internal_user
 from app.gateway.run_models import RunCreateRequest
 from app.gateway.run_origin import resolve_request_origin
-from deerflow.persistence.base import Base
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunChangeClockRow, RunRow
-from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY, ORIGIN_KINDS, admit_origin, make_origin, origin_kind_of
+from nkyel.persistence.base import Base
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunChangeClockRow, RunRow
+from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY, ORIGIN_KINDS, admit_origin, make_origin, origin_kind_of
 
 CONTRACT = json.loads((Path(__file__).resolve().parents[2] / "contracts" / "thread_origin_contract.json").read_text())
 
@@ -42,7 +42,7 @@ CONTRACT = json.loads((Path(__file__).resolve().parents[2] / "contracts" / "thre
 
 def test_contract_matches_the_module():
     assert CONTRACT["version"] == 1
-    assert CONTRACT["key"] == DEERFLOW_ORIGIN_KEY
+    assert CONTRACT["key"] == NKYEL_ORIGIN_KEY
     assert sorted(CONTRACT["kinds"]) == CONTRACT["kinds"]
     assert set(CONTRACT["kinds"]) == ORIGIN_KINDS
 
@@ -51,7 +51,7 @@ def test_origin_key_is_distinct_from_the_message_level_scheduled_origin_key():
     from app.gateway.services import SCHEDULED_ORIGIN_KEY
 
     notes = json.loads((Path(__file__).resolve().parents[2] / "contracts" / "scheduled_goal_notes_contract.json").read_text())
-    assert DEERFLOW_ORIGIN_KEY != SCHEDULED_ORIGIN_KEY == notes["scheduled_origin_key"]
+    assert NKYEL_ORIGIN_KEY != SCHEDULED_ORIGIN_KEY == notes["scheduled_origin_key"]
 
 
 @pytest.mark.parametrize(
@@ -66,7 +66,7 @@ def test_origin_key_is_distinct_from_the_message_level_scheduled_origin_key():
 )
 def test_well_formed_origins_are_admitted(value):
     assert admit_origin(value) == value
-    assert origin_kind_of({DEERFLOW_ORIGIN_KEY: value}) == value["kind"]
+    assert origin_kind_of({NKYEL_ORIGIN_KEY: value}) == value["kind"]
 
 
 @pytest.mark.parametrize(
@@ -88,7 +88,7 @@ def test_well_formed_origins_are_admitted(value):
 )
 def test_malformed_origins_are_dropped_whole(value):
     assert admit_origin(value) is None
-    assert origin_kind_of({DEERFLOW_ORIGIN_KEY: value}) is None
+    assert origin_kind_of({NKYEL_ORIGIN_KEY: value}) is None
 
 
 def test_make_origin_rejects_malformed_values():
@@ -102,12 +102,12 @@ def test_make_origin_rejects_malformed_values():
 def test_origin_kind_of_tolerates_missing_metadata():
     assert origin_kind_of(None) is None
     assert origin_kind_of({}) is None
-    assert origin_kind_of([("deerflow_origin", {"kind": "schedule"})]) is None
+    assert origin_kind_of([("nkyel_origin", {"kind": "schedule"})]) is None
 
 
 def test_request_origin_trusts_only_host_state_and_internal_callers():
     origin = {"kind": "im_channel", "provider": "slack"}
-    body = {DEERFLOW_ORIGIN_KEY: origin}
+    body = {NKYEL_ORIGIN_KEY: origin}
     # Session/PAT/API callers: the body copy is ignored.
     assert resolve_request_origin(SimpleNamespace(state=SimpleNamespace(auth_source="session")), body) is None
     assert resolve_request_origin(SimpleNamespace(state=SimpleNamespace(auth_source="pat")), body) is None
@@ -115,7 +115,7 @@ def test_request_origin_trusts_only_host_state_and_internal_callers():
     # The internal channel caller may declare it; invalid shapes still drop.
     internal = SimpleNamespace(state=SimpleNamespace(auth_source="internal"))
     assert resolve_request_origin(internal, body) == origin
-    assert resolve_request_origin(internal, {DEERFLOW_ORIGIN_KEY: {"kind": "schedule", "x": 1}}) is None
+    assert resolve_request_origin(internal, {NKYEL_ORIGIN_KEY: {"kind": "schedule", "x": 1}}) is None
     assert resolve_request_origin(internal, None) is None
     # A host-set origin wins over anything in the body.
     host = SimpleNamespace(state=SimpleNamespace(auth_source="internal", run_origin={"kind": "schedule"}))
@@ -137,11 +137,11 @@ async def gateway(monkeypatch, tmp_path):
     from langgraph.graph import MessagesState, StateGraph
     from langgraph.store.memory import InMemoryStore
 
-    from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-    from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-    from deerflow.runtime import RunManager
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
-    from deerflow.runtime.stream_bridge.memory import MemoryStreamBridge
+    from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+    from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+    from nkyel.runtime import RunManager
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.stream_bridge.memory import MemoryStreamBridge
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'runs.db'}")
     async with engine.begin() as conn:
@@ -157,8 +157,8 @@ async def gateway(monkeypatch, tmp_path):
     state.run_manager = RunManager(store=state.run_store)
     state.run_event_store = MemoryRunEventStore()
     state.stream_bridge = MemoryStreamBridge()
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
 
     def factory(*, config):
         builder = StateGraph(MessagesState)
@@ -218,15 +218,15 @@ async def _checkpoint_metadata(app, thread_id):
 @pytest.mark.asyncio
 async def test_session_caller_cannot_forge_an_origin_in_body_metadata(gateway):
     app, sf = gateway
-    record = await _start(app, _session_request(app), _body(metadata={DEERFLOW_ORIGIN_KEY: {"kind": "schedule"}, "kept": 1}), "forged-body")
-    assert DEERFLOW_ORIGIN_KEY not in record.metadata
+    record = await _start(app, _session_request(app), _body(metadata={NKYEL_ORIGIN_KEY: {"kind": "schedule"}, "kept": 1}), "forged-body")
+    assert NKYEL_ORIGIN_KEY not in record.metadata
     assert record.metadata["kept"] == 1
     assert await _origin_kind(sf, record.run_id) is None
     stored = await app.state.run_store.get(record.run_id, user_id=None)
-    assert DEERFLOW_ORIGIN_KEY not in stored["metadata"]
-    assert DEERFLOW_ORIGIN_KEY not in await _checkpoint_metadata(app, "forged-body")
+    assert NKYEL_ORIGIN_KEY not in stored["metadata"]
+    assert NKYEL_ORIGIN_KEY not in await _checkpoint_metadata(app, "forged-body")
     # The thread this run auto-created carries no marker either.
-    assert DEERFLOW_ORIGIN_KEY not in (await app.state.thread_store.get("forged-body", user_id=None))["metadata"]
+    assert NKYEL_ORIGIN_KEY not in (await app.state.thread_store.get("forged-body", user_id=None))["metadata"]
 
 
 @pytest.mark.asyncio
@@ -242,24 +242,24 @@ async def test_client_origin_in_config_metadata_is_dropped(gateway, monkeypatch)
         return await real_run_agent(*args, **kwargs)
 
     monkeypatch.setattr("app.gateway.services.run_agent", capture)
-    body = _body(config={"metadata": {DEERFLOW_ORIGIN_KEY: {"kind": "schedule"}, "caller_key": "kept"}})
+    body = _body(config={"metadata": {NKYEL_ORIGIN_KEY: {"kind": "schedule"}, "caller_key": "kept"}})
     record = await _start(app, _session_request(app), body, "forged-config")
-    assert DEERFLOW_ORIGIN_KEY not in captured["config"]["metadata"]
+    assert NKYEL_ORIGIN_KEY not in captured["config"]["metadata"]
     assert captured["config"]["metadata"]["caller_key"] == "kept"
-    assert DEERFLOW_ORIGIN_KEY not in record.metadata
+    assert NKYEL_ORIGIN_KEY not in record.metadata
     assert await _origin_kind(sf, record.run_id) is None
-    assert DEERFLOW_ORIGIN_KEY not in await _checkpoint_metadata(app, "forged-config")
+    assert NKYEL_ORIGIN_KEY not in await _checkpoint_metadata(app, "forged-config")
 
     # An internal caller's server-resolved origin overrides a conflicting copy.
     origin = {"kind": "im_channel", "provider": "slack"}
-    body = _body(metadata={DEERFLOW_ORIGIN_KEY: origin}, config={"metadata": {DEERFLOW_ORIGIN_KEY: {"kind": "extension"}}})
+    body = _body(metadata={NKYEL_ORIGIN_KEY: origin}, config={"metadata": {NKYEL_ORIGIN_KEY: {"kind": "extension"}}})
     record = await _start(app, _internal_request(app), body, "internal-config")
-    assert captured["config"]["metadata"][DEERFLOW_ORIGIN_KEY] == origin
-    assert record.metadata[DEERFLOW_ORIGIN_KEY] == origin
+    assert captured["config"]["metadata"][NKYEL_ORIGIN_KEY] == origin
+    assert record.metadata[NKYEL_ORIGIN_KEY] == origin
     assert await _origin_kind(sf, record.run_id) == "im_channel"
     # LangGraph copies only scalar config metadata into checkpoints, so the
     # origin object lives on the run (record and runs.origin_kind), not there.
-    assert DEERFLOW_ORIGIN_KEY not in await _checkpoint_metadata(app, "internal-config")
+    assert NKYEL_ORIGIN_KEY not in await _checkpoint_metadata(app, "internal-config")
 
 
 @pytest.mark.asyncio
@@ -274,13 +274,13 @@ async def test_client_origin_in_config_metadata_is_dropped(gateway, monkeypatch)
 )
 async def test_internal_caller_origin_is_kept_only_when_well_formed(gateway, value, expected):
     app, sf = gateway
-    record = await _start(app, _internal_request(app), _body(metadata={DEERFLOW_ORIGIN_KEY: value}), f"internal-{expected}")
+    record = await _start(app, _internal_request(app), _body(metadata={NKYEL_ORIGIN_KEY: value}), f"internal-{expected}")
     assert await _origin_kind(sf, record.run_id) == expected
     assert record.user_id == OWNER
     if expected is None:
-        assert DEERFLOW_ORIGIN_KEY not in record.metadata
+        assert NKYEL_ORIGIN_KEY not in record.metadata
     else:
-        assert record.metadata[DEERFLOW_ORIGIN_KEY] == value
+        assert record.metadata[NKYEL_ORIGIN_KEY] == value
 
 
 @pytest.mark.asyncio
@@ -298,11 +298,11 @@ async def test_scheduled_launch_stamps_run_and_fresh_thread(gateway):
     )
     await (await app.state.run_manager.get(result["run_id"])).task
     stored = await app.state.run_store.get(result["run_id"], user_id=None)
-    assert stored["metadata"][DEERFLOW_ORIGIN_KEY] == {"kind": "schedule"}
+    assert stored["metadata"][NKYEL_ORIGIN_KEY] == {"kind": "schedule"}
     assert stored["origin_kind"] == "schedule"
     assert stored["user_id"] == OWNER
     thread = await app.state.thread_store.get("sched-run-thread", user_id=OWNER)
-    assert thread["metadata"][DEERFLOW_ORIGIN_KEY] == {"kind": "schedule"}
+    assert thread["metadata"][NKYEL_ORIGIN_KEY] == {"kind": "schedule"}
 
 
 @pytest.mark.asyncio
@@ -338,15 +338,15 @@ async def test_extension_handle_marks_its_threads_and_runs(gateway, monkeypatch,
         runs = runs.for_plugin(namespace)
     expected = make_origin("extension", namespace=namespace)
 
-    thread_id = await runs.create_thread(thread_id="extension-thread", metadata={DEERFLOW_ORIGIN_KEY: {"kind": "schedule"}, "keep": "me"})
+    thread_id = await runs.create_thread(thread_id="extension-thread", metadata={NKYEL_ORIGIN_KEY: {"kind": "schedule"}, "keep": "me"})
     thread = await app.state.thread_store.get(thread_id, user_id=OWNER)
-    assert thread["metadata"][DEERFLOW_ORIGIN_KEY] == expected
+    assert thread["metadata"][NKYEL_ORIGIN_KEY] == expected
     assert thread["metadata"]["keep"] == "me"
 
     run = await runs.start(thread_id=thread_id, input={"messages": [{"role": "user", "content": "go"}]})
     await runs.wait(thread_id=thread_id, run_id=run.run_id, timeout=5)
     assert await _origin_kind(sf, run.run_id) == "extension"
-    assert (await app.state.run_store.get(run.run_id, user_id=None))["metadata"][DEERFLOW_ORIGIN_KEY] == expected
+    assert (await app.state.run_store.get(run.run_id, user_id=None))["metadata"][NKYEL_ORIGIN_KEY] == expected
 
 
 # ---------------------------------------------------------------------------
@@ -390,7 +390,7 @@ async def test_channel_wait_run_declares_im_origin():
     manager._client = client
     await manager._handle_chat(_message("slack"))
     client.runs.wait.assert_called_once()
-    assert client.runs.wait.call_args.kwargs["metadata"] == {DEERFLOW_ORIGIN_KEY: {"kind": "im_channel", "provider": "slack"}}
+    assert client.runs.wait.call_args.kwargs["metadata"] == {NKYEL_ORIGIN_KEY: {"kind": "im_channel", "provider": "slack"}}
 
 
 @pytest.mark.asyncio
@@ -399,7 +399,7 @@ async def test_channel_stream_run_declares_im_origin():
     client = _client()
     await manager._handle_streaming_chat(client, _message("feishu"), "im-thread", "lead_agent", {}, {}, {"role": "user", "content": "hello"})
     client.runs.stream.assert_called_once()
-    assert client.runs.stream.call_args.kwargs["metadata"] == {DEERFLOW_ORIGIN_KEY: {"kind": "im_channel", "provider": "feishu"}}
+    assert client.runs.stream.call_args.kwargs["metadata"] == {NKYEL_ORIGIN_KEY: {"kind": "im_channel", "provider": "feishu"}}
 
 
 @pytest.mark.asyncio
@@ -411,7 +411,7 @@ async def test_github_create_run_declares_github_origin():
     manager._client = client
     await manager._handle_chat(_github_message())
     client.runs.create.assert_called_once()
-    assert client.runs.create.call_args.kwargs["metadata"] == {DEERFLOW_ORIGIN_KEY: {"kind": "github", "provider": "github"}}
+    assert client.runs.create.call_args.kwargs["metadata"] == {NKYEL_ORIGIN_KEY: {"kind": "github", "provider": "github"}}
 
 
 def _github_message(text="please fix"):
@@ -428,7 +428,7 @@ async def test_followup_drain_declares_the_carrier_origin():
         manager._buffer_followup("gh-thread", _github_message(f"comment {index}"))
     await manager._drain_followups_for_thread(client, "gh-thread", _github_message("carrier"))
     client.runs.create.assert_called_once()
-    assert client.runs.create.call_args.kwargs["metadata"] == {DEERFLOW_ORIGIN_KEY: {"kind": "github", "provider": "github"}}
+    assert client.runs.create.call_args.kwargs["metadata"] == {NKYEL_ORIGIN_KEY: {"kind": "github", "provider": "github"}}
 
 
 def test_unusable_channel_name_sends_no_origin():

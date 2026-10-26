@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from support.symlinks import symlink_or_skip
 
-from deerflow.uploads.manager import UnsafeUploadPathError, copy_upload_file_no_replace
+from nkyel.uploads.manager import UnsafeUploadPathError, copy_upload_file_no_replace
 
 
 @pytest.fixture
@@ -173,7 +173,7 @@ def test_cleanup_error_does_not_mask_collision(upload_paths, monkeypatch, caplog
 
 @pytest.mark.parametrize("collisions", [0, 2])
 def test_publication_retry_uses_original_seed(upload_paths, collisions):
-    from deerflow.uploads.manager import publish_upload_copy
+    from nkyel.uploads.manager import publish_upload_copy
 
     uploads, source, _outside = upload_paths
     seen = {"notes.txt", "notes_1.txt"}
@@ -191,7 +191,7 @@ def test_publication_retry_uses_original_seed(upload_paths, collisions):
 
 
 def test_publication_retry_preserves_noncollision_errors(upload_paths, monkeypatch):
-    from deerflow.uploads import manager
+    from nkyel.uploads import manager
 
     uploads, source, _outside = upload_paths
 

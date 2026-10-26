@@ -40,8 +40,8 @@ from app.gateway.routers import mcp as mcp_router
 from app.gateway.routers import skills as skills_router
 from app.gateway.routers.mcp import McpConfigUpdateRequest
 from app.gateway.routers.skills import SkillUpdateRequest, update_skill
-from deerflow.config.extensions_config import ExtensionsConfig, SkillStateConfig
-from deerflow.skills import Skill
+from nkyel.config.extensions_config import ExtensionsConfig, SkillStateConfig
+from nkyel.skills import Skill
 
 pytestmark = pytest.mark.asyncio
 
@@ -178,7 +178,7 @@ async def test_skill_and_mcp_config_writes_are_serialized(tmp_path: Path, monkey
     """
     config_path = tmp_path / "extensions_config.json"
     await asyncio.to_thread(config_path.write_text, '{"mcpServers": {}, "skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
 
     state_lock = threading.Lock()
     counters = {"active": 0, "max": 0}
@@ -234,7 +234,7 @@ async def test_cancelled_writer_keeps_the_lock_until_its_worker_finishes(tmp_pat
     """
     config_path = tmp_path / "extensions_config.json"
     await asyncio.to_thread(config_path.write_text, '{"mcpServers": {}, "skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
 
     order: list[str] = []
     order_lock = threading.Lock()

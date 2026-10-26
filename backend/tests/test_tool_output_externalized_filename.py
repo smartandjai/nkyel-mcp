@@ -8,14 +8,14 @@ from unittest.mock import MagicMock
 import pytest
 from langchain_core.messages import ToolMessage
 
-from deerflow.agents.middlewares.tool_output_budget_middleware import (
+from nkyel.agents.middlewares.tool_output_budget_middleware import (
     ToolOutputBudgetMiddleware,
     _build_externalized_filename,
     _externalize,
     _externalize_to_sandbox,
 )
-from deerflow.config.tool_output_config import ToolOutputConfig
-from deerflow.sandbox.sandbox import Sandbox
+from nkyel.config.tool_output_config import ToolOutputConfig
+from nkyel.sandbox.sandbox import Sandbox
 
 
 def test_the_same_tool_call_gets_the_same_filename():
@@ -131,7 +131,7 @@ def test_sandbox_externalization_handles_filename_encoding_failure(invalid_field
 @pytest.mark.parametrize("storage_target", ["sandbox", "host", "mounted-host", "blob"])
 @pytest.mark.asyncio
 async def test_filename_encoding_failure_uses_bounded_fallback(monkeypatch, tmp_path: Path, async_wrapper: bool, invalid_field: str, storage_target: str):
-    from deerflow.agents.middlewares import tool_output_budget_middleware as mw
+    from nkyel.agents.middlewares import tool_output_budget_middleware as mw
 
     sandbox = MagicMock(spec=Sandbox)
     provider = SimpleNamespace(uses_thread_data_mounts=storage_target == "mounted-host", get=lambda _: sandbox)

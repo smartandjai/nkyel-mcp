@@ -20,10 +20,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.gateway.authz import AuthContext, Permissions
 from app.gateway.routers import projects
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.projects import ProjectRepository
-from deerflow.persistence.thread_meta import THREAD_ARCHIVED_METADATA_KEY, THREAD_PROJECT_METADATA_KEY, ThreadMetaRepository
-from deerflow.runtime.user_context import reset_current_user, set_current_user
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.projects import ProjectRepository
+from nkyel.persistence.thread_meta import THREAD_ARCHIVED_METADATA_KEY, THREAD_PROJECT_METADATA_KEY, ThreadMetaRepository
+from nkyel.runtime.user_context import reset_current_user, set_current_user
 
 _STUB_PERMISSIONS: list[str] = [
     Permissions.THREADS_READ,
@@ -362,7 +362,7 @@ def test_project_threads_excludes_archived_members(tmp_path):
 
 def _cap_config(monkeypatch, max_bytes: int):
     """Pin a small instructions cap so boundary tests stay compact."""
-    from deerflow.config.projects_config import ProjectsConfig
+    from nkyel.config.projects_config import ProjectsConfig
 
     monkeypatch.setattr(
         projects,
@@ -437,7 +437,7 @@ def _config_override(app: FastAPI, projects_config: Any) -> None:
 
 
 def test_projects_config_returns_configured_values(tmp_path):
-    from deerflow.config.projects_config import ProjectsConfig
+    from nkyel.config.projects_config import ProjectsConfig
 
     app = _build_projects_app(tmp_path)
     _config_override(app, ProjectsConfig(instructions_max_bytes=1024, trash_retention_days=7))
@@ -448,7 +448,7 @@ def test_projects_config_returns_configured_values(tmp_path):
 
 
 def test_projects_config_returns_defaults_when_block_absent(tmp_path):
-    from deerflow.config.projects_config import ProjectsConfig
+    from nkyel.config.projects_config import ProjectsConfig
 
     app = _build_projects_app(tmp_path)
     _config_override(app, ProjectsConfig())
@@ -461,7 +461,7 @@ def test_projects_config_returns_defaults_when_block_absent(tmp_path):
 def test_projects_config_route_is_not_swallowed_by_the_project_id_route(tmp_path):
     """``/config`` is declared before ``/{project_id}``: it answers the config
     payload, never a project-lookup 404 for a project named "config"."""
-    from deerflow.config.projects_config import ProjectsConfig
+    from nkyel.config.projects_config import ProjectsConfig
 
     app = _build_projects_app(tmp_path)
     _config_override(app, ProjectsConfig())
@@ -472,7 +472,7 @@ def test_projects_config_route_is_not_swallowed_by_the_project_id_route(tmp_path
 
 
 def test_projects_config_requires_projects_read(tmp_path):
-    from deerflow.config.projects_config import ProjectsConfig
+    from nkyel.config.projects_config import ProjectsConfig
 
     app = _build_projects_app(tmp_path)
     _config_override(app, ProjectsConfig())

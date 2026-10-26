@@ -61,7 +61,7 @@ export type MessageGroup =
  * `scheduled_origin_key` in `contracts/scheduled_goal_notes_contract.json`
  * (backend `SCHEDULED_ORIGIN_KEY`).
  */
-export const SCHEDULED_ORIGIN_KEY = "deerflow_scheduled_origin";
+export const SCHEDULED_ORIGIN_KEY = "nkyel_scheduled_origin";
 
 function stringOr<T>(value: unknown, fallback: T): string | T {
   return typeof value === "string" ? value : fallback;

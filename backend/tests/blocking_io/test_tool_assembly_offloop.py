@@ -10,7 +10,7 @@ the checkpoint state-accessor build (``abuild_checkpoint_state_accessor`` ->
 ``build_thread_checkpoint_state_accessor``).
 
 Under the strict Blockbuster context (this directory's conftest), any
-blocking IO reached from ``deerflow.*`` while on the event loop raises
+blocking IO reached from ``nkyel.*`` while on the event loop raises
 ``BlockingError``. ``get_available_tools`` is injected here as a **blocking
 probe** (real file IO): what must be pinned is that the assembly call never
 executes on the event loop, not that today's assembly happens to be cheap —
@@ -33,17 +33,17 @@ from unittest.mock import AsyncMock
 import pytest
 from langchain_core.messages import ToolMessage
 
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.extensions import get_agent_build_extensions
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.worker import RunContext, run_agent
-from deerflow.subagents.config import SubagentConfig
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.extensions import get_agent_build_extensions
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.worker import RunContext, run_agent
+from nkyel.subagents.config import SubagentConfig
 
 # importlib.import_module binds the real module: the package attribute
-# ``deerflow.tools.builtins.task_tool`` is shadowed by the StructuredTool.
-task_tool_module = importlib.import_module("deerflow.tools.builtins.task_tool")
-batch_service_module = importlib.import_module("deerflow.subagents.batch_service")
+# ``nkyel.tools.builtins.task_tool`` is shadowed by the StructuredTool.
+task_tool_module = importlib.import_module("nkyel.tools.builtins.task_tool")
+batch_service_module = importlib.import_module("nkyel.subagents.batch_service")
 # Imported at module scope: the first import of app.gateway.services pulls in
 # fastapi/pydantic, whose one-time metadata reads must not run inside a gated
 # test item.
@@ -102,7 +102,7 @@ async def test_task_tool_assembles_off_loop(monkeypatch, tmp_path):
     (tmp_path / "probe.txt").write_text("probe body", encoding="utf-8")
     observed_threads: list = []
     monkeypatch.setattr(
-        "deerflow.tools.get_available_tools",
+        "nkyel.tools.get_available_tools",
         _blocking_probe_tools(tmp_path / "probe.txt", observed_threads),
     )
     monkeypatch.setattr(task_tool_module, "SubagentStatus", _FakeSubagentStatus)
@@ -165,7 +165,7 @@ async def test_batch_item_assembles_off_loop(monkeypatch, tmp_path):
     (tmp_path / "probe.txt").write_text("probe body", encoding="utf-8")
     observed_threads: list = []
     monkeypatch.setattr(
-        "deerflow.tools.get_available_tools",
+        "nkyel.tools.get_available_tools",
         _blocking_probe_tools(tmp_path / "probe.txt", observed_threads),
     )
     monkeypatch.setattr(batch_service_module, "SubagentStatus", _FakeSubagentStatus)
@@ -248,7 +248,7 @@ async def test_run_agent_assembles_off_loop(monkeypatch, tmp_path):
     """run_agent dispatches agent_factory (lead-agent assembly) to a worker thread."""
     cfg = tmp_path / "extensions_config.json"
     cfg.write_text(json.dumps({"mcpServers": {}, "skills": {}}), encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     observed_threads: list = []
     # Sentinel bound via ctx.extensions: pins that run_assembly() preserves
     # ContextVars, so bind_agent_build_extensions reaches the factory. Dropping
@@ -269,7 +269,7 @@ async def test_run_agent_assembles_off_loop(monkeypatch, tmp_path):
     def _factory(*, config):
         observed_threads.append(threading.current_thread())
         observed_extensions.append(get_agent_build_extensions())
-        # Real production blocking read (executed inside a deerflow.* frame):
+        # Real production blocking read (executed inside a nkyel.* frame):
         # trips the strict gate when the factory runs on the loop.
         ExtensionsConfig.from_file()
         return _DummyStreamAgent()
@@ -296,7 +296,7 @@ async def test_state_accessor_build_assembles_off_loop(monkeypatch, tmp_path):
     """abuild_checkpoint_state_accessor dispatches assembly to the assembly pool."""
     cfg = tmp_path / "extensions_config.json"
     cfg.write_text(json.dumps({"mcpServers": {}, "skills": {}}), encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     observed_threads: list = []
 
     ctx = SimpleNamespace(
@@ -319,7 +319,7 @@ async def test_state_accessor_build_assembles_off_loop(monkeypatch, tmp_path):
         # probe regardless of what earlier tests left cached.
         def _factory(*, config):
             observed_threads.append(threading.current_thread())
-            # Real production blocking read (executed inside a deerflow.* frame):
+            # Real production blocking read (executed inside a nkyel.* frame):
             # trips the strict gate when the factory runs on the loop.
             ExtensionsConfig.from_file()
             return SimpleNamespace()
@@ -335,7 +335,7 @@ async def test_state_accessor_build_assembles_off_loop(monkeypatch, tmp_path):
 
 
 async def test_extensions_config_read_trips_the_gate(monkeypatch, tmp_path):
-    """Meta-check: reading the extensions config from ``deerflow.*`` code on
+    """Meta-check: reading the extensions config from ``nkyel.*`` code on
     the event loop must raise BlockingError — the exact syscall class issue
     #5172 is about — so the anchors above cannot go vacuously green. (The
     probe's own ``read_text`` trips through the same gate, proven here with
@@ -345,7 +345,7 @@ async def test_extensions_config_read_trips_the_gate(monkeypatch, tmp_path):
 
     cfg = tmp_path / "extensions_config.json"
     cfg.write_text(json.dumps({"mcpServers": {}, "skills": {}}), encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     with pytest.raises(BlockingError):
         ExtensionsConfig.from_file()

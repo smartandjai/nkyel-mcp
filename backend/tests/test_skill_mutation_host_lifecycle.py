@@ -12,15 +12,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.run_events_config import RunEventsConfig
-from deerflow.extensions.host_access import HostAccess
-from deerflow.extensions.loader import ExtensionSpec
-from deerflow.persistence.base import Base
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.skill_mutations.model import SkillOwnerRow, SkillProposalRow
-from deerflow.persistence.user.model import UserRow
-from deerflow.runtime.events.store.db import DbRunEventStore
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.run_events_config import RunEventsConfig
+from nkyel.extensions.host_access import HostAccess
+from nkyel.extensions.loader import ExtensionSpec
+from nkyel.persistence.base import Base
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.skill_mutations.model import SkillOwnerRow, SkillProposalRow
+from nkyel.persistence.user.model import UserRow
+from nkyel.runtime.events.store.db import DbRunEventStore
 
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="host skill mutation tests require POSIX filesystem primitives")
 
@@ -58,7 +58,7 @@ def granted():
 
 @pytest.mark.asyncio
 async def test_default_has_no_mutation_runtime_or_worker_pool(durable, tmp_path):
-    from deerflow.extensions.host_capabilities import HostCapabilities
+    from nkyel.extensions.host_capabilities import HostCapabilities
 
     database, sf = durable
     host = HostCapabilities(config(database), RunRepository(sf), DbRunEventStore(sf), root=tmp_path)
@@ -73,7 +73,7 @@ async def test_default_has_no_mutation_runtime_or_worker_pool(durable, tmp_path)
 
 @pytest.mark.asyncio
 async def test_disabled_plugin_still_recovers_enrolled_owners(durable, tmp_path):
-    from deerflow.extensions.host_capabilities import HostCapabilities
+    from nkyel.extensions.host_capabilities import HostCapabilities
 
     database, sf = durable
     async with sf.begin() as session:
@@ -104,7 +104,7 @@ async def test_disabled_plugin_still_recovers_enrolled_owners(durable, tmp_path)
 
 @pytest.mark.asyncio
 async def test_source_binding_and_independent_evidence_scope(durable, tmp_path):
-    from deerflow.extensions.host_capabilities import HostCapabilities
+    from nkyel.extensions.host_capabilities import HostCapabilities
 
     database, sf = durable
     seen = []
@@ -137,9 +137,9 @@ async def test_source_binding_and_independent_evidence_scope(durable, tmp_path):
 
 @pytest.mark.asyncio
 async def test_missing_topology_refuses_mutation_startup(durable, tmp_path):
-    from deerflow_extension_api import HostCapabilityError
+    from nkyel_extension_api import HostCapabilityError
 
-    from deerflow.extensions.host_capabilities import HostCapabilities
+    from nkyel.extensions.host_capabilities import HostCapabilities
 
     database, sf = durable
     spec = granted()
@@ -154,8 +154,8 @@ async def test_missing_topology_refuses_mutation_startup(durable, tmp_path):
 
 @pytest.mark.asyncio
 async def test_cancelled_startup_drains_worker_before_releasing_topology(durable, tmp_path):
-    from deerflow.extensions.host_capabilities import HostCapabilities
-    from deerflow.skills.mutations.topology import PublicationTopology
+    from nkyel.extensions.host_capabilities import HostCapabilities
+    from nkyel.skills.mutations.topology import PublicationTopology
 
     database, sf = durable
     entered, release = threading.Event(), threading.Event()
@@ -190,11 +190,11 @@ async def test_cancelled_startup_drains_worker_before_releasing_topology(durable
 
 @pytest.mark.asyncio
 async def test_read_only_evidence_reports_unsupported_without_mutation_pool(tmp_path):
-    from deerflow_extension_api import HostCapabilityError
+    from nkyel_extension_api import HostCapabilityError
 
-    from deerflow.extensions.host_capabilities import HostCapabilities
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.extensions.host_capabilities import HostCapabilities
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     spec = ExtensionSpec(use="example:install", name="reader", host_access=HostAccess.model_validate({"evidence": {"owners": ["owner"]}}))
     host = HostCapabilities(config(DatabaseConfig(), [spec]), MemoryRunStore(), MemoryRunEventStore(), root=tmp_path)
@@ -211,9 +211,9 @@ async def test_read_only_evidence_reports_unsupported_without_mutation_pool(tmp_
 
 @pytest.mark.asyncio
 async def test_mutation_owner_without_evidence_grant_is_rejected(durable, tmp_path):
-    from deerflow_extension_api import HostCapabilityError
+    from nkyel_extension_api import HostCapabilityError
 
-    from deerflow.extensions.host_capabilities import HostCapabilities
+    from nkyel.extensions.host_capabilities import HostCapabilities
 
     database, sf = durable
     spec = granted()
@@ -231,14 +231,14 @@ async def test_mutation_owner_without_evidence_grant_is_rejected(durable, tmp_pa
 @pytest.mark.parametrize("phase", ["startup", "maintenance"])
 @pytest.mark.parametrize("failure", ["lock-directory", "lock-timeout"])
 async def test_owner_gc_failure_does_not_block_host_or_healthy_owner(durable, tmp_path, monkeypatch, phase, failure):
-    from deerflow.config.paths import Paths
-    from deerflow.extensions.host_capabilities import HostCapabilities
-    from deerflow.skills.mutations import recovery as recovery_module
-    from deerflow.skills.projection import get_skill_projection_paths
-    from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+    from nkyel.config.paths import Paths
+    from nkyel.extensions.host_capabilities import HostCapabilities
+    from nkyel.skills.mutations import recovery as recovery_module
+    from nkyel.skills.projection import get_skill_projection_paths
+    from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
     database, sf = durable
-    monkeypatch.setattr("deerflow.config.paths._paths", Paths(base_dir=tmp_path / "home"))
+    monkeypatch.setattr("nkyel.config.paths._paths", Paths(base_dir=tmp_path / "home"))
     owners = ("a-broken", "z-healthy")
     async with sf.begin() as session:
         for owner_id in owners:

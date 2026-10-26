@@ -25,17 +25,17 @@ import json
 import httpx
 import pytest
 
-from deerflow.agents.memory.prescreen.contract import MODE_ENFORCE, resolve_memory_prescreen
-from deerflow.agents.memory.prescreen.openai_decisions import OpenAIDecisionsMemoryPrescreen
-from deerflow.agents.memory.prescreen.typesafe import QUESTION_ID as PRESCREEN_QUESTION
-from deerflow.agents.memory.prescreen.typesafe import TypeSafeMemoryPrescreen
-from deerflow.agents.memory.signals.contract import LABEL_REINFORCEMENT
-from deerflow.agents.memory.signals.coordinator import MemoryBatchContext, MemorySignalCoordinator
-from deerflow.agents.memory.signals.openai_decisions import OpenAIDecisionsSignalClassifier
-from deerflow.agents.memory.signals.typesafe import QUESTION_AFFIRMATION, QUESTION_NEGATION, TypeSafeSignalClassifier
-from deerflow.guardrails.openai_decisions import OpenAIDecisionsGuardrailError, OpenAIDecisionsGuardrailProvider
-from deerflow.guardrails.provider import GuardrailRequest
-from deerflow.openai_decisions.client import (
+from nkyel.agents.memory.prescreen.contract import MODE_ENFORCE, resolve_memory_prescreen
+from nkyel.agents.memory.prescreen.openai_decisions import OpenAIDecisionsMemoryPrescreen
+from nkyel.agents.memory.prescreen.typesafe import QUESTION_ID as PRESCREEN_QUESTION
+from nkyel.agents.memory.prescreen.typesafe import TypeSafeMemoryPrescreen
+from nkyel.agents.memory.signals.contract import LABEL_REINFORCEMENT
+from nkyel.agents.memory.signals.coordinator import MemoryBatchContext, MemorySignalCoordinator
+from nkyel.agents.memory.signals.openai_decisions import OpenAIDecisionsSignalClassifier
+from nkyel.agents.memory.signals.typesafe import QUESTION_AFFIRMATION, QUESTION_NEGATION, TypeSafeSignalClassifier
+from nkyel.guardrails.openai_decisions import OpenAIDecisionsGuardrailError, OpenAIDecisionsGuardrailProvider
+from nkyel.guardrails.provider import GuardrailRequest
+from nkyel.openai_decisions.client import (
     CATEGORY_REFUSAL,
     DEFAULT_API_KEY_ENV,
     DEFAULT_BASE_URL,
@@ -45,7 +45,7 @@ from deerflow.openai_decisions.client import (
     OpenAIDecisionsClient,
     resolve_decisions_connection,
 )
-from deerflow.typesafe.client import (
+from nkyel.typesafe.client import (
     CATEGORY_LABEL,
     CATEGORY_MISSING,
     CATEGORY_PROBABILITY,
@@ -55,7 +55,7 @@ from deerflow.typesafe.client import (
     NoulAnswer,
     Question,
 )
-from deerflow.typesafe.errors import CAUSE_HTTP_STATUS, CAUSE_INVALID_RESPONSE, TypeSafeError
+from nkyel.typesafe.errors import CAUSE_HTTP_STATUS, CAUSE_INVALID_RESPONSE, TypeSafeError
 
 _API_KEY = "decisions-test-key"
 _MODEL = "gpt-decisions-test"
@@ -463,12 +463,12 @@ class TestMemorySides:
     def test_it_resolves_from_the_existing_provider_slot_without_a_schema_change(self):
         provider = resolve_memory_prescreen(
             mode="shadow",
-            use="deerflow.agents.memory.prescreen.openai_decisions:OpenAIDecisionsMemoryPrescreen",
+            use="nkyel.agents.memory.prescreen.openai_decisions:OpenAIDecisionsMemoryPrescreen",
             config={"api_key": _API_KEY, "model": _MODEL},
         )
 
         assert provider.name == "openai_decisions"
-        assert provider.policy_id == "deerflow.memory.prescreen.openai_decisions"
+        assert provider.policy_id == "nkyel.memory.prescreen.openai_decisions"
 
 
 def _gateway_response(request: httpx.Request) -> httpx.Response:
@@ -541,12 +541,12 @@ class TestSameGatewayCoordination:
 
 
 def _prescreen_request(text: str):
-    from deerflow.agents.memory.prescreen.contract import MemoryPrescreenRequest
+    from nkyel.agents.memory.prescreen.contract import MemoryPrescreenRequest
 
     return MemoryPrescreenRequest(batch_text=text, digest=hashlib.sha256(text.encode()).hexdigest()[:16])
 
 
 def _signal_request(text: str):
-    from deerflow.agents.memory.signals.contract import MemorySignalRequest
+    from nkyel.agents.memory.signals.contract import MemorySignalRequest
 
     return MemorySignalRequest(batch_text=text, digest=hashlib.sha256(text.encode()).hexdigest()[:16])

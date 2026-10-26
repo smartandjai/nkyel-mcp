@@ -80,7 +80,7 @@ def test_waiter_timeout_does_not_stop_started_sync_work():
 
 def test_dedicated_file_io_pool_runs_while_default_executor_is_saturated(monkeypatch):
     async def scenario():
-        from deerflow.utils import file_io
+        from nkyel.utils import file_io
 
         loop = asyncio.get_running_loop()
         default_executor = ThreadPoolExecutor(max_workers=1)

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from deerflow.authz.plugin_targets import (
+from nkyel.authz.plugin_targets import (
     MANAGEMENT_READ_PART,
     MANAGEMENT_WRITE_PART,
     PluginTargetError,
@@ -144,7 +144,7 @@ def _accepted_by_plugin_targets(namespace: str) -> bool:
 
 
 def _accepted_by_extension_api(namespace: str) -> bool:
-    from deerflow_extension_api.auth import _require_plugin_namespace
+    from nkyel_extension_api.auth import _require_plugin_namespace
 
     try:
         _require_plugin_namespace(namespace)
@@ -154,9 +154,9 @@ def _accepted_by_extension_api(namespace: str) -> bool:
 
 
 def _accepted_by_plugin_settings(namespace: str) -> bool:
-    from deerflow_extension_api.settings import SettingsContribution, SettingsField
+    from nkyel_extension_api.settings import SettingsContribution, SettingsField
 
-    from deerflow.config.plugin_settings import validate_contribution
+    from nkyel.config.plugin_settings import validate_contribution
 
     contribution = SettingsContribution(
         namespace=namespace,
@@ -171,7 +171,7 @@ def _accepted_by_plugin_settings(namespace: str) -> bool:
 
 
 def _accepted_by_tool_provenance(namespace: str) -> bool:
-    from deerflow.tools import tool_provenance
+    from nkyel.tools import tool_provenance
 
     return tool_provenance._NAMESPACE_RE.fullmatch(namespace) is not None
 

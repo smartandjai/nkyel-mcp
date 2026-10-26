@@ -11,7 +11,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 
 def test_langgraph_config_loads_the_repository_environment_file():
-    """Standalone Studio should reuse the root environment used by DeerFlow."""
+    """Standalone Studio should reuse the root environment used by nkyel."""
     import json
 
     config = json.loads((BACKEND_DIR / "langgraph.json").read_text(encoding="utf-8"))
@@ -38,15 +38,15 @@ def test_langgraph_graph_factory_is_a_concrete_lazy_module_export():
             f"{module_name}:{variable_name} must be a concrete module export "
             "for LangGraph Server"
         )
-        assert "deerflow.agents.lead_agent" not in sys.modules, (
+        assert "nkyel.agents.lead_agent" not in sys.modules, (
             "publishing the graph factory must keep heavyweight agent imports lazy"
         )
 
         calls = []
-        fake_lead_agent = ModuleType("deerflow.agents.lead_agent")
+        fake_lead_agent = ModuleType("nkyel.agents.lead_agent")
         fake_lead_agent.__path__ = []
         fake_lead_agent.make_lead_agent = lambda config: calls.append(("factory", config)) or "graph"
-        fake_prompt = ModuleType("deerflow.agents.lead_agent.prompt")
+        fake_prompt = ModuleType("nkyel.agents.lead_agent.prompt")
         fake_prompt.prime_enabled_skills_cache = lambda: calls.append(("prime", None))
         sys.modules[fake_lead_agent.__name__] = fake_lead_agent
         sys.modules[fake_prompt.__name__] = fake_prompt

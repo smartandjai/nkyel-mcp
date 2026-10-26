@@ -38,7 +38,7 @@ async def inject_github_credentials(msg: InboundMessage, run_context: dict[str, 
         same process. A Python callable does not survive that
         encoding (``TypeError: Type is not JSON serializable: function``).
         The harness side (``_github_env_from_runtime`` in
-        ``packages/harness/deerflow/sandbox/tools.py``) already accepts
+        ``packages/harness/nkyel/sandbox/tools.py``) already accepts
         either a ``str`` or a zero-arg sync callable from
         ``runtime.context["github_token"]``; only the ``str`` shape
         round-trips through the SDK transport, so that is what we
@@ -112,7 +112,7 @@ def register_policy() -> None:
         default_recursion_limit=250,
         credentials_provider=inject_github_credentials,
         # GitHub deliveries are HMAC-authenticated at the webhook route,
-        # and the binding from "sender" to DeerFlow user is encoded in
+        # and the binding from "sender" to nkyel user is encoded in
         # the agent's config.yaml ownership (not in the channel-connections
         # table). There is no per-sender /connect handshake — opting out
         # of the bound-identity gate is what lets webhook events reach

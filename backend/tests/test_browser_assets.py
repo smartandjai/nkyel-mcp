@@ -4,16 +4,16 @@ import json
 from dataclasses import replace
 
 import pytest
-from deerflow_extension_api import BrowserAssets, BrowserModule, PluginContribution
-from deerflow_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
+from nkyel_extension_api import BrowserAssets, BrowserModule, PluginContribution
+from nkyel_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from support.symlinks import symlink_or_skip
 
 from app.gateway.routers.plugins import router
-from deerflow.extensions import browser_assets
-from deerflow.extensions.browser_assets import load_browser_assets
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions import browser_assets
+from nkyel.extensions.browser_assets import load_browser_assets
+from nkyel.extensions.registry import ExtensionRegistry
 
 
 @pytest.fixture

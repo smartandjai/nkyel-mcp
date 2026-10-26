@@ -7,7 +7,7 @@ committed fixture's SHA-256. No external dataset or network source is fetched.
 
 `plan` is offline. Only an explicit `run-live` starts paid agent work. The runner
 never starts a Gateway, loads credentials, changes models or adds account funds.
-Use a separately started, disposable loopback Gateway, a new `DEER_FLOW_HOME`
+Use a separately started, disposable loopback Gateway, a new `NKYEL_HOME`
 and SQLite directory, empty extension/MCP configuration, and disabled channels,
 memory and automatic titles. Never point it at existing user data.
 
@@ -73,20 +73,20 @@ memory:
 title:
   enabled: false
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
 tools:
   - name: read_scheduled_fixture
     group: benchmark
     use: scripts.benchmark.scheduled_tasks.fixture_tools:read_scheduled_fixture
   - name: write_file
     group: file
-    use: deerflow.sandbox.tools:write_file_tool
+    use: nkyel.sandbox.tools:write_file_tool
   - name: read_file
     group: file
-    use: deerflow.sandbox.tools:read_file_tool
+    use: nkyel.sandbox.tools:read_file_tool
   - name: read_conversation
     group: conversation
-    use: deerflow.tools.conversation:read_conversation
+    use: nkyel.tools.conversation:read_conversation
 ```
 
 The fixture reader is operator-controlled Python configuration. It accepts only

@@ -11,11 +11,11 @@ import httpx
 import pytest
 from langchain_core.tools import StructuredTool
 
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp.oauth import get_initial_oauth_headers
-from deerflow.mcp.session_pool import ServerBinding, StaleMCPBindingError, normalized_connection_fingerprint
-from deerflow.mcp.tasks.runtime import McpTaskConfigurationError
-from deerflow.mcp.tools import (
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp.oauth import get_initial_oauth_headers
+from nkyel.mcp.session_pool import ServerBinding, StaleMCPBindingError, normalized_connection_fingerprint
+from nkyel.mcp.tasks.runtime import McpTaskConfigurationError
+from nkyel.mcp.tools import (
     ServerDiscoveryResult,
     _flatten_server_tool_groups,
     get_mcp_tools,
@@ -36,9 +36,9 @@ def _config(servers: dict[str, dict]) -> ExtensionsConfig:
 
 def _patch_common(monkeypatch, *, oauth_headers=None, interceptors=None):
     headers = oauth_headers or AsyncMock(return_value={})
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", headers)
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", headers)
     monkeypatch.setattr(
-        "deerflow.mcp.tools.build_mcp_tool_interceptors",
+        "nkyel.mcp.tools.build_mcp_tool_interceptors",
         interceptors or (lambda *args, **kwargs: []),
     )
     return headers
@@ -81,8 +81,8 @@ def test_server_discovery_result_repr_hides_ownership_handles():
 async def test_get_mcp_tools_config_load_errors_propagate(monkeypatch):
     from_file = MagicMock(side_effect=FileNotFoundError("missing config"))
     logger_error = MagicMock()
-    monkeypatch.setattr("deerflow.mcp.tools.ExtensionsConfig.from_file", from_file)
-    monkeypatch.setattr("deerflow.mcp.tools.logger.error", logger_error)
+    monkeypatch.setattr("nkyel.mcp.tools.ExtensionsConfig.from_file", from_file)
+    monkeypatch.setattr("nkyel.mcp.tools.logger.error", logger_error)
 
     with pytest.raises(FileNotFoundError, match="missing config"):
         await get_mcp_tools()
@@ -102,8 +102,8 @@ async def test_get_mcp_tools_missing_adapter_returns_before_side_effects(monkeyp
             raise ImportError("missing adapter")
         return real_import(name, globals, locals, fromlist, level)
 
-    monkeypatch.setattr("deerflow.mcp.tools.ExtensionsConfig.from_file", from_file)
-    monkeypatch.setattr("deerflow.mcp.tools.get_session_pool", get_session_pool)
+    monkeypatch.setattr("nkyel.mcp.tools.ExtensionsConfig.from_file", from_file)
+    monkeypatch.setattr("nkyel.mcp.tools.get_session_pool", get_session_pool)
     monkeypatch.setattr(builtins, "__import__", fake_import)
 
     tools = await get_mcp_tools()
@@ -144,7 +144,7 @@ async def test_wrap_failure_returns_empty_instead_of_partial_tools(monkeypatch):
 
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
     _patch_common(monkeypatch)
-    monkeypatch.setattr("deerflow.mcp.tools._make_session_pool_tool", fake_wrap)
+    monkeypatch.setattr("nkyel.mcp.tools._make_session_pool_tool", fake_wrap)
 
     tools = await get_mcp_tools(config, session_pool=pool)
 
@@ -188,9 +188,9 @@ async def test_task_configuration_error_waits_for_sibling_discovery(monkeypatch)
     manager = MagicMock()
     manager.has_oauth_servers.return_value = False
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
-    monkeypatch.setattr("deerflow.mcp.tools.get_mcp_task_oauth_token_manager", lambda config: manager)
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
-    monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
+    monkeypatch.setattr("nkyel.mcp.tools.get_mcp_task_oauth_token_manager", lambda config: manager)
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
+    monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
 
     with pytest.raises(McpTaskConfigurationError, match="missing raw tool"):
         await get_mcp_tools_by_server(config, server_names={"A", "B"})
@@ -238,10 +238,10 @@ async def test_selected_stdio_isolation_builds_one_client_and_only_its_binding(m
         return tool
 
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", fake_oauth_headers)
-    monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
-    monkeypatch.setattr("deerflow.mcp.tools._make_session_pool_tool", fake_wrapper)
-    monkeypatch.setattr("deerflow.mcp.tools.get_session_pool", MagicMock(side_effect=AssertionError("caller pool must win")))
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", fake_oauth_headers)
+    monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
+    monkeypatch.setattr("nkyel.mcp.tools._make_session_pool_tool", fake_wrapper)
+    monkeypatch.setattr("nkyel.mcp.tools.get_session_pool", MagicMock(side_effect=AssertionError("caller pool must win")))
 
     result = await get_mcp_tools_by_server(
         config,
@@ -321,8 +321,8 @@ async def test_each_client_gets_interceptors_built_from_only_its_server(monkeypa
         return [object()]
 
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
-    monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", fake_interceptors)
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
+    monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", fake_interceptors)
 
     result = await get_mcp_tools_by_server(config, server_names={"A", "B"})
 
@@ -384,7 +384,7 @@ async def test_initial_oauth_headers_only_fetch_selected_names(monkeypatch):
     manager.oauth_server_names.return_value = ["A", "B"]
     manager.get_authorization_header = AsyncMock(side_effect=lambda name: f"Bearer {name}")
     monkeypatch.setattr(
-        "deerflow.mcp.oauth.OAuthTokenManager.from_extensions_config",
+        "nkyel.mcp.oauth.OAuthTokenManager.from_extensions_config",
         lambda config: manager,
     )
 
@@ -414,7 +414,7 @@ async def test_get_mcp_tools_flattens_grouped_discovery_in_enabled_order(monkeyp
             "A": ServerDiscoveryResult(tools=(a,)),
         }
 
-    monkeypatch.setattr("deerflow.mcp.tools._discover_and_wrap_prepared", fake_grouped)
+    monkeypatch.setattr("nkyel.mcp.tools._discover_and_wrap_prepared", fake_grouped)
 
     tools = await get_mcp_tools(config)
 
@@ -447,7 +447,7 @@ async def test_get_mcp_tools_full_discovery_preserves_name_order_and_loads_confi
             return [b_first, b_second]
 
     from_file = MagicMock(return_value=config)
-    monkeypatch.setattr("deerflow.mcp.tools.ExtensionsConfig.from_file", from_file)
+    monkeypatch.setattr("nkyel.mcp.tools.ExtensionsConfig.from_file", from_file)
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
     _patch_common(monkeypatch)
 
@@ -493,8 +493,8 @@ async def test_bindings_are_captured_before_the_first_discovery_await(monkeypatc
             order.append("discover")
             return []
 
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", fake_oauth_headers)
-    monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", fake_oauth_headers)
+    monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
 
     result = await get_mcp_tools_by_server(config, session_pool=pool)
@@ -550,25 +550,25 @@ async def test_personal_discovery_uses_personal_pool_domain_and_task_scope(monke
         connection_scopes.append(connection_scope)
         return tools
 
-    monkeypatch.setattr("deerflow.mcp.user_config.load_user_mcp_config", lambda owner: config)
+    monkeypatch.setattr("nkyel.mcp.user_config.load_user_mcp_config", lambda owner: config)
     monkeypatch.setattr(
-        "deerflow.mcp.personal_access.authorized_personal_config",
+        "nkyel.mcp.personal_access.authorized_personal_config",
         AsyncMock(return_value=config),
     )
-    monkeypatch.setattr("deerflow.mcp.tasks.runtime.is_mcp_task_runtime_available", lambda: True)
+    monkeypatch.setattr("nkyel.mcp.tasks.runtime.is_mcp_task_runtime_available", lambda: True)
     oauth_owners: list[str | None] = []
 
     def personal_manager_for(config, *, owner_user_id=None):
         oauth_owners.append(owner_user_id)
         return personal_manager
 
-    monkeypatch.setattr("deerflow.mcp.tools.OAuthTokenManager.from_extensions_config", personal_manager_for)
-    monkeypatch.setattr("deerflow.mcp.tools.get_mcp_task_oauth_token_manager", deployment_manager)
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
-    monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
+    monkeypatch.setattr("nkyel.mcp.tools.OAuthTokenManager.from_extensions_config", personal_manager_for)
+    monkeypatch.setattr("nkyel.mcp.tools.get_mcp_task_oauth_token_manager", deployment_manager)
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
+    monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
-    monkeypatch.setattr("deerflow.mcp.tools._make_session_pool_tool", fake_wrapper)
-    monkeypatch.setattr("deerflow.mcp.tools._configure_task_tools_for_server", fake_configure)
+    monkeypatch.setattr("nkyel.mcp.tools._make_session_pool_tool", fake_wrapper)
+    monkeypatch.setattr("nkyel.mcp.tools._configure_task_tools_for_server", fake_configure)
 
     result = await get_mcp_tools_by_server(
         config,
@@ -639,9 +639,9 @@ async def test_task_configuration_error_propagates_from_grouped_discovery(monkey
     manager = MagicMock()
     manager.has_oauth_servers.return_value = False
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
-    monkeypatch.setattr("deerflow.mcp.tools.get_mcp_task_oauth_token_manager", lambda config: manager)
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
-    monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
+    monkeypatch.setattr("nkyel.mcp.tools.get_mcp_task_oauth_token_manager", lambda config: manager)
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
+    monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", lambda *args, **kwargs: [])
 
     with pytest.raises(McpTaskConfigurationError, match="missing raw tool"):
         await get_mcp_tools_by_server(config, server_names={"A"})
@@ -662,9 +662,9 @@ async def test_selection_matching_only_unknown_or_disabled_names(monkeypatch, ca
         lambda *args, **kwargs: client_calls.append((args, kwargs)) or MagicMock(),
     )
     headers = AsyncMock(return_value={})
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", headers)
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", headers)
 
-    with caplog.at_level(logging.INFO, logger="deerflow.mcp.tools"):
+    with caplog.at_level(logging.INFO, logger="nkyel.mcp.tools"):
         assert await get_mcp_tools_by_server(config, server_names={"B", "UNKNOWN"}) == {}
 
     assert client_calls == []
@@ -703,17 +703,17 @@ async def test_discovery_and_wrapper_use_the_same_session_init_timeout(monkeypat
         return await real_wait_for(awaitable, timeout)
 
     monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
-    monkeypatch.setattr("deerflow.mcp.tools.asyncio.wait_for", spy_wait_for)
-    monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
-    monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", lambda *a, **kw: [])
+    monkeypatch.setattr("nkyel.mcp.tools.asyncio.wait_for", spy_wait_for)
+    monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
+    monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", lambda *a, **kw: [])
 
-    real_make_tool = __import__("deerflow.mcp.tools", fromlist=["_make_session_pool_tool"])._make_session_pool_tool
+    real_make_tool = __import__("nkyel.mcp.tools", fromlist=["_make_session_pool_tool"])._make_session_pool_tool
 
     def spy_make_tool(*args, **kwargs):
         observed["wrapper"] = kwargs.get("session_init_timeout")
         return real_make_tool(*args, **kwargs)
 
-    monkeypatch.setattr("deerflow.mcp.tools._make_session_pool_tool", spy_make_tool)
+    monkeypatch.setattr("nkyel.mcp.tools._make_session_pool_tool", spy_make_tool)
 
     groups = await get_mcp_tools_by_server(config, server_names={"A"})
 
@@ -747,7 +747,7 @@ async def test_per_server_discovery_failure_log_redacts_resolved_credentials(mon
 
     monkeypatch.setattr(adapter_client, "MultiServerMCPClient", FakeClient)
 
-    with caplog.at_level("WARNING", logger="deerflow.mcp.tools"):
+    with caplog.at_level("WARNING", logger="nkyel.mcp.tools"):
         result = await get_mcp_tools_by_server(config, server_names={"A"})
 
     assert result == {}

@@ -37,8 +37,8 @@ def base_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     freshly minted per test and the previous test's cache signature
     would otherwise survive into this one and short-circuit the scan.
     """
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    from deerflow.config import paths as paths_module
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "_paths", None)
     _invalidate_cache()

@@ -38,12 +38,12 @@ from app.gateway.checkpoint_retention import (
     enforce_completed_run_retention,
     enforce_thread_retention,
 )
-from deerflow.agents.thread_state import merge_message_writes
-from deerflow.runtime.checkpoint_cache.base import make_history_key
-from deerflow.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
-from deerflow.runtime.checkpointer.cached_saver import CachedHistorySaver
-from deerflow.runtime.runs.worker import _new_checkpoint_marker, persist_run_durations, persist_run_history_metadata
+from nkyel.agents.thread_state import merge_message_writes
+from nkyel.runtime.checkpoint_cache.base import make_history_key
+from nkyel.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.runtime.checkpointer.cached_saver import CachedHistorySaver
+from nkyel.runtime.runs.worker import _new_checkpoint_marker, persist_run_durations, persist_run_history_metadata
 
 
 class FullState(TypedDict):

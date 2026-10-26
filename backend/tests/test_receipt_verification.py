@@ -1,11 +1,11 @@
 """Tests for parent-side receipt citation verification (RFC #4651 PR2)."""
 
-from deerflow.agents.middlewares.receipt_verification import (
+from nkyel.agents.middlewares.receipt_verification import (
     render_citation_verdict,
     validate_receipt_verdict,
     verify_receipt_citations,
 )
-from deerflow.agents.middlewares.tool_receipt import parse_citations
+from nkyel.agents.middlewares.tool_receipt import parse_citations
 
 
 def _receipt(rid: str, tool: str = "write_file", status: str = "success") -> dict:

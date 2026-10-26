@@ -20,7 +20,7 @@ from app.channels.capabilities import (
     supports_proactive_notifications,
 )
 from app.channels.service import _CHANNEL_REGISTRY
-from deerflow.reflection import resolve_class
+from nkyel.reflection import resolve_class
 
 _BACKEND_DIR = Path(__file__).resolve().parents[1]
 # Third-party modules the channel implementations import at module level.

@@ -17,12 +17,12 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.typesafe_config import TypeSafeConfig, get_typesafe_config, load_typesafe_config_from_dict, reset_typesafe_config
-from deerflow.guardrails.provider import GuardrailRequest
-from deerflow.guardrails.typesafe import TypeSafeGuardrailProvider
-from deerflow.typesafe.client import TypeSafeClient
-from deerflow.typesafe.connection import resolve_connection, resolve_connection_for_mode
+from nkyel.config.app_config import AppConfig
+from nkyel.config.typesafe_config import TypeSafeConfig, get_typesafe_config, load_typesafe_config_from_dict, reset_typesafe_config
+from nkyel.guardrails.provider import GuardrailRequest
+from nkyel.guardrails.typesafe import TypeSafeGuardrailProvider
+from nkyel.typesafe.client import TypeSafeClient
+from nkyel.typesafe.connection import resolve_connection, resolve_connection_for_mode
 
 
 @pytest.fixture(autouse=True)
@@ -112,13 +112,13 @@ class TestPrecedence:
         config_path.write_text(
             yaml.safe_dump(
                 {
-                    "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                    "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                     "typesafe": {"api_key_env": "SHARED_TYPESAFE_KEY", "model": "block-model", "timeout": 30.0},
                 }
             ),
             encoding="utf-8",
         )
-        monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(extensions_path))
+        monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(extensions_path))
 
         block = AppConfig.from_file(str(config_path)).typesafe
         # AppConfig loading publishes this block to the process singleton; the
@@ -315,13 +315,13 @@ class TestStrictBlockValues:
         config_path.write_text(
             yaml.safe_dump(
                 {
-                    "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                    "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                     "typesafe": {"api_key_env": "SHARED_TYPESAFE_KEY", "max_attempts": True},
                 }
             ),
             encoding="utf-8",
         )
-        monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(extensions_path))
+        monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(extensions_path))
 
         with pytest.raises(ValidationError):
             AppConfig.from_file(str(config_path))

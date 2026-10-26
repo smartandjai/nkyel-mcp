@@ -12,15 +12,15 @@ from langchain_core.messages import HumanMessage
 from pydantic import SecretStr, ValidationError
 
 from app.gateway.routers import managed_models as router
-from deerflow.config.app_config import AppConfig, get_app_config, reset_app_config, set_app_config
-from deerflow.config.managed_model_providers import PROVIDERS
-from deerflow.config.managed_models import ManagedModel, ManagedModelInputError, ManagedModelStore, merge_managed_models
-from deerflow.models.factory import create_chat_model
+from nkyel.config.app_config import AppConfig, get_app_config, reset_app_config, set_app_config
+from nkyel.config.managed_model_providers import PROVIDERS
+from nkyel.config.managed_models import ManagedModel, ManagedModelInputError, ManagedModelStore, merge_managed_models
+from nkyel.models.factory import create_chat_model
 
 
 @pytest.fixture
 def store(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     return ManagedModelStore()
 
 
@@ -29,12 +29,12 @@ def store(tmp_path, monkeypatch):
     [
         ("openai", "https://api.openai.com/v1", "langchain_openai:ChatOpenAI"),
         ("anthropic", "https://api.anthropic.com", "langchain_anthropic:ChatAnthropic"),
-        ("deepseek", "https://api.deepseek.com", "deerflow.models.patched_deepseek:PatchedChatDeepSeek"),
-        ("qwen-cn", "https://dashscope.aliyuncs.com/compatible-mode/v1", "deerflow.models.patched_deepseek:PatchedChatDeepSeek"),
-        ("doubao", "https://ark.cn-beijing.volces.com/api/v3", "deerflow.models.patched_deepseek:PatchedChatDeepSeek"),
-        ("moonshot-cn", "https://api.moonshot.cn/v1", "deerflow.models.patched_deepseek:PatchedChatDeepSeek"),
-        ("zai", "https://api.z.ai/api/paas/v4", "deerflow.models.patched_deepseek:PatchedChatDeepSeek"),
-        ("minimax", "https://api.minimax.io/v1", "deerflow.models.patched_minimax:PatchedChatMiniMax"),
+        ("deepseek", "https://api.deepseek.com", "nkyel.models.patched_deepseek:PatchedChatDeepSeek"),
+        ("qwen-cn", "https://dashscope.aliyuncs.com/compatible-mode/v1", "nkyel.models.patched_deepseek:PatchedChatDeepSeek"),
+        ("doubao", "https://ark.cn-beijing.volces.com/api/v3", "nkyel.models.patched_deepseek:PatchedChatDeepSeek"),
+        ("moonshot-cn", "https://api.moonshot.cn/v1", "nkyel.models.patched_deepseek:PatchedChatDeepSeek"),
+        ("zai", "https://api.z.ai/api/paas/v4", "nkyel.models.patched_deepseek:PatchedChatDeepSeek"),
+        ("minimax", "https://api.minimax.io/v1", "nkyel.models.patched_minimax:PatchedChatMiniMax"),
     ],
 )
 def test_preset_routing_and_conservative_unknown_capabilities(provider, endpoint, adapter):
@@ -323,7 +323,7 @@ async def test_probe_limits_response_size(store, wire):
 
 
 def test_generated_name_collision_with_yaml_is_retried(store, monkeypatch):
-    from deerflow.config import managed_models
+    from nkyel.config import managed_models
 
     tokens = iter(["a" * 32, "b" * 32, "c" * 32])
     monkeypatch.setattr(managed_models, "uuid4", lambda: SimpleNamespace(hex=next(tokens)))
@@ -342,8 +342,8 @@ async def test_preset_api_save_refresh_yaml_conflict_and_disable(store, tmp_path
     original = "sandbox:\n  use: test\nmodels:\n  - name: operator\n    model: yaml-model\n    use: langchain_openai:ChatOpenAI\n    api_key: $MANAGED_TEST_YAML_KEY\n"
     path.write_text(original, encoding="utf-8")
     monkeypatch.setenv("MANAGED_TEST_YAML_KEY", "yaml-test-key")
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(path))
-    monkeypatch.delenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", raising=False)
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(path))
+    monkeypatch.delenv("NKYEL_EXTENSIONS_CONFIG_PATH", raising=False)
     reset_app_config()
     app = FastAPI()
     app.include_router(router.router)

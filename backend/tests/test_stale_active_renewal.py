@@ -7,8 +7,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from test_terminal_store_contract import store as store
 
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.runtime import RunManager, RunStatus
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.runtime import RunManager, RunStatus
 
 
 def manager_for(run_store):

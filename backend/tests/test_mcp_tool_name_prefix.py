@@ -6,9 +6,9 @@ from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
 from app.gateway.routers.mcp import McpServerConfigResponse
-from deerflow.config.extensions_config import ExtensionsConfig, McpServerConfig
-from deerflow.mcp.tools import _make_session_pool_tool, get_mcp_tools
-from deerflow.tools.mcp_metadata import get_mcp_routing
+from nkyel.config.extensions_config import ExtensionsConfig, McpServerConfig
+from nkyel.mcp.tools import _make_session_pool_tool, get_mcp_tools
+from nkyel.tools.mcp_metadata import get_mcp_routing
 
 
 class _Args(BaseModel):
@@ -114,13 +114,13 @@ async def test_mcp_tool_name_prefix_can_be_disabled_per_server_without_disabling
         return [_tool(name)]
 
     with (
-        patch("deerflow.mcp.tools.ExtensionsConfig.from_file", return_value=extensions_config),
-        patch("deerflow.mcp.tools.build_servers_config", return_value=servers_config),
-        patch("deerflow.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
-        patch("deerflow.mcp.tools.build_mcp_tool_interceptors", return_value=[]),
+        patch("nkyel.mcp.tools.ExtensionsConfig.from_file", return_value=extensions_config),
+        patch("nkyel.mcp.tools.build_servers_config", return_value=servers_config),
+        patch("nkyel.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
+        patch("nkyel.mcp.tools.build_mcp_tool_interceptors", return_value=[]),
         patch("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient),
         patch("langchain_mcp_adapters.tools.load_mcp_tools", side_effect=fake_load_mcp_tools),
-        patch("deerflow.mcp.tools._make_session_pool_tool", side_effect=lambda tool, *_args, **_kwargs: tool) as wrap_tool,
+        patch("nkyel.mcp.tools._make_session_pool_tool", side_effect=lambda tool, *_args, **_kwargs: tool) as wrap_tool,
     ):
         tools = await get_mcp_tools()
 
@@ -168,13 +168,13 @@ async def test_personal_discovery_routes_stdio_wrapper_to_personal_pool_domain()
             return [_tool("github_search")]
 
     with (
-        patch("deerflow.mcp.user_config.load_user_mcp_config", return_value=extensions_config),
-        patch("deerflow.mcp.personal_access.authorized_personal_config", new_callable=AsyncMock, return_value=extensions_config),
-        patch("deerflow.mcp.tools.build_servers_config", return_value=servers_config),
-        patch("deerflow.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
-        patch("deerflow.mcp.tools.build_mcp_tool_interceptors", return_value=[]),
+        patch("nkyel.mcp.user_config.load_user_mcp_config", return_value=extensions_config),
+        patch("nkyel.mcp.personal_access.authorized_personal_config", new_callable=AsyncMock, return_value=extensions_config),
+        patch("nkyel.mcp.tools.build_servers_config", return_value=servers_config),
+        patch("nkyel.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
+        patch("nkyel.mcp.tools.build_mcp_tool_interceptors", return_value=[]),
         patch("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient),
-        patch("deerflow.mcp.tools._make_session_pool_tool", side_effect=lambda tool, *_args, **_kwargs: tool) as wrap_tool,
+        patch("nkyel.mcp.tools._make_session_pool_tool", side_effect=lambda tool, *_args, **_kwargs: tool) as wrap_tool,
     ):
         tools = await get_mcp_tools(extensions_config, personal_user_id="alice")
 
@@ -193,10 +193,10 @@ async def test_unprefixed_stdio_tool_keeps_server_like_original_name(tmp_path: P
     mock_pool.get_session = AsyncMock(return_value=mock_session)
 
     with (
-        patch("deerflow.mcp.tools.get_session_pool", return_value=mock_pool),
-        patch("deerflow.mcp.tools.get_paths", return_value=MagicMock()),
+        patch("nkyel.mcp.tools.get_session_pool", return_value=mock_pool),
+        patch("nkyel.mcp.tools.get_paths", return_value=MagicMock()),
         patch(
-            "deerflow.mcp.tools._prepare_stdio_workspace",
+            "nkyel.mcp.tools._prepare_stdio_workspace",
             return_value=(tmp_path, tmp_path / "tmp", {}),
         ),
     ):
@@ -220,10 +220,10 @@ async def test_personal_stdio_wrapper_uses_personal_pool_domain(tmp_path: Path) 
     mock_pool.get_session = AsyncMock(return_value=mock_session)
 
     with (
-        patch("deerflow.mcp.tools.get_session_pool", return_value=mock_pool),
-        patch("deerflow.mcp.tools.get_paths", return_value=MagicMock()),
+        patch("nkyel.mcp.tools.get_session_pool", return_value=mock_pool),
+        patch("nkyel.mcp.tools.get_paths", return_value=MagicMock()),
         patch(
-            "deerflow.mcp.tools._prepare_stdio_workspace",
+            "nkyel.mcp.tools._prepare_stdio_workspace",
             return_value=(tmp_path, tmp_path / "tmp", {}),
         ),
     ):

@@ -12,9 +12,9 @@ import httpx
 import pytest
 from langchain_core.messages import HumanMessage
 
-from deerflow.agents.memory.backends.mem0 import mem0_manager
-from deerflow.agents.memory.backends.mem0.client import Mem0APIError, Mem0Client
-from deerflow.agents.memory.manager import MemoryManagerError, MemoryReadError
+from nkyel.agents.memory.backends.mem0 import mem0_manager
+from nkyel.agents.memory.backends.mem0.client import Mem0APIError, Mem0Client
+from nkyel.agents.memory.manager import MemoryManagerError, MemoryReadError
 
 
 def _manager(monkeypatch: pytest.MonkeyPatch, policy: str, handler: Callable[[httpx.Request], httpx.Response], *, write_policy: str = "log_and_drop") -> mem0_manager.Mem0Manager:
@@ -198,7 +198,7 @@ def test_invalid_encoding_probe_honors_startup_policy(monkeypatch: pytest.Monkey
                 mem0_manager.Mem0Manager.from_config(config)
             assert isinstance(caught.value.__cause__, UnicodeDecodeError)
             assert len(requests) == 1
-            assert json.loads(requests[0].content) == {"filters": {"user_id": "__deerflow_startup_check__"}}
+            assert json.loads(requests[0].content) == {"filters": {"user_id": "__nkyel_startup_check__"}}
         else:
             with closing(mem0_manager.Mem0Manager.from_config(config)):
                 assert requests == []

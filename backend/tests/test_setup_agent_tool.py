@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deerflow.tools.builtins.setup_agent_tool import setup_agent
+from nkyel.tools.builtins.setup_agent_tool import setup_agent
 
 # --- Helpers ---
 
@@ -38,7 +38,7 @@ def _make_paths_mock(tmp_path: Path):
 
 def _call_setup_agent(tmp_path: Path, soul: str, description: str, agent_name: str = "test-agent"):
     """Call the underlying setup_agent function directly, bypassing langchain tool wrapper."""
-    with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+    with patch("nkyel.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("nkyel.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
         return setup_agent.func(
             soul=soul,
             description=description,
@@ -50,7 +50,7 @@ def _call_setup_agent(tmp_path: Path, soul: str, description: str, agent_name: s
 
 
 def test_setup_agent_rejects_invalid_agent_name_before_writing(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     outside_dir = tmp_path.parent / "outside-target"
     traversal_agent = f"../../../{outside_dir.name}/evil"
     runtime = _DummyRuntime(context={"agent_name": traversal_agent}, tool_call_id="tool-1")
@@ -65,7 +65,7 @@ def test_setup_agent_rejects_invalid_agent_name_before_writing(tmp_path, monkeyp
 
 
 def test_setup_agent_rejects_absolute_agent_name_before_writing(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     absolute_agent = str(tmp_path / "outside-agent")
     runtime = _DummyRuntime(context={"agent_name": absolute_agent}, tool_call_id="tool-2")
 
@@ -92,7 +92,7 @@ class TestSetupAgentNoDataLoss:
         old_soul = agent_dir / "SOUL.md"
         old_soul.write_text("original soul content", encoding="utf-8")
 
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("nkyel.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("nkyel.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             # Force soul_file.write_text to raise after directory already exists
             with patch("yaml.dump", side_effect=OSError("disk full")):
                 setup_agent.func(
@@ -112,7 +112,7 @@ class TestSetupAgentNoDataLoss:
         agent_dir = tmp_path / "users" / "test-user-autouse" / "agents" / "test-agent"
         assert not agent_dir.exists()
 
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("nkyel.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("nkyel.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             with patch("yaml.dump", side_effect=OSError("write error")):
                 setup_agent.func(
                     soul="new soul",
@@ -140,7 +140,7 @@ class TestSetupAgentNoDataLoss:
             tool_call_id="tool-3",
         )
 
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("nkyel.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("nkyel.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             setup_agent.func(
                 soul="# My Agent",
                 description="A test agent",
@@ -188,7 +188,7 @@ class TestSetupAgentEmptySoulGuard:
         global_soul = tmp_path / "SOUL.md"
         global_soul.write_text("original global soul", encoding="utf-8")
 
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("nkyel.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("nkyel.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             setup_agent.func(
                 soul="",
                 description="desc",
@@ -212,7 +212,7 @@ class TestSetupAgentGlobalSoulAtomicPublish:
     """The default agent's SOUL.md must never be observable half written."""
 
     def _write_global_soul(self, tmp_path: Path, soul: str):
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("nkyel.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("nkyel.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             return setup_agent.func(
                 soul=soul,
                 description="desc",
@@ -317,7 +317,7 @@ class TestSetupAgentGlobalSoulPublishMode:
     """The published SOUL.md keeps a real mode, never mkstemp's 0600."""
 
     def _write_global_soul(self, tmp_path: Path, soul: str):
-        with patch("deerflow.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("deerflow.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
+        with patch("nkyel.tools.builtins.setup_agent_tool.get_paths", return_value=_make_paths_mock(tmp_path)), patch("nkyel.config.agents_config.get_paths", return_value=_make_paths_mock(tmp_path)):
             return setup_agent.func(
                 soul=soul,
                 description="desc",

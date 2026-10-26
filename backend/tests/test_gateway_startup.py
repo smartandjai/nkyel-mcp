@@ -28,7 +28,7 @@ def _deploy_fixture(tmp_path: Path, *, docker_script: str) -> tuple[Path, dict[s
     shutil.copytree(REPO_ROOT / "scripts", worktree / "scripts")
     shutil.copytree(REPO_ROOT / "docker", worktree / "docker")
     (worktree / "backend").mkdir()
-    (worktree / "config.yaml").write_text("sandbox:\n  use: deerflow.sandbox:LocalSandboxProvider\n", encoding="utf-8")
+    (worktree / "config.yaml").write_text("sandbox:\n  use: nkyel.sandbox:LocalSandboxProvider\n", encoding="utf-8")
     (worktree / "extensions_config.json").write_text('{"mcpServers":{},"skills":{}}\n', encoding="utf-8")
 
     bin_dir = tmp_path / "bin"
@@ -40,7 +40,7 @@ def _deploy_fixture(tmp_path: Path, *, docker_script: str) -> tuple[Path, dict[s
     env = os.environ.copy()
     env["PATH"] = f"{bin_dir}{os.pathsep}{env['PATH']}"
     env["BETTER_AUTH_SECRET"] = "test-better-auth-secret"
-    env["DEER_FLOW_INTERNAL_AUTH_TOKEN"] = "test-internal-auth-token"
+    env["NKYEL_INTERNAL_AUTH_TOKEN"] = "test-internal-auth-token"
     return worktree, env
 
 
@@ -95,7 +95,7 @@ def test_deploy_waits_for_gateway_readiness_before_success(tmp_path: Path) -> No
     args = capture.read_text(encoding="utf-8").splitlines()
     assert "--wait" in args
     assert "--wait-timeout" in args
-    assert "DeerFlow is running!" in result.stdout
+    assert "nkyel is running!" in result.stdout
 
 
 @requires_script_bash
@@ -117,8 +117,8 @@ def test_deploy_failure_prints_gateway_diagnostics_and_never_claims_success(tmp_
     )
 
     assert result.returncode != 0
-    assert "DeerFlow is running!" not in result.stdout
-    assert "DeerFlow services failed to become ready" in result.stderr
+    assert "nkyel is running!" not in result.stdout
+    assert "nkyel services failed to become ready" in result.stderr
     assert "supports `docker compose up --wait`" in result.stderr
     assert "upgrade to Docker Compose 2.24+" in result.stderr
     calls = capture.read_text(encoding="utf-8")
@@ -159,7 +159,7 @@ def test_production_entry_points_parse_the_compose_project_without_env_files(tmp
     """
     worktree, env = _deploy_fixture(tmp_path, docker_script=_READ_ONLY_COMPOSE)
     env["REAL_DOCKER"] = DOCKER
-    env["DEER_FLOW_HOME"] = str(tmp_path / "deer-flow-home")
+    env["NKYEL_HOME"] = str(tmp_path / "nkyel-home")
     assert not (worktree / ".env").exists()
     assert not (worktree / "frontend" / ".env").exists()
 

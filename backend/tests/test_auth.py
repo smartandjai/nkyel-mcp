@@ -288,7 +288,7 @@ def _make_internal_owner_check_app():
     from fastapi import Request
     from langgraph.store.memory import InMemoryStore
 
-    from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
+    from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
 
     app = FastAPI()
     thread_store = MemoryThreadMetaStore(InMemoryStore())
@@ -377,7 +377,7 @@ def test_sqlite_round_trip_new_fields():
     """needs_setup and token_version survive create → read round-trip.
 
     Uses the shared persistence engine (same one threads_meta, runs,
-    run_events, and feedback use). The old separate .deer-flow/users.db
+    run_events, and feedback use). The old separate .nkyel/users.db
     file is gone.
     """
     import asyncio
@@ -386,7 +386,7 @@ def test_sqlite_round_trip_new_fields():
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import (
+        from nkyel.persistence.engine import (
             close_engine,
             get_session_factory,
             init_engine,
@@ -439,7 +439,7 @@ def test_user_repository_lists_registered_user_ids(tmp_path, second_created_delt
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         await init_engine(
             "sqlite",
@@ -482,7 +482,7 @@ def test_create_user_duplicate_primary_key_is_not_misreported_as_oauth(tmp_path)
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -519,7 +519,7 @@ def test_create_user_duplicate_email_race_still_reports_email(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -550,7 +550,7 @@ def test_create_user_propagates_non_uniqueness_integrity_error(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path}/scratch.db", sqlite_dir=str(tmp_path))
         try:
@@ -578,7 +578,7 @@ def test_create_user_real_oauth_conflict_still_reported_correctly(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -600,7 +600,7 @@ def test_create_user_real_oauth_conflict_still_reported_correctly(tmp_path):
 # exception -- the end-to-end tests above cover the SQLite branch (real engine,
 # real IntegrityError). The Postgres/asyncpg branch needs a real Postgres and
 # its only e2e guard, test_oauth_identity_uniqueness_enforced_end_to_end, is
-# skipped in CI (no workflow sets DEERFLOW_TEST_POSTGRES_URL). The stubs below
+# skipped in CI (no workflow sets NKYEL_TEST_POSTGRES_URL). The stubs below
 # pin it with no DB of either kind.
 #
 # The shape matters: SQLAlchemy's asyncpg dialect does NOT hand us the asyncpg
@@ -631,7 +631,7 @@ def test_driver_constraint_name_reads_from_asyncpg_cause_chain():
 
 def test_is_oauth_identity_violation_matches_postgres_constraint_name():
     from app.gateway.auth.repositories.sqlite import _is_oauth_identity_violation
-    from deerflow.persistence.user.model import OAUTH_IDENTITY_INDEX_NAME
+    from nkyel.persistence.user.model import OAUTH_IDENTITY_INDEX_NAME
 
     assert _is_oauth_identity_violation(_pg_integrity_error(OAUTH_IDENTITY_INDEX_NAME)) is True
 
@@ -735,12 +735,12 @@ def test_update_user_raises_when_row_concurrently_deleted(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import (
+        from nkyel.persistence.engine import (
             close_engine,
             get_session_factory,
             init_engine,
         )
-        from deerflow.persistence.user.model import UserRow
+        from nkyel.persistence.user.model import UserRow
 
         with tempfile.TemporaryDirectory() as d:
             url = f"sqlite+aiosqlite:///{d}/scratch.db"
@@ -790,7 +790,7 @@ def test_email_lookup_is_case_insensitive(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -817,7 +817,7 @@ def test_create_user_rejects_email_differing_only_in_case(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -841,8 +841,8 @@ def test_create_user_rejects_legacy_mixed_case_email(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-        from deerflow.persistence.user.model import UserRow
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.user.model import UserRow
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -878,7 +878,7 @@ def test_update_user_normalizes_email(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -904,7 +904,7 @@ def test_distinct_emails_remain_distinct(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -939,8 +939,8 @@ def test_legacy_mixed_case_duplicate_rows_resolve_without_error(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-        from deerflow.persistence.user.model import UserRow
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.user.model import UserRow
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -986,8 +986,8 @@ def test_update_user_on_legacy_mixed_case_row_does_not_collide(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
 
     async def _run() -> None:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-        from deerflow.persistence.user.model import UserRow
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.user.model import UserRow
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -1054,13 +1054,13 @@ def test_oidc_login_blocked_by_existing_local_account_across_case(tmp_path):
     from app.gateway.auth.local_provider import LocalAuthProvider
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
     from app.gateway.auth.user_provisioning import get_or_provision_oidc_user
-    from deerflow.config.auth_config import OIDCProviderConfig
+    from nkyel.config.auth_config import OIDCProviderConfig
 
     async def _run() -> None:
         from fastapi import HTTPException
 
         from app.gateway.auth.oidc import OIDCIdentity
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
         url = f"sqlite+aiosqlite:///{tmp_path}/scratch.db"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -1068,7 +1068,7 @@ def test_oidc_login_blocked_by_existing_local_account_across_case(tmp_path):
             provider = LocalAuthProvider(SQLiteUserRepository(get_session_factory()))
             await provider.create_user(email="Victim@x.com", password="pw-abc-123!", system_role="user")
 
-            cfg = OIDCProviderConfig(display_name="Test SSO", issuer="https://issuer.example.com", client_id="deer-flow", auto_create_users=True)
+            cfg = OIDCProviderConfig(display_name="Test SSO", issuer="https://issuer.example.com", client_id="nkyel", auto_create_users=True)
             identity = OIDCIdentity(provider="keycloak", subject="sub-1", email="Victim@x.com", email_verified=True, name="Victim", claims={})
 
             with pytest.raises(HTTPException) as exc_info:
@@ -1195,7 +1195,7 @@ def _install_throttle_store(store):
 def memory_throttle_store():
     """A fresh in-process counter installed as the router's store."""
     from app.gateway.auth import login_throttle
-    from deerflow.persistence.login_throttle import MemoryLoginThrottleStore
+    from nkyel.persistence.login_throttle import MemoryLoginThrottleStore
 
     store = MemoryLoginThrottleStore()
     login_throttle.install_login_throttle_store(store)
@@ -1211,8 +1211,8 @@ async def throttle_store(request, tmp_path):
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     from app.gateway.auth import login_throttle
-    from deerflow.persistence.base import Base
-    from deerflow.persistence.login_throttle import LoginThrottleRow, MemoryLoginThrottleStore, SqlLoginThrottleStore
+    from nkyel.persistence.base import Base
+    from nkyel.persistence.login_throttle import LoginThrottleRow, MemoryLoginThrottleStore, SqlLoginThrottleStore
 
     engine = None
     if request.param == "memory":
@@ -1234,9 +1234,9 @@ async def throttle_store(request, tmp_path):
 @pytest.fixture
 def throttle_policy():
     """Set ``auth.local`` throttle knobs on the live app config; reset afterwards."""
-    from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-    from deerflow.config.auth_config import AuthAppConfig, LocalAuthConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+    from nkyel.config.auth_config import AuthAppConfig, LocalAuthConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     def _set(*, max_attempts: int = 5, lockout_seconds: float = 60.0) -> None:
         set_app_config(
@@ -1349,7 +1349,7 @@ def test_rate_limiter_uses_defaults_when_config_unavailable(monkeypatch):
     to propagate by the test below.
     """
     from app.gateway.routers import auth as auth_router
-    from deerflow.config import app_config as app_config_module
+    from nkyel.config import app_config as app_config_module
 
     def _missing():
         raise FileNotFoundError("no config.yaml")
@@ -1366,7 +1366,7 @@ def test_rate_limiter_malformed_config_propagates(monkeypatch):
     an operator who set max_login_attempts=2 must never silently get 5.
     """
     from app.gateway.routers import auth as auth_router
-    from deerflow.config import app_config as app_config_module
+    from nkyel.config import app_config as app_config_module
 
     def _malformed():
         raise ValueError("config validation error")
@@ -1382,7 +1382,7 @@ async def test_rate_limiter_clean_ip_skips_config_read(throttle_store, monkeypat
     come before policy resolution (get_app_config re-hashes config.yaml on
     every call, and login_local is an unauthenticated async endpoint)."""
     from app.gateway.routers import auth as auth_router
-    from deerflow.config import app_config as app_config_module
+    from nkyel.config import app_config as app_config_module
 
     def _must_not_load():
         raise AssertionError("config must not be read for a clean IP")
@@ -1436,7 +1436,7 @@ def test_local_auth_throttle_config_validation():
     """Throttle knobs reject degenerate operator values at config load."""
     import pydantic
 
-    from deerflow.config.auth_config import LocalAuthConfig
+    from nkyel.config.auth_config import LocalAuthConfig
 
     with pytest.raises(pydantic.ValidationError):
         LocalAuthConfig(max_login_attempts=0)
@@ -1555,7 +1555,7 @@ async def test_concurrent_checks_on_expired_lock_are_race_free(throttle_store, m
 
     from app.gateway.routers import auth as auth_router
     from app.gateway.routers.auth import _check_rate_limit
-    from deerflow.config.auth_config import LocalAuthConfig
+    from nkyel.config.auth_config import LocalAuthConfig
 
     def _defaults():
         return LocalAuthConfig().max_login_attempts, LocalAuthConfig().lockout_seconds
@@ -1608,7 +1608,7 @@ async def test_check_never_clobbers_record_replaced_during_policy_resolution(thr
     """
     from app.gateway.routers import auth as auth_router
     from app.gateway.routers.auth import _check_rate_limit
-    from deerflow.persistence.login_throttle import LoginThrottleRecord
+    from nkyel.persistence.login_throttle import LoginThrottleRecord
 
     ip = "10.0.0.11"
     for _ in range(2):
@@ -1670,8 +1670,8 @@ async def test_rate_limiter_counts_failure_when_config_breaks(throttle_store, mo
     and fails closed — before authenticate.
     """
     from app.gateway.routers.auth import _check_rate_limit, _record_login_failure
-    from deerflow.config import app_config as app_config_module
-    from deerflow.persistence.login_throttle import LoginThrottleRecord
+    from nkyel.config import app_config as app_config_module
+    from nkyel.persistence.login_throttle import LoginThrottleRecord
 
     def _malformed():
         raise ValueError("config validation error")
@@ -1707,7 +1707,7 @@ def test_login_local_broken_config_fails_closed_after_first_failure(memory_throt
     from fastapi.testclient import TestClient
 
     from app.gateway.routers import auth as auth_router
-    from deerflow.config import app_config as app_config_module
+    from nkyel.config import app_config as app_config_module
 
     def _malformed():
         raise ValueError("config validation error")
@@ -1753,11 +1753,11 @@ def test_login_local_lockout_follows_the_shared_database_across_replicas(tmp_pat
 
     from app.gateway.auth import login_throttle
     from app.gateway.routers import auth as auth_router
-    from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-    from deerflow.config.auth_config import AuthAppConfig, LocalAuthConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.persistence.base import Base
-    from deerflow.persistence.login_throttle import LoginThrottleRow, SqlLoginThrottleStore
+    from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+    from nkyel.config.auth_config import AuthAppConfig, LocalAuthConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.persistence.base import Base
+    from nkyel.persistence.login_throttle import LoginThrottleRow, SqlLoginThrottleStore
 
     class _Provider:
         async def authenticate(self, credentials):

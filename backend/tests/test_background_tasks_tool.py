@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from deerflow.mcp.tasks.runtime import set_mcp_task_submitter
-from deerflow.tools.builtins.background_tasks_tool import (
+from nkyel.mcp.tasks.runtime import set_mcp_task_submitter
+from nkyel.tools.builtins.background_tasks_tool import (
     _list_background_tasks_impl,
     cancel_background_task,
 )

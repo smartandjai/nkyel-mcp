@@ -13,7 +13,7 @@ from httpx import AsyncClient as RealAsyncClient
 
 @pytest.fixture
 def webz(monkeypatch):
-    import deerflow.community.webz.tools as module
+    import nkyel.community.webz.tools as module
 
     options = {"api_key": "synthetic-key"}
     monkeypatch.setattr(module, "get_app_config", lambda: SimpleNamespace(get_tool_config=lambda _: SimpleNamespace(model_extra=options)))
@@ -157,7 +157,7 @@ def test_setup_wizard_offers_webz_with_env_key():
     provider = next(p for p in SEARCH_PROVIDERS if p.name == "webz")
     assert provider.env_var == "WEBZ_API_KEY"
     config = build_minimal_config(provider_use="langchain_openai:ChatOpenAI", model_name="dummy", display_name="Dummy", api_key_field="api_key", env_var="OPENAI_API_KEY", search_use=provider.use, search_extra_config=provider.extra_config)
-    assert next(t for t in yaml.safe_load(config)["tools"] if t["name"] == "web_search")["use"] == "deerflow.community.webz.tools:web_search_tool"
+    assert next(t for t in yaml.safe_load(config)["tools"] if t["name"] == "web_search")["use"] == "nkyel.community.webz.tools:web_search_tool"
 
 
 @pytest.mark.asyncio
@@ -214,7 +214,7 @@ def test_doctor_recognizes_webz_credentials(tmp_path, monkeypatch):
     import doctor
 
     config = tmp_path / "config.yaml"
-    config.write_text("tools:\n  - name: web_search\n    use: deerflow.community.webz.tools:web_search_tool\n", encoding="utf-8")
+    config.write_text("tools:\n  - name: web_search\n    use: nkyel.community.webz.tools:web_search_tool\n", encoding="utf-8")
     monkeypatch.delenv("WEBZ_API_KEY", raising=False)
     missing = doctor.check_web_search(config)
     assert missing.status == "warn"

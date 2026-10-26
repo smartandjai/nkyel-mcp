@@ -16,11 +16,11 @@ from langgraph.errors import GraphInterrupt
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Interrupt
 
-from deerflow.subagents.config import SubagentConfig
-from deerflow.utils import custom_events as custom_events_module
-from deerflow.utils.custom_events import aemit_custom_event, emit_custom_event
+from nkyel.subagents.config import SubagentConfig
+from nkyel.utils import custom_events as custom_events_module
+from nkyel.utils.custom_events import aemit_custom_event, emit_custom_event
 
-task_tool_module = importlib.import_module("deerflow.tools.builtins.task_tool")
+task_tool_module = importlib.import_module("nkyel.tools.builtins.task_tool")
 
 
 class _State(TypedDict):
@@ -149,7 +149,7 @@ async def test_real_task_tool_events_reach_astream_events(monkeypatch):
     monkeypatch.setattr(task_tool_module, "get_subagent_config", lambda _name: config)
     monkeypatch.setattr(task_tool_module, "get_background_task_result", lambda _task_id: completed)
     monkeypatch.setattr(task_tool_module, "cleanup_background_task", lambda _task_id: None)
-    monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **_kwargs: [])
+    monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **_kwargs: [])
 
     agent = create_agent(
         model=_TaskCallingModel(),

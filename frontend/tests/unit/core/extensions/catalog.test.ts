@@ -22,7 +22,7 @@ const contribution: LoadedContribution = {
 
 test("catalog covers every bundled extension package even without runtime registrations", () => {
   const packages = readdirSync(resolve(process.cwd(), "../examples")).filter(
-    (name) => name.startsWith("deerflow-extension-"),
+    (name) => name.startsWith("nkyel-extension-"),
   );
   expect(extensionCatalog.map((entry) => entry.package).sort()).toEqual(
     packages.sort(),
@@ -62,13 +62,13 @@ test("team catalog metadata stays localized and merges only its runtime registra
     [zhCN.extensions.catalog, "Agent 团队"],
   ] as const) {
     const catalogOnly = extensionDirectory([], copy).find(
-      (entry) => entry.package === "deerflow-extension-agent-teams",
+      (entry) => entry.package === "nkyel-extension-agent-teams",
     );
     expect(catalogOnly).toMatchObject({
       id: team.namespace,
       title,
       guide:
-        "https://github.com/bytedance/deer-flow/tree/main/examples/deerflow-extension-agent-teams#readme",
+        "https://github.com/bytedance/deer-flow/tree/main/examples/nkyel-extension-agent-teams#readme",
     });
     expect(catalogOnly?.description).toBeTruthy();
     expect(catalogOnly?.loaded).toBeUndefined();
@@ -90,7 +90,7 @@ test("merges by namespace without duplicating catalog entries or guessing backen
   ).toBe(false);
   expect(
     entries.find(
-      (entry) => entry.package === "deerflow-extension-jev-screening",
+      (entry) => entry.package === "nkyel-extension-jev-screening",
     )?.loaded,
   ).toBeUndefined();
 });
@@ -127,13 +127,13 @@ test("workflow metadata is localized, explains Phase 2 limits and merges its reg
     [zhCN.extensions.catalog, "脚本工作流", "不支持重启回放或硬金额预算"],
   ] as const) {
     const catalogOnly = extensionDirectory([], copy).find(
-      (entry) => entry.package === "deerflow-extension-workflows",
+      (entry) => entry.package === "nkyel-extension-workflows",
     );
     expect(catalogOnly).toMatchObject({
       id: workflow.namespace,
       title,
       guide:
-        "https://github.com/bytedance/deer-flow/tree/main/examples/deerflow-extension-workflows#readme",
+        "https://github.com/bytedance/deer-flow/tree/main/examples/nkyel-extension-workflows#readme",
     });
     expect(catalogOnly?.description).toContain(limitations);
     expect(catalogOnly?.loaded).toBeUndefined();
@@ -152,13 +152,13 @@ test("WeKnora discovery is localized without implying runtime activation", () =>
     [zhCN.extensions.catalog, "WeKnora 知识检索"],
   ] as const) {
     const entry = extensionDirectory([], copy).find(
-      (item) => item.package === "deerflow-extension-weknora",
+      (item) => item.package === "nkyel-extension-weknora",
     );
     expect(entry).toMatchObject({
       id: "catalog/weknora",
       title,
       guide:
-        "https://github.com/bytedance/deer-flow/tree/main/examples/deerflow-extension-weknora#readme",
+        "https://github.com/bytedance/deer-flow/tree/main/examples/nkyel-extension-weknora#readme",
     });
     expect(entry?.description).toBeTruthy();
     expect(entry?.loaded).toBeUndefined();
@@ -168,7 +168,7 @@ test("WeKnora discovery is localized without implying runtime activation", () =>
 test("LightRAG discovery is localized without claiming a runtime registration", () => {
   for (const copy of [enUS.extensions.catalog, zhCN.extensions.catalog]) {
     const entry = extensionDirectory([], copy).find(
-      (item) => item.package === "deerflow-extension-lightrag",
+      (item) => item.package === "nkyel-extension-lightrag",
     );
     expect(entry?.title).toBe("LightRAG");
     expect(entry?.description).toBe(copy.lightrag.description);
@@ -183,7 +183,7 @@ test("knowledge management discovery merges its namespace without implying activ
     [zhCN.extensions.catalog, "知识入库与处理"],
   ] as const) {
     const entry = extensionDirectory([], copy).find(
-      (item) => item.package === "deerflow-extension-knowledge-management",
+      (item) => item.package === "nkyel-extension-knowledge-management",
     );
     expect(entry?.id).toBe(management.namespace);
     expect(entry?.title).toBe(title);
@@ -202,13 +202,13 @@ test("knowledge platform discovery is localized and does not imply a management 
     [zhCN.extensions.catalog, "知识空间与连接"],
   ] as const) {
     const entry = extensionDirectory([], copy).find(
-      (item) => item.package === "deerflow-extension-knowledge-platform",
+      (item) => item.package === "nkyel-extension-knowledge-platform",
     );
     expect(entry?.id).toBe("knowledge-platform");
     expect(entry?.title).toBe(title);
     expect(entry?.description).toBe(copy.knowledgePlatform.description);
     expect(entry?.guide).toBe(
-      "https://github.com/bytedance/deer-flow/tree/main/examples/deerflow-extension-knowledge-platform#readme",
+      "https://github.com/bytedance/deer-flow/tree/main/examples/nkyel-extension-knowledge-platform#readme",
     );
     expect(entry?.loaded).toBeUndefined();
   }

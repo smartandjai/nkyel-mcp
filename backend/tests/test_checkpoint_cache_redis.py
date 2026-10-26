@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
-from deerflow.config.app_config import AppConfig
-from deerflow.runtime.checkpoint_cache.provider import (
+from nkyel.config.app_config import AppConfig
+from nkyel.runtime.checkpoint_cache.provider import (
     checkpoint_cache_db_hash,
     checkpoint_cache_key_prefix,
     make_checkpoint_cache,
@@ -102,7 +102,7 @@ def _make_cache(
     serde: Any | None = None,
     **kwargs: Any,
 ):
-    import deerflow.runtime.checkpoint_cache.redis as redis_mod
+    import nkyel.runtime.checkpoint_cache.redis as redis_mod
 
     monkeypatch.setattr(redis_mod, "_create_client", lambda *a, **k: fake)
     return redis_mod.RedisCheckpointHistoryCache(
@@ -125,7 +125,7 @@ def _entry(i: int) -> dict:
 def _app_config(database: dict) -> AppConfig:
     return AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local.provider:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local.provider:LocalSandboxProvider"},
             "database": database,
         }
     )
@@ -244,7 +244,7 @@ async def test_adelete_thread_outage_degrades_without_raising(monkeypatch: pytes
 
 @pytest.mark.anyio
 async def test_provider_memory_default():
-    from deerflow.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
+    from nkyel.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
 
     async with make_checkpoint_cache(_app_config({"backend": "sqlite"}), serde=JsonPlusSerializer()) as cache:
         assert isinstance(cache, MemoryCheckpointHistoryCache)
@@ -254,7 +254,7 @@ async def test_provider_memory_default():
 @pytest.mark.anyio
 async def test_provider_zero_max_entries_disables_any_type():
     app_config = _app_config({"backend": "sqlite", "checkpoint_cache": {"type": "redis", "max_entries": 0}})
-    from deerflow.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
+    from nkyel.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
 
     async with make_checkpoint_cache(app_config, serde=JsonPlusSerializer()) as cache:
         assert isinstance(cache, MemoryCheckpointHistoryCache)
@@ -262,7 +262,7 @@ async def test_provider_zero_max_entries_disables_any_type():
 
 
 def test_db_hash_distinguishes_backends_and_targets():
-    from deerflow.config.database_config import DatabaseConfig
+    from nkyel.config.database_config import DatabaseConfig
 
     sqlite_cfg = DatabaseConfig.model_validate({"backend": "sqlite", "sqlite_dir": "/tmp/a"})
     pg_cfg = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "postgresql://u:p@h/db"})
@@ -274,11 +274,11 @@ def test_db_hash_distinguishes_backends_and_targets():
 
 def test_db_hash_stable_across_credential_rotation():
     """Same database, rotated user/password -> same cache namespace."""
-    from deerflow.config.database_config import DatabaseConfig
+    from nkyel.config.database_config import DatabaseConfig
 
-    before = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "postgresql://alice:secret1@pg.internal:5432/deerflow"})
-    rotated = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "postgresql://bob:secret2@pg.internal:5432/deerflow"})
-    driver_suffix = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "postgresql+asyncpg://alice:secret1@pg.internal:5432/deerflow"})
+    before = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "postgresql://alice:secret1@pg.internal:5432/nkyel"})
+    rotated = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "postgresql://bob:secret2@pg.internal:5432/nkyel"})
+    driver_suffix = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "postgresql+asyncpg://alice:secret1@pg.internal:5432/nkyel"})
     other_db = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "postgresql://alice:secret1@pg.internal:5432/other"})
     assert checkpoint_cache_db_hash(before) == checkpoint_cache_db_hash(rotated)
     assert checkpoint_cache_db_hash(before) == checkpoint_cache_db_hash(driver_suffix)
@@ -286,7 +286,7 @@ def test_db_hash_stable_across_credential_rotation():
 
 
 def test_db_hash_unparseable_url_falls_back_to_raw():
-    from deerflow.config.database_config import DatabaseConfig
+    from nkyel.config.database_config import DatabaseConfig
 
     cfg = DatabaseConfig.model_validate({"backend": "postgres", "postgres_url": "not-a-url"})
     assert len(checkpoint_cache_db_hash(cfg)) == 12  # stable, never raises

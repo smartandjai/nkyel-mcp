@@ -13,18 +13,18 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig, DeerMemModelConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.llm import build_llm
-from deerflow.agents.memory.backends.deermem.deermem.core.paths import DEFAULT_AGENT_BUCKET
-from deerflow.agents.memory.backends.deermem.deermem.core.queue import MemoryUpdateQueue
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import create_empty_memory, create_storage
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig, DeerMemModelConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.llm import build_llm
+from nkyel.agents.memory.backends.deermem.deermem.core.paths import DEFAULT_AGENT_BUCKET
+from nkyel.agents.memory.backends.deermem.deermem.core.queue import MemoryUpdateQueue
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import create_empty_memory, create_storage
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater
 
 from .contract import Protocol, SemanticCase
 
 ROOT = Path(__file__).resolve().parent
 BACKEND_ROOT = ROOT.parents[2]
-PROMPT_PATH = BACKEND_ROOT / "packages" / "harness" / "deerflow" / "agents" / "memory" / "backends" / "deermem" / "deermem" / "core" / "prompts" / "memory_update.chat.yaml"
+PROMPT_PATH = BACKEND_ROOT / "packages" / "harness" / "nkyel" / "agents" / "memory" / "backends" / "deermem" / "deermem" / "core" / "prompts" / "memory_update.chat.yaml"
 ROW_SCHEMA_VERSION = 2
 MARKER_SCHEMA_VERSION = 1
 

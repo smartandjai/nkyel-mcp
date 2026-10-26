@@ -9,9 +9,9 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import HumanMessage
 
-from deerflow.sandbox import prewarm
-from deerflow.sandbox.exceptions import SandboxAuthorizationError
-from deerflow.sandbox.lease import (
+from nkyel.sandbox import prewarm
+from nkyel.sandbox.exceptions import SandboxAuthorizationError
+from nkyel.sandbox.lease import (
     SANDBOX_PREWARM_CLEANUP_CONTEXT_KEY,
     ensure_sandbox_lease_owner,
     get_sandbox_lease_manager,
@@ -19,8 +19,8 @@ from deerflow.sandbox.lease import (
     release_sandbox_execution_lease_async,
     sandbox_prewarm_cleanup_registered,
 )
-from deerflow.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
-from deerflow.sandbox.tools import ensure_sandbox_initialized_async
+from nkyel.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
+from nkyel.sandbox.tools import ensure_sandbox_initialized_async
 
 
 class Provider(SandboxProvider):
@@ -65,7 +65,7 @@ class Provider(SandboxProvider):
 @pytest.fixture
 def setup(monkeypatch):
     provider = Provider()
-    config = SimpleNamespace(sandbox=SimpleNamespace(prewarm=True, prewarm_max_concurrent=1, use="deerflow.community.aio_sandbox:AioSandboxProvider"))
+    config = SimpleNamespace(sandbox=SimpleNamespace(prewarm=True, prewarm_max_concurrent=1, use="nkyel.community.aio_sandbox:AioSandboxProvider"))
     monkeypatch.setattr(prewarm, "get_app_config", lambda: config)
     set_sandbox_provider(provider)
     yield provider, config
@@ -81,7 +81,7 @@ def runtime(user="alice", thread="thread"):
 
 def start(rt):
     prewarm.start_sandbox_prewarm({"messages": [HumanMessage(content="```sh\npytest tests\n```")]}, rt)
-    return rt.context["__deerflow_sandbox_prewarm"]
+    return rt.context["__nkyel_sandbox_prewarm"]
 
 
 @pytest.mark.parametrize("text", ["https://example.com/path/file.py", "https://example.com", "Python is useful", "git is a version control tool", "Please compare read/write behavior", "API/TUI", "Error: why is this phrasing confusing?"])
@@ -151,7 +151,7 @@ async def test_first_tool_claims_same_lease_after_auth_recheck(setup, monkeypatc
     async def deny(**kwargs):
         raise SandboxAuthorizationError()
 
-    monkeypatch.setattr("deerflow.sandbox.tools.authorize_sandbox_execution_async", deny)
+    monkeypatch.setattr("nkyel.sandbox.tools.authorize_sandbox_execution_async", deny)
     with pytest.raises(SandboxAuthorizationError):
         await ensure_sandbox_initialized_async(rt)
     assert rt.state == {}
@@ -281,7 +281,7 @@ async def test_prewarm_admission_preserves_existing_modes(setup, mode):
     if mode == "disabled":
         config.sandbox.prewarm = False
     elif mode == "other-provider":
-        config.sandbox.use = "deerflow.sandbox.local:LocalSandboxProvider"
+        config.sandbox.use = "nkyel.sandbox.local:LocalSandboxProvider"
     elif mode == "snapshot-disabled":
         rt.context["app_config"] = SimpleNamespace(sandbox=SimpleNamespace(prewarm=False))
     elif mode == "existing":
@@ -289,7 +289,7 @@ async def test_prewarm_admission_preserves_existing_modes(setup, mode):
     else:
         state["sandbox"] = Overwrite({"sandbox_id": "parent"})
     prewarm.start_sandbox_prewarm(state, rt)
-    handle = rt.context.get("__deerflow_sandbox_prewarm")
+    handle = rt.context.get("__nkyel_sandbox_prewarm")
     if handle is not None:
         await handle.task
     await release_sandbox_execution_lease_async(rt.context)
@@ -304,7 +304,7 @@ async def test_compiled_graph_model_outcome_cleans_unclaimed_prewarm(setup, monk
     from langchain_core.messages import AIMessage
     from langchain_core.outputs import ChatGeneration, ChatResult
 
-    from deerflow.sandbox.middleware import SandboxMiddleware
+    from nkyel.sandbox.middleware import SandboxMiddleware
 
     provider, _ = setup
 
@@ -347,8 +347,8 @@ async def test_compiled_graph_model_outcome_cleans_unclaimed_prewarm(setup, monk
 async def test_gateway_worker_finally_cleans_prewarm_without_context_sandbox_id(setup, cancelled):
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.worker import RunContext, run_agent
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.worker import RunContext, run_agent
 
     provider, _ = setup
     manager = RunManager()
@@ -526,7 +526,7 @@ async def test_cancelled_skipped_prewarm_cleanup_still_releases_actual_tool_leas
     if mode == "disabled":
         config.sandbox.prewarm = False
     elif mode == "non-aio":
-        config.sandbox.use = "deerflow.sandbox.local:LocalSandboxProvider"
+        config.sandbox.use = "nkyel.sandbox.local:LocalSandboxProvider"
     else:
         blocker = runtime("slot-owner")
         await start(blocker).task
@@ -645,7 +645,7 @@ def test_compiled_sync_graph_keeps_lazy_path_without_speculation(setup, monkeypa
     from langchain_core.messages import AIMessage
     from langchain_core.outputs import ChatGeneration, ChatResult
 
-    from deerflow.sandbox.middleware import SandboxMiddleware
+    from nkyel.sandbox.middleware import SandboxMiddleware
 
     provider, config = setup
     config.sandbox.prewarm = enabled
@@ -671,7 +671,7 @@ def test_compiled_sync_graph_keeps_lazy_path_without_speculation(setup, monkeypa
     else:
         result = list(graph.stream(state, context=context, stream_mode="values"))[-1]
     assert result["messages"][-1].content == "Explained without execution"
-    assert "__deerflow_sandbox_prewarm" not in context
+    assert "__nkyel_sandbox_prewarm" not in context
     assert provider.calls == []
     assert not prewarm._permits
 
@@ -686,9 +686,9 @@ async def test_direct_sdk_graph_does_not_leak_speculation(setup, monkeypatch, en
     from langchain_core.outputs import ChatGeneration, ChatResult
     from langchain_core.tools import StructuredTool
 
-    from deerflow.agents.factory import create_deerflow_agent
-    from deerflow.agents.features import RuntimeFeatures
-    from deerflow.sandbox.middleware import SandboxMiddleware
+    from nkyel.agents.factory import create_nkyel_agent
+    from nkyel.agents.features import RuntimeFeatures
+    from nkyel.sandbox.middleware import SandboxMiddleware
 
     provider, config = setup
     config.sandbox.prewarm = enabled
@@ -709,7 +709,7 @@ async def test_direct_sdk_graph_does_not_leak_speculation(setup, monkeypatch, en
 
         async def _agenerate(self, *args, **kwargs):
             messages = args[0] if args else kwargs["messages"]
-            handle = context.get("__deerflow_sandbox_prewarm")
+            handle = context.get("__nkyel_sandbox_prewarm")
             if handle is not None:
                 await handle.task
             entered.set()
@@ -728,7 +728,7 @@ async def test_direct_sdk_graph_does_not_leak_speculation(setup, monkeypatch, en
         return sandbox.id
 
     tool = StructuredTool.from_function(coroutine=use_sandbox, name="use_sandbox", description="Acquire a sandbox for a real tool call")
-    graph = create_deerflow_agent(Model(), tools=[tool] if outcome == "tool" else [], features=RuntimeFeatures(loop_detection=False))
+    graph = create_nkyel_agent(Model(), tools=[tool] if outcome == "tool" else [], features=RuntimeFeatures(loop_detection=False))
     state = {"messages": [HumanMessage(content="```sh\npytest tests\n```")]}
 
     async def invoke():
@@ -762,7 +762,7 @@ async def test_direct_sdk_graph_does_not_leak_speculation(setup, monkeypatch, en
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
         # Failure-only hygiene does not supply the graph's execution boundary.
-        handle = context.get("__deerflow_sandbox_prewarm")
+        handle = context.get("__nkyel_sandbox_prewarm")
         if handle is not None:
             await handle.close()
 
@@ -778,7 +778,7 @@ async def test_prewarm_requires_registered_execution_cleanup(setup, marker):
 
     prewarm.start_sandbox_prewarm({"messages": [HumanMessage(content="```sh\npytest tests\n```")]}, rt)
 
-    assert "__deerflow_sandbox_prewarm" not in rt.context
+    assert "__nkyel_sandbox_prewarm" not in rt.context
     assert provider.calls == []
     assert not prewarm._permits
 

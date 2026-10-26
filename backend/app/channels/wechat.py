@@ -32,7 +32,7 @@ from app.channels.commands import is_known_channel_command
 from app.channels.connection_identity import attach_connection_identity
 from app.channels.credential_staging import cleanup_stale_credential_staging, credential_staging_prefix
 from app.channels.message_bus import INBOUND_FILE_CLEANUP_KEY, InboundMessage, InboundMessageType, MessageBus, OutboundMessage, ResolvedAttachment, cleanup_inbound_files
-from deerflow.utils.file_io import await_drained
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 _monotonic = time.monotonic
@@ -409,7 +409,7 @@ class WechatChannel(Channel):
             chat_id=msg.chat_id,
             context_token=context_token,
             text=text,
-            client_id_prefix="deerflow",
+            client_id_prefix="nkyel",
             max_retries=_max_retries,
         )
 
@@ -435,7 +435,7 @@ class WechatChannel(Channel):
         if current["id"] != connection["id"]:
             raise RuntimeError("WeChat notification identity is no longer connected")
         self._require_notification_transport()
-        payload = self._text_message_payload(chat_id=target, context_token=token, text=text_markdown, client_id_prefix="deerflow-notification")
+        payload = self._text_message_payload(chat_id=target, context_token=token, text=text_markdown, client_id_prefix="nkyel-notification")
         try:
             # The outbox owns retries; do not call the chat reply retry helper.
             data = await self._request_json("/ilink/bot/sendmessage", payload, require_object=True)
@@ -600,7 +600,7 @@ class WechatChannel(Channel):
                 "msg": {
                     "from_user_id": "",
                     "to_user_id": msg.chat_id,
-                    "client_id": f"deerflow_img_{int(time.time() * 1000)}",
+                    "client_id": f"nkyel_img_{int(time.time() * 1000)}",
                     "message_type": 2,
                     "message_state": 2,
                     "context_token": context_token,
@@ -694,7 +694,7 @@ class WechatChannel(Channel):
                 "msg": {
                     "from_user_id": "",
                     "to_user_id": msg.chat_id,
-                    "client_id": f"deerflow_file_{int(time.time() * 1000)}",
+                    "client_id": f"nkyel_file_{int(time.time() * 1000)}",
                     "message_type": 2,
                     "message_state": 2,
                     "context_token": context_token,
@@ -886,7 +886,7 @@ class WechatChannel(Channel):
             status="connected",
         )
         await self._remember_notification_context(connection_id=connection["id"], owner_user_id=state["owner_user_id"], chat_id=chat_id, context_token=context_token)
-        await self._send_connection_reply(chat_id, context_token, "WeChat connected to DeerFlow.")
+        await self._send_connection_reply(chat_id, context_token, "WeChat connected to nkyel.")
         return True
 
     async def _send_connection_reply(self, chat_id: str, context_token: str, text: str) -> None:
@@ -896,7 +896,7 @@ class WechatChannel(Channel):
             chat_id=chat_id,
             context_token=context_token,
             text=text,
-            client_id_prefix="deerflow-connect",
+            client_id_prefix="nkyel-connect",
             max_retries=1,
         )
 

@@ -18,12 +18,12 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.persistence.base import Base
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunChangeClockRow, RunRow
-from deerflow.persistence.thread_reads import ThreadReadMarkerRow, ThreadReadRepository, ThreadReadVersionRow
-from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY, make_origin
+from nkyel.persistence.base import Base
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunChangeClockRow, RunRow
+from nkyel.persistence.thread_reads import ThreadReadMarkerRow, ThreadReadRepository, ThreadReadVersionRow
+from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY, make_origin
 
 ALICE = "user-alice"
 BOB = "user-bob"
@@ -65,7 +65,7 @@ async def database(tmp_path, *, backend="sqlite"):
 
 async def put_run(runs, run_id, thread_id, *, user_id=ALICE, origin=None, status="success"):
     """Write a run as RunManager does; ``origin`` is the server-stamped origin kind."""
-    metadata = {DEERFLOW_ORIGIN_KEY: make_origin(origin)} if origin else {}
+    metadata = {NKYEL_ORIGIN_KEY: make_origin(origin)} if origin else {}
     await runs.put(run_id, thread_id=thread_id, user_id=user_id, status=status, metadata=metadata)
 
 
@@ -186,7 +186,7 @@ async def test_shared_thread_other_users_runs_do_not_mark_unread(tmp_path, datab
 @pytest.mark.asyncio
 async def test_thread_operations_never_carry_an_origin(tmp_path, database_backend):
     async with database(tmp_path, backend=database_backend) as (sf, runs, reads):
-        await runs.put("op-1", thread_id="thread", user_id=ALICE, operation_kind="checkpoint_write", metadata={DEERFLOW_ORIGIN_KEY: make_origin("schedule")})
+        await runs.put("op-1", thread_id="thread", user_id=ALICE, operation_kind="checkpoint_write", metadata={NKYEL_ORIGIN_KEY: make_origin("schedule")})
         async with sf() as session:
             assert (await session.get(RunRow, "op-1")).origin_kind is None
         assert await reads.unread_thread_ids(user_id=ALICE, thread_ids=["thread"]) == set()

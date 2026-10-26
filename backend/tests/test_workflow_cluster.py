@@ -1,4 +1,4 @@
-"""Real PostgreSQL coordination; opt in with DEERFLOW_TEST_WORKFLOW_POSTGRES."""
+"""Real PostgreSQL coordination; opt in with NKYEL_TEST_WORKFLOW_POSTGRES."""
 
 import asyncio
 import os
@@ -11,17 +11,17 @@ import test_workflow_plugin as fixtures
 from test_workflow_plugin import context
 
 plugin = fixtures.plugin
-pytestmark = [pytest.mark.asyncio, pytest.mark.skipif(not os.getenv("DEERFLOW_TEST_WORKFLOW_POSTGRES"), reason="Requires dedicated PostgreSQL")]
+pytestmark = [pytest.mark.asyncio, pytest.mark.skipif(not os.getenv("NKYEL_TEST_WORKFLOW_POSTGRES"), reason="Requires dedicated PostgreSQL")]
 
 
 @pytest_asyncio.fixture
 async def cluster(plugin):
     import psycopg
-    from deerflow_extension_workflows.service import Workflows
+    from nkyel_extension_workflows.service import Workflows
     from psycopg import sql
     from psycopg.conninfo import make_conninfo
 
-    dsn = os.environ["DEERFLOW_TEST_WORKFLOW_POSTGRES"]
+    dsn = os.environ["NKYEL_TEST_WORKFLOW_POSTGRES"]
     schema = "workflow_test_" + uuid.uuid4().hex
     with psycopg.connect(dsn, autocommit=True) as db:
         db.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
@@ -176,7 +176,7 @@ async def test_real_owner_kill_during_review_and_rolling_upgrade(cluster):
     root = Path(__file__).resolve().parents[2]
     program = r"""
 import asyncio,json,sys
-from deerflow_extension_workflows.service import Workflows
+from nkyel_extension_workflows.service import Workflows
 from test_workflow_plugin import Runs,context
 async def main():
     service=Workflows(json.loads(sys.argv[1]));await service.start(None)
@@ -195,7 +195,7 @@ asyncio.run(main())
         json.dumps(a.config),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        env={**os.environ, "PYTHONPATH": os.pathsep.join([str(root / "examples/deerflow-extension-workflows"), str(root / "backend/tests"), str(root / "backend")])},
+        env={**os.environ, "PYTHONPATH": os.pathsep.join([str(root / "examples/nkyel-extension-workflows"), str(root / "backend/tests"), str(root / "backend")])},
     )
     try:
         run_id = (await asyncio.wait_for(child.stdout.readline(), 10)).decode().strip()
@@ -373,7 +373,7 @@ async def test_expired_cancel_command_cannot_resume_dispatch(cluster):
 
 
 async def test_cluster_policy_rejects_mismatched_replica(cluster):
-    from deerflow_extension_workflows.service import Workflows
+    from nkyel_extension_workflows.service import Workflows
 
     a, _, _ = cluster
     peer = Workflows({**a.config, "global_concurrency": 1})
@@ -447,7 +447,7 @@ async def test_expired_cancelling_can_finish_cleanup_and_delete(cluster, saturat
 
 async def test_reads_do_not_wait_for_cluster_budget_lock(cluster):
     import psycopg
-    from deerflow_extension_workflows.postgres import LOCK
+    from nkyel_extension_workflows.postgres import LOCK
 
     a, b, runs = cluster
     run_id = (await a.launch({"request_id": "read-lock", "script": "return 1;", "args": {}}, context(runs)))["run_id"]
@@ -464,7 +464,7 @@ async def test_reads_do_not_wait_for_cluster_budget_lock(cluster):
 async def test_rejected_admission_slot_accounting(cluster, monkeypatch, failure):
     from contextlib import closing
 
-    from deerflow_extension_api import AgentRunError
+    from nkyel_extension_api import AgentRunError
 
     a, b, runs = cluster
     a.config["global_concurrency"] = b.config["global_concurrency"] = 1

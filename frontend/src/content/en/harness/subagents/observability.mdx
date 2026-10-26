@@ -89,7 +89,7 @@ The response contains thread totals, input / output totals, run count, `by_model
 
 ## Langfuse
 
-Subagent spans are attributed to the parent thread: `session_id` is the parent `thread_id`, `user_id` is the current user, the trace name is `subagent:<name>` (lowercase, underscores replaced by hyphens), and tags carry the environment and model. The LangChain tag is likewise `subagent:<name>`. Opening a thread in the Langfuse Sessions view shows every subagent it dispatched. The request-level `deerflow_trace_id` is written into the trace metadata as well.
+Subagent spans are attributed to the parent thread: `session_id` is the parent `thread_id`, `user_id` is the current user, the trace name is `subagent:<name>` (lowercase, underscores replaced by hyphens), and tags carry the environment and model. The LangChain tag is likewise `subagent:<name>`. Opening a thread in the Langfuse Sessions view shows every subagent it dispatched. The request-level `nkyel_trace_id` is written into the trace metadata as well.
 
 ## Request trace id
 

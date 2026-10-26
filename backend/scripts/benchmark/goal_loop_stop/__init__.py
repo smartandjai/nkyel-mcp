@@ -21,17 +21,17 @@ from langchain_core.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import ConfigDict
 
-from deerflow.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.app_config import AppConfig
-from deerflow.config.paths import Paths
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.goal import build_goal_state, read_thread_goal, write_thread_goal
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.user_context import reset_current_user, set_current_user
+from nkyel.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.app_config import AppConfig
+from nkyel.config.paths import Paths
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.goal import build_goal_state, read_thread_goal, write_thread_goal
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.user_context import reset_current_user, set_current_user
 
 
 @dataclass
@@ -99,7 +99,7 @@ async def run_case(*, max_continuations: int = 1) -> dict[str, Any]:
         context_schema=dict,
         checkpointer=saver,
     )
-    cfg = AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+    cfg = AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
     cfg.title.enabled = cfg.memory.enabled = cfg.memory.injection_enabled = False
     bridge = SimpleNamespace(publish=AsyncMock(), publish_end=AsyncMock(), cleanup=AsyncMock())
     token = set_current_user(SimpleNamespace(id="goal-loop-probe", role="admin"))
@@ -107,8 +107,8 @@ async def run_case(*, max_continuations: int = 1) -> dict[str, Any]:
         with tempfile.TemporaryDirectory(prefix="goal-loop-stop-") as folder:
             paths = Paths(base_dir=Path(folder))
             with (
-                patch("deerflow.config.paths._paths", paths),
-                patch.dict(os.environ, {"DEER_FLOW_HOME": folder, "LANGSMITH_TRACING": "false", "LANGCHAIN_TRACING_V2": "false"}),
+                patch("nkyel.config.paths._paths", paths),
+                patch.dict(os.environ, {"NKYEL_HOME": folder, "LANGSMITH_TRACING": "false", "LANGCHAIN_TRACING_V2": "false"}),
                 patch.object(worker, "create_goal_evaluator_model", lambda **kwargs: UnmetEvaluator(counts)),
             ):
                 record = await manager.create(f"loop-stop-{uuid4().hex}", user_id="goal-loop-probe")

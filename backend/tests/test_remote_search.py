@@ -10,7 +10,7 @@ import subprocess
 
 import pytest
 
-from deerflow.sandbox.remote_search import parse_remote_search_output, remote_search_command
+from nkyel.sandbox.remote_search import parse_remote_search_output, remote_search_command
 
 _POSIX_SH = pytest.mark.skipif(
     os.name == "nt" or shutil.which("sh") is None or shutil.which("head") is None,

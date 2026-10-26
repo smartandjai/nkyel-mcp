@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 
-from deerflow.community.jina_ai import jina_client, tools
+from nkyel.community.jina_ai import jina_client, tools
 
 pytestmark = pytest.mark.anyio
 

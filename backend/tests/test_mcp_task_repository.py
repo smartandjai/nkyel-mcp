@@ -12,18 +12,18 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.mcp_tasks.service import McpTaskService
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.mcp.tasks import McpTaskDriverRegistry
-from deerflow.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.mcp_tasks import (
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.mcp.tasks import McpTaskDriverRegistry
+from nkyel.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.mcp_tasks import (
     DuplicateMcpRemoteTaskError,
     McpTaskRepository,
     McpTaskThreadMismatchError,
 )
-from deerflow.persistence.mcp_tasks.model import McpTaskRow
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
-from deerflow.runtime.runs.manager import ConflictError
-from deerflow.runtime.runs.schemas import RunStatus
+from nkyel.persistence.mcp_tasks.model import McpTaskRow
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.runtime.runs.manager import ConflictError
+from nkyel.runtime.runs.schemas import RunStatus
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -442,7 +442,7 @@ async def test_create_observes_delete_and_recreate_at_insert_boundary(tmp_path):
             return
         replaced = True
         lock_statement = statement
-        with contextlib.closing(sqlite3.connect(tmp_path / "deerflow.db")) as connection:
+        with contextlib.closing(sqlite3.connect(tmp_path / "nkyel.db")) as connection:
             with connection:
                 connection.execute("DELETE FROM threads_meta WHERE thread_id = ?", ("thread-1",))
                 connection.execute(
@@ -524,7 +524,7 @@ async def test_request_cancel_rejects_delete_recreate_before_scope_lock(tmp_path
         if replaced or "UPDATE THREADS_META" not in statement.upper():
             return
         replaced = True
-        with contextlib.closing(sqlite3.connect(tmp_path / "deerflow.db")) as connection:
+        with contextlib.closing(sqlite3.connect(tmp_path / "nkyel.db")) as connection:
             with connection:
                 connection.execute("DELETE FROM threads_meta WHERE thread_id = ?", ("thread-1",))
                 connection.execute(
@@ -1715,7 +1715,7 @@ async def test_legacy_empty_notification_retry_is_consumed_on_claim(tmp_path):
     """
     from sqlalchemy import update as sql_update
 
-    from deerflow.persistence.mcp_tasks.model import McpTaskRow
+    from nkyel.persistence.mcp_tasks.model import McpTaskRow
 
     repo = await _make_repo(tmp_path)
     now = datetime.now(UTC)
@@ -1979,7 +1979,7 @@ async def test_legacy_empty_dispatch_respects_a_newer_event(tmp_path, legacy_sta
     """
     from sqlalchemy import update as sql_update
 
-    from deerflow.persistence.mcp_tasks.model import McpTaskRow
+    from nkyel.persistence.mcp_tasks.model import McpTaskRow
 
     repo = await _make_repo(tmp_path)
     now = datetime.now(UTC)

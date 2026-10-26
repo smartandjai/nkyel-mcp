@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from deerflow.extensions.loader import (
+from nkyel.extensions.loader import (
     Diagnostic,
     ExtensionLoadError,
     ExtensionSpec,
@@ -32,7 +32,7 @@ def test_host_disabled_required_extension_is_skipped_before_resolution(monkeypat
     def _must_not_resolve(path: str):
         raise AssertionError(f"disabled extension was resolved: {path}")
 
-    monkeypatch.setattr("deerflow.extensions.loader.resolve_variable", _must_not_resolve)
+    monkeypatch.setattr("nkyel.extensions.loader.resolve_variable", _must_not_resolve)
 
     loaded, diagnostics = load_extensions([ExtensionSpec(use="missing_extension:install", enabled=False, required=True)])
 
@@ -43,13 +43,13 @@ def test_host_disabled_required_extension_is_skipped_before_resolution(monkeypat
 def test_manager_metadata_is_accepted_without_reaching_the_install_hook():
     spec = ExtensionSpec(
         name="demo",
-        package="deerflow-extension-demo",
+        package="nkyel-extension-demo",
         use=f"{_FIXTURE}:install_ok",
         enabled=False,
     )
 
     assert spec.name == "demo"
-    assert spec.package == "deerflow-extension-demo"
+    assert spec.package == "nkyel-extension-demo"
 
 
 def test_successful_install_registers_and_attributes():
@@ -158,7 +158,7 @@ def test_incompatible_declared_api_is_refused_with_actionable_message():
 
 
 def test_optional_extension_with_non_string_api_marker_is_skipped_with_a_diagnostic(monkeypatch):
-    monkeypatch.setattr(demo_extensions.install_ok, "__deerflow_api__", 101, raising=False)
+    monkeypatch.setattr(demo_extensions.install_ok, "__nkyel_api__", 101, raising=False)
     spec = ExtensionSpec(use=f"{_FIXTURE}:install_ok")
 
     loaded, diagnostics = load_extensions([spec])
@@ -182,7 +182,7 @@ def test_required_extension_with_non_string_iterable_api_marker_fails_closed(mon
 
     monkeypatch.setattr(
         demo_extensions.install_ok,
-        "__deerflow_api__",
+        "__nkyel_api__",
         _IterableAPIMarker(),
         raising=False,
     )
@@ -204,7 +204,7 @@ def test_optional_extension_with_unrenderable_api_marker_still_returns_a_diagnos
 
     monkeypatch.setattr(
         demo_extensions.install_ok,
-        "__deerflow_api__",
+        "__nkyel_api__",
         _UnrenderableAPIMarker(),
         raising=False,
     )
@@ -224,14 +224,14 @@ def test_optional_extension_with_unrenderable_api_marker_still_returns_a_diagnos
 def test_extension_api_marker_getter_failure_obeys_required_policy(monkeypatch, required):
     class _ExplodingMarkerInstall:
         @property
-        def __deerflow_api__(self):
+        def __nkyel_api__(self):
             raise RuntimeError("API marker getter exploded")
 
         def __call__(self, registry, config):
             raise AssertionError("install must not run after marker inspection fails")
 
     monkeypatch.setattr(
-        "deerflow.extensions.loader.resolve_variable",
+        "nkyel.extensions.loader.resolve_variable",
         lambda path: _ExplodingMarkerInstall(),
     )
     spec = ExtensionSpec(use="hostile_extension:install", required=required)
@@ -260,7 +260,7 @@ def test_string_subclass_api_marker_cannot_break_incompatibility_diagnostics(mon
 
     monkeypatch.setattr(
         demo_extensions.install_ok,
-        "__deerflow_api__",
+        "__nkyel_api__",
         _HostileString("99.0"),
         raising=False,
     )
@@ -287,7 +287,7 @@ def test_compatible_string_subclass_api_marker_can_load(monkeypatch):
 
     monkeypatch.setattr(
         demo_extensions.install_ok,
-        "__deerflow_api__",
+        "__nkyel_api__",
         _HostileString("0.2.0"),
         raising=False,
     )
@@ -330,7 +330,7 @@ def test_compatible_follows_semver_windows():
     """0.x: minors may break — the window is same major.minor with patches
     additive (host >= declared). From 1.0 on: contracts only grow within a
     major. Comparisons are numeric (1.10 > 1.9), not lexicographic."""
-    from deerflow.extensions.loader import _compatible
+    from nkyel.extensions.loader import _compatible
 
     # 0.x window: same major.minor, patch-level growth only.
     assert _compatible("0.1", "0.1")
@@ -361,7 +361,7 @@ def test_undeclared_api_is_allowed():
 def test_a_successful_load_is_reported(caplog):
     """Every other branch is failure-only, so without this line an operator has
     no way to tell a clean load from a `plugins:` block the host never read."""
-    with caplog.at_level("INFO", logger="deerflow.extensions.loader"):
+    with caplog.at_level("INFO", logger="nkyel.extensions.loader"):
         load_extensions([ExtensionSpec(use=f"{_FIXTURE}:install_ok")])
 
     assert f"Extensions loaded: 1/1 ({_FIXTURE}:install_ok)" in caplog.text
@@ -372,14 +372,14 @@ def test_the_report_counts_skipped_extensions_apart_from_loaded_ones(caplog):
         ExtensionSpec(use=f"{_FIXTURE}:install_ok"),
         ExtensionSpec(use="does.not.exist:install"),
     ]
-    with caplog.at_level("INFO", logger="deerflow.extensions.loader"):
+    with caplog.at_level("INFO", logger="nkyel.extensions.loader"):
         load_extensions(specs)
 
     assert f"Extensions loaded: 1/2 ({_FIXTURE}:install_ok)" in caplog.text
 
 
 def test_an_all_failed_load_reports_none_rather_than_an_empty_list(caplog):
-    with caplog.at_level("INFO", logger="deerflow.extensions.loader"):
+    with caplog.at_level("INFO", logger="nkyel.extensions.loader"):
         load_extensions([ExtensionSpec(use="does.not.exist:install")])
 
     assert "Extensions loaded: 0/1 (none)" in caplog.text
@@ -387,7 +387,7 @@ def test_an_all_failed_load_reports_none_rather_than_an_empty_list(caplog):
 
 def test_no_configured_plugins_stays_off_the_info_log(caplog):
     """The default state for nearly every deployment; a line here is boot noise."""
-    with caplog.at_level("INFO", logger="deerflow.extensions.loader"):
+    with caplog.at_level("INFO", logger="nkyel.extensions.loader"):
         load_extensions([])
 
     assert "Extensions loaded" not in caplog.text
@@ -404,9 +404,9 @@ def test_host_registry_satisfies_the_public_contract():
     """Extensions annotate install(registry: ExtensionRegistry, ...) against
     the contract package alone; the host's concrete registry must satisfy that
     Protocol, or every correctly-annotated extension is lying about its types."""
-    from deerflow_extension_api import ExtensionRegistry as ContractRegistry
+    from nkyel_extension_api import ExtensionRegistry as ContractRegistry
 
-    from deerflow.extensions.registry import ExtensionRegistry as HostRegistry
+    from nkyel.extensions.registry import ExtensionRegistry as HostRegistry
 
     assert isinstance(HostRegistry(), ContractRegistry)
 
@@ -421,18 +421,18 @@ class TestTablePrefixRegistration:
     """
 
     def setup_method(self):
-        from deerflow.persistence.migrations import _env_filters
+        from nkyel.persistence.migrations import _env_filters
 
         self._saved = set(_env_filters.EXTENSION_TABLE_PREFIXES)
 
     def teardown_method(self):
-        from deerflow.persistence.migrations import _env_filters
+        from nkyel.persistence.migrations import _env_filters
 
         _env_filters.EXTENSION_TABLE_PREFIXES.clear()
         _env_filters.EXTENSION_TABLE_PREFIXES.update(self._saved)
 
     def test_a_declared_prefix_is_registered_with_the_migration_filter(self):
-        from deerflow.persistence.migrations._env_filters import include_object
+        from nkyel.persistence.migrations._env_filters import include_object
 
         spec = ExtensionSpec(use=f"{_FIXTURE}:install_ok", table_prefix="ext_")
         load_extensions([spec])
@@ -440,7 +440,7 @@ class TestTablePrefixRegistration:
         assert include_object(None, "ext_events", "table", True, None) is False
 
     def test_no_declared_prefix_registers_nothing(self):
-        from deerflow.persistence.migrations import _env_filters
+        from nkyel.persistence.migrations import _env_filters
 
         spec = ExtensionSpec(use=f"{_FIXTURE}:install_ok")
         load_extensions([spec])
@@ -450,7 +450,7 @@ class TestTablePrefixRegistration:
     def test_a_disabled_specs_prefix_is_still_registered(self):
         """Tables from a previously-enabled run may still be in the database;
         disabling the extension must not make autogenerate reflect them."""
-        from deerflow.persistence.migrations._env_filters import include_object
+        from nkyel.persistence.migrations._env_filters import include_object
 
         spec = ExtensionSpec(use=f"{_FIXTURE}:install_ok", enabled=False, table_prefix="ext_")
         load_extensions([spec])
@@ -460,7 +460,7 @@ class TestTablePrefixRegistration:
     def test_a_failing_specs_prefix_is_still_registered(self):
         """A broken install() this run doesn't retroactively delete tables a
         prior successful run already created."""
-        from deerflow.persistence.migrations._env_filters import include_object
+        from nkyel.persistence.migrations._env_filters import include_object
 
         spec = ExtensionSpec(use=f"{_FIXTURE}:install_partial_then_raise", table_prefix="ext_")
         load_extensions([spec])

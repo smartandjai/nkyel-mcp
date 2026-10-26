@@ -25,12 +25,12 @@ from sqlalchemy import create_engine
 
 from app.gateway.knowledge_scope_admission import RAGFLOW_KNOWLEDGE_SEARCH_PROVIDER
 from app.gateway.routers import knowledge
-from deerflow.community.ragflow import provider as ragflow_provider
-from deerflow.config.paths import get_paths
-from deerflow.persistence.agents.model import AgentRow
-from deerflow.persistence.agents.sql import SqlAgentStore
-from deerflow.persistence.base import Base
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.community.ragflow import provider as ragflow_provider
+from nkyel.config.paths import get_paths
+from nkyel.persistence.agents.model import AgentRow
+from nkyel.persistence.agents.sql import SqlAgentStore
+from nkyel.persistence.base import Base
+from nkyel.runtime.user_context import get_effective_user_id
 
 pytestmark = pytest.mark.asyncio
 
@@ -43,11 +43,11 @@ _AGENT = "kb-agent"
 
 @pytest.fixture(autouse=True)
 def _isolate_agent_store_config(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.delenv("DEER_FLOW_CONFIG_PATH", raising=False)
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(tmp_path))
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.app_config._legacy_config_candidates", lambda: ())
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.delenv("NKYEL_CONFIG_PATH", raising=False)
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.app_config._legacy_config_candidates", lambda: ())
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
 
 
 def _seed_file_agent() -> None:
@@ -74,7 +74,7 @@ def seeded_agent_store(request, tmp_path: Path, monkeypatch) -> None:
         _seed_file_agent()
         return
     store = _seed_db_agent(tmp_path)
-    monkeypatch.setattr("deerflow.persistence.agents.get_agent_store", lambda: store)
+    monkeypatch.setattr("nkyel.persistence.agents.get_agent_store", lambda: store)
 
 
 def _config() -> SimpleNamespace:

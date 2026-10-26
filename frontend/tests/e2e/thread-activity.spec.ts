@@ -46,7 +46,7 @@ const GITHUB_THREAD: MockThread = {
   title: "Review the docs PR",
   updated_at: "2026-10-05T10:00:00Z",
   metadata: {
-    deerflow_origin: { kind: "github", provider: "github" },
+    nkyel_origin: { kind: "github", provider: "github" },
     channel_source: { type: "im_channel", provider: "github" },
   },
 };
@@ -54,7 +54,7 @@ const GITHUB_THREAD: MockThread = {
 /** The recorded run's thread, marked as a scheduled run. */
 const scheduledRun = (overrides: Partial<MockThread> = {}): MockThread => ({
   ...take.runThread,
-  metadata: { deerflow_origin: { kind: "schedule" } },
+  metadata: { nkyel_origin: { kind: "schedule" } },
   ...overrides,
 });
 
@@ -108,7 +108,7 @@ for (const lang of LOCALES) {
       ...take.runThread,
       updated_at: "2099-01-01T00:00:00Z",
       metadata: {
-        deerflow_origin: { kind: "schedule" },
+        nkyel_origin: { kind: "schedule" },
         scheduled_task_id: take.task.id,
       },
       unread: true,

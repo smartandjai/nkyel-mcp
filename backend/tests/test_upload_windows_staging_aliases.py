@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from app.gateway.deps import get_config
 from app.gateway.routers import uploads
-from deerflow.uploads.manager import cleanup_stale_upload_staging_files, list_files_in_dir, normalize_filename, write_upload_file_no_symlink
+from nkyel.uploads.manager import cleanup_stale_upload_staging_files, list_files_in_dir, normalize_filename, write_upload_file_no_symlink
 
 ALIASES = [".upload-notes.part.", ".upload-notes.part ", ".upload-notes.part.. ", ".upload-notes.part .", ".UPLOAD-NOTES.PART", ".Upload-NoTeS.Part", ".UPLOAD-NOTES.PART.", ".Upload-NoTeS.Part ."]
 

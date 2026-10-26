@@ -6,13 +6,13 @@ from pathlib import Path
 import httpx
 import pytest
 
-from deerflow.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
+from nkyel.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
 
 
 @pytest.fixture
 def adapter(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-weknora"))
-    from deerflow_extension_weknora import WeKnoraProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-weknora"))
+    from nkyel_extension_weknora import WeKnoraProvider
 
     monkeypatch.setenv("WEKNORA_TEST_KEY", "synthetic-secret")
     calls = []
@@ -151,7 +151,7 @@ async def test_http_errors_are_redacted_and_never_retried(adapter, status, error
 @pytest.mark.asyncio
 async def test_multi_space_ids_are_stable_bounded_and_isolated(adapter):
     provider, _, _, config, transport = adapter
-    from deerflow_extension_weknora import WeKnoraProvider
+    from nkyel_extension_weknora import WeKnoraProvider
 
     config["spaces"].append({**config["spaces"][0], "tenant_id": "2", "user_ids": ["bob"]})
     multi = WeKnoraProvider(config, transport=transport)
@@ -195,7 +195,7 @@ async def test_unsafe_native_ids_fail_before_path_request(adapter, bad_id):
 
 
 def test_configuration_rejects_implicit_authorization_and_credentials(adapter):
-    from deerflow_extension_weknora import WeKnoraProvider
+    from nkyel_extension_weknora import WeKnoraProvider
 
     _, _, _, config, _ = adapter
     for change in ({"tenant_id": None}, {"user_ids": []}, {"base_url": "https://user:secret@example.com"}, {"api_key_env": ""}, {"knowledge_base_ids": []}):
@@ -211,16 +211,16 @@ async def test_packaged_registration_real_tool_replay_budget_and_delegation(adap
     from langgraph.graph import END, START, MessagesState, StateGraph
     from langgraph.prebuilt import ToolNode
 
-    from deerflow.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, load_extensions
-    from deerflow.extensions.loader import ExtensionSpec
-    from deerflow.knowledge import tools
-    from deerflow.knowledge.providers import GENERIC_KNOWLEDGE_TOOL, resolve_knowledge_provider
-    from deerflow.knowledge.sources import prune_sources
-    from deerflow.runtime.serialization import serialize_channel_values_for_api
-    from deerflow.tools.builtins.task_tool import _task_result_command
+    from nkyel.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, load_extensions
+    from nkyel.extensions.loader import ExtensionSpec
+    from nkyel.knowledge import tools
+    from nkyel.knowledge.providers import GENERIC_KNOWLEDGE_TOOL, resolve_knowledge_provider
+    from nkyel.knowledge.sources import prune_sources
+    from nkyel.runtime.serialization import serialize_channel_values_for_api
+    from nkyel.tools.builtins.task_tool import _task_result_command
 
     _, _, _, config, transport = adapter
-    loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_weknora:install", config=config)])
+    loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_weknora:install", config=config)])
     assert diagnostics == []
     app_config = SimpleNamespace(get_tool_config=lambda _: SimpleNamespace(use=GENERIC_KNOWLEDGE_TOOL, model_extra={"provider": "weknora"}))
     provider = resolve_knowledge_provider(app_config, extensions=loaded)
@@ -257,7 +257,7 @@ async def test_missing_key_fails_closed(adapter, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_allowlist_and_missing_configured_base(adapter):
-    from deerflow_extension_weknora import WeKnoraProvider
+    from nkyel_extension_weknora import WeKnoraProvider
 
     _, calls, state, config, transport = adapter
     config["spaces"][0]["knowledge_base_ids"] = ["kb-1"]
@@ -308,21 +308,21 @@ async def test_all_document_selections_checked_before_any_search(adapter):
 
 def test_gateway_catalog_uses_authenticated_user_with_real_adapter(adapter):
     from _router_auth_helpers import make_authed_test_app
-    from deerflow_extension_weknora import WeKnoraProvider
+    from nkyel_extension_weknora import WeKnoraProvider
     from fastapi.testclient import TestClient
 
     from app.gateway.auth.models import User
     from app.gateway.deps import get_config
     from app.gateway.routers import knowledge
-    from deerflow.config.app_config import AppConfig
-    from deerflow.extensions import ExtensionRegistry
+    from nkyel.config.app_config import AppConfig
+    from nkyel.extensions import ExtensionRegistry
 
     _, calls, _, config, transport = adapter
     user = User(email="weknora@example.com", password_hash="unused", system_role="user")
     config["spaces"][0]["user_ids"] = [str(user.id)]
     provider = WeKnoraProvider(config, transport=transport)
     registry = ExtensionRegistry()
-    with registry.attributed_to("deerflow_extension_weknora:install"):
+    with registry.attributed_to("nkyel_extension_weknora:install"):
         registry.knowledge_provider("weknora", provider)
     app = make_authed_test_app(user_factory=lambda: user, bind_current_user=True)
     app.state.extensions = registry.build()
@@ -330,9 +330,9 @@ def test_gateway_catalog_uses_authenticated_user_with_real_adapter(adapter):
     app_config = AppConfig.model_validate(
         {
             "models": [],
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "knowledge_base": {"enabled": True, "scope_selection_enabled": True},
-            "tools": [{"name": "knowledge_search", "group": "knowledge", "use": "deerflow.knowledge.tools:knowledge_search_tool", "provider": "weknora"}],
+            "tools": [{"name": "knowledge_search", "group": "knowledge", "use": "nkyel.knowledge.tools:knowledge_search_tool", "provider": "weknora"}],
         }
     )
     app.dependency_overrides[get_config] = lambda: app_config

@@ -13,8 +13,8 @@ from alembic import command
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence import bootstrap
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 REVISION = "0031_scheduled_streak_boundary"
 PREVIOUS = "0030_notification_claim_tokens"

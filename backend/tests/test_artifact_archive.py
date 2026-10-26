@@ -15,9 +15,9 @@ from fastapi.testclient import TestClient
 from app.gateway import artifact_archive
 from app.gateway.auth.models import User
 from app.gateway.routers import thread_runs
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 THREAD_ID = "thread-archive"
 RUN_ID = "run-archive"

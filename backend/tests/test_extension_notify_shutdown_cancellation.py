@@ -6,8 +6,8 @@ from concurrent.futures import Future
 
 import pytest
 
-import deerflow.extensions.notify as notify_module
-from deerflow.extensions.notify import (
+import nkyel.extensions.notify as notify_module
+from nkyel.extensions.notify import (
     _pending_dispatches,
     dispatch_system_model_observation,
     drain_extension_notify_dispatches,

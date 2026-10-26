@@ -13,21 +13,21 @@ Evidence column values are repo-relative `path:line` references using the aliase
 
 | Alias | Path |
 | --- | --- |
-| `dbcfg` | `backend/packages/harness/deerflow/config/database_config.py` |
-| `appcfg` | `backend/packages/harness/deerflow/config/app_config.py` |
-| `reload` | `backend/packages/harness/deerflow/config/reload_boundary.py` |
-| `cmode` | `backend/packages/harness/deerflow/runtime/checkpoint_mode.py` |
-| `cstate` | `backend/packages/harness/deerflow/runtime/checkpoint_state.py` |
-| `tstate` | `backend/packages/harness/deerflow/agents/thread_state.py` |
-| `factory` | `backend/packages/harness/deerflow/agents/factory.py` |
-| `client` | `backend/packages/harness/deerflow/client.py` |
-| `worker` | `backend/packages/harness/deerflow/runtime/runs/worker.py` |
-| `agent` | `backend/packages/harness/deerflow/agents/lead_agent/agent.py` |
-| `goalsrc` | `backend/packages/harness/deerflow/runtime/goal.py` |
-| `checkpoint_patches` | `backend/packages/harness/deerflow/checkpoint_patches.py` |
-| `syncprov` | `backend/packages/harness/deerflow/runtime/checkpointer/provider.py` |
-| `asyncprov` | `backend/packages/harness/deerflow/runtime/checkpointer/async_provider.py` |
-| `cacheprov` | `backend/packages/harness/deerflow/runtime/checkpoint_cache/provider.py` |
+| `dbcfg` | `backend/packages/harness/nkyel/config/database_config.py` |
+| `appcfg` | `backend/packages/harness/nkyel/config/app_config.py` |
+| `reload` | `backend/packages/harness/nkyel/config/reload_boundary.py` |
+| `cmode` | `backend/packages/harness/nkyel/runtime/checkpoint_mode.py` |
+| `cstate` | `backend/packages/harness/nkyel/runtime/checkpoint_state.py` |
+| `tstate` | `backend/packages/harness/nkyel/agents/thread_state.py` |
+| `factory` | `backend/packages/harness/nkyel/agents/factory.py` |
+| `client` | `backend/packages/harness/nkyel/client.py` |
+| `worker` | `backend/packages/harness/nkyel/runtime/runs/worker.py` |
+| `agent` | `backend/packages/harness/nkyel/agents/lead_agent/agent.py` |
+| `goalsrc` | `backend/packages/harness/nkyel/runtime/goal.py` |
+| `checkpoint_patches` | `backend/packages/harness/nkyel/checkpoint_patches.py` |
+| `syncprov` | `backend/packages/harness/nkyel/runtime/checkpointer/provider.py` |
+| `asyncprov` | `backend/packages/harness/nkyel/runtime/checkpointer/async_provider.py` |
+| `cacheprov` | `backend/packages/harness/nkyel/runtime/checkpoint_cache/provider.py` |
 | `threads` | `backend/app/gateway/routers/threads.py` |
 | `thread_runs` | `backend/app/gateway/routers/thread_runs.py` |
 | `runs` | `backend/app/gateway/routers/runs.py` |
@@ -50,7 +50,7 @@ Every `database.*` key related to checkpoints, with the constraint the loader ac
 | `database.checkpoint_graph_cache.accessor_graph_max` | `int` | `64` | `ge=1` | No — hot-reloadable, re-read on every eviction check | `dbcfg:96-99`, `services:1133-1138` |
 | `database.checkpoint_cache.type` | `Literal["memory", "redis"]` | `"memory"` | `memory` \| `redis`; `redis` is async/Gateway only | Yes — captured when the checkpointer is built | `dbcfg:113-116`, `syncprov:181-182`, `asyncprov:250-254` |
 | `database.checkpoint_cache.max_entries` | `int` | `128` | `ge=0`; `0` disables the cache entirely | Yes — captured when the checkpointer is built | `dbcfg:117-121`, `cacheprov:76-84`, `deps:463` |
-| `database.checkpoint_cache.redis_url` | `str \| None` | `None` | any redis URL; when omitted, `DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL`, then `REDIS_URL`, then `redis://localhost:6379/0` | Yes — captured when the checkpointer is built | `dbcfg:122-125`, `cacheprov:19-23` |
+| `database.checkpoint_cache.redis_url` | `str \| None` | `None` | any redis URL; when omitted, `NKYEL_CHECKPOINT_CACHE_REDIS_URL`, then `REDIS_URL`, then `redis://localhost:6379/0` | Yes — captured when the checkpointer is built | `dbcfg:122-125`, `cacheprov:19-23` |
 | `database.checkpoint_cache.ttl_seconds` | `int` | `86400` | `ge=0`; `0` explicitly disables expiry | Yes — captured when the checkpointer is built | `dbcfg:126-135` |
 | `database.checkpoint_cache.key_prefix` | `str` | `""` | any string; empty derives a hash of the database identity | Yes — captured when the checkpointer is built | `dbcfg:136-139`, `cacheprov:60-64` |
 | `database.checkpoint_delta_snapshot_frequency` (deprecated, flat) | `int` | none — carried onto the nested key | `ge=1` after migration | n/a | `dbcfg:218-254` |
@@ -99,7 +99,7 @@ The old top-level `database.checkpoint_delta_snapshot_frequency` is still honore
 
 ### Environment variables
 
-No environment variable selects the checkpoint mode or its cadence. Both come only from `config.yaml`. The only mode-feature environment variables are the history-cache redis URL fallbacks (`DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL`, then `REDIS_URL`, then `redis://localhost:6379/0`) at `cacheprov:19-23`. `$VAR` interpolation in config values is resolved centrally by `AppConfig.resolve_env_variables()` before `DatabaseConfig` is constructed, so `DatabaseConfig` itself does no environment processing (`dbcfg:13-22`, `appcfg:442`).
+No environment variable selects the checkpoint mode or its cadence. Both come only from `config.yaml`. The only mode-feature environment variables are the history-cache redis URL fallbacks (`NKYEL_CHECKPOINT_CACHE_REDIS_URL`, then `REDIS_URL`, then `redis://localhost:6379/0`) at `cacheprov:19-23`. `$VAR` interpolation in config values is resolved centrally by `AppConfig.resolve_env_variables()` before `DatabaseConfig` is constructed, so `DatabaseConfig` itself does no environment processing (`dbcfg:13-22`, `appcfg:442`).
 
 ### Config version
 
@@ -115,13 +115,13 @@ Your config.yaml (version %d) is outdated — the latest version is %d. Run `mak
 
 | Symbol | Value | Where it lives | Evidence |
 | --- | --- | --- | --- |
-| `CheckpointChannelMode` | `Literal["full", "delta"]` | `deerflow.config.database_config` | `dbcfg:59` |
-| `DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY` | `10` | `deerflow.config.database_config` | `dbcfg:61` |
-| `INTERNAL_CHECKPOINT_MODE_KEY` | `"__deerflow_checkpoint_channel_mode"` (a `RunnableConfig` `configurable` key) | `deerflow.runtime.checkpoint_mode` | `cmode:18` |
-| `CHECKPOINT_MODE_METADATA_KEY` | `"deerflow_checkpoint_channel_mode"` (a checkpoint metadata key; the value written is `"delta"`) | `deerflow.runtime.checkpoint_mode` | `cmode:19`, `cmode:86` |
-| `counters_since_delta_snapshot` | LangGraph's own metadata key; a dict containing `"messages"` is treated as delta even without the DeerFlow marker | upstream `langgraph-checkpoint`; detected in `deerflow.runtime.checkpoint_mode` | `cmode:97-98` |
+| `CheckpointChannelMode` | `Literal["full", "delta"]` | `nkyel.config.database_config` | `dbcfg:59` |
+| `DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY` | `10` | `nkyel.config.database_config` | `dbcfg:61` |
+| `INTERNAL_CHECKPOINT_MODE_KEY` | `"__nkyel_checkpoint_channel_mode"` (a `RunnableConfig` `configurable` key) | `nkyel.runtime.checkpoint_mode` | `cmode:18` |
+| `CHECKPOINT_MODE_METADATA_KEY` | `"nkyel_checkpoint_channel_mode"` (a checkpoint metadata key; the value written is `"delta"`) | `nkyel.runtime.checkpoint_mode` | `cmode:19`, `cmode:86` |
+| `counters_since_delta_snapshot` | LangGraph's own metadata key; a dict containing `"messages"` is treated as delta even without the nkyel marker | upstream `langgraph-checkpoint`; detected in `nkyel.runtime.checkpoint_mode` | `cmode:97-98` |
 
-Marker semantics, in one place: `inject_checkpoint_mode(config, mode)` always sets `config["configurable"]["__deerflow_checkpoint_channel_mode"]`. In delta mode it additionally sets `config["metadata"]["deerflow_checkpoint_channel_mode"] = "delta"`; in full mode it **removes** that metadata key, so absence means full and pre-feature checkpoints need no migration (`cmode:81-88`). The snapshot cadence is deliberately **not** stamped into checkpoint metadata, because the mode marker contract and the full-to-delta migration semantics are unchanged by the frequency value (`cmode:53-60`).
+Marker semantics, in one place: `inject_checkpoint_mode(config, mode)` always sets `config["configurable"]["__nkyel_checkpoint_channel_mode"]`. In delta mode it additionally sets `config["metadata"]["nkyel_checkpoint_channel_mode"] = "delta"`; in full mode it **removes** that metadata key, so absence means full and pre-feature checkpoints need no migration (`cmode:81-88`). The snapshot cadence is deliberately **not** stamped into checkpoint metadata, because the mode marker contract and the full-to-delta migration semantics are unchanged by the frequency value (`cmode:53-60`).
 
 ## Exceptions and HTTP status
 
@@ -140,7 +140,7 @@ Verbatim messages raised by the mode machinery and its guards:
 | `Thread requires delta mode; materialize and convert its checkpoints before using full mode.` | `CheckpointModeMismatchError`, from `raise_if_snapshot_incompatible` and `raise_if_checkpoint_tuple_incompatible`, and duplicated in the degraded gateway accessor | `cmode:123`, `cmode:129`, `services:1229` |
 | `database.checkpoint_cache.type 'redis' is not supported on the sync checkpointer path (TUI/embedded); use 'memory'.` | `ValueError` in `_wrap_sync_if_delta` | `syncprov:181-182` |
 | `f"Unknown checkpoint cache type: {config.type!r}"` | `ValueError` in `make_checkpoint_cache` | `cacheprov:102` |
-| `create_deerflow_agent does not support checkpoint_channel_mode='delta' with a checkpointer: persisted graphs built here bypass checkpoint mode marker injection and the fail-closed compatibility gate (see deerflow.runtime.checkpoint_mode), so a mixed-mode store would silently corrupt thread state.  Use the guarded application paths (make_lead_agent or DeerFlowClient) for delta persistence; delta without a checkpointer is ephemeral and allowed.` | `ValueError` in `create_deerflow_agent` | `factory:135-141` |
+| `create_nkyel_agent does not support checkpoint_channel_mode='delta' with a checkpointer: persisted graphs built here bypass checkpoint mode marker injection and the fail-closed compatibility gate (see nkyel.runtime.checkpoint_mode), so a mixed-mode store would silently corrupt thread state.  Use the guarded application paths (make_lead_agent or NkyelClient) for delta persistence; delta without a checkpointer is ephemeral and allowed.` | `ValueError` in `create_nkyel_agent` | `factory:135-141` |
 
 ### HTTP status mapping
 
@@ -197,44 +197,44 @@ Import paths a consumer may rely on. Everything listed here is a Python import; 
 
 | Symbol | Import path | Role | Evidence |
 | --- | --- | --- | --- |
-| `CheckpointChannelMode` | `deerflow.config.database_config` | mode literal | `dbcfg:59` |
-| `DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY` | `deerflow.config.database_config` | default cadence, `10` | `dbcfg:61` |
-| `CheckpointDeltaConfig` | `deerflow.config.database_config` | delta tuning model (`snapshot_frequency`) | `dbcfg:64` |
-| `CheckpointGraphCacheConfig` | `deerflow.config.database_config` | graph-cache cap model (`accessor_graph_max`) | `dbcfg:86` |
-| `CheckpointCacheConfig` | `deerflow.config.database_config` | history-cache policy model | `dbcfg:103` |
-| `DatabaseConfig` | `deerflow.config.database_config` | the whole `database:` section | `dbcfg:142` |
-| `resolve_checkpoint_graph_cache_max(database_config, field_name, default)` | `deerflow.config.database_config` | tolerant hot-reloadable cap reader | `dbcfg:45-57` |
-| `INTERNAL_CHECKPOINT_MODE_KEY` | `deerflow.runtime.checkpoint_mode` | configurable key | `cmode:18` |
-| `CHECKPOINT_MODE_METADATA_KEY` | `deerflow.runtime.checkpoint_mode` | checkpoint metadata key | `cmode:19` |
-| `CheckpointModeMismatchError` | `deerflow.runtime.checkpoint_mode` | fail-closed cross-mode error | `cmode:22` |
-| `CheckpointModeReconfigurationError` | `deerflow.runtime.checkpoint_mode` | restart-required violation error | `cmode:26` |
-| `frozen_checkpoint_channel_mode()` | `deerflow.runtime.checkpoint_mode` | read the frozen mode or `None` | `cmode:34-36` |
-| `freeze_checkpoint_channel_mode(mode)` | `deerflow.runtime.checkpoint_mode` | freeze on first call, reject changes | `cmode:39-45` |
-| `frozen_checkpoint_snapshot_frequency()` | `deerflow.runtime.checkpoint_mode` | read the frozen cadence or `None` | `cmode:48-50` |
-| `freeze_checkpoint_snapshot_frequency(n)` | `deerflow.runtime.checkpoint_mode` | freeze cadence; `ValueError` if non-positive | `cmode:53-69` |
-| `resolve_checkpoint_snapshot_frequency(n=None)` | `deerflow.runtime.checkpoint_mode` | explicit → frozen → default | `cmode:72-78` |
-| `inject_checkpoint_mode(config, mode)` | `deerflow.runtime.checkpoint_mode` | stamp the configurable key and metadata marker | `cmode:81-88` |
-| `checkpoint_metadata_uses_delta(metadata)` | `deerflow.runtime.checkpoint_mode` | marker/counters detection | `cmode:91-98` |
-| `checkpoint_tuple_uses_delta(tuple)` | `deerflow.runtime.checkpoint_mode` | tuple-level detection | `cmode:101-104` |
-| `state_snapshot_uses_delta(snapshot)` | `deerflow.runtime.checkpoint_mode` | snapshot-level detection | `cmode:107-111` |
-| `raise_if_snapshot_incompatible(snapshot, mode)` | `deerflow.runtime.checkpoint_mode` | read gate | `cmode:114-123` |
-| `raise_if_checkpoint_tuple_incompatible(tuple, mode)` | `deerflow.runtime.checkpoint_mode` | raw-tuple gate | `cmode:126-129` |
-| `ensure_checkpoint_mode_compatible(checkpointer, config, mode)` | `deerflow.runtime.checkpoint_mode` | sync pre-write gate | `cmode:132-140` |
-| `aensure_checkpoint_mode_compatible(checkpointer, config, mode)` | `deerflow.runtime.checkpoint_mode` | async pre-write gate | `cmode:143-146` |
-| `ThreadState` | `deerflow.agents.thread_state` | full-mode state schema | `tstate:280` |
-| `DeltaThreadState` | `deerflow.agents.thread_state` | delta schema at the default cadence | `tstate:396-397,423-426` |
-| `delta_messages_field(snapshot_frequency=DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY)` | `deerflow.agents.thread_state` | `Annotated[list[AnyMessage], DeltaChannel(merge_message_writes, snapshot_frequency=…)]` | `tstate:385-390` |
-| `DELTA_MESSAGES_FIELD` | `deerflow.agents.thread_state` | module-level default-cadence delta field | `tstate:393` |
-| `merge_message_writes(state, writes)` | `deerflow.agents.thread_state` | linear-time `add_messages`-equivalent reducer | `tstate:328-382` |
-| `get_thread_state_schema(mode, snapshot_frequency=None)` | `deerflow.agents.thread_state` | `ThreadState` for non-delta, cached delta schema otherwise | `tstate:416-419` |
-| `adapt_state_schema_for_mode(schema, mode, snapshot_frequency=None)` | `deerflow.agents.thread_state` | middleware/state schema adaptation | `tstate:437-440` |
-| `normalize_middleware_state_schemas(middleware, mode, snapshot_frequency=None)` | `deerflow.agents.thread_state` | middleware list with adapted `state_schema` copies | `tstate:454-467` |
-| `THREAD_STATE_REDUCER_FIELDS` | `deerflow.agents.thread_state` | frozenset of reducer channels (including `"messages"`), used to decide `Overwrite` wrapping | `tstate:400-413`, `threads:1065-1066` |
-| `create_deerflow_agent(..., checkpoint_channel_mode="full", checkpoint_snapshot_frequency=None, ...)` | `deerflow.agents.factory` | public agent factory; delta plus a checkpointer is rejected | `factory:66-77`, `factory:135-141` |
-| `CheckpointStateAccessor`, `build_state_mutation_graph` | `deerflow.runtime` (package re-export) | accessor choke point and mutation graph | `deerflow/runtime/__init__.py:8,21-22` |
-| `ThreadState`, `DeltaThreadState`, `SandboxState` | `deerflow.agents` (package re-export) | lazily exported state schemas | `agents/__init__.py:14-16,40-47` |
-| `CheckpointStateAccessor.bind(graph, checkpointer, *, store=None, mode="full")` | `deerflow.runtime.checkpoint_state` | bind graph, saver, and mode | `cstate:112-134` |
-| `build_state_mutation_graph(as_node, mode, state_schema=None, *, snapshot_frequency=None)` | `deerflow.runtime.checkpoint_state` | state-only writer graph for `Overwrite`-style writes | `cstate:39-65` |
+| `CheckpointChannelMode` | `nkyel.config.database_config` | mode literal | `dbcfg:59` |
+| `DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY` | `nkyel.config.database_config` | default cadence, `10` | `dbcfg:61` |
+| `CheckpointDeltaConfig` | `nkyel.config.database_config` | delta tuning model (`snapshot_frequency`) | `dbcfg:64` |
+| `CheckpointGraphCacheConfig` | `nkyel.config.database_config` | graph-cache cap model (`accessor_graph_max`) | `dbcfg:86` |
+| `CheckpointCacheConfig` | `nkyel.config.database_config` | history-cache policy model | `dbcfg:103` |
+| `DatabaseConfig` | `nkyel.config.database_config` | the whole `database:` section | `dbcfg:142` |
+| `resolve_checkpoint_graph_cache_max(database_config, field_name, default)` | `nkyel.config.database_config` | tolerant hot-reloadable cap reader | `dbcfg:45-57` |
+| `INTERNAL_CHECKPOINT_MODE_KEY` | `nkyel.runtime.checkpoint_mode` | configurable key | `cmode:18` |
+| `CHECKPOINT_MODE_METADATA_KEY` | `nkyel.runtime.checkpoint_mode` | checkpoint metadata key | `cmode:19` |
+| `CheckpointModeMismatchError` | `nkyel.runtime.checkpoint_mode` | fail-closed cross-mode error | `cmode:22` |
+| `CheckpointModeReconfigurationError` | `nkyel.runtime.checkpoint_mode` | restart-required violation error | `cmode:26` |
+| `frozen_checkpoint_channel_mode()` | `nkyel.runtime.checkpoint_mode` | read the frozen mode or `None` | `cmode:34-36` |
+| `freeze_checkpoint_channel_mode(mode)` | `nkyel.runtime.checkpoint_mode` | freeze on first call, reject changes | `cmode:39-45` |
+| `frozen_checkpoint_snapshot_frequency()` | `nkyel.runtime.checkpoint_mode` | read the frozen cadence or `None` | `cmode:48-50` |
+| `freeze_checkpoint_snapshot_frequency(n)` | `nkyel.runtime.checkpoint_mode` | freeze cadence; `ValueError` if non-positive | `cmode:53-69` |
+| `resolve_checkpoint_snapshot_frequency(n=None)` | `nkyel.runtime.checkpoint_mode` | explicit → frozen → default | `cmode:72-78` |
+| `inject_checkpoint_mode(config, mode)` | `nkyel.runtime.checkpoint_mode` | stamp the configurable key and metadata marker | `cmode:81-88` |
+| `checkpoint_metadata_uses_delta(metadata)` | `nkyel.runtime.checkpoint_mode` | marker/counters detection | `cmode:91-98` |
+| `checkpoint_tuple_uses_delta(tuple)` | `nkyel.runtime.checkpoint_mode` | tuple-level detection | `cmode:101-104` |
+| `state_snapshot_uses_delta(snapshot)` | `nkyel.runtime.checkpoint_mode` | snapshot-level detection | `cmode:107-111` |
+| `raise_if_snapshot_incompatible(snapshot, mode)` | `nkyel.runtime.checkpoint_mode` | read gate | `cmode:114-123` |
+| `raise_if_checkpoint_tuple_incompatible(tuple, mode)` | `nkyel.runtime.checkpoint_mode` | raw-tuple gate | `cmode:126-129` |
+| `ensure_checkpoint_mode_compatible(checkpointer, config, mode)` | `nkyel.runtime.checkpoint_mode` | sync pre-write gate | `cmode:132-140` |
+| `aensure_checkpoint_mode_compatible(checkpointer, config, mode)` | `nkyel.runtime.checkpoint_mode` | async pre-write gate | `cmode:143-146` |
+| `ThreadState` | `nkyel.agents.thread_state` | full-mode state schema | `tstate:280` |
+| `DeltaThreadState` | `nkyel.agents.thread_state` | delta schema at the default cadence | `tstate:396-397,423-426` |
+| `delta_messages_field(snapshot_frequency=DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY)` | `nkyel.agents.thread_state` | `Annotated[list[AnyMessage], DeltaChannel(merge_message_writes, snapshot_frequency=…)]` | `tstate:385-390` |
+| `DELTA_MESSAGES_FIELD` | `nkyel.agents.thread_state` | module-level default-cadence delta field | `tstate:393` |
+| `merge_message_writes(state, writes)` | `nkyel.agents.thread_state` | linear-time `add_messages`-equivalent reducer | `tstate:328-382` |
+| `get_thread_state_schema(mode, snapshot_frequency=None)` | `nkyel.agents.thread_state` | `ThreadState` for non-delta, cached delta schema otherwise | `tstate:416-419` |
+| `adapt_state_schema_for_mode(schema, mode, snapshot_frequency=None)` | `nkyel.agents.thread_state` | middleware/state schema adaptation | `tstate:437-440` |
+| `normalize_middleware_state_schemas(middleware, mode, snapshot_frequency=None)` | `nkyel.agents.thread_state` | middleware list with adapted `state_schema` copies | `tstate:454-467` |
+| `THREAD_STATE_REDUCER_FIELDS` | `nkyel.agents.thread_state` | frozenset of reducer channels (including `"messages"`), used to decide `Overwrite` wrapping | `tstate:400-413`, `threads:1065-1066` |
+| `create_nkyel_agent(..., checkpoint_channel_mode="full", checkpoint_snapshot_frequency=None, ...)` | `nkyel.agents.factory` | public agent factory; delta plus a checkpointer is rejected | `factory:66-77`, `factory:135-141` |
+| `CheckpointStateAccessor`, `build_state_mutation_graph` | `nkyel.runtime` (package re-export) | accessor choke point and mutation graph | `nkyel/runtime/__init__.py:8,21-22` |
+| `ThreadState`, `DeltaThreadState`, `SandboxState` | `nkyel.agents` (package re-export) | lazily exported state schemas | `agents/__init__.py:14-16,40-47` |
+| `CheckpointStateAccessor.bind(graph, checkpointer, *, store=None, mode="full")` | `nkyel.runtime.checkpoint_state` | bind graph, saver, and mode | `cstate:112-134` |
+| `build_state_mutation_graph(as_node, mode, state_schema=None, *, snapshot_frequency=None)` | `nkyel.runtime.checkpoint_state` | state-only writer graph for `Overwrite`-style writes | `cstate:39-65` |
 
 <Callout type="warning">
   In delta mode a raw saver read sees sentinels, not messages. Consumers must read
@@ -265,7 +265,7 @@ Tests a reader can run or cite as the executable contract. All paths are under `
 
 ### Mode gate, freezing, and configuration
 
-- `test_checkpoint_mode.py` (freeze, detection, gate) — the module named as the mode gate in `backend/packages/harness/deerflow/runtime/AGENTS.md:133`
+- `test_checkpoint_mode.py` (freeze, detection, gate) — the module named as the mode gate in `backend/packages/harness/nkyel/runtime/AGENTS.md:133`
 - `test_checkpoint_mode.py::test_yaml_mode_change_is_rejected_when_graph_is_reconstructed`
 - `test_checkpoint_mode.py::test_delta_mode_accepts_plain_full_checkpoint`
 - `test_checkpoint_mode.py::test_gateway_runtime_rejects_mode_different_from_frozen_process`
@@ -355,14 +355,14 @@ State at the pinned set (`langgraph 1.2.9`, `langgraph-checkpoint 4.2.0`, `langg
 
 | id | Kind / status | Scenario that breaks | Local handling | Pinned version | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| `#4380` | DeerFlow issue; patched locally | A replace-style write into an empty Union-typed `BinaryOperatorAggregate` channel persists the `Overwrite` wrapper; the next read crashes with `TypeError: 'Overwrite' object is not subscriptable` | Probe-guarded patch in `checkpoint_patches.py`; patch tests; branch/state-update anchors in `test_threads_router.py` | `langgraph 1.2.9` | `checkpoint_patches:91-107`, `backend/tests/test_checkpoint_patches.py:31-95` |
+| `#4380` | nkyel issue; patched locally | A replace-style write into an empty Union-typed `BinaryOperatorAggregate` channel persists the `Overwrite` wrapper; the next read crashes with `TypeError: 'Overwrite' object is not subscriptable` | Probe-guarded patch in `checkpoint_patches.py`; patch tests; branch/state-update anchors in `test_threads_router.py` | `langgraph 1.2.9` | `checkpoint_patches:91-107`, `backend/tests/test_checkpoint_patches.py:31-95` |
 | `#8526` (fixes upstream `#8384`), plus postgres `#8535` | upstream langgraph PR; merged 2026-08-07; fixed in `langgraph-checkpoint` 4.2.0 | After switching a thread from `BinaryOperatorAggregate` to `DeltaChannel`, the first post-migration write survives the live `invoke` return value but disappears from every subsequent read; on postgres, with no seed the walk runs to the root and replays everything | Local `InMemorySaver` patch deleted; dependency floor `langgraph-checkpoint>=4.2.0,<5.0`; regression gate `test_delta_channel_checkpointers.py::test_full_to_delta_migration_replays_on_same_thread`; a version-guarded saver patch must not be re-added | `langgraph-checkpoint 4.2.0` | `checkpoint_patches:11-17`, `backend/packages/harness/pyproject.toml:49-56`, `CHANGELOG.md:3040-3048` |
 | `#8382` | upstream langgraph issue; **open**; fix PR `#8544` unmerged, no released version | Delta replay order diverges from live execution order for parallel-superstep writes: live `invoke` returns path-sorted `[a..h]`, `get_state` replays `[f,b,g,h,a,c,d,e]` (a pure permutation); reproduced on memory, sqlite, and postgres | Trigger-skip naming the issue; `test_delta_channel_checkpointers.py::test_parallel_superstep_replay_matches_live_write_order` | `langgraph-checkpoint 4.2.0` | `test_delta_channel_checkpointers.py:419,440-460` |
 | `#8448` | upstream langgraph issue; **open**; fix PR `#8556` unmerged | `PostgresSaver.get_delta_channel_history` permanently poisons the walk cursor when the target checkpoint is not in the first pagination page, so old checkpoints hydrate empty; only Postgres pages its stage-1 scan | Assertion stays live on memory/sqlite (differential against an `InMemorySaver` oracle); Postgres trigger-skips; `test_delta_channel_checkpointers.py::test_long_chain_history_survives_pagination` | `langgraph-checkpoint-postgres 3.1.2` | `test_delta_channel_checkpointers.py:459` |
 | `#8548` | upstream langgraph PR; **open**; fixes upstream `#8443`, with related issue `#8551` still waiting on it | Does not replay an abandoned branch into a `DeltaChannel` fork | While unmerged the local linearization cannot be removed: `_linearize_delta_checkpoint_resume` is retained | `langgraph 1.2.9` | `worker:2267-2279`, `test_run_worker_delta_resume.py::test_linearizes_a_delta_resume_onto_the_head` |
-| `#4458` | DeerFlow issue; the user-visible symptom of the fork bug | Regenerating in a branched thread resurrected the old assistant message beside the new one after a reload; reproduced on postgres, sqlite, and the in-memory saver, and it also broke branch history when seeded rows shared one run id | Linearization plus per-turn seeded run ids; `test_run_worker_delta_resume.py::test_regenerating_in_a_branched_thread_does_not_resurrect_the_old_answer` | `langgraph 1.2.9` | `worker:2267-2289`, `test_run_worker_delta_resume.py:204` |
-| `#4189` item 3 | DeerFlow design discussion | Retention and deletion of checkpoint rows; what may be deleted | `backend/docs/checkpoint-retention-contract.md`, `backend/tests/test_checkpoint_retention_contract.py`, `backend/app/gateway/checkpoint_retention.py`; bounded cleanup runs at durable admission before checkpoint reads, protects explicit selections, and removes only the root trailing duration leaf | — | `checkpoint_retention.py`, `backend/docs/checkpoint-retention-contract.md:31-77` |
-| `#3859` (review) | DeerFlow review reference | An interrupted-title write must bump `channel_versions["title"]` and declare it in `new_versions`, or database savers drop the blob | `backend/tests/test_run_worker_rollback.py:3501-3504` pins the shape | — | `backend/tests/test_run_worker_rollback.py:3501-3504` |
+| `#4458` | nkyel issue; the user-visible symptom of the fork bug | Regenerating in a branched thread resurrected the old assistant message beside the new one after a reload; reproduced on postgres, sqlite, and the in-memory saver, and it also broke branch history when seeded rows shared one run id | Linearization plus per-turn seeded run ids; `test_run_worker_delta_resume.py::test_regenerating_in_a_branched_thread_does_not_resurrect_the_old_answer` | `langgraph 1.2.9` | `worker:2267-2289`, `test_run_worker_delta_resume.py:204` |
+| `#4189` item 3 | nkyel design discussion | Retention and deletion of checkpoint rows; what may be deleted | `backend/docs/checkpoint-retention-contract.md`, `backend/tests/test_checkpoint_retention_contract.py`, `backend/app/gateway/checkpoint_retention.py`; bounded cleanup runs at durable admission before checkpoint reads, protects explicit selections, and removes only the root trailing duration leaf | — | `checkpoint_retention.py`, `backend/docs/checkpoint-retention-contract.md:31-77` |
+| `#3859` (review) | nkyel review reference | An interrupted-title write must bump `channel_versions["title"]` and declare it in `new_versions`, or database savers drop the blob | `backend/tests/test_run_worker_rollback.py:3501-3504` pins the shape | — | `backend/tests/test_run_worker_rollback.py:3501-3504` |
 
 See [Operating Checkpoints](/docs/harness/checkpoints/operations) for what the remaining patch does and how the dependency floor is enforced, and [Troubleshooting](/docs/harness/checkpoints/troubleshooting) for the symptoms each defect produces for a user.
 

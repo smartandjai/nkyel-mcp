@@ -67,8 +67,8 @@ def test_enabled_scheduler_start_failure_aborts_gateway_lifespan():
             patch("app.channels.service.start_channel_service", start_channel_service),
             patch("app.channels.service.stop_channel_service", AsyncMock()),
             patch("app.scheduler.ScheduledTaskService", return_value=scheduler_service) as service_class,
-            patch("deerflow.skills.projection.ensure_public_skill_projection"),
-            patch("deerflow.agents.memory.get_memory_manager", return_value=MagicMock()),
+            patch("nkyel.skills.projection.ensure_public_skill_projection"),
+            patch("nkyel.agents.memory.get_memory_manager", return_value=MagicMock()),
         ):
             with pytest.raises(RuntimeError, match="scheduled recovery failed"):
                 async with lifespan(app):
@@ -111,11 +111,11 @@ async def _run_lifespan_with_hanging_stop() -> float:
         patch("app.gateway.app.get_app_config", return_value=startup_config),
         patch("app.gateway.app.get_gateway_config", return_value=MagicMock(host="x", port=0)),
         patch("app.gateway.app.langgraph_runtime", _noop_langgraph_runtime),
-        patch("deerflow.skills.projection.ensure_public_skill_projection"),
+        patch("nkyel.skills.projection.ensure_public_skill_projection"),
         patch("app.gateway.app.auth.close_oidc_service", close_oidc_service),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
         patch("app.channels.service.stop_channel_service", side_effect=hang_forever),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=MagicMock()),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=MagicMock()),
     ):
         loop = asyncio.get_event_loop()
         start = loop.time()
@@ -158,7 +158,7 @@ async def _run_lifespan_with_upload_staging_cleanup():
         patch("app.gateway.app.get_app_config", return_value=startup_config),
         patch("app.gateway.app.get_gateway_config", return_value=MagicMock(host="x", port=0)),
         patch("app.gateway.app.langgraph_runtime", _noop_langgraph_runtime),
-        patch("deerflow.skills.projection.ensure_public_skill_projection"),
+        patch("nkyel.skills.projection.ensure_public_skill_projection"),
         patch("app.gateway.app.cleanup_stale_upload_staging_files", cleanup_upload_staging_files),
         patch("app.gateway.app.auth.close_oidc_service", close_oidc_service),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
@@ -179,7 +179,7 @@ def test_lifespan_sweeps_upload_staging_files_on_startup():
 
 
 def test_personal_mcp_authority_spans_runtime_startup_and_shutdown():
-    from deerflow.mcp import personal_access
+    from nkyel.mcp import personal_access
 
     events = []
     previous = personal_access._admin_checker
@@ -204,7 +204,7 @@ def test_personal_mcp_authority_spans_runtime_startup_and_shutdown():
 
 def test_mcp_oauth_token_store_spans_runtime_startup_and_shutdown():
     """Runs drain inside the runtime's exit; a refresh there must still reach the shared store."""
-    from deerflow.mcp import oauth_store
+    from nkyel.mcp import oauth_store
 
     events = []
     store = object()
@@ -232,8 +232,8 @@ def test_mcp_oauth_token_store_spans_runtime_startup_and_shutdown():
 
 async def _run_lifespan_with_mcp_task_config_snapshot() -> None:
     from app.gateway.app import lifespan
-    from deerflow.config.extensions_config import ExtensionsConfig
-    from deerflow.mcp.tasks.runtime import McpTaskConfigurationError, validate_mcp_task_config_snapshot
+    from nkyel.config.extensions_config import ExtensionsConfig
+    from nkyel.mcp.tasks.runtime import McpTaskConfigurationError, validate_mcp_task_config_snapshot
 
     app = FastAPI()
     startup_config = SimpleNamespace(
@@ -275,9 +275,9 @@ async def _run_lifespan_with_mcp_task_config_snapshot() -> None:
         patch("app.gateway.app.auth.close_oidc_service", AsyncMock()),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
         patch("app.channels.service.stop_channel_service", AsyncMock()),
-        patch("deerflow.skills.projection.ensure_public_skill_projection"),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=MagicMock()),
-        patch("deerflow.config.extensions_config.ExtensionsConfig.from_file", return_value=startup_extensions),
+        patch("nkyel.skills.projection.ensure_public_skill_projection"),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=MagicMock()),
+        patch("nkyel.config.extensions_config.ExtensionsConfig.from_file", return_value=startup_extensions),
     ):
         async with lifespan(app):
             with pytest.raises(McpTaskConfigurationError, match="reports.*restart"):
@@ -345,12 +345,12 @@ async def _run_lifespan_with_memory_flush(
         patch("app.gateway.app.get_app_config", return_value=startup_config),
         patch("app.gateway.app.get_gateway_config", return_value=MagicMock(host="x", port=0)),
         patch("app.gateway.app.langgraph_runtime", _noop_langgraph_runtime),
-        patch("deerflow.skills.projection.ensure_public_skill_projection"),
+        patch("nkyel.skills.projection.ensure_public_skill_projection"),
         patch("app.gateway.app.auth.close_oidc_service", close_oidc_service),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
         patch("app.channels.service.stop_channel_service", stop_channel_service),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=manager),
-        patch("deerflow.extensions.notify.suspend_extension_system_observations", suspend_system_observations),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=manager),
+        patch("nkyel.extensions.notify.suspend_extension_system_observations", suspend_system_observations),
     ):
         async with lifespan(app):
             pass
@@ -447,7 +447,7 @@ async def _run_lifespan_with_warm_return(warm_return: bool | None) -> MagicMock:
         patch("app.gateway.app.auth.close_oidc_service", close_oidc_service),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
         patch("app.channels.service.stop_channel_service", stop_channel_service),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=manager),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=manager),
     ):
         async with lifespan(app):
             pass
@@ -505,7 +505,7 @@ async def _run_lifespan_with_slow_retrieval_warm() -> float:
         patch("app.gateway.app.auth.close_oidc_service", AsyncMock()),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
         patch("app.channels.service.stop_channel_service", AsyncMock()),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=manager),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=manager),
     ):
         context = lifespan(app)
         loop = asyncio.get_running_loop()
@@ -561,7 +561,7 @@ async def _run_shutdown_with_blocked_retrieval_warm() -> tuple[float, MagicMock]
         patch("app.gateway.app.auth.close_oidc_service", AsyncMock()),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
         patch("app.channels.service.stop_channel_service", AsyncMock()),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=manager),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=manager),
     ):
         context = lifespan(app)
         await context.__aenter__()
@@ -587,11 +587,11 @@ def test_lifespan_preserves_flush_budget_when_retrieval_warm_is_still_running() 
 
 @pytest.mark.asyncio
 async def test_lifespan_pins_batch_service_to_app_extensions(monkeypatch):
-    import deerflow.extensions as extensions
+    import nkyel.extensions as extensions
     from app.gateway.app import lifespan
-    from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-    from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-    from deerflow.extensions.registry import ExtensionRegistry
+    from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+    from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+    from nkyel.extensions.registry import ExtensionRegistry
 
     app = FastAPI()
     snapshot = ExtensionRegistry().build()
@@ -619,10 +619,10 @@ async def test_lifespan_pins_batch_service_to_app_extensions(monkeypatch):
         patch("app.gateway.app.auth.close_oidc_service", AsyncMock()),
         patch("app.channels.service.start_channel_service", AsyncMock(return_value=channel_service)),
         patch("app.channels.service.stop_channel_service", AsyncMock()),
-        patch("deerflow.skills.projection.ensure_public_skill_projection"),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=MagicMock()),
-        patch("deerflow.subagents.batch_service.SubagentBatchService.start", AsyncMock()),
-        patch("deerflow.subagents.batch_service.SubagentBatchService.stop", AsyncMock()),
+        patch("nkyel.skills.projection.ensure_public_skill_projection"),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=MagicMock()),
+        patch("nkyel.subagents.batch_service.SubagentBatchService.start", AsyncMock()),
+        patch("nkyel.subagents.batch_service.SubagentBatchService.stop", AsyncMock()),
     ):
         async with lifespan(app):
             assert app.state.subagent_batch_service._extensions is snapshot
@@ -639,15 +639,15 @@ def _gateway_lifespan_patches(startup_config, *, pool=None, browser_manager=None
         patch("app.gateway.app.auth.close_oidc_service", AsyncMock()),
         patch("app.channels.service.start_channel_service", AsyncMock(return_value=channel_service)),
         patch("app.channels.service.stop_channel_service", AsyncMock()),
-        patch("deerflow.skills.projection.ensure_public_skill_projection"),
-        patch("deerflow.agents.memory.get_memory_manager", return_value=MagicMock()),
+        patch("nkyel.skills.projection.ensure_public_skill_projection"),
+        patch("nkyel.agents.memory.get_memory_manager", return_value=MagicMock()),
     ]
     if pool is not None:
-        patches.append(patch("deerflow.mcp.session_pool.get_session_pool", return_value=pool))
+        patches.append(patch("nkyel.mcp.session_pool.get_session_pool", return_value=pool))
     if browser_manager is not None:
         patches.append(
             patch(
-                "deerflow.community.browser_automation.get_browser_session_manager",
+                "nkyel.community.browser_automation.get_browser_session_manager",
                 return_value=browser_manager,
             )
         )
@@ -719,8 +719,8 @@ def test_lifespan_continues_when_mcp_close_fails():
 def test_lifespan_closes_mcp_sessions_created_during_run_drain():
     """An active run can acquire a session after other shutdown hooks begin."""
     from app.gateway.app import lifespan
-    from deerflow.mcp.session_pool import MCPSessionPool
-    from deerflow.runtime import RunManager, RunStatus
+    from nkyel.mcp.session_pool import MCPSessionPool
+    from nkyel.runtime import RunManager, RunStatus
 
     async def scenario():
         app = FastAPI()
@@ -798,7 +798,7 @@ async def _langgraph_with_scheduled_repos(app, _startup_config):
 
 
 def _notification_startup_config(*, channel_connections_enabled: bool = True):
-    from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+    from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
     return SimpleNamespace(
         log_level="INFO",
@@ -865,15 +865,15 @@ async def _run_lifespan_with_notification_worker(*, channel_service_available: b
         patch("app.gateway.app.get_gateway_config", return_value=MagicMock(host="x", port=0)),
         patch("app.gateway.app.langgraph_runtime", _langgraph_with_scheduled_repos),
         patch("app.gateway.app._ensure_admin_user", AsyncMock()),
-        patch("deerflow.skills.projection.ensure_public_skill_projection"),
+        patch("nkyel.skills.projection.ensure_public_skill_projection"),
         patch("app.gateway.app.auth.close_oidc_service", close_oidc_service),
         patch("app.channels.service.start_channel_service", side_effect=fake_start),
         patch("app.channels.service.get_channel_service", side_effect=fake_get_channel_service),
         patch("app.channels.service.stop_channel_service", stop_channel_service),
-        patch("deerflow.persistence.engine.get_session_factory", return_value=session_factory),
+        patch("nkyel.persistence.engine.get_session_factory", return_value=session_factory),
         patch("app.scheduler.ScheduledTaskService", return_value=scheduled_service),
         patch("app.scheduler.notification_delivery.NotificationDeliveryWorker", worker_factory),
-        patch("deerflow.persistence.run.RunRepository"),
+        patch("nkyel.persistence.run.RunRepository"),
     ):
         async with lifespan(app):
             worker_on_app = getattr(app.state, "notification_delivery_worker", None)
@@ -940,15 +940,15 @@ def test_lifespan_detaches_the_outbox_when_the_delivery_worker_cannot_start() ->
             patch("app.gateway.app.get_gateway_config", return_value=MagicMock(host="x", port=0)),
             patch("app.gateway.app.langgraph_runtime", _langgraph_with_scheduled_repos),
             patch("app.gateway.app._ensure_admin_user", AsyncMock()),
-            patch("deerflow.skills.projection.ensure_public_skill_projection"),
+            patch("nkyel.skills.projection.ensure_public_skill_projection"),
             patch("app.gateway.app.auth.close_oidc_service", AsyncMock()),
             patch("app.channels.service.start_channel_service", AsyncMock(return_value=fake_service)),
             patch("app.channels.service.get_channel_service", return_value=fake_service),
             patch("app.channels.service.stop_channel_service", AsyncMock()),
-            patch("deerflow.persistence.engine.get_session_factory", return_value=MagicMock()),
+            patch("nkyel.persistence.engine.get_session_factory", return_value=MagicMock()),
             patch("app.scheduler.ScheduledTaskService", return_value=scheduled_service),
             patch("app.scheduler.notification_delivery.NotificationDeliveryWorker", return_value=worker_instance),
-            patch("deerflow.persistence.run.RunRepository"),
+            patch("nkyel.persistence.run.RunRepository"),
         ):
             async with lifespan(app):
                 assert getattr(app.state, "notification_delivery_worker", None) is None

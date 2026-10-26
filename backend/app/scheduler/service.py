@@ -16,23 +16,23 @@ from sqlalchemy import select
 from app.channels.capabilities import supports_proactive_group_notifications, supports_proactive_notifications
 from app.channels.notification_groups import is_notification_group
 from app.scheduler.notification_text import NOTIFICATION_LOCALES
-from deerflow.persistence.channel_connections.model import ChannelConnectionRow
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_events import ScheduledTaskEventRepository
-from deerflow.persistence.scheduled_task_runs import ActiveScheduledRunConflict, ScheduledTaskAdmissionRejected
-from deerflow.persistence.scheduled_task_runs.finalization import LIFECYCLE_EVENTS, RUN_EVENT_BY_STATUS, lifecycle_anchor, lifecycle_reason
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_task_runs.sql import run_number_expression
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
-from deerflow.persistence.user.im_notifications import ImNotificationPreferencesRepository
-from deerflow.persistence.user.model import UserPreferenceRow
-from deerflow.runtime import ConflictError, RunRecord
-from deerflow.runtime.run_origin import origin_kind_of
-from deerflow.scheduler.host_notes import RUN_ERROR_DELETED_WHILE_QUEUED, RUN_ERROR_INTERRUPTED, RUN_ERROR_LEASE_LOST, RUN_ERROR_PAUSED_WHILE_QUEUED, RUN_ERROR_QUEUE_TIMEOUT, RUN_ERROR_RESTARTED
-from deerflow.scheduler.schedules import next_run_at, should_advance_schedule_cursor
-from deerflow.scheduler.stop_rule import launch_prompt
-from deerflow.trace_context import ensure_trace_context
-from deerflow.utils.thread_id import validate_thread_id
+from nkyel.persistence.channel_connections.model import ChannelConnectionRow
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_events import ScheduledTaskEventRepository
+from nkyel.persistence.scheduled_task_runs import ActiveScheduledRunConflict, ScheduledTaskAdmissionRejected
+from nkyel.persistence.scheduled_task_runs.finalization import LIFECYCLE_EVENTS, RUN_EVENT_BY_STATUS, lifecycle_anchor, lifecycle_reason
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_task_runs.sql import run_number_expression
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.persistence.user.im_notifications import ImNotificationPreferencesRepository
+from nkyel.persistence.user.model import UserPreferenceRow
+from nkyel.runtime import ConflictError, RunRecord
+from nkyel.runtime.run_origin import origin_kind_of
+from nkyel.scheduler.host_notes import RUN_ERROR_DELETED_WHILE_QUEUED, RUN_ERROR_INTERRUPTED, RUN_ERROR_LEASE_LOST, RUN_ERROR_PAUSED_WHILE_QUEUED, RUN_ERROR_QUEUE_TIMEOUT, RUN_ERROR_RESTARTED
+from nkyel.scheduler.schedules import next_run_at, should_advance_schedule_cursor
+from nkyel.scheduler.stop_rule import launch_prompt
+from nkyel.trace_context import ensure_trace_context
+from nkyel.utils.thread_id import validate_thread_id
 
 logger = logging.getLogger(__name__)
 
@@ -263,8 +263,8 @@ class ScheduledTaskService:
         """
         if self._own_stop_available is not None:
             return self._own_stop_available
-        from deerflow.config.app_config import get_app_config
-        from deerflow.scheduler.runtime import scheduler_tools_enabled
+        from nkyel.config.app_config import get_app_config
+        from nkyel.scheduler.runtime import scheduler_tools_enabled
 
         try:
             return scheduler_tools_enabled(await asyncio.to_thread(get_app_config))
@@ -385,7 +385,7 @@ class ScheduledTaskService:
                 # keeping group_row.provider intact. If the row was hard-deleted after a
                 # prior delivery, recover its provider from the outbox history before
                 # falling back to legacy "feishu".
-                from deerflow.persistence.notification_deliveries.model import NotificationDeliveryRow
+                from nkyel.persistence.notification_deliveries.model import NotificationDeliveryRow
 
                 prior_provider = await session.scalar(
                     select(NotificationDeliveryRow.provider)

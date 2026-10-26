@@ -1,12 +1,12 @@
 """SQLAlchemy-backed UserRepository implementation.
 
 Uses the shared async session factory from
-``deerflow.persistence.engine`` — the ``users`` table lives in the
+``nkyel.persistence.engine`` — the ``users`` table lives in the
 same database as ``threads_meta``, ``runs``, ``run_events``, and
 ``feedback``.
 
 Constructor takes the session factory directly (same pattern as the
-other four repositories in ``deerflow.persistence.*``). Callers
+other four repositories in ``nkyel.persistence.*``). Callers
 construct this after ``init_engine_from_config()`` has run.
 """
 
@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.gateway.auth.models import User
 from app.gateway.auth.repositories.base import LastActiveAdminError, LastAdminRemainsError, UserNotFoundError, UserRepository
-from deerflow.persistence.user.model import OAUTH_IDENTITY_INDEX_NAME, UserRow
+from nkyel.persistence.user.model import OAUTH_IDENTITY_INDEX_NAME, UserRow
 
 # ``email`` is ``mapped_column(unique=True, index=True)``, which SQLAlchemy
 # (and 0001_baseline) realise as a single UNIQUE INDEX -- not a named UNIQUE
@@ -135,8 +135,8 @@ def _normalize_email(email: str) -> str:
 
 # Fixed 63-bit key for pg_advisory_xact_lock(bigint); scopes the first-admin
 # claim without colliding with other advisory-lock users in this database.
-_FIRST_ADMIN_LOCK_KEY = int.from_bytes(hashlib.sha256(b"deerflow:auth:first-admin-claim").digest()[:8], "big") & 0x7FFFFFFFFFFFFFFF
-_ROLE_MUTATION_LOCK_KEY = int.from_bytes(hashlib.sha256(b"deerflow:auth:role-mutation").digest()[:8], "big") & 0x7FFFFFFFFFFFFFFF
+_FIRST_ADMIN_LOCK_KEY = int.from_bytes(hashlib.sha256(b"nkyel:auth:first-admin-claim").digest()[:8], "big") & 0x7FFFFFFFFFFFFFFF
+_ROLE_MUTATION_LOCK_KEY = int.from_bytes(hashlib.sha256(b"nkyel:auth:role-mutation").digest()[:8], "big") & 0x7FFFFFFFFFFFFFFF
 
 
 class SQLiteUserRepository(UserRepository):

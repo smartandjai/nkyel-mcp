@@ -2,15 +2,15 @@ import pytest
 
 from app.gateway.routers.thread_runs import _record_to_response
 from app.gateway.routers.threads import HistoryEntry, ThreadResponse, ThreadStateResponse
-from deerflow.runtime.runs.manager import RunRecord
-from deerflow.runtime.runs.schemas import DisconnectMode, RunStatus
-from deerflow.runtime.secret_context import (
+from nkyel.runtime.runs.manager import RunRecord
+from nkyel.runtime.runs.schemas import DisconnectMode, RunStatus
+from nkyel.runtime.secret_context import (
     LegacyRunMetadataSecretError,
     redact_config_secrets,
     redact_metadata_secrets,
     validate_run_metadata_secrets,
 )
-from deerflow.trace_context import DEERFLOW_TRACE_METADATA_KEY
+from nkyel.trace_context import NKYEL_TRACE_METADATA_KEY
 
 
 @pytest.mark.parametrize("value", ["secret", "", None, {"nested": True}])
@@ -75,12 +75,12 @@ def test_redact_config_secrets_hides_legacy_config_metadata_without_mutating_sou
 
 def test_redact_config_secrets_drops_trace_id_from_metadata_and_context():
     """``body.config`` is persisted as ``runs.kwargs_json`` and echoed verbatim
-    by the runs API. ``deerflow_trace_id`` is ignored as an input everywhere
+    by the runs API. ``nkyel_trace_id`` is ignored as an input everywhere
     else, so echoing a caller-supplied one back would only manufacture
     disagreement with the response header, the logs, and the run record."""
     source = {
-        "metadata": {DEERFLOW_TRACE_METADATA_KEY: "forged-meta", "token_usage": 7},
-        "context": {DEERFLOW_TRACE_METADATA_KEY: "forged-ctx", "model_name": "default"},
+        "metadata": {NKYEL_TRACE_METADATA_KEY: "forged-meta", "token_usage": 7},
+        "context": {NKYEL_TRACE_METADATA_KEY: "forged-ctx", "model_name": "default"},
     }
 
     redacted = redact_config_secrets(source)
@@ -89,8 +89,8 @@ def test_redact_config_secrets_drops_trace_id_from_metadata_and_context():
         "metadata": {"token_usage": 7},
         "context": {"model_name": "default"},
     }
-    assert source["metadata"][DEERFLOW_TRACE_METADATA_KEY] == "forged-meta"
-    assert source["context"][DEERFLOW_TRACE_METADATA_KEY] == "forged-ctx"
+    assert source["metadata"][NKYEL_TRACE_METADATA_KEY] == "forged-meta"
+    assert source["context"][NKYEL_TRACE_METADATA_KEY] == "forged-ctx"
 
 
 @pytest.mark.parametrize("section", ["context", "configurable"])

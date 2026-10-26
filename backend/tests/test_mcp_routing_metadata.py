@@ -8,8 +8,8 @@ import pytest
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.tools.mcp_metadata import MCP_TOOL_METADATA_KEY, MCP_TOOL_ROUTING_METADATA_KEY, get_mcp_routing, tag_mcp_routing, tag_mcp_tool
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.tools.mcp_metadata import MCP_TOOL_METADATA_KEY, MCP_TOOL_ROUTING_METADATA_KEY, get_mcp_routing, tag_mcp_routing, tag_mcp_tool
 
 
 class _Args(BaseModel):
@@ -75,7 +75,7 @@ def test_get_mcp_routing_returns_none_for_off_mode():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("transport", ["http", "stdio"])
 async def test_get_mcp_tools_tags_effective_routing_metadata(transport: str):
-    from deerflow.mcp.tools import get_mcp_tools
+    from nkyel.mcp.tools import get_mcp_tools
 
     tool = _tool("postgres_query")
     extensions_config = ExtensionsConfig.model_validate(
@@ -104,13 +104,13 @@ async def test_get_mcp_tools_tags_effective_routing_metadata(transport: str):
     )
 
     with (
-        patch("deerflow.mcp.tools.ExtensionsConfig.from_file", return_value=extensions_config),
+        patch("nkyel.mcp.tools.ExtensionsConfig.from_file", return_value=extensions_config),
         patch(
-            "deerflow.mcp.tools.build_servers_config",
+            "nkyel.mcp.tools.build_servers_config",
             return_value={"postgres": {"transport": transport, "url": "http://localhost:8000/mcp", "command": "npx"}},
         ),
-        patch("deerflow.mcp.tools.get_initial_oauth_headers", return_value={}),
-        patch("deerflow.mcp.tools.build_oauth_tool_interceptor", return_value=None),
+        patch("nkyel.mcp.tools.get_initial_oauth_headers", return_value={}),
+        patch("nkyel.mcp.tools.build_oauth_tool_interceptor", return_value=None),
         patch("langchain_mcp_adapters.client.MultiServerMCPClient") as MockClient,
     ):
         MockClient.return_value.get_tools = AsyncMock(return_value=[tool])

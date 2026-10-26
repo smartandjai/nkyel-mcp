@@ -19,18 +19,18 @@ from langgraph.graph import StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.types import Overwrite
 
-from deerflow.agents.thread_state import merge_artifacts, merge_message_writes
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.runtime import context_compaction
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.context_compaction import compact_thread_context
-from deerflow.runtime.context_keys import CHECKPOINT_AGENT_NAME_METADATA_KEY, CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
-from deerflow.runtime.runs.manager import CancelOutcome, ConflictError, RunManager
-from deerflow.runtime.runs.schemas import RunStatus
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.runs.worker import (
+from nkyel.agents.thread_state import merge_artifacts, merge_message_writes
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.runtime import context_compaction
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.context_compaction import compact_thread_context
+from nkyel.runtime.context_keys import CHECKPOINT_AGENT_NAME_METADATA_KEY, CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
+from nkyel.runtime.runs.manager import CancelOutcome, ConflictError, RunManager
+from nkyel.runtime.runs.schemas import RunStatus
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.runs.worker import (
     RollbackPoint,
     RunContext,
     _agent_factory_supports_app_config,
@@ -47,13 +47,13 @@ from deerflow.runtime.runs.worker import (
     persist_run_durations,
     run_agent,
 )
-from deerflow.sandbox.lease import (
+from nkyel.sandbox.lease import (
     SANDBOX_COMMAND_SCOPE_CONTEXT_KEY,
     SANDBOX_LEASE_OWNER_CONTEXT_KEY,
     ensure_sandbox_lease_owner,
     get_sandbox_lease_manager,
 )
-from deerflow.sandbox.sandbox_provider import reset_sandbox_provider, set_sandbox_provider
+from nkyel.sandbox.sandbox_provider import reset_sandbox_provider, set_sandbox_provider
 
 
 class FakeCheckpointer:
@@ -142,7 +142,7 @@ async def test_admission_cleanup_finishes_before_first_checkpoint_read(monkeypat
             await peer.create_or_reject(thread_id)
         return None
 
-    monkeypatch.setattr("deerflow.runtime.runs.worker._capture_rollback_point", observe_preflight)
+    monkeypatch.setattr("nkyel.runtime.runs.worker._capture_rollback_point", observe_preflight)
 
     class EmptyAgent:
         async def astream(self, graph_input, config=None, stream_mode=None, subgraphs=False):
@@ -451,7 +451,7 @@ def _stub_mutation_graph(monkeypatch, *, restored_config):
     mock_graph = SimpleNamespace()
     mock_graph.aupdate_state = AsyncMock(return_value=restored_config)
     monkeypatch.setattr(
-        "deerflow.runtime.runs.worker.build_state_mutation_graph",
+        "nkyel.runtime.runs.worker.build_state_mutation_graph",
         lambda *args, **kwargs: mock_graph,
     )
     return mock_graph
@@ -616,7 +616,7 @@ def test_large_file_tool_chunk_batcher_does_not_retain_non_file_names():
                     "id": f"call-{index}",
                     "index": 0,
                     "name": "web_search",
-                    "args": '{"query":"deerflow"}',
+                    "args": '{"query":"nkyel"}',
                 }
             ],
         )
@@ -727,7 +727,7 @@ def test_install_runtime_context_removes_caller_sandbox_execution_identities():
         "context": {
             SANDBOX_LEASE_OWNER_CONTEXT_KEY: "forged-owner",
             SANDBOX_COMMAND_SCOPE_CONTEXT_KEY: "forged-scope",
-            "__deerflow_sandbox_prewarm": "forged-prewarm",
+            "__nkyel_sandbox_prewarm": "forged-prewarm",
         }
     }
 
@@ -741,12 +741,12 @@ def test_install_runtime_context_removes_caller_sandbox_execution_identities():
 
     assert SANDBOX_LEASE_OWNER_CONTEXT_KEY not in config["context"]
     assert SANDBOX_COMMAND_SCOPE_CONTEXT_KEY not in config["context"]
-    assert "__deerflow_sandbox_prewarm" not in config["context"]
+    assert "__nkyel_sandbox_prewarm" not in config["context"]
 
 
 def test_build_runtime_context_ignores_caller_project_context_key():
     """The worker merge refuses a caller-supplied pinned project snapshot (§12)."""
-    from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+    from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
     ctx = _build_runtime_context("thread-1", "run-1", {PROJECT_CONTEXT_KEY: {"project_id": "forged"}, "agent_name": "kept"})
 
@@ -755,7 +755,7 @@ def test_build_runtime_context_ignores_caller_project_context_key():
 
 
 def test_install_runtime_context_removes_caller_project_context_key_when_unpinned():
-    from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+    from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
     config = {"context": {PROJECT_CONTEXT_KEY: {"project_id": "forged"}}}
 
@@ -765,7 +765,7 @@ def test_install_runtime_context_removes_caller_project_context_key_when_unpinne
 
 
 def test_install_runtime_context_preserves_the_pinned_project_context():
-    from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+    from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
     stamped = {"project_id": "p-1", "name": "Roadmap", "instructions": "x"}
     config = {"context": {PROJECT_CONTEXT_KEY: stamped}}
@@ -776,8 +776,8 @@ def test_install_runtime_context_preserves_the_pinned_project_context():
 
 
 def test_pin_admission_project_context_hoists_only_the_stamped_value():
-    from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
-    from deerflow.runtime.runs.worker import _pin_admission_project_context
+    from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
+    from nkyel.runtime.runs.worker import _pin_admission_project_context
 
     stamped = {"project_id": "p-1", "name": "Roadmap", "instructions": "x"}
     runtime_ctx = {"thread_id": "record-thread", "run_id": "run-1"}
@@ -1076,7 +1076,7 @@ async def test_run_agent_schedules_terminal_run_record_cleanup():
 
 @pytest.mark.anyio
 async def test_run_agent_schedules_terminal_cleanup_when_publish_end_fails(monkeypatch):
-    import deerflow.runtime.runs.worker as worker_module
+    import nkyel.runtime.runs.worker as worker_module
 
     class CleanupTrackingRunManager(RunManager):
         def __init__(self) -> None:
@@ -1121,8 +1121,8 @@ async def test_run_agent_schedules_terminal_cleanup_when_publish_end_fails(monke
 
 @pytest.mark.anyio
 async def test_run_agent_schedules_terminal_cleanup_when_completion_hook_is_cancelled(monkeypatch):
-    import deerflow.runtime.runs.worker as worker_module
-    from deerflow.runtime.journal import RunJournal
+    import nkyel.runtime.runs.worker as worker_module
+    from nkyel.runtime.journal import RunJournal
 
     class CleanupTrackingRunManager(RunManager):
         def __init__(self) -> None:
@@ -1402,7 +1402,7 @@ async def test_run_agent_repeated_cancellation_waits_for_stream_close(stream_mod
     assert not stream.closed
     bridge.publish_end.assert_not_awaited()
 
-    with caplog.at_level(logging.DEBUG, logger="deerflow.runtime.runs.worker"):
+    with caplog.at_level(logging.DEBUG, logger="nkyel.runtime.runs.worker"):
         allow_close.set()
         await run_task
 
@@ -1460,7 +1460,7 @@ async def test_run_agent_ignores_stream_close_failure_after_abort(stream_modes, 
             del graph_input, config, stream_mode, subgraphs
             return stream
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.runtime.runs.worker"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.runtime.runs.worker"):
         await run_agent(
             bridge,
             run_manager,
@@ -1589,7 +1589,7 @@ async def test_terminal_cleanup_tasks_do_not_inherit_run_context():
 
 @pytest.mark.anyio
 async def test_terminal_cycle_collection_is_coalesced_contextless_and_off_loop(monkeypatch, caplog):
-    import deerflow.runtime.runs.worker as worker_module
+    import nkyel.runtime.runs.worker as worker_module
 
     marker: ContextVar[str | None] = ContextVar("terminal_gc_marker", default=None)
     loop_thread_id = threading.get_ident()
@@ -1636,9 +1636,9 @@ async def test_terminal_cycle_collection_is_coalesced_contextless_and_off_loop(m
 @pytest.mark.anyio
 @pytest.mark.parametrize("fail_checkpoint_inspection", [False, True])
 async def test_run_agent_releases_terminal_runtime_callbacks(caplog, fail_checkpoint_inspection):
-    from deerflow.runtime.journal import RunJournal
+    from nkyel.runtime.journal import RunJournal
 
-    caplog.set_level(logging.DEBUG, logger="deerflow.runtime.runs.worker")
+    caplog.set_level(logging.DEBUG, logger="nkyel.runtime.runs.worker")
     run_manager = RunManager()
     record = await run_manager.create("thread-runtime-release")
     bridge = SimpleNamespace(
@@ -1804,7 +1804,7 @@ async def test_run_agent_marks_rollback_unusable_when_capture_fails():
             yield {"messages": []}
 
     with patch(
-        "deerflow.runtime.runs.worker._rollback_to_pre_run_checkpoint",
+        "nkyel.runtime.runs.worker._rollback_to_pre_run_checkpoint",
         new_callable=AsyncMock,
     ) as rollback:
         await run_agent(
@@ -1842,7 +1842,7 @@ async def test_run_agent_cancel_before_snapshot_capture_does_not_delete_thread(m
         raise asyncio.CancelledError()
 
     monkeypatch.setattr(
-        "deerflow.runtime.runs.worker.aensure_checkpoint_mode_compatible",
+        "nkyel.runtime.runs.worker.aensure_checkpoint_mode_compatible",
         _cancel_before_capture,
     )
 
@@ -1943,7 +1943,7 @@ async def test_run_agent_marks_llm_error_fallback_as_error_status():
                     AIMessage(
                         content="The configured LLM provider is temporarily unavailable after multiple retries.",
                         additional_kwargs={
-                            "deerflow_error_fallback": True,
+                            "nkyel_error_fallback": True,
                             "error_type": "APIConnectionError",
                             "error_reason": "transient",
                             "error_detail": "Connection error.",
@@ -2034,7 +2034,7 @@ async def test_run_agent_rolls_back_failed_edit_replay_and_publishes_restored_va
 
     run_manager.set_status = _set_status  # type: ignore[method-assign]
     with patch(
-        "deerflow.runtime.runs.worker._rollback_to_pre_run_checkpoint",
+        "nkyel.runtime.runs.worker._rollback_to_pre_run_checkpoint",
         new_callable=AsyncMock,
     ) as rollback:
         rollback.return_value = True
@@ -2676,7 +2676,7 @@ async def test_rollback_linearizes_delta_restore_onto_cancelled_head():
 )
 async def test_rollback_preserves_agent_binding_for_manual_compaction(monkeypatch, mode, state_schema):
     """A state-only rollback must keep the policy that produced its state."""
-    import deerflow.config.agents_config as agents_config
+    import nkyel.config.agents_config as agents_config
 
     checkpointer = InMemorySaver()
 
@@ -2978,13 +2978,13 @@ def test_build_runtime_context_uses_server_owned_thread_incarnation():
         "run-1",
         {
             "thread_incarnation": "spoofed",
-            "__deerflow_thread_incarnation_metadata_guard": True,
+            "__nkyel_thread_incarnation_metadata_guard": True,
         },
         thread_incarnation="server-incarnation",
     )
 
     assert ctx["thread_incarnation"] == "server-incarnation"
-    assert "__deerflow_thread_incarnation_metadata_guard" not in ctx
+    assert "__nkyel_thread_incarnation_metadata_guard" not in ctx
 
 
 def test_build_runtime_context_ignores_caller_pre_existing_message_ids():
@@ -2999,14 +2999,14 @@ def test_build_runtime_context_ignores_caller_sandbox_execution_identities():
     caller_context = {
         SANDBOX_LEASE_OWNER_CONTEXT_KEY: "forged-owner",
         SANDBOX_COMMAND_SCOPE_CONTEXT_KEY: "forged-scope",
-        "__deerflow_sandbox_prewarm": "forged-prewarm",
+        "__nkyel_sandbox_prewarm": "forged-prewarm",
     }
 
     ctx = _build_runtime_context("thread-1", "run-1", caller_context)
 
     assert SANDBOX_LEASE_OWNER_CONTEXT_KEY not in ctx
     assert SANDBOX_COMMAND_SCOPE_CONTEXT_KEY not in ctx
-    assert "__deerflow_sandbox_prewarm" not in ctx
+    assert "__nkyel_sandbox_prewarm" not in ctx
 
 
 def test_build_runtime_context_ignores_caller_audit_attribution_and_recorders():
@@ -3033,7 +3033,7 @@ def test_agent_factory_supports_app_config_returns_false_when_signature_lookup_f
         def __call__(self, **kwargs):
             return kwargs
 
-    monkeypatch.setattr("deerflow.runtime.runs.worker.inspect.signature", lambda _obj: (_ for _ in ()).throw(ValueError("boom")))
+    monkeypatch.setattr("nkyel.runtime.runs.worker.inspect.signature", lambda _obj: (_ for _ in ()).throw(ValueError("boom")))
 
     assert _agent_factory_supports_app_config(BrokenCallable()) is False
 
@@ -3047,7 +3047,7 @@ def test_try_extract_from_message_finds_fallback_on_message_object():
     msg = AIMessage(
         content="fallback",
         additional_kwargs={
-            "deerflow_error_fallback": True,
+            "nkyel_error_fallback": True,
             "error_detail": "Connection error.",
             "error_reason": "transient",
         },
@@ -3059,7 +3059,7 @@ def test_try_extract_from_message_finds_fallback_on_dict():
     msg = {
         "content": "fallback",
         "additional_kwargs": {
-            "deerflow_error_fallback": True,
+            "nkyel_error_fallback": True,
             "error_detail": "Quota exceeded.",
         },
     }
@@ -3092,7 +3092,7 @@ def test_extract_llm_error_fallback_message_finds_fallback_in_messages_list():
             AIMessage(
                 content="Unavailable.",
                 additional_kwargs={
-                    "deerflow_error_fallback": True,
+                    "nkyel_error_fallback": True,
                     "error_detail": "Connection error.",
                 },
             ),
@@ -3106,7 +3106,7 @@ def test_extract_llm_error_fallback_message_finds_fallback_in_raw_message():
     msg = AIMessage(
         content="Unavailable.",
         additional_kwargs={
-            "deerflow_error_fallback": True,
+            "nkyel_error_fallback": True,
             "error_reason": "quota",
         },
     )
@@ -3119,7 +3119,7 @@ def test_extract_llm_error_fallback_message_finds_fallback_in_tuple():
         AIMessage(
             content="Unavailable.",
             additional_kwargs={
-                "deerflow_error_fallback": True,
+                "nkyel_error_fallback": True,
                 "error_detail": "Circuit open.",
             },
         ),
@@ -3143,7 +3143,7 @@ def test_extract_llm_error_fallback_message_finds_fallback_in_updates_mode():
                 AIMessage(
                     content="Unavailable.",
                     additional_kwargs={
-                        "deerflow_error_fallback": True,
+                        "nkyel_error_fallback": True,
                         "error_detail": "Connection error.",
                     },
                 )
@@ -3179,7 +3179,7 @@ def test_try_extract_skips_message_with_pre_existing_id():
         id="stale-1",
         content="Unavailable.",
         additional_kwargs={
-            "deerflow_error_fallback": True,
+            "nkyel_error_fallback": True,
             "error_detail": "Connection error.",
         },
     )
@@ -3194,7 +3194,7 @@ def test_try_extract_still_finds_fresh_message_when_others_are_stale():
         id="fresh-1",
         content="Unavailable.",
         additional_kwargs={
-            "deerflow_error_fallback": True,
+            "nkyel_error_fallback": True,
             "error_detail": "Connection error.",
         },
     )
@@ -3206,7 +3206,7 @@ def test_try_extract_skips_dict_message_with_pre_existing_id():
         "id": "stale-2",
         "content": "Unavailable.",
         "additional_kwargs": {
-            "deerflow_error_fallback": True,
+            "nkyel_error_fallback": True,
             "error_detail": "Quota exceeded.",
         },
     }
@@ -3223,7 +3223,7 @@ def test_extract_llm_error_fallback_message_skips_stale_history():
                 id="stale-fallback",
                 content="Unavailable.",
                 additional_kwargs={
-                    "deerflow_error_fallback": True,
+                    "nkyel_error_fallback": True,
                     "error_detail": "Connection error.",
                 },
             ),
@@ -3241,7 +3241,7 @@ def test_extract_llm_error_fallback_message_returns_fresh_marker_alongside_stale
                 id="stale-fallback",
                 content="Old failure.",
                 additional_kwargs={
-                    "deerflow_error_fallback": True,
+                    "nkyel_error_fallback": True,
                     "error_detail": "Old error.",
                 },
             ),
@@ -3249,7 +3249,7 @@ def test_extract_llm_error_fallback_message_returns_fresh_marker_alongside_stale
                 id="fresh-fallback",
                 content="New failure.",
                 additional_kwargs={
-                    "deerflow_error_fallback": True,
+                    "nkyel_error_fallback": True,
                     "error_detail": "Fresh error.",
                 },
             ),
@@ -3266,7 +3266,7 @@ def test_extract_llm_error_fallback_message_default_filter_is_empty():
                 id="any",
                 content="Unavailable.",
                 additional_kwargs={
-                    "deerflow_error_fallback": True,
+                    "nkyel_error_fallback": True,
                     "error_detail": "Connection error.",
                 },
             )
@@ -3298,7 +3298,7 @@ async def test_run_agent_ignores_stale_llm_error_fallback_from_prior_run():
     must NOT cause a successful current run to be reported as ``error``.
 
     This guards against the regression where one IndexError-driven failure (now
-    classified transient and surfaced as a ``deerflow_error_fallback`` AIMessage)
+    classified transient and surfaced as a ``nkyel_error_fallback`` AIMessage)
     persisted in thread history and tripped ``RunStatus.error`` on every
     subsequent run that re-played the messages channel via ``stream_mode="values"``.
     """
@@ -3314,7 +3314,7 @@ async def test_run_agent_ignores_stale_llm_error_fallback_from_prior_run():
         id="stale-fallback",
         content="Old failure.",
         additional_kwargs={
-            "deerflow_error_fallback": True,
+            "nkyel_error_fallback": True,
             "error_type": "IndexError",
             "error_reason": "transient",
             "error_detail": "list index out of range",
@@ -3412,7 +3412,7 @@ class _TitleCheckpointer:
 @pytest.mark.anyio
 async def test_interrupted_title_finalization_blocks_new_same_thread_run(monkeypatch):
     """A cancelled run must remain active while its title-only checkpoint is finalizing."""
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     monkeypatch.setattr(
         TitleMiddleware,
@@ -3569,7 +3569,7 @@ async def test_finalizing_run_only_blocks_reject_strategy():
 @pytest.mark.anyio
 async def test_admitted_pending_replacement_does_not_steal_interrupted_title_recovery(monkeypatch):
     """The old run must still write the fallback title before releasing a serialized replacement."""
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     monkeypatch.setattr(
         TitleMiddleware,
@@ -3669,7 +3669,7 @@ async def test_admitted_pending_replacement_does_not_steal_interrupted_title_rec
 @pytest.mark.anyio
 async def test_interrupted_title_does_not_overwrite_checkpoint_from_admitted_replacement(monkeypatch):
     """A replacement run admitted by multitask interrupt must not lose its newer checkpoint."""
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     monkeypatch.setattr(
         TitleMiddleware,
@@ -3860,7 +3860,7 @@ async def test_replacement_run_waits_for_prior_finalizing_run():
 @pytest.mark.anyio
 async def test_ensure_interrupted_title_reloads_latest_checkpoint_before_write():
     """If the checkpoint advances before the title write, preserve the newer messages."""
-    from deerflow.config.title_config import TitleConfig
+    from nkyel.config.title_config import TitleConfig
 
     old_checkpoint = {
         "id": "ckpt-old",
@@ -3919,7 +3919,7 @@ async def test_ensure_interrupted_title_bumps_channel_version_and_declares_it_in
     and pass ``{"title": next_version}`` so the fallback title actually survives
     a fresh ``aget_tuple`` after the worker's finally hook.
     """
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     monkeypatch.setattr(
         TitleMiddleware,
@@ -3969,7 +3969,7 @@ async def test_ensure_interrupted_title_bumps_channel_version_and_declares_it_in
 @pytest.mark.anyio
 async def test_ensure_interrupted_title_writes_graph_input_fallback_without_checkpoint(monkeypatch):
     """When no checkpoint exists, graph_input should still seed the fallback title write."""
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     captured_state: dict[str, Any] = {}
 
@@ -4005,7 +4005,7 @@ async def test_ensure_interrupted_title_bumps_existing_string_version(monkeypatc
     version is a string (some savers use UUID-shaped versions), the helper must
     still produce a strictly different value rather than overwriting in place.
     """
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     monkeypatch.setattr(
         TitleMiddleware,
@@ -4073,7 +4073,7 @@ async def test_ensure_interrupted_title_round_trip_with_real_sqlite_checkpointer
     from langgraph.checkpoint.base import empty_checkpoint
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
-    from deerflow.config.title_config import TitleConfig
+    from nkyel.config.title_config import TitleConfig
 
     db_path = str(tmp_path / "ckpt.db")
     thread_cfg = {"configurable": {"thread_id": "thread-1", "checkpoint_ns": ""}}
@@ -4157,7 +4157,7 @@ def test_bump_channel_version_falls_back_on_broken_get_next_version():
 @pytest.mark.anyio
 async def test_ensure_interrupted_title_handles_none_messages_channel(monkeypatch):
     """A partially-initialized checkpoint with ``messages=None`` must not crash."""
-    from deerflow.config.title_config import TitleConfig
+    from nkyel.config.title_config import TitleConfig
 
     initial_checkpoint = {
         "id": "ckpt-1",
@@ -4180,7 +4180,7 @@ async def test_ensure_interrupted_title_propagates_aput_error_to_caller(monkeypa
     This test pins the contract: the helper itself does NOT silently eat saver errors,
     so a structural saver regression remains visible in the logs at the call site.
     """
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     monkeypatch.setattr(
         TitleMiddleware,
@@ -4211,7 +4211,7 @@ async def test_ensure_interrupted_title_idempotent_across_repeated_calls(monkeyp
     """
     from langgraph.checkpoint.memory import InMemorySaver
 
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     monkeypatch.setattr(
         TitleMiddleware,
@@ -4251,7 +4251,7 @@ async def test_ensure_interrupted_title_preserves_non_title_channel_versions(mon
     ``dict(channel_versions)`` and would have erroneously declared every
     channel as "needs new blob" on DB savers.
     """
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     monkeypatch.setattr(
         TitleMiddleware,
@@ -4291,7 +4291,7 @@ async def test_worker_finally_block_swallows_helper_exceptions(monkeypatch):
     running. This pins the integration of helper + finally try/except, not just
     the helper itself.
     """
-    import deerflow.runtime.runs.worker as worker_module
+    import nkyel.runtime.runs.worker as worker_module
 
     helper_called = asyncio.Event()
 
@@ -4426,7 +4426,7 @@ async def test_worker_discards_buffered_journal_events_after_ownership_loss(monk
             self.record_middleware("buffered", name="test", hook="after", action="record", changes={})
             journals.append(self)
 
-    monkeypatch.setattr("deerflow.runtime.journal.RunJournal", BufferedRunJournal)
+    monkeypatch.setattr("nkyel.runtime.journal.RunJournal", BufferedRunJournal)
 
     event_store = TrackingRunEventStore()
     run_manager = RunManager()

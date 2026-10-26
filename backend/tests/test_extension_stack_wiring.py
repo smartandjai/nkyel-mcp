@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 import pytest
-from deerflow_extension_api import AgentScope, MiddlewarePlacement, Placement
+from nkyel_extension_api import AgentScope, MiddlewarePlacement, Placement
 from langchain.agents.middleware import AgentMiddleware
 
-from deerflow.agents.lead_agent.agent import build_middlewares
-from deerflow.config.app_config import AppConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.extensions.isolation import IsolatedMiddleware
-from deerflow.extensions.registry import ExtensionRegistry
-from deerflow.extensions.stack import PLACEMENT_ANCHORS
+from nkyel.agents.lead_agent.agent import build_middlewares
+from nkyel.config.app_config import AppConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.extensions.isolation import IsolatedMiddleware
+from nkyel.extensions.registry import ExtensionRegistry
+from nkyel.extensions.stack import PLACEMENT_ANCHORS
 
 
 def _app_config() -> AppConfig:
@@ -20,7 +20,7 @@ def _app_config() -> AppConfig:
     # verbatim test code assumed a default-constructible AppConfig; every
     # other builder test in this suite (e.g. test_lead_agent_model_resolution.py)
     # supplies this same minimal sandbox stanza for the same reason.
-    return AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+    return AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
 
 
 class _Probe(AgentMiddleware):
@@ -69,10 +69,10 @@ def test_zero_extensions_leaves_the_stack_unchanged():
 
 
 def test_zero_extensions_skip_policy_projection(monkeypatch):
-    from deerflow.agents.middlewares.tool_error_handling_middleware import (
+    from nkyel.agents.middlewares.tool_error_handling_middleware import (
         build_subagent_runtime_middlewares,
     )
-    from deerflow.extensions import policy as policy_module
+    from nkyel.extensions import policy as policy_module
 
     def _unexpected_projection(app_config):
         raise AssertionError("zero-extension path constructed an extension payload")
@@ -85,9 +85,9 @@ def test_zero_extensions_skip_policy_projection(monkeypatch):
 
 
 def test_zero_extension_composition_reuses_the_built_stack():
-    from deerflow_extension_api import AgentBuildContext
+    from nkyel_extension_api import AgentBuildContext
 
-    from deerflow.extensions.stack import compose_with_extensions
+    from nkyel.extensions.stack import compose_with_extensions
 
     middlewares = []
     result = compose_with_extensions(
@@ -101,10 +101,10 @@ def test_zero_extension_composition_reuses_the_built_stack():
 
 
 def test_bound_build_snapshot_is_used_by_lead_and_subagent_fallbacks():
-    from deerflow.agents.middlewares.tool_error_handling_middleware import (
+    from nkyel.agents.middlewares.tool_error_handling_middleware import (
         build_subagent_runtime_middlewares,
     )
-    from deerflow.extensions import bind_agent_build_extensions
+    from nkyel.extensions import bind_agent_build_extensions
 
     lead_capture = _CtxCapture()
     subagent_capture = _CtxCapture()
@@ -121,7 +121,7 @@ def test_bound_build_snapshot_is_used_by_lead_and_subagent_fallbacks():
 
 
 def test_lead_system_middlewares_capture_the_explicit_build_snapshot():
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     registry = ExtensionRegistry()
     with registry.attributed_to("observer:install"):
@@ -152,7 +152,7 @@ def test_tool_raw_lands_inside_tool_error_handling():
 
 
 def test_runtime_isolation_failure_is_recorded_after_stack_composition():
-    from deerflow.extensions import get_runtime_diagnostics, reset_runtime_diagnostics
+    from nkyel.extensions import get_runtime_diagnostics, reset_runtime_diagnostics
 
     class _FailingObserver(AgentMiddleware):
         def wrap_tool_call(self, request, handler):
@@ -189,7 +189,7 @@ def test_runtime_isolation_failure_is_recorded_after_stack_composition():
 
 
 def test_build_and_runtime_diagnostics_are_each_recorded_once():
-    from deerflow.extensions import get_runtime_diagnostics, reset_runtime_diagnostics
+    from nkyel.extensions import get_runtime_diagnostics, reset_runtime_diagnostics
 
     class _FailingObserver(AgentMiddleware):
         def wrap_model_call(self, request, handler):
@@ -221,7 +221,7 @@ def test_build_and_runtime_diagnostics_are_each_recorded_once():
 
 
 def test_lead_only_contribution_is_absent_from_subagent_stack():
-    from deerflow.agents.middlewares.tool_error_handling_middleware import (
+    from nkyel.agents.middlewares.tool_error_handling_middleware import (
         build_subagent_runtime_middlewares,
     )
 
@@ -238,10 +238,10 @@ def test_first_subagent_build_resolves_every_lazy_anchor(monkeypatch):
     empty table, then populate only MODEL_PHYSICAL as it installed the
     subagent-specific override.
     """
-    from deerflow.agents.middlewares.tool_error_handling_middleware import (
+    from nkyel.agents.middlewares.tool_error_handling_middleware import (
         build_subagent_runtime_middlewares,
     )
-    from deerflow.extensions import stack as stack_module
+    from nkyel.extensions import stack as stack_module
 
     fresh_table = stack_module._AnchorTable()
     monkeypatch.setattr(stack_module._AnchorTable, "_loaded", False)
@@ -276,9 +276,9 @@ def test_core_ordering_table_is_enforced_against_a_real_stack(monkeypatch):
     them would require stubbing sys.modules entries, which tests the stubbing
     more than the wiring. Patching the table asserts exactly the claim at issue.
     """
-    from deerflow.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
-    from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-    from deerflow.extensions import ordering as ordering_mod
+    from nkyel.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
+    from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+    from nkyel.extensions import ordering as ordering_mod
 
     # InputSanitization is the outermost wrapper and ToolErrorHandling sits deep
     # in the tail, so demanding the reverse is a constraint the real stack breaks.
@@ -308,8 +308,8 @@ def test_core_ordering_table_passes_on_the_unmodified_stack():
 def test_ordering_violation_raises_and_names_the_extension():
     """A contribution that inverts a core invariant must fail loudly at build
     time — the resulting behaviour would otherwise be wrong without an error."""
-    from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-    from deerflow.extensions.ordering import OrderingConstraint, assert_ordering
+    from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+    from nkyel.extensions.ordering import OrderingConstraint, assert_ordering
 
     stack = [ToolErrorHandlingMiddleware(app_config=_app_config()), _Probe("x")]
     constraints = (OrderingConstraint(outer=_Probe, inner=ToolErrorHandlingMiddleware, reason="test"),)
@@ -342,11 +342,11 @@ def _extensions_with_contributor(contributor):
 
 
 def _policy_config() -> AppConfig:
-    from deerflow.config.subagents_config import SubagentsAppConfig
-    from deerflow.config.token_budget_config import TokenBudgetConfig
+    from nkyel.config.subagents_config import SubagentsAppConfig
+    from nkyel.config.token_budget_config import TokenBudgetConfig
 
     return AppConfig(
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         token_budget=TokenBudgetConfig(
             enabled=True,
             max_tokens=12345,
@@ -397,7 +397,7 @@ def test_lead_build_context_carries_the_projected_host_policy():
 
 
 def test_subagent_build_context_carries_the_projected_host_policy():
-    from deerflow.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
+    from nkyel.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
 
     capture = _CtxCapture()
     build_subagent_runtime_middlewares(

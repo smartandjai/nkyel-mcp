@@ -55,7 +55,7 @@ test("plugin candidates coexist with skills, survive draft reload and submit str
       });
     if (url.pathname.endsWith("/actions/search")) {
       searches.push(route.request().postDataJSON());
-      expect(route.request().headers()["x-deerflow-plugin-viewer"]).toBe(
+      expect(route.request().headers()["x-nkyel-plugin-viewer"]).toBe(
         "default",
       );
       if (holdSearch) {

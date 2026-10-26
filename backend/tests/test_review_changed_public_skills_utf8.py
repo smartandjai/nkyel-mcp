@@ -31,11 +31,11 @@ print("OK")
 
 @pytest.fixture
 def analyzer_stub(tmp_path: Path) -> Path:
-    """A repo-root stand-in whose `deerflow.skills.review.cli` prints raw UTF-8 JSON."""
+    """A repo-root stand-in whose `nkyel.skills.review.cli` prints raw UTF-8 JSON."""
     stub_root = tmp_path / "repo_root"
-    package = stub_root / "deerflow" / "skills" / "review"
+    package = stub_root / "nkyel" / "skills" / "review"
     package.mkdir(parents=True)
-    for parent in (stub_root / "deerflow", stub_root / "deerflow" / "skills", package):
+    for parent in (stub_root / "nkyel", stub_root / "nkyel" / "skills", package):
         (parent / "__init__.py").write_text("", encoding="utf-8")
     (package / "cli.py").write_text(
         "import json\nprint(json.dumps(" + repr(PAYLOAD) + ", ensure_ascii=False))\n",

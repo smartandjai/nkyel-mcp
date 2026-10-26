@@ -4,16 +4,16 @@ import asyncio
 from pathlib import Path
 
 import pytest
-from deerflow_extension_api.auth import ExtensionPrincipal
+from nkyel_extension_api.auth import ExtensionPrincipal
 
 
 @pytest.fixture
 def platform(tmp_path, monkeypatch):
     root = Path(__file__).resolve().parents[2]
     for package in ("knowledge-platform", "knowledge-management"):
-        monkeypatch.syspath_prepend(str(root / "examples" / f"deerflow-extension-{package}"))
-    from deerflow_extension_knowledge_platform.models import Settings, resource_key
-    from deerflow_extension_knowledge_platform.store import Store
+        monkeypatch.syspath_prepend(str(root / "examples" / f"nkyel-extension-{package}"))
+    from nkyel_extension_knowledge_platform.models import Settings, resource_key
+    from nkyel_extension_knowledge_platform.store import Store
 
     resource = resource_key("weknora", "local", "kb")
     settings = Settings.model_validate(
@@ -40,7 +40,7 @@ def document(resource):
 
 
 def test_four_level_inheritance_and_restart(platform):
-    from deerflow_extension_knowledge_platform.store import Store
+    from nkyel_extension_knowledge_platform.store import Store
 
     store, settings, resource = platform
     result = store.replace(ADMIN, document(resource), 0)
@@ -53,8 +53,8 @@ def test_four_level_inheritance_and_restart(platform):
 
 
 def deep_policy(settings, directory, resources_per_connection=40, connections=5):
-    from deerflow_extension_knowledge_platform.models import Settings, resource_key
-    from deerflow_extension_knowledge_platform.store import Store
+    from nkyel_extension_knowledge_platform.models import Settings, resource_key
+    from nkyel_extension_knowledge_platform.store import Store
 
     config = settings.model_dump()
     config["storage_path"] = str(directory / "deep.db")
@@ -75,7 +75,7 @@ def deep_policy(settings, directory, resources_per_connection=40, connections=5)
 
 @pytest.mark.parametrize(("connections", "resources_per_connection"), [(5, 1), (5, 40), (20, 200)])
 def test_deep_policy_does_not_reserialize_processing_per_resource_ancestor(platform, tmp_path, monkeypatch, connections, resources_per_connection):
-    from deerflow_extension_knowledge_management.contracts import ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ProcessingOptions
 
     _, settings, _ = platform
     store, policy, resource = deep_policy(settings, tmp_path, resources_per_connection, connections)
@@ -103,7 +103,7 @@ def test_deep_policy_does_not_reserialize_processing_per_resource_ancestor(platf
 
 
 def test_listing_deep_spaces_does_not_build_processing_or_resource_projections(platform, tmp_path, monkeypatch):
-    from deerflow_extension_knowledge_management.contracts import ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ProcessingOptions
 
     _, settings, _ = platform
     store, policy, _ = deep_policy(settings, tmp_path, resources_per_connection=1)
@@ -122,8 +122,8 @@ def test_listing_deep_spaces_does_not_build_processing_or_resource_projections(p
 
 @pytest.mark.parametrize("change", ["resource_removed", "tool_revoked", "connection_disabled", "ancestor_disabled", "member_blocked", "ancestor_revoked"])
 def test_listing_keeps_detail_admission_after_policy_or_operator_changes(platform, change):
-    from deerflow_extension_knowledge_platform.models import Settings
-    from deerflow_extension_knowledge_platform.store import Store
+    from nkyel_extension_knowledge_platform.models import Settings
+    from nkyel_extension_knowledge_platform.store import Store
 
     store, settings, resource = platform
     data = document(resource)
@@ -219,7 +219,7 @@ def test_ancestor_revocation_and_connection_disable(platform):
 
 
 def test_sharing_is_explicit_and_same_named_resources_do_not_alias(platform):
-    from deerflow_extension_knowledge_platform.models import resource_key
+    from nkyel_extension_knowledge_platform.models import resource_key
 
     store, _, resource = platform
     assert resource != resource_key("weknora", "other", "kb")
@@ -235,7 +235,7 @@ def test_sharing_is_explicit_and_same_named_resources_do_not_alias(platform):
 def test_concurrent_writers_conflict_instead_of_losing_update(platform):
     from concurrent.futures import ThreadPoolExecutor
 
-    from deerflow_extension_knowledge_platform.store import RevisionConflict
+    from nkyel_extension_knowledge_platform.store import RevisionConflict
 
     store, _, resource = platform
 
@@ -251,8 +251,8 @@ def test_concurrent_writers_conflict_instead_of_losing_update(platform):
 
 
 def _process_writer(settings_data, resource):
-    from deerflow_extension_knowledge_platform.models import Settings
-    from deerflow_extension_knowledge_platform.store import RevisionConflict, Store
+    from nkyel_extension_knowledge_platform.models import Settings
+    from nkyel_extension_knowledge_platform.store import RevisionConflict, Store
 
     try:
         Store(Settings.model_validate(settings_data)).replace(ADMIN, document(resource), 0)
@@ -273,8 +273,8 @@ def test_independent_processes_share_the_sqlite_revision_fence(platform):
 
 @pytest.mark.asyncio
 async def test_space_management_preserves_principal_and_applies_defaults(platform):
-    from deerflow_extension_knowledge_management.contracts import Capabilities, IngestRequest, ProcessingResult
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_management.contracts import Capabilities, IngestRequest, ProcessingResult
+    from nkyel_extension_knowledge_platform.service import Platform
 
     store, settings, resource = platform
     data = document(resource)
@@ -302,7 +302,7 @@ async def test_space_management_preserves_principal_and_applies_defaults(platfor
 
 @pytest.mark.asyncio
 async def test_policy_denial_before_any_provider_call(platform):
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_platform.service import Platform
 
     store, settings, resource = platform
     store.replace(ADMIN, document(resource), 0)
@@ -319,8 +319,8 @@ async def test_policy_denial_before_any_provider_call(platform):
 @pytest.mark.asyncio
 async def test_http_trusted_auth_and_bounded_input(platform):
     import httpx
-    from deerflow_extension_knowledge_platform.router import build_router
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_platform.router import build_router
+    from nkyel_extension_knowledge_platform.service import Platform
     from fastapi import FastAPI
 
     store, settings, resource = platform
@@ -328,13 +328,13 @@ async def test_http_trusted_auth_and_bounded_input(platform):
     app.include_router(build_router(Platform(settings, store, {})))
     principal = ADMIN
     scopes = []
-    app.state.deerflow_extension_principal_resolver = lambda request: principal
+    app.state.nkyel_extension_principal_resolver = lambda request: principal
 
     async def authorize(request, namespace, scope):
         scopes.append((namespace, scope))
         return True
 
-    app.state.deerflow_extension_plugin_authz_resolver_async = authorize
+    app.state.nkyel_extension_plugin_authz_resolver_async = authorize
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         response = await client.put("/api/extensions/knowledge-platform/policy", json={"revision": 0, "policy": document(resource)})
         assert response.status_code == 200
@@ -359,19 +359,19 @@ async def test_policy_storage_lock_returns_503_without_mutating(platform, monkey
     from contextlib import closing
 
     import httpx
-    from deerflow_extension_knowledge_platform.router import build_router
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_platform.router import build_router
+    from nkyel_extension_knowledge_platform.service import Platform
     from fastapi import FastAPI
 
     store, settings, resource = platform
     app = FastAPI()
     app.include_router(build_router(Platform(settings, store, {})))
-    app.state.deerflow_extension_principal_resolver = lambda request: ADMIN
+    app.state.nkyel_extension_principal_resolver = lambda request: ADMIN
 
     async def authorize(*args):
         return True
 
-    app.state.deerflow_extension_plugin_authz_resolver_async = authorize
+    app.state.nkyel_extension_plugin_authz_resolver_async = authorize
     # Exercise the real busy-timeout error without waiting the production ten seconds.
     monkeypatch.setattr(store, "connect", lambda: sqlite3.connect(store.path, timeout=0.01))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as client:
@@ -390,20 +390,20 @@ async def test_policy_storage_lock_returns_503_without_mutating(platform, monkey
 @pytest.mark.asyncio
 async def test_unavailable_policy_database_returns_sanitized_503(platform):
     import httpx
-    from deerflow_extension_knowledge_platform.router import build_router
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_platform.router import build_router
+    from nkyel_extension_knowledge_platform.service import Platform
     from fastapi import FastAPI
 
     store, settings, _ = platform
     store.path.write_bytes(b"invalid SQLite database with private diagnostic content")
     app = FastAPI()
     app.include_router(build_router(Platform(settings, store, {})))
-    app.state.deerflow_extension_principal_resolver = lambda request: ADMIN
+    app.state.nkyel_extension_principal_resolver = lambda request: ADMIN
 
     async def authorize(*args):
         return True
 
-    app.state.deerflow_extension_plugin_authz_resolver_async = authorize
+    app.state.nkyel_extension_plugin_authz_resolver_async = authorize
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as client:
         response = await client.get("/api/extensions/knowledge-platform/policy")
     assert response.status_code == 503
@@ -413,7 +413,7 @@ async def test_unavailable_policy_database_returns_sanitized_503(platform):
 
 @pytest.mark.asyncio
 async def test_platform_database_work_runs_off_loop(platform, monkeypatch):
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_platform.service import Platform
 
     store, settings, _ = platform
     original = store.read
@@ -429,8 +429,8 @@ async def test_platform_database_work_runs_off_loop(platform, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_revocation_during_capability_lookup_prevents_write(platform):
-    from deerflow_extension_knowledge_management.contracts import Capabilities, IngestRequest
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_management.contracts import Capabilities, IngestRequest
+    from nkyel_extension_knowledge_platform.service import Platform
 
     store, settings, resource = platform
     data = document(resource)
@@ -455,16 +455,16 @@ async def test_real_management_adapter_composition(platform, monkeypatch):
     import json
 
     import httpx
-    from deerflow_extension_knowledge_management.contracts import IngestRequest
-    from deerflow_extension_knowledge_management.weknora import WeKnoraManagement
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_management.contracts import IngestRequest
+    from nkyel_extension_knowledge_management.weknora import WeKnoraManagement
+    from nkyel_extension_knowledge_platform.service import Platform
 
     store, settings, resource = platform
     dataset = "wk1_" + hashlib.sha256(json.dumps(["https://weknora.invalid", "1", "kb"], ensure_ascii=False).encode()).hexdigest()
     updated = settings.model_dump()
     updated["connections"][0]["resources"][0]["dataset_id"] = dataset
-    from deerflow_extension_knowledge_platform.models import Settings
-    from deerflow_extension_knowledge_platform.store import Store
+    from nkyel_extension_knowledge_platform.models import Settings
+    from nkyel_extension_knowledge_platform.store import Store
 
     settings = Settings.model_validate(updated)
     store = Store(settings)
@@ -521,8 +521,8 @@ async def test_real_management_adapter_composition(platform, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_mismatched_result_identity_is_not_remapped(platform):
-    from deerflow_extension_knowledge_management.contracts import ProcessingResult
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_management.contracts import ProcessingResult
+    from nkyel_extension_knowledge_platform.service import Platform
 
     store, settings, resource = platform
     store.replace(ADMIN, document(resource), 0)
@@ -575,8 +575,8 @@ def test_child_can_explicitly_clear_inherited_default_tool(platform):
 
 
 def test_operator_resource_removal_can_be_reconciled_without_global_outage(platform):
-    from deerflow_extension_knowledge_platform.models import Settings
-    from deerflow_extension_knowledge_platform.store import Store
+    from nkyel_extension_knowledge_platform.models import Settings
+    from nkyel_extension_knowledge_platform.store import Store
 
     store, settings, resource = platform
     data = document(resource)
@@ -596,8 +596,8 @@ def test_operator_resource_removal_can_be_reconciled_without_global_outage(platf
 
 
 def test_operator_tool_revocation_cannot_leave_an_invalid_default(platform):
-    from deerflow_extension_knowledge_platform.models import Settings
-    from deerflow_extension_knowledge_platform.store import Store
+    from nkyel_extension_knowledge_platform.models import Settings
+    from nkyel_extension_knowledge_platform.store import Store
 
     store, settings, resource = platform
     data = document(resource)
@@ -612,7 +612,7 @@ def test_operator_tool_revocation_cannot_leave_an_invalid_default(platform):
 
 
 def test_management_namespace_can_be_registered_without_direct_routes(platform):
-    from deerflow_extension_knowledge_management import install
+    from nkyel_extension_knowledge_management import install
 
     class Registry:
         plugins, mounted = [], []
@@ -641,20 +641,20 @@ def test_policy_never_serializes_operator_configuration(platform):
 @pytest.mark.asyncio
 async def test_dual_namespace_authorization_is_required(platform):
     import httpx
-    from deerflow_extension_knowledge_platform.router import build_router
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_platform.router import build_router
+    from nkyel_extension_knowledge_platform.service import Platform
     from fastapi import FastAPI
 
     store, settings, resource = platform
     store.replace(ADMIN, document(resource), 0)
     app = FastAPI()
     app.include_router(build_router(Platform(settings, store, {})))
-    app.state.deerflow_extension_principal_resolver = lambda request: ADMIN
+    app.state.nkyel_extension_principal_resolver = lambda request: ADMIN
 
     async def authorize(request, namespace, scope):
         return namespace == "knowledge-platform"
 
-    app.state.deerflow_extension_plugin_authz_resolver_async = authorize
+    app.state.nkyel_extension_plugin_authz_resolver_async = authorize
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get(f"/api/extensions/knowledge-platform/spaces/project/resources/{resource}/capabilities")
     assert response.status_code == 403
@@ -663,8 +663,8 @@ async def test_dual_namespace_authorization_is_required(platform):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("operation", ["upload", "reprocess", "cancel"])
 async def test_remaining_management_operations_preserve_contract(platform, operation):
-    from deerflow_extension_knowledge_management.contracts import Capabilities, ProcessingOptions, ProcessingResult
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_management.contracts import Capabilities, ProcessingOptions, ProcessingResult
+    from nkyel_extension_knowledge_platform.service import Platform
 
     store, settings, resource = platform
     data = document(resource)
@@ -692,8 +692,8 @@ async def test_remaining_management_operations_preserve_contract(platform, opera
 
 @pytest.mark.asyncio
 async def test_unsupported_options_do_not_mutate_or_retry(platform):
-    from deerflow_extension_knowledge_management.contracts import Capabilities, IngestRequest
-    from deerflow_extension_knowledge_platform.service import Platform
+    from nkyel_extension_knowledge_management.contracts import Capabilities, IngestRequest
+    from nkyel_extension_knowledge_platform.service import Platform
 
     store, settings, resource = platform
     store.replace(ADMIN, document(resource), 0)
@@ -715,7 +715,7 @@ async def test_unsupported_options_do_not_mutate_or_retry(platform):
 def test_install_is_opt_in_and_uses_only_operator_factory(platform, monkeypatch):
     from types import SimpleNamespace
 
-    from deerflow_extension_knowledge_platform import install
+    from nkyel_extension_knowledge_platform import install
 
     _, settings, _ = platform
     calls = []
@@ -733,7 +733,7 @@ def test_install_is_opt_in_and_uses_only_operator_factory(platform, monkeypatch)
     registry = Registry()
     install(registry, {})
     assert not registry.plugins
-    monkeypatch.setattr("deerflow_extension_knowledge_platform.import_module", lambda module: SimpleNamespace(WeKnoraManagement=lambda config: calls.append(config) or object()))
+    monkeypatch.setattr("nkyel_extension_knowledge_platform.import_module", lambda module: SimpleNamespace(WeKnoraManagement=lambda config: calls.append(config) or object()))
     install(registry, settings.model_dump())
     assert len(registry.plugins) == len(registry.mounted) == len(calls) == 1
     assert registry.plugins[0].namespace == "knowledge-platform"

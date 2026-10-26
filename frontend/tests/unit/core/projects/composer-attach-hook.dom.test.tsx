@@ -132,7 +132,7 @@ test("removing one chip persists the remaining pending attachments", () => {
   unmount();
 
   expect(
-    window.sessionStorage.getItem("deerflow.project-attachment.thread-1"),
+    window.sessionStorage.getItem("nkyel.project-attachment.thread-1"),
   ).toBe(JSON.stringify([ATTACHMENT]));
 
   render(
@@ -155,7 +155,7 @@ test("clearing after a successful send drops the pending list for good", () => {
   unmount();
 
   expect(
-    window.sessionStorage.getItem("deerflow.project-attachment.thread-1"),
+    window.sessionStorage.getItem("nkyel.project-attachment.thread-1"),
   ).toBeNull();
 
   render(

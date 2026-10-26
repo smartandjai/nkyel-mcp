@@ -9,22 +9,22 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from deerflow.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.tool_output_config import ToolOutputConfig
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
-from deerflow.extensions.plugin_tools import build_plugin_tools
-from deerflow.runtime.checkpoint_mode import inject_checkpoint_mode
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
-from deerflow.runtime.serialization import serialize_channel_values_for_api
+from nkyel.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.tool_output_config import ToolOutputConfig
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.plugin_tools import build_plugin_tools
+from nkyel.runtime.checkpoint_mode import inject_checkpoint_mode
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.runtime.serialization import serialize_channel_values_for_api
 
 
 @pytest.fixture
 def retrieval_plugin(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-retrieval"))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-retrieval"))
 
     def load(config=None):
-        loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_retrieval:install", config={} if config is None else config)])
+        loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_retrieval:install", config={} if config is None else config)])
         assert diagnostics == []
         return loaded
 
@@ -76,7 +76,7 @@ async def test_plugin_artifact_survives_budget_sqlite_reopen_and_later_turn(tmp_
         assert [item["document_id"] for item in message.artifact["matches"]] == ["demo-release"]
         assert "Tuesday" in message.artifact["matches"][0]["excerpt"]
         if limit == 120:
-            assert message.additional_kwargs["deerflow_tool_transforms"][-1]["kind"] == "truncated"
+            assert message.additional_kwargs["nkyel_tool_transforms"][-1]["kind"] == "truncated"
             assert len(message.artifact["matches"][0]["excerpt"]) > len(message.content)
         else:
             assert "Tuesday" in message.content
@@ -137,9 +137,9 @@ async def test_no_matches_is_a_successful_empty_result(retrieval_plugin):
 async def test_shared_knowledge_sources_from_plugin_survive_budget_and_replay(tmp_path, retrieval_plugin, mode, limit):
     from dataclasses import replace
 
-    from deerflow_extension_api import PluginToolResult
+    from nkyel_extension_api import PluginToolResult
 
-    from deerflow.knowledge import KnowledgeSource, RetrievalHit, RetrievalResult, format_result, sources_from_messages
+    from nkyel.knowledge import KnowledgeSource, RetrievalHit, RetrievalResult, format_result, sources_from_messages
 
     source = KnowledgeSource(provider="plugin-test", title="Synthetic captured guide", excerpt="Synthetic retrieved evidence from the provider.")
     content, artifact = format_result(RetrievalResult(hits=[RetrievalHit(content=source.excerpt, source=source)]))

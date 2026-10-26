@@ -50,9 +50,9 @@ def _app_with_config(
     app.include_router(features.router)
     tools = []
     if browser_enabled:
-        tools.append(SimpleNamespace(name="browser_navigate", use="deerflow.community.browser:browser_navigate_tool", model_extra=browser_extra or {}))
+        tools.append(SimpleNamespace(name="browser_navigate", use="nkyel.community.browser:browser_navigate_tool", model_extra=browser_extra or {}))
     if conversation_references_enabled:
-        tools.append(SimpleNamespace(name="read_conversation", use="deerflow.tools.conversation:read_conversation", model_extra={}))
+        tools.append(SimpleNamespace(name="read_conversation", use="nkyel.tools.conversation:read_conversation", model_extra={}))
     fake_config = SimpleNamespace(
         agents_api=SimpleNamespace(enabled=agents_api_enabled),
         tools=tools,
@@ -130,7 +130,7 @@ def test_features_enables_scope_selection_only_for_exact_ragflow_provider() -> N
             agents_api_enabled=True,
             knowledge_base_enabled=True,
             scope_selection_enabled=True,
-            knowledge_search_provider=("deerflow.community.ragflow.tools:knowledge_search_tool"),
+            knowledge_search_provider=("nkyel.community.ragflow.tools:knowledge_search_tool"),
         )
     ) as client:
         response = client.get("/api/features")
@@ -142,8 +142,8 @@ def test_features_enables_scope_selection_only_for_exact_ragflow_provider() -> N
 @pytest.mark.parametrize(
     ("knowledge_base_enabled", "provider"),
     [
-        (False, "deerflow.community.ragflow.tools:knowledge_search_tool"),
-        (True, "deerflow.community.lightrag.tools:knowledge_search_tool"),
+        (False, "nkyel.community.ragflow.tools:knowledge_search_tool"),
+        (True, "nkyel.community.lightrag.tools:knowledge_search_tool"),
         (True, "custom.provider:knowledge_search_tool"),
         (True, None),
     ],

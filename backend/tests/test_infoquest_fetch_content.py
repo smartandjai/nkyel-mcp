@@ -7,8 +7,8 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from deerflow.community.infoquest import infoquest_client, tools
-from deerflow.logging_config import UrlRedactionFilter
+from nkyel.community.infoquest import infoquest_client, tools
+from nkyel.logging_config import UrlRedactionFilter
 
 _URL = "https://example.com/article"
 _LOG_URL = "https://example.com/<redacted>"

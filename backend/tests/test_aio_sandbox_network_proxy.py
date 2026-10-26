@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from deerflow.community.aio_sandbox import network_proxy
+from nkyel.community.aio_sandbox import network_proxy
 
 
 def test_domain_matches_exact_and_leading_wildcard_only() -> None:
@@ -40,8 +40,8 @@ def test_address_is_public_rejects_host_private_link_local_and_metadata() -> Non
 
 def test_policy_denial_and_temporary_or_sandbox_grants(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(network_proxy, "POLICY_DB", tmp_path / "policy.sqlite3")
-    monkeypatch.setenv("DEERFLOW_NETWORK_MODE", "allowlist")
-    monkeypatch.setenv("DEERFLOW_ALLOW_DOMAINS_JSON", json.dumps(["pypi.org"]))
+    monkeypatch.setenv("NKYEL_NETWORK_MODE", "allowlist")
+    monkeypatch.setenv("NKYEL_ALLOW_DOMAINS_JSON", json.dumps(["pypi.org"]))
 
     assert network_proxy.policy_allows("pypi.org", 443, now=100)
     assert not network_proxy.policy_allows("example.com", 443, now=100)
@@ -179,9 +179,9 @@ async def test_resolve_public_returns_every_validated_answer_and_open_retries(mo
 @pytest.mark.parametrize("mode", ["isolated", "allowlist"])
 async def test_denied_destination_is_rejected_without_dns_resolution(tmp_path, monkeypatch, mode: str) -> None:
     monkeypatch.setattr(network_proxy, "POLICY_DB", tmp_path / "policy.sqlite3")
-    monkeypatch.setenv("DEERFLOW_NETWORK_MODE", mode)
-    monkeypatch.setenv("DEERFLOW_ALLOW_DOMAINS_JSON", json.dumps(["allowed.example"]))
-    monkeypatch.delenv("DEERFLOW_RECORD_DENIALS", raising=False)
+    monkeypatch.setenv("NKYEL_NETWORK_MODE", mode)
+    monkeypatch.setenv("NKYEL_ALLOW_DOMAINS_JSON", json.dumps(["allowed.example"]))
+    monkeypatch.delenv("NKYEL_RECORD_DENIALS", raising=False)
     resolutions: list[tuple[str, int]] = []
 
     async def fake_resolve_public(host: str, port: int):
@@ -311,7 +311,7 @@ async def test_sandbox_api_relay_requires_per_sandbox_token(monkeypatch) -> None
     upstream = await asyncio.start_server(upstream_handler, "127.0.0.1", 0)
     upstream_port = upstream.sockets[0].getsockname()[1]
     monkeypatch.setenv(network_proxy.RELAY_TOKEN_ENV, "test-relay-token")
-    monkeypatch.setenv("DEERFLOW_SANDBOX_TARGET", f"127.0.0.1:{upstream_port}")
+    monkeypatch.setenv("NKYEL_SANDBOX_TARGET", f"127.0.0.1:{upstream_port}")
     relay = await asyncio.start_server(network_proxy.handle_relay, "127.0.0.1", 0)
     relay_port = relay.sockets[0].getsockname()[1]
     try:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# serve.sh — Unified DeerFlow service launcher
+# serve.sh — Unified nkyel service launcher
 #
 # Usage:
 #   ./scripts/serve.sh [--dev|--prod] [--daemon] [--stop|--restart]
@@ -43,7 +43,7 @@ _pick_python() {
     local candidate
     for candidate in python3 python py; do
         # Probe through `env` as well: the frontend is launched as
-        # `env PORT=3000 "$DEERFLOW_PNPM_PYTHON" ...` (FRONTEND_CMD below), and on
+        # `env PORT=3000 "$NKYEL_PNPM_PYTHON" ...` (FRONTEND_CMD below), and on
         # Windows/Git Bash the Microsoft Store python aliases under WindowsApps
         # are skipped by Bash's own PATH lookup yet still resolved (and fail to
         # exec) inside /usr/bin/env. A bare "$candidate" probe passes while the
@@ -85,16 +85,16 @@ done
 
 # ── Stop helper ──────────────────────────────────────────────────────────────
 
-# Every deer-flow worktree (the main checkout + each linked worktree) hardcodes
+# Every nkyel worktree (the main checkout + each linked worktree) hardcodes
 # the same dev ports (8001/3000/2026), so a service started from ANY of them
 # must be reclaimable from here — otherwise `make stop`/`make dev` in this
 # worktree can neither kill nor take over a port held by a sibling worktree.
-# DEERFLOW_ROOTS is that set of roots; processes living outside all of them
+# NKYEL_ROOTS is that set of roots; processes living outside all of them
 # (e.g. an unrelated project on port 3000) are still never touched.
 # Sorted most-specific-first (longest path first): a linked worktree lives
 # under the main checkout, so both roots are substrings of its files — checking
 # the deeper root first attributes a reclaimed port to the right worktree.
-DEERFLOW_ROOTS="$(
+NKYEL_ROOTS="$(
     {
         printf '%s\n' "$REPO_ROOT"
         git -C "$REPO_ROOT" worktree list --porcelain 2>/dev/null |
@@ -102,18 +102,18 @@ DEERFLOW_ROOTS="$(
     } | awk 'NF && !seen[$0]++ {print length($0)"\t"$0}' | sort -rn | sed 's/^[0-9]*\t//'
 )"
 
-# True if PID has an open file/cwd under any deer-flow worktree root. The
-# trailing slash keeps a sibling dir like ".../deer-flow-notes" from matching
-# the ".../deer-flow" root.
-_is_deerflow_pid() {
+# True if PID has an open file/cwd under any nkyel worktree root. The
+# trailing slash keeps a sibling dir like ".../nkyel-notes" from matching
+# the ".../nkyel" root.
+_is_nkyel_pid() {
     local pid=$1 files root
 
-    # Daemon children inherit DEERFLOW_DAEMON_ROOT from run_service. Checking
+    # Daemon children inherit NKYEL_DAEMON_ROOT from run_service. Checking
     # it (Linux only — macOS has no /proc) identifies processes like
     # next-server that lsof misses, so the name/port reaps in stop_all can
     # claim them.
     if [ -r "/proc/$pid/environ" ] &&
-        tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null | grep -Fxq "DEERFLOW_DAEMON_ROOT=$REPO_ROOT"; then
+        tr '\0' '\n' < "/proc/$pid/environ" 2>/dev/null | grep -Fxq "NKYEL_DAEMON_ROOT=$REPO_ROOT"; then
         return 0
     fi
 
@@ -123,7 +123,7 @@ _is_deerflow_pid() {
         case "$files" in
             *"$root"/*) return 0 ;;
         esac
-    done <<< "$DEERFLOW_ROOTS"
+    done <<< "$NKYEL_ROOTS"
     return 1
 }
 
@@ -133,14 +133,14 @@ _report_reclaimed_ports() {
     local port pid files root owner
     for port in 8001 3000 2026; do
         for pid in $(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null); do
-            _is_deerflow_pid "$pid" || continue
+            _is_nkyel_pid "$pid" || continue
             files=$(lsof -b -w -p "$pid" 2>/dev/null)
             case "$files" in *"$REPO_ROOT"/*) continue ;; esac  # this worktree — normal
             owner=""
             while IFS= read -r root; do
                 [ -n "$root" ] || continue
                 case "$files" in *"$root"/*) owner="$root"; break ;; esac
-            done <<< "$DEERFLOW_ROOTS"
+            done <<< "$NKYEL_ROOTS"
             echo "  ↻ Reclaiming port $port from another worktree: ${owner:-?}"
             break
         done
@@ -153,7 +153,7 @@ _kill_repo_processes() {
     local pids=""
 
     while IFS= read -r pid; do
-        if [ -n "$pid" ] && _is_deerflow_pid "$pid"; then
+        if [ -n "$pid" ] && _is_nkyel_pid "$pid"; then
             case " $pids " in
                 *" $pid "*) ;;
                 *) pids="$pids $pid" ;;
@@ -172,7 +172,7 @@ _kill_repo_port() {
     local pids=""
 
     while IFS= read -r pid; do
-        if [ -n "$pid" ] && _is_deerflow_pid "$pid"; then
+        if [ -n "$pid" ] && _is_nkyel_pid "$pid"; then
             case " $pids " in
                 *" $pid "*) ;;
                 *) pids="$pids $pid" ;;
@@ -229,9 +229,9 @@ _is_repo_nginx_pid() {
         case "$args" in
             *"$root"/docker/nginx/nginx.local.conf*|*"$root"/*) return 0 ;;
         esac
-    done <<< "$DEERFLOW_ROOTS"
+    done <<< "$NKYEL_ROOTS"
 
-    _is_deerflow_pid "$pid"
+    _is_nkyel_pid "$pid"
 }
 
 _kill_repo_nginx() {
@@ -273,13 +273,13 @@ stop_all() {
     sleep 1
     _kill_repo_nginx
     # Force-kill any survivors still holding the service ports. 2026 is included
-    # so a lingering nginx (or any deer-flow process) that _kill_repo_nginx did
+    # so a lingering nginx (or any nkyel process) that _kill_repo_nginx did
     # not match by name still gets reclaimed — otherwise `make dev` fails its
     # nginx port preflight.
     _kill_repo_port 8001
     _kill_repo_port 3000
     _kill_repo_port 2026
-    bash ./scripts/cleanup-containers.sh deer-flow-sandbox 2>/dev/null || true
+    bash ./scripts/cleanup-containers.sh nkyel-sandbox 2>/dev/null || true
     echo "✓ All services stopped"
 }
 
@@ -297,9 +297,9 @@ fi
 # not tear down a running stack. Gateway and frontend always bind loopback;
 # nginx is the only entry point, as in the Docker stack.
 if [ "$ACTION" != "stop" ]; then
-    GATEWAY_STARTUP_TIMEOUT="${DEER_FLOW_GATEWAY_STARTUP_TIMEOUT-30}"
+    GATEWAY_STARTUP_TIMEOUT="${NKYEL_GATEWAY_STARTUP_TIMEOUT-30}"
     if [[ ! "$GATEWAY_STARTUP_TIMEOUT" =~ ^[0-9]+$ ]] || ! [ "$GATEWAY_STARTUP_TIMEOUT" -gt 0 ] 2>/dev/null; then
-        echo "✗ DEER_FLOW_GATEWAY_STARTUP_TIMEOUT must be a positive integer (seconds)." >&2
+        echo "✗ NKYEL_GATEWAY_STARTUP_TIMEOUT must be a positive integer (seconds)." >&2
         exit 1
     fi
     NGINX_CONF="$(bash "$REPO_ROOT/scripts/nginx-local-conf.sh")" || exit 1
@@ -332,36 +332,36 @@ fi
 
 # Resolve pnpm through the same runner used by make check/install. Exporting
 # these values keeps paths with spaces intact when run_service invokes sh -c.
-if ! DEERFLOW_PNPM_PYTHON="$(_pick_python)"; then
+if ! NKYEL_PNPM_PYTHON="$(_pick_python)"; then
     echo "Python 3 is required to run pnpm."
     exit 1
 fi
-DEERFLOW_PNPM_RUNNER="$REPO_ROOT/scripts/pnpm.py"
-export DEERFLOW_PNPM_PYTHON DEERFLOW_PNPM_RUNNER
+NKYEL_PNPM_RUNNER="$REPO_ROOT/scripts/pnpm.py"
+export NKYEL_PNPM_PYTHON NKYEL_PNPM_RUNNER
 
 # Frontend command
 if $DEV_MODE; then
-    FRONTEND_CMD='env PORT=3000 "$DEERFLOW_PNPM_PYTHON" "$DEERFLOW_PNPM_RUNNER" run dev --hostname 127.0.0.1'
+    FRONTEND_CMD='env PORT=3000 "$NKYEL_PNPM_PYTHON" "$NKYEL_PNPM_RUNNER" run dev --hostname 127.0.0.1'
     if $SKIP_FRONTEND_BUILD; then
         echo "  Note: --skip-frontend-build is ignored in dev mode (next dev does not build)."
     fi
 elif $SKIP_FRONTEND_BUILD; then
     # The BUILD_ID preflight above already guarantees a reusable build exists.
-    FRONTEND_CMD="env PORT=3000 BETTER_AUTH_SECRET=$($DEERFLOW_PNPM_PYTHON -c 'import secrets; print(secrets.token_hex(16))') \"\$DEERFLOW_PNPM_PYTHON\" \"\$DEERFLOW_PNPM_RUNNER\" run start --hostname 127.0.0.1"
+    FRONTEND_CMD="env PORT=3000 BETTER_AUTH_SECRET=$($NKYEL_PNPM_PYTHON -c 'import secrets; print(secrets.token_hex(16))') \"\$NKYEL_PNPM_PYTHON\" \"\$NKYEL_PNPM_RUNNER\" run start --hostname 127.0.0.1"
 else
-    FRONTEND_CMD="env PORT=3000 BETTER_AUTH_SECRET=$($DEERFLOW_PNPM_PYTHON -c 'import secrets; print(secrets.token_hex(16))') \"\$DEERFLOW_PNPM_PYTHON\" \"\$DEERFLOW_PNPM_RUNNER\" run preview --hostname 127.0.0.1"
+    FRONTEND_CMD="env PORT=3000 BETTER_AUTH_SECRET=$($NKYEL_PNPM_PYTHON -c 'import secrets; print(secrets.token_hex(16))') \"\$NKYEL_PNPM_PYTHON\" \"\$NKYEL_PNPM_RUNNER\" run preview --hostname 127.0.0.1"
 fi
 
 # Runtime path defaults. Local `make dev` launches Gateway from `backend/`,
-# so pin DeerFlow-owned state to the expected backend runtime directory and
+# so pin nkyel-owned state to the expected backend runtime directory and
 # create it before uvicorn builds its reload exclude filter.
-if [ -z "$DEER_FLOW_PROJECT_ROOT" ]; then
-    export DEER_FLOW_PROJECT_ROOT="$REPO_ROOT"
+if [ -z "$NKYEL_PROJECT_ROOT" ]; then
+    export NKYEL_PROJECT_ROOT="$REPO_ROOT"
 fi
 
-BACKEND_RUNTIME_HOME="$REPO_ROOT/backend/.deer-flow"
-if [ -z "$DEER_FLOW_HOME" ]; then
-    export DEER_FLOW_HOME="$BACKEND_RUNTIME_HOME"
+BACKEND_RUNTIME_HOME="$REPO_ROOT/backend/.nkyel"
+if [ -z "$NKYEL_HOME" ]; then
+    export NKYEL_HOME="$BACKEND_RUNTIME_HOME"
 fi
 
 # `backend/sandbox` is excluded from uvicorn's reload watcher below. uvicorn only
@@ -369,14 +369,14 @@ fi
 # otherwise it globs the pattern, and Python 3.12's pathlib rejects absolute glob
 # patterns with NotImplementedError, crashing `make dev` on a fresh checkout
 # (#3459 / #3454). Creating it here keeps every absolute exclude on the is_dir path.
-mkdir -p "$DEER_FLOW_HOME" "$BACKEND_RUNTIME_HOME" "$REPO_ROOT/backend/sandbox"
-DEER_FLOW_HOME="$(cd "$DEER_FLOW_HOME" && pwd -P)"
+mkdir -p "$NKYEL_HOME" "$BACKEND_RUNTIME_HOME" "$REPO_ROOT/backend/sandbox"
+NKYEL_HOME="$(cd "$NKYEL_HOME" && pwd -P)"
 BACKEND_RUNTIME_HOME="$(cd "$BACKEND_RUNTIME_HOME" && pwd -P)"
-export DEER_FLOW_HOME
+export NKYEL_HOME
 
 # Extra flags for uvicorn
 if $DEV_MODE && ! $DAEMON_MODE; then
-    GATEWAY_EXTRA_FLAGS="--reload --reload-include='*.yaml' --reload-include='.env' --reload-exclude='*.pyc' --reload-exclude='__pycache__' --reload-exclude='$REPO_ROOT/backend/sandbox' --reload-exclude='$DEER_FLOW_HOME' --reload-exclude='$BACKEND_RUNTIME_HOME'"
+    GATEWAY_EXTRA_FLAGS="--reload --reload-include='*.yaml' --reload-include='.env' --reload-exclude='*.pyc' --reload-exclude='__pycache__' --reload-exclude='$REPO_ROOT/backend/sandbox' --reload-exclude='$NKYEL_HOME' --reload-exclude='$BACKEND_RUNTIME_HOME'"
 else
     GATEWAY_EXTRA_FLAGS=""
 fi
@@ -391,12 +391,12 @@ fi
 # ── Config check ─────────────────────────────────────────────────────────────
 
 if ! { \
-        [ -n "$DEER_FLOW_CONFIG_PATH" ] && [ -f "$DEER_FLOW_CONFIG_PATH" ] || \
-        [ -f "$DEER_FLOW_PROJECT_ROOT/config.yaml" ] || \
+        [ -n "$NKYEL_CONFIG_PATH" ] && [ -f "$NKYEL_CONFIG_PATH" ] || \
+        [ -f "$NKYEL_PROJECT_ROOT/config.yaml" ] || \
         [ -f backend/config.yaml ] || \
         [ -f config.yaml ]; \
     }; then
-    echo "✗ No DeerFlow config file found."
+    echo "✗ No nkyel config file found."
     echo "  Run 'make setup' (recommended) or 'make config' to generate config.yaml."
     exit 1
 fi
@@ -431,11 +431,11 @@ if ! $SKIP_INSTALL; then
     if [ -n "$UV_EXTRAS_FLAGS" ]; then
         echo "  • uv extras: $UV_EXTRAS_FLAGS"
     fi
-    # `--all-packages` propagates extras into workspace members (deerflow-harness
+    # `--all-packages` propagates extras into workspace members (nkyel-harness
     # in particular). Required for postgres extras — see PR #2584.
     # Intentionally unquoted to splat multiple `--extra X` pairs.
     (cd backend && uv sync --locked --quiet --all-packages $UV_EXTRAS_FLAGS) || { echo "✗ Backend dependency install failed"; exit 1; }
-    (cd frontend && "$DEERFLOW_PNPM_PYTHON" "$DEERFLOW_PNPM_RUNNER" install --silent) || { echo "✗ Frontend dependency install failed"; exit 1; }
+    (cd frontend && "$NKYEL_PNPM_PYTHON" "$NKYEL_PNPM_RUNNER" install --silent) || { echo "✗ Frontend dependency install failed"; exit 1; }
     echo "✓ Dependencies synced"
 else
     echo "⏩ Skipping dependency install (--skip-install)"
@@ -445,7 +445,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "  Starting DeerFlow"
+echo "  Starting nkyel"
 echo "=========================================="
 echo ""
 echo "  Mode: $MODE_LABEL"
@@ -488,9 +488,9 @@ run_service() {
     echo "Starting $name..."
     if $DAEMON_MODE; then
         # Tag the daemon so every descendant (pnpm → next → next-server)
-        # carries DEERFLOW_DAEMON_ROOT in its environment, letting
-        # _is_deerflow_pid recognize it at stop time.
-        nohup env DEERFLOW_DAEMON_ROOT="$REPO_ROOT" sh -c "$cmd" > /dev/null 2>&1 &
+        # carries NKYEL_DAEMON_ROOT in its environment, letting
+        # _is_nkyel_pid recognize it at stop time.
+        nohup env NKYEL_DAEMON_ROOT="$REPO_ROOT" sh -c "$cmd" > /dev/null 2>&1 &
     else
         sh -c "$cmd" &
     fi
@@ -501,7 +501,7 @@ run_service() {
         [ -f "$logfile" ] && tail -20 "$logfile"
         if [ "$name" = "Gateway" ]; then
             echo "  Check logs/gateway.log for startup errors. If Gateway is still initializing,"
-            echo "  increase DEER_FLOW_GATEWAY_STARTUP_TIMEOUT (seconds; current: $GATEWAY_STARTUP_TIMEOUT)."
+            echo "  increase NKYEL_GATEWAY_STARTUP_TIMEOUT (seconds; current: $GATEWAY_STARTUP_TIMEOUT)."
         fi
         cleanup 1
     }
@@ -532,7 +532,7 @@ run_service "Nginx" \
 
 echo ""
 echo "=========================================="
-echo "  ✓ DeerFlow is running!  [$MODE_LABEL]"
+echo "  ✓ nkyel is running!  [$MODE_LABEL]"
 echo "=========================================="
 echo ""
 echo "  🌐 http://localhost:2026"

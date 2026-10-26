@@ -17,7 +17,7 @@ from typing import Any, Protocol
 
 from sqlalchemy import text
 
-from deerflow.config.deployment_config import multi_instance_declaration
+from nkyel.config.deployment_config import multi_instance_declaration
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +112,7 @@ class PostgresInboundDedupeStore:
     def _resolve_session_factory(self) -> Any:
         if self._session_factory is not None:
             return self._session_factory
-        from deerflow.persistence.engine import get_session_factory
+        from nkyel.persistence.engine import get_session_factory
 
         sf = get_session_factory()
         if sf is None:
@@ -272,7 +272,7 @@ def make_inbound_dedupe_store(app_config: Any | None = None) -> InboundDedupeSto
 
     workers, worker_env = _gateway_workers()
     # The worker count only sees one process tree; Kubernetes replicas declare
-    # themselves through deployment.multi_instance / DEER_FLOW_MULTI_INSTANCE.
+    # themselves through deployment.multi_instance / NKYEL_MULTI_INSTANCE.
     declaration = multi_instance_declaration(app_config)
     multi_worker = workers > 1 or declaration is not None
     topology = f"{worker_env}>1" if workers > 1 else getattr(declaration, "knob", None)

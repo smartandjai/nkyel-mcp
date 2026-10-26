@@ -2,7 +2,7 @@
 
 from langchain_core.messages import AIMessage
 
-from deerflow.agents.middlewares.model_length_termination_detectors import (
+from nkyel.agents.middlewares.model_length_termination_detectors import (
     AnthropicMaxTokensDetector,
     GeminiMaxTokensDetector,
     OpenAICompatibleLengthDetector,

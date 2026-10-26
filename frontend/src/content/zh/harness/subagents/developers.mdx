@@ -1,17 +1,17 @@
 ---
 title: 开发者与集成
-description: 直接使用 create_deerflow_agent 或 SubagentRuntime 时的注意事项、结构化契约、扩展系统能看到与介入的位置、安全边界，以及后台执行注册表的规则。
+description: 直接使用 create_nkyel_agent 或 SubagentRuntime 时的注意事项、结构化契约、扩展系统能看到与介入的位置、安全边界，以及后台执行注册表的规则。
 ---
 
 import { Callout } from "nextra/components";
 
 # 开发者与集成
 
-本章面向把 DeerFlow harness 嵌入自己程序、编写扩展或对接前端契约的开发者。
+本章面向把 nkyel harness 嵌入自己程序、编写扩展或对接前端契约的开发者。
 
-## 直接集成 create_deerflow_agent
+## 直接集成 create_nkyel_agent
 
-`create_deerflow_agent` 是不经过 Gateway 的构图入口。与子 Agent 相关的要点：
+`create_nkyel_agent` 是不经过 Gateway 的构图入口。与子 Agent 相关的要点：
 
 - 通过 `RuntimeFeatures` 打开 `subagent` 特性后，工厂会装上 `SubagentLimitMiddleware`（并发数与每 run 总量）并注册 `task` 工具。可以传入一个 `SubagentRuntime`，它必须与 `subagent` 特性同时使用，且不能与中间件完全接管模式并存。
 - `DurableContextMiddleware` 现在**始终**在工厂链上。委派账本由它写入，每 run 总量和"已委派勿重复"都依赖账本；摘要后的 `summary_text` 也由它回注。旧版本的工厂图缺少它，导致这些功能静默失效。
@@ -37,7 +37,7 @@ LangGraph Server 的入口必须是模块级的具体函数，harness 提供 `ma
 - `start()` 启动自有的批处理 worker；`stop()` 在生命周期锁下不设上限地排干正在运行的工作，并把调用方的取消传播出去。它把批处理服务的停止放在一个受保护的独立任务里，即使调用方反复取消也会跑完。
 - 支持 `async with`。
 
-公开导出：`deerflow.agents` 提供 `create_deerflow_agent`、`RuntimeFeatures`、`make_lead_agent`、`ThreadState` 等；`deerflow.subagents` 提供 `SubagentConfig`、`SubagentExecutor`、`SubagentResult`、`SubagentRuntime`、`get_available_subagent_names`、`get_subagent_config`、`list_subagents`。两者都是惰性导出。
+公开导出：`nkyel.agents` 提供 `create_nkyel_agent`、`RuntimeFeatures`、`make_lead_agent`、`ThreadState` 等；`nkyel.subagents` 提供 `SubagentConfig`、`SubagentExecutor`、`SubagentResult`、`SubagentRuntime`、`get_available_subagent_names`、`get_subagent_config`、`list_subagents`。两者都是惰性导出。
 
 ## 结构化契约
 
@@ -76,7 +76,7 @@ LangGraph Server 的入口必须是模块级的具体函数，harness 提供 `ma
 
 ### 装配观察
 
-注册了装配观察者时，执行器会在构图后发出一份装配描述符（`prompt_template_id` 为 `deerflow-subagent-v1`），其中 `effective_policies.subagents` 已按调用方的 `allowed_subagents` 过滤，不会向观察者泄漏完整目录。没有观察者时整段逻辑跳过。
+注册了装配观察者时，执行器会在构图后发出一份装配描述符（`prompt_template_id` 为 `nkyel-subagent-v1`），其中 `effective_policies.subagents` 已按调用方的 `allowed_subagents` 过滤，不会向观察者泄漏完整目录。没有观察者时整段逻辑跳过。
 
 ## 安全边界
 

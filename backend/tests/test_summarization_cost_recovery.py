@@ -14,10 +14,10 @@ from langchain_core.messages import AIMessage, HumanMessage, get_buffer_string
 from langchain_core.outputs import ChatGeneration, ChatResult
 from pydantic import Field
 
-from deerflow.agents.middlewares.pii_redaction_middleware import redact_text
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware, SummaryGenerationError
-from deerflow.config.pii_redaction_config import PiiRedactionConfig
-from deerflow.config.task_continuity_config import TaskContinuityConfig
+from nkyel.agents.middlewares.pii_redaction_middleware import redact_text
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware, SummaryGenerationError
+from nkyel.config.pii_redaction_config import PiiRedactionConfig
+from nkyel.config.task_continuity_config import TaskContinuityConfig
 
 
 def _text(length):
@@ -68,7 +68,7 @@ def _middleware(model, *, budget=512, default_counter=False, **kwargs):
     if not default_counter:
         options["token_counter"] = CountingChars()
     options.update(kwargs)
-    return DeerFlowSummarizationMiddleware(**options)
+    return NkyelSummarizationMiddleware(**options)
 
 
 def _state(text, previous=None):
@@ -132,8 +132,8 @@ async def test_near_budget_carry_recovers_with_default_counter_and_complete_sour
 @pytest.mark.parametrize("asynchronous", [False, True], ids=["sync", "async"])
 @pytest.mark.parametrize("manual", [False, True], ids=["automatic", "manual"])
 async def test_64_chunk_policy_aborts_without_committing_any_partial_result(monkeypatch, asynchronous, manual):
-    from deerflow.agents.middlewares import summarization_middleware as module
-    from deerflow.agents.task_continuity import archive
+    from nkyel.agents.middlewares import summarization_middleware as module
+    from nkyel.agents.task_continuity import archive
 
     budget = 128
     model = FreeModel(hard_limit=70)

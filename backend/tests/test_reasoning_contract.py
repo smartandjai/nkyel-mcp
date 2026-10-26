@@ -3,7 +3,7 @@
 Covers three layers:
 
 - ``ModelConfig.reasoning`` schema validation and legacy-boolean projection.
-- ``deerflow.models.reasoning`` normalization and request resolution.
+- ``nkyel.models.reasoning`` normalization and request resolution.
 - The ``reasoning`` capabilities payload projected through ``/api/models``.
 """
 
@@ -12,8 +12,8 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.model_config import ModelConfig, ReasoningCapabilities, ReasoningEffortCapabilities
-from deerflow.models.reasoning import (
+from nkyel.config.model_config import ModelConfig, ReasoningCapabilities, ReasoningEffortCapabilities
+from nkyel.models.reasoning import (
     GENERIC_EFFORT_VALUES,
     ReasoningContract,
     ReasoningPolicyError,
@@ -104,7 +104,7 @@ def test_native_provider_reasoning_values_load_as_legacy_profiles(native):
 
 def test_contract_is_excluded_from_provider_kwargs_by_the_factory_exclusion_list():
     """The factory excludes ``reasoning`` explicitly; pin the field name so a rename cannot leak it."""
-    from deerflow.models import factory as factory_module
+    from nkyel.models import factory as factory_module
 
     assert "reasoning" in factory_module._MODEL_METADATA_FIELDS
 

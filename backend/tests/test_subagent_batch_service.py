@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.mcp_scope import THREAD_INCARNATION_CONTEXT_KEY
-from deerflow.subagents import batch_service as service_module
-from deerflow.subagents.batch_runtime import BatchSubmitRequest
-from deerflow.subagents.batch_service import SubagentBatchService
-from deerflow.subagents.capacity import SubagentExecutionCapacity
+from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.mcp_scope import THREAD_INCARNATION_CONTEXT_KEY
+from nkyel.subagents import batch_service as service_module
+from nkyel.subagents.batch_runtime import BatchSubmitRequest
+from nkyel.subagents.batch_service import SubagentBatchService
+from nkyel.subagents.capacity import SubagentExecutionCapacity
 
 _MISSING = object()
 
@@ -194,9 +194,9 @@ async def test_browser_evidence_bounds_legacy_rows(field, limit, oversized):
 def test_browser_evidence_counts_valid_captured_excerpt_filtered_at_read():
     from langchain_core.messages import ToolMessage
 
-    from deerflow.community.ragflow.formatting import format_retrieval_sources
-    from deerflow.community.ragflow.sources import durable_source_artifact
-    from deerflow.subagents.step_events import capture_step_message
+    from nkyel.community.ragflow.formatting import format_retrieval_sources
+    from nkyel.community.ragflow.sources import durable_source_artifact
+    from nkyel.subagents.step_events import capture_step_message
 
     content, artifact = format_retrieval_sources(
         {"chunks": [{"id": "chunk", "dataset_id": "kb", "document_id": "doc", "content": "x" * 17_000}]},
@@ -362,7 +362,7 @@ async def test_execute_item_marks_real_running_then_persists_terminal_result(
     monkeypatch.setattr(service_module, "SubagentStatus", FakeStatus)
     monkeypatch.setattr(service_module, "get_background_task_result", lambda _execution_id: result)
     monkeypatch.setattr(service_module, "cleanup_background_task", lambda _execution_id: None)
-    monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **_kwargs: [])
+    monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **_kwargs: [])
     service = SubagentBatchService(
         repository=repository,
         config=SubagentBatchesConfig(),
@@ -455,7 +455,7 @@ async def test_execute_item_polls_completion_without_waiting_for_lease_renewal(m
     monkeypatch.setattr(service_module, "SubagentStatus", FakeStatus)
     monkeypatch.setattr(service_module, "get_background_task_result", read_result)
     monkeypatch.setattr(service_module, "cleanup_background_task", lambda _execution_id: None)
-    monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **_kwargs: [])
+    monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **_kwargs: [])
     service = SubagentBatchService(
         repository=repository,
         config=SubagentBatchesConfig(poll_interval_seconds=0.1, lease_seconds=120),
@@ -548,7 +548,7 @@ def _running_item_service(monkeypatch, registry: _Registry, *, mark_item_running
     monkeypatch.setattr(service_module, "get_app_config", lambda: SimpleNamespace())
     monkeypatch.setattr(service_module, "resolve_subagent_model_name", lambda *_args, **_kwargs: "model-a")
     monkeypatch.setattr(service_module, "SubagentExecutor", Executor)
-    monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **_kwargs: [])
+    monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **_kwargs: [])
     service = SubagentBatchService(
         repository=Repository(),
         config=SubagentBatchesConfig(poll_interval_seconds=0.1, lease_seconds=120),
@@ -738,7 +738,7 @@ async def test_executor_admission_failure_requeues_instead_of_finalizing(monkeyp
     monkeypatch.setattr(service_module, "SubagentStatus", FakeStatus)
     monkeypatch.setattr(service_module, "get_background_task_result", lambda _execution_id: result)
     monkeypatch.setattr(service_module, "cleanup_background_task", lambda _execution_id: None)
-    monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **_kwargs: [])
+    monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **_kwargs: [])
     service = SubagentBatchService(
         repository=repository,
         config=SubagentBatchesConfig(),
@@ -766,9 +766,9 @@ async def test_cancel_during_tool_assembly_skips_launch(monkeypatch, tmp_path) -
     import threading
     from datetime import UTC, datetime
 
-    from deerflow.config.database_config import DatabaseConfig
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-    from deerflow.persistence.subagent_batches import SubagentBatchRepository
+    from nkyel.config.database_config import DatabaseConfig
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+    from nkyel.persistence.subagent_batches import SubagentBatchRepository
 
     await init_engine_from_config(DatabaseConfig(backend="sqlite", sqlite_dir=str(tmp_path)))
     try:
@@ -820,7 +820,7 @@ async def test_cancel_during_tool_assembly_skips_launch(monkeypatch, tmp_path) -
             assembly_release.wait(timeout=15)
             return []
 
-        monkeypatch.setattr("deerflow.tools.get_available_tools", _blocking_assembly)
+        monkeypatch.setattr("nkyel.tools.get_available_tools", _blocking_assembly)
         monkeypatch.setattr(service_module, "SubagentStatus", FakeStatus)
         monkeypatch.setattr(service_module, "resolve_subagent_model_name", lambda *_a, **_k: "test-model")
         monkeypatch.setattr(service_module, "request_cancel_background_task", lambda _execution_id: None)

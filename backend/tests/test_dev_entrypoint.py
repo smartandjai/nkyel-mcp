@@ -70,14 +70,14 @@ def _run(
     """Invoke the entrypoint's public extras-resolution dry run."""
     env = os.environ.copy()
     env.pop("UV_EXTRAS", None)
-    env.pop("DEER_FLOW_CONFIG_PATH", None)
-    env.pop("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", None)
+    env.pop("NKYEL_CONFIG_PATH", None)
+    env.pop("NKYEL_STREAM_BRIDGE_REDIS_URL", None)
     if uv_extras is not None:
         env["UV_EXTRAS"] = uv_extras
     if config_path is not None:
-        env["DEER_FLOW_CONFIG_PATH"] = str(config_path)
+        env["NKYEL_CONFIG_PATH"] = str(config_path)
     if stream_bridge_redis_url is not None:
-        env["DEER_FLOW_STREAM_BRIDGE_REDIS_URL"] = stream_bridge_redis_url
+        env["NKYEL_STREAM_BRIDGE_REDIS_URL"] = stream_bridge_redis_url
     python_shim_dir = _windows_python_shim_dir()
     if python_shim_dir is not None:
         env["PATH"] = f"{python_shim_dir}{os.pathsep}{env['PATH']}"
@@ -103,15 +103,15 @@ def test_entrypoint_script_exists_and_is_posix_sh():
 def test_entrypoint_excludes_runtime_state_from_uvicorn_reload():
     content = ENTRYPOINT.read_text(encoding="utf-8")
 
-    assert ': "${DEER_FLOW_HOME:=/app/backend/.deer-flow}"' in content
-    # sandbox must be created too, not just .deer-flow (#3459 / #3454).
-    assert 'mkdir -p "$DEER_FLOW_HOME" /app/backend/.deer-flow /app/backend/sandbox' in content
+    assert ': "${NKYEL_HOME:=/app/backend/.nkyel}"' in content
+    # sandbox must be created too, not just .nkyel (#3459 / #3454).
+    assert 'mkdir -p "$NKYEL_HOME" /app/backend/.nkyel /app/backend/sandbox' in content
     assert "--reload-include='*.yaml .env'" not in content
     assert "--reload-include='*.yaml'" in content
     assert "--reload-include='.env'" in content
     assert "--reload-exclude=/app/backend/sandbox" in content
-    assert '--reload-exclude="$DEER_FLOW_HOME"' in content
-    assert "--reload-exclude=/app/backend/.deer-flow" in content
+    assert '--reload-exclude="$NKYEL_HOME"' in content
+    assert "--reload-exclude=/app/backend/.nkyel" in content
 
 
 def test_failed_sync_recreates_a_clean_virtual_environment():

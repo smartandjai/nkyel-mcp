@@ -1,7 +1,7 @@
 """Opt-in verification of the same managed DeepSeek path before/after a fix.
 
 From backend/ (test credentials are read only from the process environment):
-    DEER_FLOW_RUN_LIVE_TESTS=1 uv run --no-sync pytest \
+    NKYEL_RUN_LIVE_TESTS=1 uv run --no-sync pytest \
         tests/test_managed_deepseek_live.py -q -s
 
 Set DEEPSEEK_TEST_API_KEY separately; optional DEEPSEEK_TEST_MODEL defaults to
@@ -16,14 +16,14 @@ import pytest
 from langchain_core.messages import HumanMessage, ToolMessage
 
 from app.gateway.routers import managed_models as router
-from deerflow.config.app_config import AppConfig
-from deerflow.config.managed_models import ManagedModel
-from deerflow.models.factory import create_chat_model
+from nkyel.config.app_config import AppConfig
+from nkyel.config.managed_models import ManagedModel
+from nkyel.models.factory import create_chat_model
 
 pytestmark = [
     pytest.mark.live,
     pytest.mark.skipif(
-        os.getenv("DEER_FLOW_RUN_LIVE_TESTS") != "1" or not os.getenv("DEEPSEEK_TEST_API_KEY") or bool(os.getenv("CI")),
+        os.getenv("NKYEL_RUN_LIVE_TESTS") != "1" or not os.getenv("DEEPSEEK_TEST_API_KEY") or bool(os.getenv("CI")),
         reason="Requires explicit live opt-in and DEEPSEEK_TEST_API_KEY; never runs in CI",
     ),
 ]
@@ -31,7 +31,7 @@ pytestmark = [
 
 @pytest.fixture
 def profile(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setenv("LANGSMITH_TRACING", "false")
     monkeypatch.setenv("LANGCHAIN_TRACING_V2", "false")
     return ManagedModel(name="deepseek-live", model=os.getenv("DEEPSEEK_TEST_MODEL", "deepseek-flash"), base_url="https://api.deepseek.com", api_key=os.environ["DEEPSEEK_TEST_API_KEY"], max_tokens=512)

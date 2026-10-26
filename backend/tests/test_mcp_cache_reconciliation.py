@@ -42,20 +42,20 @@ from pathlib import Path
 import pytest
 from fastapi import HTTPException
 
-import deerflow.mcp.cache as cache_module
+import nkyel.mcp.cache as cache_module
 from app.gateway.routers import mcp as mcp_router
 from app.gateway.routers.mcp import McpServerStateUpdateRequest
-from deerflow.config.extensions_config import ExtensionsConfig, atomic_write_extensions_config, extensions_config_write_lock
-from deerflow.config.file_signature import get_config_signature
-from deerflow.mcp import session_pool as session_pool_module
-from deerflow.mcp.client import build_server_params, build_servers_config
-from deerflow.mcp.session_pool import (
+from nkyel.config.extensions_config import ExtensionsConfig, atomic_write_extensions_config, extensions_config_write_lock
+from nkyel.config.file_signature import get_config_signature
+from nkyel.mcp import session_pool as session_pool_module
+from nkyel.mcp.client import build_server_params, build_servers_config
+from nkyel.mcp.session_pool import (
     MCPSessionPool,
     StaleMCPBindingError,
     normalized_connection_fingerprint,
 )
-from deerflow.mcp.tasks.runtime import McpTaskConfigurationError, set_mcp_task_config_snapshot
-from deerflow.mcp.tools import ServerDiscoveryResult
+from nkyel.mcp.tasks.runtime import McpTaskConfigurationError, set_mcp_task_config_snapshot
+from nkyel.mcp.tools import ServerDiscoveryResult
 
 _MISSING = object()
 
@@ -225,7 +225,7 @@ def _install_discovery(
     The grouped fake honours ``server_names`` selection, so per-server reuse is
     exercised exactly as the initializer drives it.
     """
-    from deerflow.mcp import tools as tools_module
+    from nkyel.mcp import tools as tools_module
 
     async def _run(*, extensions_config, server_names, session_pool):
         pool = session_pool if session_pool is not None else session_pool_module.get_session_pool()
@@ -303,7 +303,7 @@ def _entry(pool: MCPSessionPool, name: str, scope: str = "u:t", domain: str = "d
 
 async def _initialize(monkeypatch, cfg: Path, servers: dict, log: dict, **kwargs) -> list:
     _write_config(cfg, servers, **{k: v for k, v in kwargs.items() if k in {"skills", "interceptors"}})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     _record_sessions(monkeypatch, log)
     hooks: dict = {}
     _install_discovery(monkeypatch, hooks=hooks)
@@ -604,7 +604,7 @@ async def test_path_switch_with_equivalent_config_keeps_bindings(reconciler, mon
     _write_config(cfg_b, {"A": _stdio("cmd-A")}, skills={"other": {"enabled": True}})
 
     binding_a = _binding(pool, "A")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg_b))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg_b))
 
     assert cache_module.refresh_mcp_cache_if_active() is False
     assert _binding(pool, "A") is binding_a
@@ -625,7 +625,7 @@ async def test_path_switch_with_changed_connection_retires_changed_server(reconc
     _write_config(cfg_b, {"A": _stdio("cmd-A2"), "B": _stdio("cmd-B")})
 
     binding_b = _binding(pool, "B")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg_b))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg_b))
 
     assert cache_module.refresh_mcp_cache_if_active() is True
     assert session_pool_module.get_session_pool() is pool
@@ -773,7 +773,7 @@ async def test_committed_reconciliation_failure_logs_once(reconciler, monkeypatc
         )
 
     assert exc_info.value.status_code == 500
-    assert exc_info.value.detail == "MCP configuration was saved, but local cache reconciliation failed; retry or restart DeerFlow before relying on the changed server."
+    assert exc_info.value.detail == "MCP configuration was saved, but local cache reconciliation failed; retry or restart nkyel before relying on the changed server."
     assert json.loads(cfg.read_text(encoding="utf-8"))["mcpServers"]["remote"]["enabled"] is True
     assert close_calls == [False]
     assert [(record.name, record.levelno, record.getMessage()) for record in caplog.records] == [
@@ -1161,7 +1161,7 @@ async def test_failed_first_discovery_leaves_a_reconcilable_residual(reconciler,
     session_pool_module._pool = pool
     log = _session_log()
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     _record_sessions(monkeypatch, log)
     _install_discovery(monkeypatch, fail_after_bindings=True)
 
@@ -1193,7 +1193,7 @@ async def test_removed_server_without_published_tools_gets_a_tombstone(reconcile
     session_pool_module._pool = pool
     log = _session_log()
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     _record_sessions(monkeypatch, log)
     _install_discovery(monkeypatch, fail_after_bindings=True)
 
@@ -1293,7 +1293,7 @@ async def test_superseded_discovery_result_is_fenced_during_flight(reconciler, m
     log = _session_log()
     _record_sessions(monkeypatch, log)
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     entered = asyncio.Event()
     release = asyncio.Event()
@@ -1334,7 +1334,7 @@ async def test_late_binding_seed_cannot_resurrect_a_superseded_revision(reconcil
     log = _session_log()
     _record_sessions(monkeypatch, log)
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     entered = asyncio.Event()
     release = asyncio.Event()
@@ -1375,7 +1375,7 @@ async def test_repeated_supersession_never_regresses_the_applied_state(reconcile
     log = _session_log()
     _record_sessions(monkeypatch, log)
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     entered = asyncio.Event()
     release = asyncio.Event()
@@ -1525,7 +1525,7 @@ async def test_cancelled_initializer_keeps_its_baseline_for_the_successor(reconc
     log = _session_log()
     _record_sessions(monkeypatch, log)
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     started = asyncio.Event()
     release = asyncio.Event()
@@ -1695,14 +1695,14 @@ async def test_config_deleted_after_load_keeps_last_known_good_tools(reconciler,
 @pytest.mark.asyncio
 async def test_discovery_failure_does_not_lock_the_generation_claim(reconciler, monkeypatch, tmp_path):
     """A non-stale discovery error is surfaced but leaves the cache retryable."""
-    from deerflow.mcp import tools as tools_module
+    from nkyel.mcp import tools as tools_module
 
     cfg = tmp_path / "extensions_config.json"
     pool = MCPSessionPool()
     session_pool_module._pool = pool
     log = _session_log()
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     async def _boom(**_kwargs):
         raise RuntimeError("discovery failed")
@@ -1723,13 +1723,13 @@ async def test_discovery_failure_does_not_lock_the_generation_claim(reconciler, 
 @pytest.mark.asyncio
 async def test_stale_binding_error_without_supersession_is_not_swallowed(reconciler, monkeypatch, tmp_path):
     """A binding conflict on a still-valid pool stays a real error."""
-    from deerflow.mcp import tools as tools_module
+    from nkyel.mcp import tools as tools_module
 
     cfg = tmp_path / "extensions_config.json"
     pool = MCPSessionPool()
     session_pool_module._pool = pool
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     async def _conflict(**_kwargs):
         raise StaleMCPBindingError("A")
@@ -1798,7 +1798,7 @@ async def test_claimed_revision_reconciles_a_preexisting_stale_binding(reconcile
     assert log["created"]["cmd-A1"] == 1
 
     _write_config(cfg, {"A": _stdio("cmd-A2")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     _install_discovery(monkeypatch)
 
     published = await asyncio.wait_for(cache_module.initialize_mcp_tools(), 5)
@@ -1832,7 +1832,7 @@ async def test_unpublished_deployment_cache_never_retires_personal_sessions(reco
     )
 
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     # No deployment cache, no applied baseline and no discovery: a deployment
     # config change is not a reason to touch the shared pool at all.
@@ -1974,7 +1974,7 @@ async def test_first_claim_tombstones_a_deployment_binding_the_config_dropped(re
 
     # The first revision this process ever claims declares B, not A.
     _write_config(cfg, {"B": _stdio("cmd-B1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     _install_discovery(monkeypatch)
 
     assert cache_module._applied_mcp_revision is None
@@ -2013,7 +2013,7 @@ async def test_shared_reset_retires_a_durable_only_deployment_session(reconciler
     assert cache_module._applied_mcp_revision is None
 
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     marker_path = _write_remote_marker(cfg, "reset-before-first-claim")
     _install_discovery(monkeypatch)
 
@@ -2050,7 +2050,7 @@ async def test_shared_reset_with_only_personal_state_is_adopted_without_a_reset(
     )
 
     _write_config(cfg, {"A": _stdio("cmd-A1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     marker_path = _write_remote_marker(cfg, "reset-with-personal-only-state")
     _install_discovery(monkeypatch)
 
@@ -2109,7 +2109,7 @@ async def test_first_claim_atomically_tombstones_a_concurrently_retained_server(
 
     monkeypatch.setattr(pool, "reconcile_bindings", _reconcile_with_racing_retainer)
     _write_config(cfg, {"B": _stdio("cmd-B1")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     _install_discovery(monkeypatch)
 
     published = await asyncio.wait_for(cache_module.initialize_mcp_tools(), 5)
@@ -2186,7 +2186,7 @@ async def test_rejected_revision_installs_no_epoch_and_no_tombstone(reconciler, 
     )
     for revised in revisions:
         _write_config(cfg, revised)
-        monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+        monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
         _install_discovery(monkeypatch)
 
         with pytest.raises(McpTaskConfigurationError):
@@ -2274,7 +2274,7 @@ async def test_rejected_revision_still_tears_down_the_pool_a_shared_reset_retire
     # A shared reset retires the pool, and the revision loaded right after it is
     # rejected by the frozen task snapshot.
     _write_config(cfg, {"A": _task_server("cmd-A2")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     marker_path = _write_remote_marker(cfg, "reset-then-rejected-revision")
     _install_discovery(monkeypatch)
 
@@ -2323,7 +2323,7 @@ async def test_reader_waiting_for_discovery_still_cleans_a_retired_pool(reconcil
     _record_sessions(monkeypatch, log)
     servers = {"A": _stdio("cmd-A1")}
     _write_config(cfg, servers)
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     # A persistent session established before discovery starts.
     connection = build_servers_config(ExtensionsConfig.model_validate({"mcpServers": servers}))["A"]
@@ -2450,7 +2450,7 @@ def test_committed_cold_path_fences_binding_inserted_after_the_retained_check(re
 @pytest.mark.asyncio
 async def test_tombstone_only_change_advances_applied_tokens(reconciler, monkeypatch, tmp_path):
     """A history change that only moves a tombstone must advance the applied token map."""
-    from deerflow.mcp.lifecycle import LIFECYCLE_KEY, plan_mcp_lifecycle
+    from nkyel.mcp.lifecycle import LIFECYCLE_KEY, plan_mcp_lifecycle
 
     cfg = tmp_path / "extensions_config.json"
     pool = MCPSessionPool()
@@ -2516,7 +2516,7 @@ def _seed_stdio_entry(pool, servers: dict, name: str):
 
 
 def _lifecycle_raw(servers: dict, tokens: dict) -> dict:
-    from deerflow.mcp.lifecycle import LIFECYCLE_KEY
+    from nkyel.mcp.lifecycle import LIFECYCLE_KEY
 
     return {"mcpServers": servers, "skills": {}, LIFECYCLE_KEY: {"version": 1, "servers": tokens}}
 
@@ -2524,7 +2524,7 @@ def _lifecycle_raw(servers: dict, tokens: dict) -> dict:
 async def _initialize_with_ledger(monkeypatch, cfg, servers: dict, log: dict, tokens: dict):
     """Initialize against a config that already carries an explicit lifecycle ledger."""
     cfg.write_text(json.dumps(_lifecycle_raw(servers, tokens)), encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     _record_sessions(monkeypatch, log)
     _install_discovery(monkeypatch, hooks={})
     return await cache_module.initialize_mcp_tools()

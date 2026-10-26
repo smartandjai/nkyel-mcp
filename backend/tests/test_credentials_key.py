@@ -1,4 +1,4 @@
-"""At-rest credentials key ``DEER_FLOW_CREDENTIALS_KEY`` and the cipher built from it.
+"""At-rest credentials key ``NKYEL_CREDENTIALS_KEY`` and the cipher built from it.
 
 The key is env-only: one or more comma-separated urlsafe-base64 Fernet keys,
 the first encrypting and every one decrypting, so an operator rotates by
@@ -17,8 +17,8 @@ from pathlib import Path
 import pytest
 from cryptography.fernet import Fernet, InvalidToken
 
-from deerflow.config import credentials_key as ck
-from deerflow.config.credentials_key import (
+from nkyel.config import credentials_key as ck
+from nkyel.config.credentials_key import (
     CIPHERTEXT_PREFIX,
     CREDENTIALS_KEY_ENV_VAR,
     CREDENTIALS_KEY_FILENAME,
@@ -31,7 +31,7 @@ from deerflow.config.credentials_key import (
     parse_credentials_keys,
     reset_credentials_cipher,
 )
-from deerflow.persistence.channel_connections import ChannelCredentialCipher
+from nkyel.persistence.channel_connections import ChannelCredentialCipher
 
 KEY_OLD = Fernet.generate_key().decode("ascii")
 KEY_NEW = Fernet.generate_key().decode("ascii")
@@ -196,7 +196,7 @@ def test_a_single_instance_generates_the_key_file_once(tmp_path: Path) -> None:
 
 
 def test_a_blank_environment_value_means_unset(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    """Compose renders ``${DEER_FLOW_CREDENTIALS_KEY:-}`` as an empty string."""
+    """Compose renders ``${NKYEL_CREDENTIALS_KEY:-}`` as an empty string."""
     monkeypatch.setenv(CREDENTIALS_KEY_ENV_VAR, "  ")
 
     load_credentials_cipher(base_dir=tmp_path)
@@ -239,9 +239,9 @@ def test_the_key_is_never_derived_from_the_jwt_secret(monkeypatch: pytest.Monkey
 
 
 def test_the_process_cipher_is_loaded_once_until_reset(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    from deerflow.config.paths import Paths
+    from nkyel.config.paths import Paths
 
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
     monkeypatch.setenv(CREDENTIALS_KEY_ENV_VAR, KEY_OLD)
 
     first = get_credentials_cipher()

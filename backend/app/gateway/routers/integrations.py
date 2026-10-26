@@ -6,9 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.gateway.deps import get_config, require_admin_user
-from deerflow.agents.lead_agent.prompt import refresh_skills_system_prompt_cache_async
-from deerflow.config.app_config import AppConfig
-from deerflow.integrations.lark_cli import (
+from nkyel.agents.lead_agent.prompt import refresh_skills_system_prompt_cache_async
+from nkyel.config.app_config import AppConfig
+from nkyel.integrations.lark_cli import (
     LARK_AUTH_COMPLETE_DEFAULT_WAIT_SECONDS,
     LARK_AUTH_COMPLETE_MAX_WAIT_SECONDS,
     LARK_AUTH_COMPLETE_MIN_WAIT_SECONDS,
@@ -29,8 +29,8 @@ from deerflow.integrations.lark_cli import (
     start_lark_auth,
     start_lark_config,
 )
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.utils.file_io import await_drained
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ async def _is_admin_user(request: Request) -> bool:
 
 
 class LarkCliProbeResponse(BaseModel):
-    available: bool = Field(..., description="Whether lark-cli is available to the Gateway, either managed by DeerFlow or on PATH")
+    available: bool = Field(..., description="Whether lark-cli is available to the Gateway, either managed by nkyel or on PATH")
     path: str | None = Field(None, description="Resolved lark-cli executable path")
     version: str | None = Field(None, description="lark-cli --version output")
     error: str | None = Field(None, description="Probe failure message")

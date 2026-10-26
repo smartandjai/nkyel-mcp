@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.sandbox.local import local_sandbox as local_sandbox_module
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.sandbox.local import local_sandbox as local_sandbox_module
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
 
 
 def _make_sandbox(tmp_path: Path) -> LocalSandbox:

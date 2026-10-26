@@ -6,12 +6,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import uvicorn
-from deerflow_extension_api import BrowserAssets, PluginContribution
-from deerflow_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
+from nkyel_extension_api import BrowserAssets, PluginContribution
+from nkyel_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
 from fastapi import FastAPI
 
 from app.gateway.routers.plugins import router
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions.registry import ExtensionRegistry
 
 
 def create_app(directory):
@@ -30,5 +30,5 @@ def create_app(directory):
 
 
 if __name__ == "__main__":
-    with TemporaryDirectory(prefix="deerflow-asset-probe-") as directory:
+    with TemporaryDirectory(prefix="nkyel-asset-probe-") as directory:
         uvicorn.run(create_app(directory), host="127.0.0.1", port=int(sys.argv[1]), log_level="warning")

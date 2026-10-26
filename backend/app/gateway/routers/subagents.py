@@ -10,17 +10,17 @@ from pydantic import BaseModel, Field, ValidationError
 
 from app.gateway.deps import is_admin_user, require_admin_user
 from app.gateway.persistent_writes import run_drained_write
-from deerflow.config.app_config import get_app_config
-from deerflow.persistence.managed_subagents import (
+from nkyel.config.app_config import get_app_config
+from nkyel.persistence.managed_subagents import (
     ManagedSubagentDefinition,
     ManagedSubagentExistsError,
     get_managed_subagent_store,
 )
-from deerflow.persistence.managed_subagents.base import (
+from nkyel.persistence.managed_subagents.base import (
     MANAGED_SUBAGENT_NAME_PATTERN,
     normalize_managed_subagent_name,
 )
-from deerflow.subagents.builtins import BUILTIN_SUBAGENTS
+from nkyel.subagents.builtins import BUILTIN_SUBAGENTS
 
 router = APIRouter(prefix="/api/subagents", tags=["subagents"])
 _ADMIN_REQUIRED_DETAIL = "Admin privileges are required to manage subagents."

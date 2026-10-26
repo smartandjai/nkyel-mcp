@@ -22,7 +22,7 @@ def _load_module():
 
 
 resources = _load_module()
-PREFIX = "deerflow-bench-abc123-"
+PREFIX = "nkyel-bench-abc123-"
 OWN_ID = "a" * 64
 OTHER_ID = "b" * 64
 
@@ -41,7 +41,7 @@ def test_missing_or_invalid_memory_is_unknown(text):
     assert resources.parse_bytes(text) is None
 
 
-@pytest.mark.parametrize("prefix", ["", "-", "deerflow", "bad prefix-", "*all*"])
+@pytest.mark.parametrize("prefix", ["", "-", "nkyel", "bad prefix-", "*all*"])
 def test_sampler_requires_explicit_bounded_prefix(prefix, tmp_path):
     with pytest.raises(ValueError, match="prefix"):
         resources.DockerResourceSampler(prefix, tmp_path / "resources.jsonl")

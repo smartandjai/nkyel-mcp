@@ -2,17 +2,17 @@ import asyncio
 import copy
 
 import pytest
-from deerflow_extension_api import ExtensionData
+from nkyel_extension_api import ExtensionData
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.checkpoint.base import empty_checkpoint, uuid6
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.extensions.registry import ExtensionRegistry
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.goal import GoalEvaluation, attach_goal_evaluation, build_goal_state, latest_visible_assistant_signature, read_thread_goal, write_thread_goal
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import RunRecord, RunStartOutcome
-from deerflow.runtime.runs.schemas import DisconnectMode, RunStatus
+from nkyel.extensions.registry import ExtensionRegistry
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.goal import GoalEvaluation, attach_goal_evaluation, build_goal_state, latest_visible_assistant_signature, read_thread_goal, write_thread_goal
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import RunRecord, RunStartOutcome
+from nkyel.runtime.runs.schemas import DisconnectMode, RunStatus
 
 
 @pytest.mark.asyncio
@@ -34,7 +34,7 @@ async def test_goal_progress_uses_operation_results_instead_of_reply_wording(mon
     for turn in range(3):
         call = {"id": f"call-{turn}", "name": "write_file" if successful_work else "read_file", "args": {"path": f"/outputs/part-{turn}.txt"}}
         if turn:
-            messages.append(HumanMessage(content="Continue", additional_kwargs={"hide_from_ui": True, "deerflow_goal_continuation": True}))
+            messages.append(HumanMessage(content="Continue", additional_kwargs={"hide_from_ui": True, "nkyel_goal_continuation": True}))
         messages.extend(
             [
                 AIMessage(content="", tool_calls=[call]),
@@ -999,7 +999,7 @@ def test_stand_down_reason_uses_documented_default_caps_when_missing():
 
     assert worker._stand_down_reason(bare_goal, unmet, no_progress_count=0) is None
     # And the two gate functions agree on the same bare goal.
-    from deerflow.runtime.goal import should_continue_goal
+    from nkyel.runtime.goal import should_continue_goal
 
     assert should_continue_goal(bare_goal, unmet, no_progress_count=0) is True
 
@@ -1479,8 +1479,8 @@ async def test_rollback_restores_the_met_goal_record_a_cancelled_run_dropped(mod
     """A rolled-back run whose input replaced the goal must not lose the earlier record."""
     from langgraph.graph import END, START, StateGraph
 
-    from deerflow.agents.thread_state import get_thread_state_schema
-    from deerflow.runtime.goal import build_goal_outcome
+    from nkyel.agents.thread_state import get_thread_state_schema
+    from nkyel.runtime.goal import build_goal_outcome
 
     checkpointer = InMemorySaver()
     builder = StateGraph(get_thread_state_schema(mode))

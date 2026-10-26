@@ -48,7 +48,7 @@ test("sends the current language after switching in Appearance settings", async 
   await page.locator("textarea").press("Enter");
   await expect.poll(() => locales).toEqual(["zh-CN"]);
   await expect(
-    page.getByText("Hello from DeerFlow!", { exact: true }),
+    page.getByText("Hello from nkyel!", { exact: true }),
   ).toBeVisible();
 
   await switchLanguage(page, "English");

@@ -201,7 +201,7 @@ test.describe("Artifact viewer window", () => {
       );
 
     // Record the popup's navigation *requests*, not its committed URLs. This
-    // harness runs with DEER_FLOW_AUTH_DISABLED, so `(auth)/layout` treats the
+    // harness runs with NKYEL_AUTH_DISABLED, so `(auth)/layout` treats the
     // window as signed in and answers /login with a server redirect that never
     // commits — the request is the only place the redirect target is visible.
     const navigated: string[] = [];

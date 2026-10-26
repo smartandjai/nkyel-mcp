@@ -1,6 +1,6 @@
 # MCP (Model Context Protocol) Configuration
 
-DeerFlow supports configurable MCP servers and skills to extend its capabilities, which are loaded from a dedicated `extensions_config.json` file in the project root directory.
+nkyel supports configurable MCP servers and skills to extend its capabilities, which are loaded from a dedicated `extensions_config.json` file in the project root directory.
 
 ## Setup
 
@@ -45,7 +45,7 @@ sandbox/artifact API.
 ## OpenViking MCP Tools
 
 OpenViking's official server exposes a Streamable HTTP MCP endpoint at `/mcp`.
-DeerFlow connects to it through the same generic MCP client used for other HTTP
+nkyel connects to it through the same generic MCP client used for other HTTP
 servers:
 
 ```json
@@ -67,13 +67,13 @@ Set `OPENVIKING_API_KEY` to a normal owner-bound OpenViking **USER API key**.
 The key determines the OpenViking account and user. Do not use a root/admin
 key, trusted mode, or add `X-OpenViking-Account`, `X-OpenViking-User`, or
 `X-OpenViking-Actor-Peer` headers for this personal single-owner setup.
-`X-API-Key` is used here because DeerFlow expands a whole-string `$ENV_VAR`
+`X-API-Key` is used here because nkyel expands a whole-string `$ENV_VAR`
 value without storing a credential in the checked-in configuration.
 If `OPENVIKING_API_KEY` is missing or empty during initialization, OpenViking
-authentication fails and DeerFlow skips that MCP server, so no OpenViking tools
-appear. Changing only the environment variable does not invalidate DeerFlow's
+authentication fails and nkyel skips that MCP server, so no OpenViking tools
+appear. Changing only the environment variable does not invalidate nkyel's
 already-populated, file-signature-based MCP tool cache; after setting or fixing
-the key, restart DeerFlow, modify and re-save the extensions config, or call the
+the key, restart nkyel, modify and re-save the extensions config, or call the
 MCP cache-reset endpoint at `POST /api/mcp/cache/reset`. In a multi-worker
 deployment whose workers share the writable extensions-config directory, that
 endpoint publishes a shared generation so every worker refreshes before its
@@ -81,22 +81,22 @@ next MCP lookup. The response reports `scope: shared_config` to identify that
 transport (it reaches only workers mounting that directory), or `scope: process`
 if no config path can be resolved.
 
-OpenViking owns the tool schemas and behavior. DeerFlow performs the standard
+OpenViking owns the tool schemas and behavior. nkyel performs the standard
 MCP initialization and discovery flow, prefixes the discovered names with
 `openviking_` by default, and routes calls back through the generic MCP client.
-For capability parity with other official OpenViking harnesses, DeerFlow exposes
+For capability parity with other official OpenViking harnesses, nkyel exposes
 the native `forget` tool with the other discovered tools. `forget` permanently
 deletes a `viking://` URI and should be called only after explicit user
-confirmation; DeerFlow does not enforce that confirmation.
+confirmation; nkyel does not enforce that confirmation.
 
 Operators who do not want agents to call `forget` can block its default visible
-name with DeerFlow's existing guardrail configuration:
+name with nkyel's existing guardrail configuration:
 
 ```yaml
 guardrails:
   enabled: true
   provider:
-    use: deerflow.guardrails.builtin:AllowlistProvider
+    use: nkyel.guardrails.builtin:AllowlistProvider
     config:
       denied_tools: ["openviking_forget"]
 ```
@@ -117,9 +117,9 @@ container, such as `http://openviking:1933/mcp` for a shared Compose network or
 
 The `parallel-search` entry in `extensions_config.example.json` is disabled by
 default. To opt in, copy that entry into `mcpServers` in your root
-`extensions_config.json`, set `"enabled": true`, and restart DeerFlow. It connects
+`extensions_config.json`, set `"enabled": true`, and restart nkyel. It connects
 to `https://search.parallel.ai/mcp` over HTTP and adds Parallel's search and fetch
-tools. With DeerFlow's default tool-name prefix, the agent sees
+tools. With nkyel's default tool-name prefix, the agent sees
 `parallel-search_web_search` and `parallel-search_web_fetch`. Existing search
 providers and defaults stay unchanged.
 
@@ -130,7 +130,7 @@ conversation, so enable it only if you are comfortable sending that data to
 Parallel.
 
 Access is anonymous by default: no API key or authentication headers are needed.
-Keep `"User-Agent": "deer-flow"` in the entry's `headers`. This stable,
+Keep `"User-Agent": "nkyel"` in the entry's `headers`. This stable,
 project-wide identity lets Parallel measure aggregate usage from this
 integration to understand adoption and support it; it does not identify an
 individual user or installation. Preserve it on search and fetch HTTP requests
@@ -142,17 +142,17 @@ For higher rate limits, optionally add authorization to the `headers` field of t
 ```json
 {
   "headers": {
-    "User-Agent": "deer-flow",
+    "User-Agent": "nkyel",
     "Authorization": "$PARALLEL_AUTHORIZATION"
   }
 }
 ```
 
-Set `PARALLEL_AUTHORIZATION` in the DeerFlow backend's environment to the full
-value `Bearer <your-parallel-api-key>`, then restart DeerFlow. Include `Bearer `
-in the environment variable because DeerFlow expands only whole-string
+Set `PARALLEL_AUTHORIZATION` in the nkyel backend's environment to the full
+value `Bearer <your-parallel-api-key>`, then restart nkyel. Include `Bearer `
+in the environment variable because nkyel expands only whole-string
 `$ENV_VAR` references, not `Bearer $ENV_VAR`. Keep the actual key out of committed
-files. Remove only `Authorization` and restart DeerFlow to return to anonymous
+files. Remove only `Authorization` and restart nkyel to return to anonymous
 access. See the
 [Parallel Search MCP documentation](https://docs.parallel.ai/integrations/mcp/search-mcp)
 for details.
@@ -215,7 +215,7 @@ top-level `config.yaml -> tool_search.auto_promote_top_k` setting.
 
 ## Tool Name Prefixes
 
-DeerFlow prefixes discovered MCP tool names with `<server_name>_` by default.
+nkyel prefixes discovered MCP tool names with `<server_name>_` by default.
 This avoids collisions when two enabled servers expose tools with the same
 name. A server that already namespaces its own tools can opt out:
 
@@ -236,7 +236,7 @@ With this setting, a server tool named `semantic_scholar_search_papers` keeps
 that name instead of becoming
 `semantic-scholar_semantic_scholar_search_papers`. The default is `true` for
 backward compatibility. Disable it only when every resulting tool name remains
-unique across the enabled servers. Stdio tools continue to use DeerFlow's
+unique across the enabled servers. Stdio tools continue to use nkyel's
 persistent per-thread session pool regardless of this setting.
 
 Session reuse also requires the same owning event loop. Parallel synchronous
@@ -292,21 +292,21 @@ never returns the matching MCP response cannot stall the task poller. Other
 
 ## Filesystem MCP Servers
 
-DeerFlow already provides built-in file tools for thread-scoped workspace access.
-Do not add an MCP filesystem server for the same DeerFlow workspace. The
+nkyel already provides built-in file tools for thread-scoped workspace access.
+Do not add an MCP filesystem server for the same nkyel workspace. The
 overlapping file tools use different path semantics, which can make LLM tool
 selection and file access behavior unstable.
 
-DeerFlow does not currently adapt the MCP Roots mode for filesystem servers. In
-particular, it does not publish per-thread MCP roots or map DeerFlow sandbox
+nkyel does not currently adapt the MCP Roots mode for filesystem servers. In
+particular, it does not publish per-thread MCP roots or map nkyel sandbox
 paths such as `/mnt/user-data/...` to paths accepted by
-`@modelcontextprotocol/server-filesystem`. Use DeerFlow's built-in file tools
-for DeerFlow workspace files.
+`@modelcontextprotocol/server-filesystem`. Use nkyel's built-in file tools
+for nkyel workspace files.
 
 ## Durable Background Tasks with Ordinary MCP Tools
 
 An MCP server can expose a fast `submit` tool plus `status` and `cancel` tools
-for long-running work. DeerFlow keeps the remote task ID in SQL and polls it
+for long-running work. nkyel keeps the remote task ID in SQL and polls it
 outside the Agent run, so the model does not have to remember or repeatedly
 send that ID.
 
@@ -321,7 +321,7 @@ mcp_tasks:
 ```
 
 Then bind exact remote tool names in `extensions_config.json`. These names are
-the server's raw names, before DeerFlow adds any `<server_name>_` prefix:
+the server's raw names, before nkyel adds any `<server_name>_` prefix:
 
 ```json
 {
@@ -354,12 +354,12 @@ are never parsed as a task protocol:
   `running`, `input_required`, `completed`, `failed`, or `cancelled`. It may
   also return `result`, `result_artifact` (`uri` plus `mime_type`), `error`,
   `error_code`, `input_required`, and a finite positive
-  `poll_after_seconds`. DeerFlow caps that remote scheduling hint at 24 hours.
+  `poll_after_seconds`. nkyel caps that remote scheduling hint at 24 hours.
 - `cancel_report({"task_id":"remote-123"})` is idempotent and returns the
   actual terminal status: `cancelled`, `completed`, or `failed`.
 
 For the status tool, `isError: true` means that the status call itself failed;
-DeerFlow records a bounded snippet of its first text content block and retries
+nkyel records a bounded snippet of its first text content block and retries
 with capped exponential backoff. It does not infer that the remote task failed,
 because MCP tool errors do not distinguish transient from permanent conditions.
 A server must report a permanent remote-task failure through a normal tool
@@ -380,7 +380,7 @@ both SQLite and PostgreSQL.
 `error_code: "task_not_found"` is a permanent failure. Network and transport
 errors remain retryable with capped exponential backoff; the query API reports
 `tracking_degraded` after repeated failures. Oversized JSON results are not
-cut into invalid JSON: DeerFlow stores a text preview, marks
+cut into invalid JSON: nkyel stores a text preview, marks
 `result_truncated`, and preserves any external `result_artifact` reference.
 
 Only submit remains in the Agent's normal tool list. Status and cancel are
@@ -392,7 +392,7 @@ runtime-internal. Query the current thread through:
 Task toolsets require `database.backend: sqlite` or `postgres`; startup fails
 instead of falling back to a synchronous submit when persistence or the task
 runtime is disabled. Restart recovery also requires the remote service to keep
-the task alive and recognize its ID after DeerFlow reconnects. Status and cancellation calls renew their control lease while executing and saving their result; the lease duration is a crash-recovery window, not a tool-call timeout. See [control-call leases](mcp-control-leases.md) for ownership loss, cancellation cleanup, and SQLite claim serialization. A stdio server
+the task alive and recognize its ID after nkyel reconnects. Status and cancellation calls renew their control lease while executing and saving their result; the lease duration is a crash-recovery window, not a tool-call timeout. See [control-call leases](mcp-control-leases.md) for ownership loss, cancellation cleanup, and SQLite claim serialization. A stdio server
 must therefore persist its own tasks; multi-instance deployments should
 normally use an independently running HTTP/SSE service.
 
@@ -444,17 +444,17 @@ credentials can access the same remote task. If the background credential
 cannot access it and the status tool returns a normal structured
 `error_code: "task_not_found"` result, the task becomes permanently `failed`,
 not a retryable authentication error.
-Restart DeerFlow after changing
+Restart nkyel after changing
 `mcp_tasks`, `task_toolsets`, `mcpInterceptors`, or any connection,
 authentication, transport, or timeout setting on a task-enabled server.
-DeerFlow rejects task-tool reloads that no longer match the Gateway's startup
+nkyel rejects task-tool reloads that no longer match the Gateway's startup
 snapshot instead of discovering tools with new settings while the background
 poller still calls the old endpoint. Agent-facing description/routing changes
 and changes to servers without task toolsets remain hot-reloadable.
 
 ## OAuth Support (HTTP/SSE MCP Servers)
 
-For `http` and `sse` MCP servers, DeerFlow supports OAuth token acquisition and automatic token refresh.
+For `http` and `sse` MCP servers, nkyel supports OAuth token acquisition and automatic token refresh.
 
 - Supported grants: `client_credentials`, `refresh_token`
 - Configure per-server `oauth` block in `extensions_config.json`
@@ -489,8 +489,8 @@ Providers such as Auth0, Okta and Google rotate refresh tokens: every refresh
 returns a new one and invalidates the old one. With `database.backend: sqlite`
 or `postgres`, the Gateway keeps each `refresh_token` connection's latest access
 token and refresh token in the `mcp_oauth_tokens` table (migration
-`0047_mcp_oauth_tokens`), encrypted with `DEER_FLOW_CREDENTIALS_KEY` (see
-[CONFIGURATION.md](CONFIGURATION.md#credentials-encryption-key-deer_flow_credentials_key)):
+`0047_mcp_oauth_tokens`), encrypted with `NKYEL_CREDENTIALS_KEY` (see
+[CONFIGURATION.md](CONFIGURATION.md#credentials-encryption-key-nkyel_credentials_key)):
 
 - A restart, a tool-cache reset, or a later run of a personal connection
   continues from the stored chain instead of the configured `refresh_token`.
@@ -526,16 +526,16 @@ token and refresh token in the `mcp_oauth_tokens` table (migration
   fails with an error that names the server and asks for a new refresh token.
   If the instance fell back to the seed because it could not decrypt the chain
   another instance stored, the error also says that every instance needs the
-  same `DEER_FLOW_CREDENTIALS_KEY`.
+  same `NKYEL_CREDENTIALS_KEY`.
 - `client_credentials` tokens are not stored; each process requests its own.
 - Tokens stay in process memory, as before, with `database.backend: memory`,
-  in the embedded `DeerFlowClient` (no Gateway), or when the credentials key
+  in the embedded `NkyelClient` (no Gateway), or when the credentials key
   cannot be loaded. If the database cannot be read or written, the refresh
   fails instead of consuming a refresh token that nothing records; a still-valid
   access token keeps working.
 - A declared multi-instance deployment (`deployment.multi_instance: true`) with
   an enabled `refresh_token` OAuth server refuses to start without a shared
-  `DEER_FLOW_CREDENTIALS_KEY`. Personal OAuth connections are saved at runtime,
+  `NKYEL_CREDENTIALS_KEY`. Personal OAuth connections are saved at runtime,
   so that startup check cannot see them; set the variable on every
   multi-instance deployment that uses them.
 
@@ -620,7 +620,7 @@ The caller supplies the values on each run request:
   `user_auth` credential. See *Durable Background
   Tasks* above.
 
-Use `user_auth` instead when the credential belongs to a configured DeerFlow
+Use `user_auth` instead when the credential belongs to a configured nkyel
 user rather than to the individual request.
 
 ## Custom Tool Interceptors
@@ -655,7 +655,7 @@ needs logic (signing, exchanging the secret for another token, routing on the
 tool name):
 
 ```python
-from deerflow.runtime.secret_context import extract_request_secrets
+from nkyel.runtime.secret_context import extract_request_secrets
 
 
 def build_auth_interceptor():
@@ -680,7 +680,7 @@ node injects the runtime into any tool parameter named `runtime`, which is how
 both the pooled stdio wrapper and `langchain-mcp-adapters`' HTTP/SSE tool
 receive it. When the call originates outside a tool node, fall back to
 `langgraph.runtime.get_runtime()` (see
-`deerflow/mcp/context_headers.py::_current_runtime`).
+`nkyel/mcp/context_headers.py::_current_runtime`).
 
 Supply the credential on each run request through `config.context.secrets`:
 
@@ -716,7 +716,7 @@ Deployments that previously sent `metadata.auth_token` or `config.metadata.auth_
    logs, snapshots, exports, and backups.
 
 Current history APIs hide legacy `metadata.auth_token` and `config.metadata.auth_token` values, but hiding a response does not erase
-material already retained by those systems. Restarting or upgrading DeerFlow does
+material already retained by those systems. Restarting or upgrading nkyel does
 not rotate credentials or perform historical cleanup; operators must complete
 both actions explicitly.
 
@@ -755,7 +755,7 @@ re-authenticates, or restarts the others.
 
 ## How It Works
 
-MCP servers expose tools that are automatically discovered and integrated into DeerFlow’s agent system at runtime. Once enabled, these tools become available to agents without additional code changes.
+MCP servers expose tools that are automatically discovered and integrated into nkyel’s agent system at runtime. Once enabled, these tools become available to agents without additional code changes.
 
 ## Example Capabilities
 

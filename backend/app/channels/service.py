@@ -18,15 +18,15 @@ from app.channels.manager import DEFAULT_CHANNEL_MAX_CONCURRENCY, DEFAULT_CHANNE
 from app.channels.message_bus import DEFAULT_INBOUND_QUEUE_MAXSIZE, MessageBus
 from app.channels.runtime_config_store import RuntimeConfigStore, SqlChannelRuntimeConfigStore, merge_runtime_channel_configs, overlay_runtime_channel_configs, resolve_runtime_config_store, runtime_channel_disconnected
 from app.channels.store import ChannelStore, SqlChannelStore, resolve_channel_store
-from deerflow.config.channel_leader_lease_config import CHANNEL_LEADER_LEASE_FIELD, CHANNEL_LEADER_LEASE_KEY, ChannelLeaderLeaseConfig, channel_leader_lease_config
-from deerflow.utils.file_io import await_drained
+from nkyel.config.channel_leader_lease_config import CHANNEL_LEADER_LEASE_FIELD, CHANNEL_LEADER_LEASE_KEY, ChannelLeaderLeaseConfig, channel_leader_lease_config
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.channel_connections_config import ChannelConnectionsConfig
-    from deerflow.runtime import StreamBridge
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.channel_connections_config import ChannelConnectionsConfig
+    from nkyel.runtime import StreamBridge
 
 # Channel name → import path for lazy loading
 _CHANNEL_REGISTRY: dict[str, str] = {
@@ -64,8 +64,8 @@ _UNARBITRATED_PROVIDERS = frozenset({"github"})
 # transport (bad credentials, platform outage).
 _LEASE_START_BACKOFF_MAX_SECONDS = 300.0
 
-_CHANNELS_LANGGRAPH_URL_ENV = "DEER_FLOW_CHANNELS_LANGGRAPH_URL"
-_CHANNELS_GATEWAY_URL_ENV = "DEER_FLOW_CHANNELS_GATEWAY_URL"
+_CHANNELS_LANGGRAPH_URL_ENV = "NKYEL_CHANNELS_LANGGRAPH_URL"
+_CHANNELS_GATEWAY_URL_ENV = "NKYEL_CHANNELS_GATEWAY_URL"
 
 
 def _channel_has_credentials(name: str, channel_config: dict[str, Any]) -> bool:
@@ -160,8 +160,8 @@ def _make_connection_repo(connection_config: ChannelConnectionsConfig | None, *,
         return None
 
     try:
-        from deerflow.persistence.channel_connections import ChannelConnectionRepository
-        from deerflow.persistence.engine import get_session_factory
+        from nkyel.persistence.channel_connections import ChannelConnectionRepository
+        from nkyel.persistence.engine import get_session_factory
     except Exception:
         logger.exception("Failed to import channel connection repository")
         return None
@@ -185,8 +185,8 @@ def _make_leadership(lease_config: ChannelLeaderLeaseConfig, *, owner_id: str | 
     is a configuration the startup gate refuses, so reaching it here is an
     error rather than a silent fallback to every instance connecting.
     """
-    from deerflow.persistence.channel_leases import SqlChannelLeaseRepository
-    from deerflow.persistence.engine import get_session_factory
+    from nkyel.persistence.channel_leases import SqlChannelLeaseRepository
+    from nkyel.persistence.engine import get_session_factory
 
     session_factory = get_session_factory()
     if session_factory is None:
@@ -297,14 +297,14 @@ class ChannelService:
         ``ChannelManager`` (see its docstring); it is optional so direct
         callers (including most tests) that don't need follow-up-buffer
         auto-draining can omit it. ``credentials_cipher`` is the Gateway's
-        ``DEER_FLOW_CREDENTIALS_KEY`` cipher for per-connection credentials;
+        ``NKYEL_CREDENTIALS_KEY`` cipher for per-connection credentials;
         without it stored credentials stay unavailable. ``multi_process`` is
         the Gateway's multi-process signal, which ``channels.leader_lease:
         auto`` follows; ``lease_owner_id`` names this instance in the lease
         table (the Gateway passes its RunManager worker id).
         """
         if app_config is None:
-            from deerflow.config.app_config import get_app_config
+            from nkyel.config.app_config import get_app_config
 
             app_config = get_app_config()
         channels_config = {}
@@ -544,7 +544,7 @@ class ChannelService:
         caller that falls back to its cached config for an absent provider
         must not revive credentials a peer disconnected.
         """
-        from deerflow.config.app_config import get_app_config
+        from nkyel.config.app_config import get_app_config
 
         app_config = get_app_config()
         extra = app_config.model_extra or {}
@@ -759,7 +759,7 @@ class ChannelService:
             return False
 
         try:
-            from deerflow.reflection import resolve_class
+            from nkyel.reflection import resolve_class
 
             channel_cls = resolve_class(import_path, base_class=None)
         except Exception:
@@ -775,7 +775,7 @@ class ChannelService:
                 # guard. Wired here (like channel_store) rather than defaulted
                 # inside the connector so that directly constructed channels
                 # (tests, tooling) stay free of filesystem side effects.
-                from deerflow.config.paths import get_paths
+                from nkyel.config.paths import get_paths
 
                 def _default_seen_store_path() -> str:
                     # Worker thread: ``base_dir`` resolves through realpath, and a

@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.config import paths as paths_module
-from deerflow.config.paths import Paths
-from deerflow.integrations import lark_cli
+from nkyel.config import paths as paths_module
+from nkyel.config.paths import Paths
+from nkyel.integrations import lark_cli
 
 
 @pytest.mark.parametrize("file_kind", ["skill", "manifest"])
@@ -35,7 +35,7 @@ def test_failed_file_publish_preserves_previous_content(tmp_path, monkeypatch, f
     monkeypatch.setattr(lark_cli.os, "replace", fail_target_replace)
     with pytest.raises(OSError, match="injected file publication failure"):
         if file_kind == "skill":
-            lark_cli._append_deerflow_lark_shared_guidance(root)
+            lark_cli._append_nkyel_lark_shared_guidance(root)
         else:
             lark_cli._write_manifest(root, {"lark-shared"}, version="v1.0.65", content_sha256="new-digest")
 

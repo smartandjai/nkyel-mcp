@@ -1,4 +1,4 @@
-"""Root-relative glob semantics of ``deerflow.sandbox.search.path_matches``.
+"""Root-relative glob semantics of ``nkyel.sandbox.search.path_matches``.
 
 ``path_matches`` backs the ``glob`` tool and the ``grep`` ``glob=`` filter for
 every sandbox provider. It relied on ``PurePosixPath.match``, which matches
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.sandbox.search import find_glob_matches, find_grep_matches, path_matches
+from nkyel.sandbox.search import find_glob_matches, find_grep_matches, path_matches
 
 TREE = (
     "src/top.py",

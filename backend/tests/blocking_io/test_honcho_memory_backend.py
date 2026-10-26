@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.honcho.honcho_manager import HonchoMemoryManager
+from nkyel.agents.memory.backends.honcho.honcho_manager import HonchoMemoryManager
 
 
 class _BlockingFakeClient:

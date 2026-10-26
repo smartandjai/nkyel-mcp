@@ -16,14 +16,14 @@ from sqlalchemy import text
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.persistence.base import Base
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args, dsn_with_search_path
-from deerflow.persistence.run.sql import RunRepository
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import ConflictError, RunManager
-from deerflow.runtime.runs.schemas import RunStatus
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.persistence.base import Base
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args, dsn_with_search_path
+from nkyel.persistence.run.sql import RunRepository
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import ConflictError, RunManager
+from nkyel.runtime.runs.schemas import RunStatus
 
 
 def _asyncpg_fixture_url(uri: str) -> URL:
@@ -36,7 +36,7 @@ def _asyncpg_fixture_url(uri: str) -> URL:
 
 @pytest.mark.parametrize("sslmode", [None, "disable", "allow", "prefer", "require", "verify-ca", "verify-full"])
 def test_asyncpg_fixture_url_preserves_sslmode_and_other_connect_options(sslmode):
-    uri = "postgresql://user:password@localhost:5432/deerflow?target_session_attrs=read-write"
+    uri = "postgresql://user:password@localhost:5432/nkyel?target_session_attrs=read-write"
     if sslmode is not None:
         uri += f"&sslmode={sslmode}"
     url = _asyncpg_fixture_url(uri)

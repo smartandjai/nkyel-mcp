@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# cleanup-containers.sh - Clean up DeerFlow sandbox containers
+# cleanup-containers.sh - Clean up nkyel sandbox containers
 #
 # This script cleans up both Docker and Apple Container runtime containers
 # to ensure compatibility across different container runtimes.
@@ -8,7 +8,7 @@
 
 set -e
 
-PREFIX="${1:-deer-flow-sandbox}"
+PREFIX="${1:-nkyel-sandbox}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -23,7 +23,7 @@ cleanup_docker() {
     if command -v docker &> /dev/null; then
         echo -n "Checking Docker containers... "
         # Docker's name filter matches substrings. Check the returned names as
-        # well so a container like not-deer-flow-sandbox is never stopped.
+        # well so a container like not-nkyel-sandbox is never stopped.
         DOCKER_LIST=$(docker ps --filter "name=${PREFIX}-" --format '{{.ID}} {{.Names}} {{.Status}}' 2>/dev/null || true)
         docker_ids=()
         docker_rows=()

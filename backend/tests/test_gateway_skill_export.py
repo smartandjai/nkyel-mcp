@@ -17,13 +17,13 @@ from app.gateway import skill_export as service
 from app.gateway.auth.models import User
 from app.gateway.deps import get_config
 from app.gateway.routers import skills
-from deerflow.skills.export import SkillExportArchive
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.skills.export import SkillExportArchive
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 
 @pytest.fixture
 def app(tmp_path, monkeypatch):
-    from deerflow.config import paths
+    from nkyel.config import paths
 
     monkeypatch.setattr(paths, "_paths", paths.Paths(base_dir=tmp_path / "home"))
     stores = {u: UserScopedSkillStorage(u, host_path=str(tmp_path / "skills")) for u in ("alice", "bob")}
@@ -209,7 +209,7 @@ def test_export_upload_roundtrip_uses_existing_scanner_and_rejects_conflict(app,
     import shutil
     from pathlib import Path
 
-    from deerflow.skills.security_scanner import ScanResult
+    from nkyel.skills.security_scanner import ScanResult
 
     source = Path(__file__).resolve().parents[2] / "skills/public/data-analysis"
     alice = app.state.stores["alice"]
@@ -224,7 +224,7 @@ def test_export_upload_roundtrip_uses_existing_scanner_and_rejects_conflict(app,
     async def refresh(_):
         pass
 
-    monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", scan)
+    monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", scan)
     monkeypatch.setattr(skills, "refresh_user_skills_system_prompt_cache_async", refresh)
     with TestClient(app) as client:
         manifest = client.get("/api/skills/custom/data-analysis/export-manifest").json()

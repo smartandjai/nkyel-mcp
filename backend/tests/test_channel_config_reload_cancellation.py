@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.channels.service import ChannelService
-from deerflow.config import app_config as app_config_module
+from nkyel.config import app_config as app_config_module
 
 
 @pytest.mark.asyncio

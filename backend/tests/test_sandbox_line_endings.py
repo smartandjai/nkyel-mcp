@@ -15,10 +15,10 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-import deerflow.sandbox.local.local_sandbox as local_sandbox
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
-from deerflow.sandbox.read_file_contract import count_file_lines
-from deerflow.sandbox.tools import read_current_file_content, str_replace_tool
+import nkyel.sandbox.local.local_sandbox as local_sandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.read_file_contract import count_file_lines
+from nkyel.sandbox.tools import read_current_file_content, str_replace_tool
 
 CRLF_SOURCE = b"first\r\nsecond\r\nthird\r\n"
 
@@ -38,8 +38,8 @@ def _local_runtime(tmp_path: Path) -> SimpleNamespace:
 
 
 def _use_local_sandbox(monkeypatch) -> None:
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
 
 
 def _str_replace(tmp_path, monkeypatch, source: bytes, *, old_str: str, new_str: str, replace_all: bool = False) -> tuple[str, bytes]:
@@ -193,9 +193,9 @@ def test_str_replace_matches_crlf_from_a_provider_that_reads_raw(monkeypatch) ->
     sandbox = MagicMock()
     sandbox.id = "remote"
     sandbox.read_file.return_value = "first\r\nsecond\r\n"
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
-    monkeypatch.setattr("deerflow.sandbox.tools.is_local_sandbox", lambda runtime: False)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.is_local_sandbox", lambda runtime: False)
 
     result = str_replace_tool.func(runtime=MagicMock(), description="d", path="/mnt/user-data/outputs/f.txt", old_str="first\nsecond", new_str="1\n2")
 

@@ -12,18 +12,18 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.client import DeerFlowClient
-from deerflow.uploads.manager import UnsafeUploadPathError
+from nkyel.client import NkyelClient
+from nkyel.uploads.manager import UnsafeUploadPathError
 
 
 @pytest.fixture
 def upload_case(monkeypatch, tmp_path):
-    import deerflow.client as client_module
+    import nkyel.client as client_module
 
     uploads = tmp_path / "thread/user-data/uploads"
     uploads.mkdir(parents=True)
     monkeypatch.setattr(client_module, "ensure_uploads_dir", lambda *_args, **_kwargs: uploads)
-    return DeerFlowClient.__new__(DeerFlowClient), uploads, client_module
+    return NkyelClient.__new__(NkyelClient), uploads, client_module
 
 
 def test_unsafe_upload_stays_a_skip_when_discarding_its_capture_fails(upload_case, tmp_path, monkeypatch):
@@ -46,7 +46,7 @@ def test_unsafe_upload_stays_a_skip_when_discarding_its_capture_fails(upload_cas
     real_unlink = Path.unlink
 
     def unlink(self, *args, **kwargs):
-        if "deerflow-upload-source-" in str(self):
+        if "nkyel-upload-source-" in str(self):
             raise PermissionError("capture is still open")
         return real_unlink(self, *args, **kwargs)
 
@@ -71,7 +71,7 @@ def test_successful_upload_survives_a_capture_it_cannot_discard(upload_case, tmp
     real_unlink = Path.unlink
 
     def unlink(self, *args, **kwargs):
-        if "deerflow-upload-source-" in str(self):
+        if "nkyel-upload-source-" in str(self):
             raise PermissionError("capture is still open")
         return real_unlink(self, *args, **kwargs)
 
@@ -98,7 +98,7 @@ def test_capture_directory_cleanup_failure_does_not_fail_the_batch(upload_case, 
     def rmtree(cls, name, ignore_errors=False, repeated=False):
         # A locked capture: exactly what CPython's onexc re-raises when the
         # directory's cleanup is not told to ignore errors.
-        if "deerflow-upload-source-" in str(name) and not ignore_errors:
+        if "nkyel-upload-source-" in str(name) and not ignore_errors:
             raise PermissionError("capture directory is still open")
         return real_rmtree(cls, name, ignore_errors=ignore_errors, repeated=repeated)
 

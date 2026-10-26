@@ -30,7 +30,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
 pytestmark = pytest.mark.asyncio
 
@@ -61,7 +61,7 @@ async def test_install_skill_archive_does_not_block_event_loop(tmp_path: Path, m
         return SimpleNamespace(decision="allow", reason="anchor stub")
 
     # External dependency boundary only: the security scanner is an LLM call.
-    monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _allow_scan)
+    monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _allow_scan)
 
     # Constructor resolves paths (one-time, cached in production via
     # get_or_new_skill_storage); offloaded here so the anchor exercises only
@@ -84,8 +84,8 @@ async def test_user_scoped_install_skill_archive_does_not_block_event_loop(tmp_p
     pipeline with a per-user custom root and creates that root inside the
     coroutine, so the host-scoped anchor above cannot catch a regression there.
     """
-    from deerflow.config import paths as paths_mod
-    from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+    from nkyel.config import paths as paths_mod
+    from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
     archive = tmp_path / "loop-skill.skill"
     await asyncio.to_thread(_build_archive, archive)
@@ -93,8 +93,8 @@ async def test_user_scoped_install_skill_archive_does_not_block_event_loop(tmp_p
     async def _allow_scan(content: str, *, executable: bool = False, location: str = "SKILL.md", app_config=None, static_findings=None):
         return SimpleNamespace(decision="allow", reason="anchor stub")
 
-    monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _allow_scan)
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _allow_scan)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setattr(paths_mod, "_paths", None)
 
     # Constructor resolves per-user paths; offloaded so the only production

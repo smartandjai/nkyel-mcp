@@ -12,9 +12,9 @@ from support.symlinks import symlink_or_skip
 
 from app.gateway.auth.models import User
 from app.gateway.routers import skills as routes
-from deerflow.config.paths import Paths
-from deerflow.skills.storage import reset_skill_storage
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config.paths import Paths
+from nkyel.skills.storage import reset_skill_storage
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 BAD = "---\nname: broken\ndescription: private-value: detail\n---\n"
 GOOD = '---\nname: broken\ndescription: "private-value: detail"\n---\n'
@@ -31,7 +31,7 @@ def write(root: Path, package: str, content: str = BAD) -> Path:
 @pytest.fixture
 def scope(tmp_path, monkeypatch):
     paths = Paths(tmp_path)
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: paths)
     config = SimpleNamespace(skills=SimpleNamespace(get_skills_path=lambda: tmp_path / "global", container_path="/mnt/skills"))
     storage = UserScopedSkillStorage(USER_ID, app_config=config)
     reset_skill_storage()
@@ -239,7 +239,7 @@ def test_diagnostic_failure_does_not_expose_exception(scope, monkeypatch):
 
 
 def test_correction_and_reload_restore_runtime_catalog(scope, monkeypatch):
-    from deerflow.agents.lead_agent import prompt
+    from nkyel.agents.lead_agent import prompt
 
     paths, config, storage = scope
     broken = write(paths.user_custom_skills_dir(USER_ID), "broken")

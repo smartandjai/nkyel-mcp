@@ -33,8 +33,8 @@ from app.channels.manager import ALREADY_ADMITTED_MESSAGE, THREAD_BUSY_MESSAGE, 
 from app.channels.message_bus import InboundMessage, MessageBus, OutboundMessage
 from app.channels.store import JsonChannelStore, SqlChannelStore
 from app.gateway.internal_auth import INTERNAL_OWNER_USER_ID_HEADER_NAME
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_thread_bindings import ChannelThreadBindingRow
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_thread_bindings import ChannelThreadBindingRow
 
 pytestmark = pytest.mark.asyncio
 
@@ -497,8 +497,8 @@ async def test_new_command_still_rebinds_the_conversation(tmp_path):
 
 
 async def test_connection_bound_conversation_converges_through_the_repository(tmp_path):
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'connections.db'}", sqlite_dir=str(tmp_path))
     try:

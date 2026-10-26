@@ -41,7 +41,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine  # no
 
 from app.gateway.auth.models import User  # noqa: E402
 from app.gateway.auth.repositories.sqlite import SQLiteUserRepository  # noqa: E402
-from deerflow.config.database_config import DatabaseConfig  # noqa: E402
+from nkyel.config.database_config import DatabaseConfig  # noqa: E402
 
 # Must be the exact same absolute path run_concurrency_bench.py's
 # seed_baseline() computes (SQLITE_BENCH_DIR there) -- DatabaseConfig
@@ -50,10 +50,10 @@ from deerflow.config.database_config import DatabaseConfig  # noqa: E402
 # workers at different directories whenever this script is invoked from
 # outside backend/ (the seeder ran in-process from the invoker's own CWD;
 # workers are spawned with cwd=BACKEND_DIR, which don't necessarily match).
-SQLITE_BENCH_DIR = str(BACKEND_DIR / ".deer-flow" / "bench_data")
+SQLITE_BENCH_DIR = str(BACKEND_DIR / ".nkyel" / "bench_data")
 
 # The exact per-connection PRAGMAs the app sets on every SQLite connection
-# (deerflow/persistence/engine.py::_enable_sqlite_wal). journal_mode is
+# (nkyel/persistence/engine.py::_enable_sqlite_wal). journal_mode is
 # persistent so WAL would be picked up incidentally from the seeder's engine,
 # but synchronous and foreign_keys are per-connection: without this a worker
 # runs at SQLite's synchronous=FULL / foreign_keys=OFF defaults and its write

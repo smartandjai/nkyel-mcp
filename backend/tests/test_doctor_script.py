@@ -25,7 +25,7 @@ def doctor_checkout(tmp_path: Path) -> Path:
 
 
 def _run_doctor(checkout: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    env = {name: value for name, value in os.environ.items() if not name.startswith("DEER_FLOW_") and name not in {"PYTHONPATH", "PYTHONHOME"}}
+    env = {name: value for name, value in os.environ.items() if not name.startswith("NKYEL_") and name not in {"PYTHONPATH", "PYTHONHOME"}}
     return subprocess.run(
         [sys.executable, str(checkout / "scripts" / "doctor.py"), *args],
         cwd=checkout,
@@ -78,10 +78,10 @@ def test_no_arguments_ignores_inherited_runtime_configuration(doctor_checkout: P
     external_env.write_bytes(env_bytes)
     external_home = tmp_path / "external home"
     for name, value in {
-        "DEER_FLOW_CONFIG_PATH": external_config,
-        "DEER_FLOW_PROJECT_ROOT": external_root,
-        "DEER_FLOW_ENV_FILE": external_env,
-        "DEER_FLOW_HOME": external_home,
+        "NKYEL_CONFIG_PATH": external_config,
+        "NKYEL_PROJECT_ROOT": external_root,
+        "NKYEL_ENV_FILE": external_env,
+        "NKYEL_HOME": external_home,
     }.items():
         monkeypatch.setenv(name, str(value))
 

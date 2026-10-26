@@ -7,14 +7,14 @@ import pytest
 
 @pytest.fixture(params=["local", "user"])
 def storage(request, monkeypatch, tmp_path):
-    from deerflow.config.paths import Paths
-    from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
-    from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+    from nkyel.config.paths import Paths
+    from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
+    from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
     root = tmp_path / "skills"
     if request.param == "local":
         return LocalSkillStorage(host_path=str(root))
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
     return UserScopedSkillStorage("history-owner", host_path=str(root))
 
 

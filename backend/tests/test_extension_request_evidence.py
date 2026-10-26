@@ -6,21 +6,21 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from deerflow_extension_api import InvalidRunEvidenceCursor, require_run_evidence_reader, resolve_run_evidence_reader
+from nkyel_extension_api import InvalidRunEvidenceCursor, require_run_evidence_reader, resolve_run_evidence_reader
 from fastapi import APIRouter, HTTPException, Request
 
-from deerflow.extensions.run_evidence import StoreRunEvidenceReader, StoreRunEvidenceReaderFactory
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.extensions.run_evidence import StoreRunEvidenceReader, StoreRunEvidenceReaderFactory
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 @pytest.fixture
 def evidence_app(monkeypatch):
     import app.gateway.app as app_module
-    import deerflow.extensions as extensions
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.extensions.registry import ExtensionRegistry
+    import nkyel.extensions as extensions
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.extensions.registry import ExtensionRegistry
 
     monkeypatch.setattr(app_module, "get_app_config", lambda: AppConfig(sandbox=SandboxConfig(use="test")))
     monkeypatch.setattr("app.gateway.auth_middleware.is_auth_disabled", lambda: False)
@@ -75,7 +75,7 @@ def test_resolver_failure_does_not_return_a_global_reader():
     def fail(request):
         raise RuntimeError("resolver failed")
 
-    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(deerflow_extension_run_evidence_reader_resolver=fail)))
+    request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(nkyel_extension_run_evidence_reader_resolver=fail)))
     with pytest.raises(RuntimeError, match="resolver failed"):
         resolve_run_evidence_reader(request)
 

@@ -12,7 +12,7 @@ second. Mirrors the app-config boolean guard.
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.scheduler_config import SchedulerConfig
+from nkyel.config.scheduler_config import SchedulerConfig
 
 SCHEDULER_INT_FIELDS = (
     "poll_interval_seconds",

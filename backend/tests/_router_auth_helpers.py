@@ -39,7 +39,7 @@ from starlette.types import ASGIApp
 
 from app.gateway.auth.models import User
 from app.gateway.authz import AuthContext, Permissions
-from deerflow.runtime.user_context import reset_current_user, set_current_user
+from nkyel.runtime.user_context import reset_current_user, set_current_user
 
 # Default permission set granted to the stub user. Mirrors `_ALL_PERMISSIONS`
 # in authz.py — kept inline so the tests don't import a private symbol.

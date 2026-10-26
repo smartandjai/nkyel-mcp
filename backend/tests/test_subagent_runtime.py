@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.subagents import SubagentRuntime
+from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.subagents import SubagentRuntime
 
 
 def test_runtime_rejects_batch_repository_without_enabled_batch_config() -> None:
@@ -51,7 +51,7 @@ async def test_runtime_owns_batch_worker_lifecycle_and_shared_capacity() -> None
     app_config = MagicMock()
 
     with patch(
-        "deerflow.subagents.batch_service.SubagentBatchService",
+        "nkyel.subagents.batch_service.SubagentBatchService",
         return_value=service,
     ) as service_type:
         runtime = SubagentRuntime(
@@ -94,7 +94,7 @@ async def test_runtime_stop_drains_owned_batch_worker_across_repeated_cancellati
     app_config = MagicMock()
 
     with patch(
-        "deerflow.subagents.batch_service.SubagentBatchService",
+        "nkyel.subagents.batch_service.SubagentBatchService",
         return_value=service,
     ):
         runtime = SubagentRuntime(
@@ -144,7 +144,7 @@ async def test_runtime_stop_preserves_caller_cancellation_when_service_fails(can
     service = MagicMock()
     service.start = AsyncMock()
     service.stop = AsyncMock(side_effect=failing_stop)
-    with patch("deerflow.subagents.batch_service.SubagentBatchService", return_value=service):
+    with patch("nkyel.subagents.batch_service.SubagentBatchService", return_value=service):
         runtime = SubagentRuntime(
             batch_repository=MagicMock(),
             batch_config=SubagentBatchesConfig(enabled=True),

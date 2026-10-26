@@ -10,12 +10,12 @@ from langchain_core.messages import ToolMessage
 from langchain_mcp_adapters.tools import load_mcp_tools
 from mcp.types import CallToolResult, ListToolsResult, ResourceLink, Tool
 
-from deerflow.agents.middlewares.artifact_capture_middleware import ArtifactCaptureMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.config.paths import Paths
-from deerflow.mcp.session_pool import MCPSessionPool
-from deerflow.mcp.tools import _RawServerDiscovery, _wrap_discovered_server_tools
+from nkyel.agents.middlewares.artifact_capture_middleware import ArtifactCaptureMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.config.paths import Paths
+from nkyel.mcp.session_pool import MCPSessionPool
+from nkyel.mcp.tools import _RawServerDiscovery, _wrap_discovered_server_tools
 
 
 @pytest_asyncio.fixture
@@ -76,7 +76,7 @@ async def test_resource_link_captured_by_agent_graph(transport, mime, suffix, mo
     # Discovery, pooling/call protection, tool execution, and capture are real.
     monkeypatch.setattr("langchain_mcp_adapters.tools.create_session", fake_session)
     monkeypatch.setattr("langchain_mcp_adapters.sessions.create_session", fake_session)
-    monkeypatch.setattr("deerflow.mcp.tools.get_paths", lambda: Paths(tmp_path))
+    monkeypatch.setattr("nkyel.mcp.tools.get_paths", lambda: Paths(tmp_path))
     connection = {"transport": "stdio", "command": "offline-mcp-fixture"} if transport == "stdio" else {"transport": "streamable_http", "url": "https://example.com/mcp"}
     discovered = await load_mcp_tools(
         None,

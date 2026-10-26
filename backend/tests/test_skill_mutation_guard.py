@@ -7,8 +7,8 @@ import threading
 
 import pytest
 
-from deerflow.skills.projection import _projection_lock, skill_projection_read_lock
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.skills.projection import _projection_lock, skill_projection_read_lock
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
 
 def test_read_guard_is_reentrant_inside_existing_writer(tmp_path):
@@ -44,7 +44,7 @@ def test_another_process_cannot_bypass_owner_guard_and_kill_releases_it(tmp_path
     script = """
 import sys
 from pathlib import Path
-from deerflow.skills.projection import _projection_lock
+from nkyel.skills.projection import _projection_lock
 with _projection_lock(Path(sys.argv[1]) / 'custom'):
     print('locked', flush=True)
     sys.stdin.read()

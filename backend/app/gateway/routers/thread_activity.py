@@ -22,7 +22,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from app.gateway.authz import require_permission
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.runtime.user_context import get_effective_user_id
 
 router = APIRouter(prefix="/api/thread-activity", tags=["threads"])
 

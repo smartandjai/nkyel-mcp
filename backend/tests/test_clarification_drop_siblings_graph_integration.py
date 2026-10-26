@@ -16,8 +16,8 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.tools import tool
 
-from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
-from deerflow.tools.builtins.clarification_tool import ask_clarification_tool
+from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
+from nkyel.tools.builtins.clarification_tool import ask_clarification_tool
 
 _BASH_INVOCATIONS: list[str] = []
 _MIXED_MESSAGE_ID = "ai-clarification-with-sibling"

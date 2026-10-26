@@ -14,13 +14,13 @@ from langgraph.types import Overwrite
 
 from app.gateway.routers import runs, thread_runs, threads
 from app.gateway.services import normalize_input, strip_server_owned_state_metadata
-from deerflow.community.aio_sandbox.aio_sandbox_provider import AioSandboxProvider
-from deerflow.sandbox.exceptions import SandboxRuntimeError
-from deerflow.sandbox.lease import SANDBOX_LEASE_OWNER_CONTEXT_KEY
-from deerflow.sandbox.sandbox import Sandbox
-from deerflow.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
-from deerflow.sandbox.search import GrepMatch
-from deerflow.sandbox.tools import ensure_sandbox_initialized, ensure_sandbox_initialized_async
+from nkyel.community.aio_sandbox.aio_sandbox_provider import AioSandboxProvider
+from nkyel.sandbox.exceptions import SandboxRuntimeError
+from nkyel.sandbox.lease import SANDBOX_LEASE_OWNER_CONTEXT_KEY
+from nkyel.sandbox.sandbox import Sandbox
+from nkyel.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
+from nkyel.sandbox.search import GrepMatch
+from nkyel.sandbox.tools import ensure_sandbox_initialized, ensure_sandbox_initialized_async
 
 FOREIGN_SANDBOX_ID = "sandbox-user-b-thread-b"
 OWN_SANDBOX_ID = "sandbox-user-a-thread-a"

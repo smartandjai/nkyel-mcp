@@ -12,19 +12,19 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.client import DeerFlowClient
-from deerflow.uploads.companions import resolve_companion
+from nkyel.client import NkyelClient
+from nkyel.uploads.companions import resolve_companion
 
 
 @pytest.fixture
 def upload_case(monkeypatch, tmp_path):
-    import deerflow.client as client_module
+    import nkyel.client as client_module
 
     uploads = tmp_path / "thread/user-data/uploads"
     uploads.mkdir(parents=True)
     monkeypatch.setattr(client_module, "ensure_uploads_dir", lambda *args, **kwargs: uploads)
     # upload_files has no dependency on initialized instance fields.
-    return DeerFlowClient.__new__(DeerFlowClient), uploads
+    return NkyelClient.__new__(NkyelClient), uploads
 
 
 def call_upload(client, source, in_loop):
@@ -41,8 +41,8 @@ def call_upload(client, source, in_loop):
 @pytest.mark.parametrize("change", ["edit", "remove"])
 @pytest.mark.parametrize("existing", [False, True])
 def test_conversion_keeps_uploaded_version(upload_case, monkeypatch, tmp_path, in_loop, change, existing):
-    import deerflow.client as client_module
-    import deerflow.utils.file_conversion as conversion
+    import nkyel.client as client_module
+    import nkyel.utils.file_conversion as conversion
 
     client, uploads = upload_case
     source = tmp_path / "report.pdf"
@@ -91,7 +91,7 @@ def test_conversion_keeps_uploaded_version(upload_case, monkeypatch, tmp_path, i
 
 @pytest.mark.parametrize("in_loop", [False, True])
 def test_failed_conversion_keeps_original_and_cleans_snapshot(upload_case, monkeypatch, tmp_path, in_loop):
-    import deerflow.utils.file_conversion as conversion
+    import nkyel.utils.file_conversion as conversion
 
     client, uploads = upload_case
     source = tmp_path / "report.pdf"
@@ -123,7 +123,7 @@ def test_convertible_same_file_is_rejected_without_data_loss(upload_case):
 
 
 def test_captured_upload_preserves_original_metadata(upload_case, monkeypatch, tmp_path):
-    import deerflow.utils.file_conversion as conversion
+    import nkyel.utils.file_conversion as conversion
 
     client, uploads = upload_case
     source = tmp_path / "report.pdf"
@@ -151,7 +151,7 @@ def test_captured_upload_preserves_original_metadata(upload_case, monkeypatch, t
 def test_real_xlsx_conversion_uses_captured_version(upload_case, monkeypatch, tmp_path, in_loop, existing):
     from openpyxl import Workbook, load_workbook
 
-    import deerflow.client as client_module
+    import nkyel.client as client_module
 
     client, uploads = upload_case
     source = tmp_path / "report.xlsx"
@@ -196,7 +196,7 @@ def test_real_xlsx_conversion_uses_captured_version(upload_case, monkeypatch, tm
 
 
 def test_capture_failure_preserves_existing_upload(upload_case, monkeypatch, tmp_path):
-    import deerflow.uploads.manager as manager
+    import nkyel.uploads.manager as manager
 
     client, uploads = upload_case
     source = tmp_path / "report.pdf"
@@ -210,7 +210,7 @@ def test_capture_failure_preserves_existing_upload(upload_case, monkeypatch, tmp
         src_name, dest_name = getattr(src, "name", None), getattr(dest, "name", None)
         if isinstance(src_name, (str, os.PathLike)) and isinstance(dest_name, (str, os.PathLike)):
             capture = Path(dest_name)
-            if Path(src_name) == source and capture.parent.name.startswith("deerflow-upload-source-"):
+            if Path(src_name) == source and capture.parent.name.startswith("nkyel-upload-source-"):
                 captures.append(capture)
                 raise OSError("snapshot disk full")
         return real_copyfileobj(src, dest, *args, **kwargs)
@@ -230,7 +230,7 @@ def test_capture_failure_preserves_existing_upload(upload_case, monkeypatch, tmp
 @pytest.mark.parametrize("in_loop", [False, True])
 def test_acl_only_readable_source_uploads_and_converts(upload_case, monkeypatch, tmp_path, in_loop):
     """Preserve the ACL-only source case identified in the #6621 review."""
-    import deerflow.utils.file_conversion as conversion
+    import nkyel.utils.file_conversion as conversion
 
     if os.geteuid() == 0:
         pytest.skip("root bypasses source permission checks")
@@ -277,8 +277,8 @@ def test_collision_retries_keep_one_capture(upload_case, monkeypatch, tmp_path, 
     """Retry new names without reopening the source or losing its metadata."""
     import builtins
 
-    import deerflow.uploads.manager as manager
-    import deerflow.utils.file_conversion as conversion
+    import nkyel.uploads.manager as manager
+    import nkyel.utils.file_conversion as conversion
 
     client, uploads = upload_case
     source = tmp_path / "report.pdf"
@@ -347,7 +347,7 @@ def test_collision_retries_keep_one_capture(upload_case, monkeypatch, tmp_path, 
 
 
 def test_colliding_original_is_published_only_after_copy_completes(upload_case, monkeypatch, tmp_path):
-    import deerflow.uploads.manager as manager
+    import nkyel.uploads.manager as manager
 
     client, uploads = upload_case
     source = tmp_path / "notes.txt"

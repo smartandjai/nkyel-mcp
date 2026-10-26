@@ -22,7 +22,7 @@ from app.gateway.routers import project_documents as mod
 class _Request:
     """Minimal request stand-in; the permission decorators honor this bypass."""
 
-    _deerflow_test_bypass_auth = True
+    _nkyel_test_bypass_auth = True
 
 
 class _StagedPath:

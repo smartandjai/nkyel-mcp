@@ -24,13 +24,13 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
-from deerflow.projects import documents as documents_mod
-from deerflow.projects.documents import add_staged_document, original_file_path, stage_document_bytes
-from deerflow.projects.tools import _read_project_document_impl
-from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
-from deerflow.utils.file_io import run_file_io as _real_run_file_io
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
+from nkyel.projects import documents as documents_mod
+from nkyel.projects.documents import add_staged_document, original_file_path, stage_document_bytes
+from nkyel.projects.tools import _read_project_document_impl
+from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
+from nkyel.utils.file_io import run_file_io as _real_run_file_io
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -49,16 +49,16 @@ def _spy_offload(monkeypatch) -> list[str]:
         calls.append(getattr(target, "__name__", repr(target)))
         return await _real_run_file_io(func, *args, **kwargs)
 
-    monkeypatch.setattr("deerflow.projects.documents.run_file_io", spy)
-    monkeypatch.setattr("deerflow.projects.tools.run_file_io", spy)
+    monkeypatch.setattr("nkyel.projects.documents.run_file_io", spy)
+    monkeypatch.setattr("nkyel.projects.tools.run_file_io", spy)
     monkeypatch.setattr("app.gateway.routers.project_documents.run_file_io", spy)
     return calls
 
 
 async def _make_env(tmp_path, monkeypatch) -> SimpleNamespace:
-    import deerflow.config.paths as paths_mod
+    import nkyel.config.paths as paths_mod
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setattr(paths_mod, "_paths", None)
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}", sqlite_dir=str(tmp_path))
     sf = get_session_factory()
@@ -112,7 +112,7 @@ async def test_list_content_missing_check_dispatches_off_the_loop(tmp_path, monk
         assert result is not None
         state = SimpleNamespace(project_repo=ProjectRepository(get_session_factory()), project_document_repo=env.docs)
         request = SimpleNamespace(app=SimpleNamespace(state=state))
-        from deerflow.runtime.user_context import reset_current_user, set_current_user
+        from nkyel.runtime.user_context import reset_current_user, set_current_user
 
         token = set_current_user(SimpleNamespace(id=_USER))
         try:
@@ -187,7 +187,7 @@ async def test_conversion_publish_path_dispatches_off_the_loop(tmp_path, monkeyp
         return output_path
 
     monkeypatch.setattr(documents_mod, "convert_file_to_markdown", fake_convert)
-    monkeypatch.setattr("deerflow.projects.tools._resolve_auto_convert", lambda: True)
+    monkeypatch.setattr("nkyel.projects.tools._resolve_auto_convert", lambda: True)
     calls = _spy_offload(monkeypatch)
     env = await _make_env(tmp_path, monkeypatch)
     try:
@@ -213,9 +213,9 @@ async def test_tool_search_dispatches_off_the_loop(tmp_path, monkeypatch) -> Non
     (``_content_intact``), resolves serving paths, samples text
     (``is_text_file_by_content``) and reads the scan window
     (``_read_text_window``) — all through the offload."""
-    from deerflow.projects.tools import _search_project_documents_impl
+    from nkyel.projects.tools import _search_project_documents_impl
 
-    monkeypatch.setattr("deerflow.projects.tools._resolve_search_budgets", lambda: (100_000, 1_000_000))
+    monkeypatch.setattr("nkyel.projects.tools._resolve_search_budgets", lambda: (100_000, 1_000_000))
     calls = _spy_offload(monkeypatch)
     env = await _make_env(tmp_path, monkeypatch)
     try:

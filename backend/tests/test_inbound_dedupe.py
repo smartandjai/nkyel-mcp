@@ -28,7 +28,7 @@ def isolated_worker_env(monkeypatch):
     """
     monkeypatch.delenv("GATEWAY_WORKERS", raising=False)
     monkeypatch.delenv("WEB_CONCURRENCY", raising=False)
-    monkeypatch.delenv("DEER_FLOW_MULTI_INSTANCE", raising=False)
+    monkeypatch.delenv("NKYEL_MULTI_INSTANCE", raising=False)
 
 
 class _FakeDedupe:
@@ -112,18 +112,18 @@ def test_factory_warns_when_memory_explicit_under_a_declared_multi_instance_depl
     """Kubernetes replicas run one worker each and declare their peers instead of a worker count."""
     import logging
 
-    monkeypatch.setenv("DEER_FLOW_MULTI_INSTANCE", "1")
+    monkeypatch.setenv("NKYEL_MULTI_INSTANCE", "1")
     app = _FakeApp("memory", "sqlite")
     with caplog.at_level(logging.WARNING):
         store = make_inbound_dedupe_store(app)
     assert isinstance(store, MemoryInboundDedupeStore)
-    assert any("dedupe_storage=memory with DEER_FLOW_MULTI_INSTANCE=1" in r.message for r in caplog.records)
+    assert any("dedupe_storage=memory with NKYEL_MULTI_INSTANCE=1" in r.message for r in caplog.records)
 
 
 def test_factory_warns_when_auto_resolves_memory_under_a_declared_multi_instance_deployment(monkeypatch, caplog):
     import logging
 
-    monkeypatch.setenv("DEER_FLOW_MULTI_INSTANCE", "true")
+    monkeypatch.setenv("NKYEL_MULTI_INSTANCE", "true")
     app = _FakeApp("auto", "sqlite")
     with caplog.at_level(logging.WARNING):
         store = make_inbound_dedupe_store(app)
@@ -328,7 +328,7 @@ async def test_postgres_release_deletes_key():
 async def test_postgres_try_record_fail_open_when_no_session_factory(monkeypatch):
     # When Postgres is selected but no session factory is available, the store
     # must fail open (allow the message) rather than crash startup/handling.
-    import deerflow.persistence.engine as engine_mod
+    import nkyel.persistence.engine as engine_mod
 
     monkeypatch.setattr(engine_mod, "get_session_factory", lambda: None)
     store = PostgresInboundDedupeStore()  # no injected factory -> resolved lazily

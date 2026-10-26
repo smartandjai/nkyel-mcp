@@ -1,6 +1,6 @@
 """Shared cache-reset markers for Gateway processes that share one config directory.
 
-``deerflow.config.shared_reset_marker`` is the generic helper behind the MCP
+``nkyel.config.shared_reset_marker`` is the generic helper behind the MCP
 tools-cache reset (``.<extensions config>.mcp-cache-reset.json``) and the skills
 prompt-cache reset (``.<extensions config>.skills-cache-reset.json``). A writer
 publishes a fresh random generation with an atomic replace; every other process
@@ -17,10 +17,10 @@ from pathlib import Path
 import pytest
 from support.symlinks import symlink_or_skip
 
-import deerflow.config.shared_reset_marker as shared_reset_marker_module
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.config.file_signature import get_config_signature
-from deerflow.config.shared_reset_marker import (
+import nkyel.config.shared_reset_marker as shared_reset_marker_module
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.config.file_signature import get_config_signature
+from nkyel.config.shared_reset_marker import (
     SharedResetChange,
     SharedResetMarker,
     SharedResetMarkerTracker,
@@ -276,7 +276,7 @@ def test_reset_forgets_the_observed_state(config_path: Path) -> None:
 
 def test_resolve_shared_config_path_treats_a_missing_explicit_file_as_unconfigured(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     missing = tmp_path / "missing.json"
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(missing))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(missing))
 
     with pytest.raises(FileNotFoundError):
         ExtensionsConfig.resolve_config_path()
@@ -284,6 +284,6 @@ def test_resolve_shared_config_path_treats_a_missing_explicit_file_as_unconfigur
 
 
 def test_resolve_shared_config_path_returns_the_explicit_file(config_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
 
     assert resolve_shared_config_path() == config_path

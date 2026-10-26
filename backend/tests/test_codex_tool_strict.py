@@ -12,8 +12,8 @@ from langchain_core.messages import HumanMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 from langchain_core.utils import function_calling
 
-from deerflow.models import openai_codex_provider as provider
-from deerflow.models.credential_loader import CodexCliCredential
+from nkyel.models import openai_codex_provider as provider
+from nkyel.models.credential_loader import CodexCliCredential
 
 
 @pytest.mark.parametrize("shape,binding", [(shape, binding) for shape in ("wrapped", "flat", "bare") for binding in ("direct", "bound")] + [("base_tool", "bound")])

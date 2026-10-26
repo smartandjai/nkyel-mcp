@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.prompt import format_conversation_for_update
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import (
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.prompt import format_conversation_for_update
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import (
     MemoryManifestRevisionConflict,
     MemoryStorage,
 )
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import (
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import (
     MemoryUpdater,
     _build_staleness_section,
     _coerce_source_confidence,
@@ -21,8 +21,8 @@ from deerflow.agents.memory.backends.deermem.deermem.core.updater import (
     _normalize_memory_update_fact,
     _parse_memory_update_response,
 )
-from deerflow.agents.memory.manager import LangfuseMemoryCallbacks
-from deerflow.trace_context import get_current_trace_id, request_trace_context
+from nkyel.agents.memory.manager import LangfuseMemoryCallbacks
+from nkyel.trace_context import get_current_trace_id, request_trace_context
 
 
 def _make_memory(facts: list[dict[str, object]] | None = None) -> dict[str, object]:
@@ -448,7 +448,7 @@ def test_apply_updates_skips_same_batch_duplicates_and_keeps_source_metadata() -
         "newFacts": [
             {**_DURABLE_USER_FACT, "content": "User prefers dark mode", "category": "preference", "confidence": 0.91},
             {**_DURABLE_USER_FACT, "content": "User prefers dark mode", "category": "preference", "confidence": 0.92},
-            {**_DURABLE_USER_FACT, "content": "User works on DeerFlow", "category": "context", "confidence": 0.87},
+            {**_DURABLE_USER_FACT, "content": "User works on nkyel", "category": "context", "confidence": 0.87},
         ],
     }
 
@@ -456,7 +456,7 @@ def test_apply_updates_skips_same_batch_duplicates_and_keeps_source_metadata() -
 
     assert [fact["content"] for fact in result["facts"]] == [
         "User prefers dark mode",
-        "User works on DeerFlow",
+        "User works on nkyel",
     ]
     assert all(fact["id"].startswith("fact_") for fact in result["facts"])
     assert all(fact["source"] == "thread-42" for fact in result["facts"])
@@ -545,7 +545,7 @@ def test_apply_updates_ignores_empty_source_error() -> None:
 
 def test_clear_memory_data_clears_facts_and_preserves_shared_summaries() -> None:
     memory = _make_memory(facts=[{"id": "fact_1", "content": "Keep tests focused"}])
-    memory["user"]["workContext"]["summary"] = "Working on DeerFlow"
+    memory["user"]["workContext"]["summary"] = "Working on nkyel"
     memory["history"]["recentMonths"]["summary"] = "Migrated memory storage"
     storage = _MemoryStorage(memory)
     updater = _make_updater(storage=storage)
@@ -553,7 +553,7 @@ def test_clear_memory_data_clears_facts_and_preserves_shared_summaries() -> None
     result = updater.clear_memory_data(agent_name="researcher")
 
     assert result["facts"] == []
-    assert result["user"]["workContext"]["summary"] == "Working on DeerFlow"
+    assert result["user"]["workContext"]["summary"] == "Working on nkyel"
     assert result["history"]["recentMonths"]["summary"] == "Migrated memory storage"
     assert storage.save_calls == [("researcher", None, 0)]
 
@@ -832,7 +832,7 @@ def test_import_memory_data_saves_and_returns_imported_memory() -> None:
         facts=[
             {
                 "id": "fact_import",
-                "content": "User works on DeerFlow.",
+                "content": "User works on nkyel.",
                 "category": "context",
                 "confidence": 0.87,
                 "createdAt": "2026-03-20T00:00:00Z",
@@ -1271,14 +1271,14 @@ class TestUpdateMemoryStructuredResponse:
         """Parsed JSON with bad field types should not break the memory update."""
         response = (
             '{"user": "bad", "history": [], "newFacts": ["bad", '
-            '{"content": "User works on DeerFlow", "category": "context", "confidence": 0.91, '
+            '{"content": "User works on nkyel", "category": "context", "confidence": 0.91, '
             '"scope": "user", "durability": "durable", "authority": "descriptive"}], "factsToRemove": "bad"}'
         )
 
         result, storage = self._run_update_with_response(response)
 
         assert result is True
-        assert [fact["content"] for fact in storage.memory["facts"]] == ["User works on DeerFlow"]
+        assert [fact["content"] for fact in storage.memory["facts"]] == ["User works on nkyel"]
 
     def test_fact_schema_guard_coerces_and_filters_nested_fields(self):
         """Malformed fact entries should be normalized per fact, not fail the whole update."""
@@ -1388,7 +1388,7 @@ class TestUpdateMemoryStructuredResponse:
 
         with (
             patch(
-                "deerflow.agents.memory.backends.deermem.deermem.core.updater._SYNC_MEMORY_UPDATER_EXECUTOR.submit",
+                "nkyel.agents.memory.backends.deermem.deermem.core.updater._SYNC_MEMORY_UPDATER_EXECUTOR.submit",
                 side_effect=RuntimeError("executor down"),
             ),
         ):
@@ -1683,11 +1683,11 @@ class TestUserIdForwarding:
         assert storage.load_calls == [(None, "user-99")]
         assert storage.save_calls == [(None, "user-99", 0)]
 
-    def test_sync_update_injects_deerflow_trace_metadata_when_langfuse_enabled(self, monkeypatch):
+    def test_sync_update_injects_nkyel_trace_metadata_when_langfuse_enabled(self, monkeypatch):
         monkeypatch.setenv("LANGFUSE_TRACING", "true")
         monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
         monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-        from deerflow.config.tracing_config import reset_tracing_config
+        from nkyel.config.tracing_config import reset_tracing_config
 
         reset_tracing_config()
         valid_json = '{"user": {}, "history": {}, "newFacts": [], "factsToRemove": []}'
@@ -1722,7 +1722,7 @@ class TestUserIdForwarding:
         metadata = invoke_config["metadata"]
         # The update runs on a Timer thread that inherits no ContextVars, so the
         # id captured at enqueue time is what keeps this trace correlated.
-        assert metadata["deerflow_trace_id"] == "memory-trace-1"
+        assert metadata["nkyel_trace_id"] == "memory-trace-1"
         assert metadata["langfuse_session_id"] == "thread-memory"
         assert metadata["langfuse_user_id"] == "user-42"
         assert metadata["langfuse_trace_name"] == "memory_agent"
@@ -1783,7 +1783,7 @@ class TestSyncUpdateBindsTraceContextVar:
         thread.join()
         return results[0]
 
-    def test_binds_deerflow_trace_id_into_contextvar(self) -> None:
+    def test_binds_nkyel_trace_id_into_contextvar(self) -> None:
         captured: list[str | None] = []
         updater, model = self._make_updater_with_capturing_model(captured)
 
@@ -1917,7 +1917,7 @@ class TestOutOfRangeExtractionConfidenceDoesNotBlockUpdates:
         assert normalized["confidence"] == confidence
 
     def test_update_memory_drops_the_bad_fact_and_keeps_the_rest(self, tmp_path) -> None:
-        from deerflow.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage
+        from nkyel.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage
 
         response = {
             "user": {},
@@ -1948,7 +1948,7 @@ class TestOutOfRangeExtractionConfidenceDoesNotBlockUpdates:
         assert [fact["content"] for fact in stored["facts"]] == ["User prefers dark mode"]
 
     def test_out_of_range_drop_logs_the_raw_confidence(self, caplog) -> None:
-        with caplog.at_level(logging.WARNING, logger="deerflow.agents.memory.backends.deermem.deermem.core.updater"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.agents.memory.backends.deermem.deermem.core.updater"):
             normalized = _normalize_memory_update_fact({**_DURABLE_USER_FACT, "content": "User lives in Berlin", "confidence": 95})
         assert normalized is None
         assert any("out-of-range confidence" in message and "95" in message for message in caplog.messages)

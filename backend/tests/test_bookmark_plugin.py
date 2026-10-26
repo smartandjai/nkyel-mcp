@@ -5,22 +5,22 @@ import json
 from pathlib import Path
 
 import pytest
-from deerflow_extension_api.auth import ExtensionPrincipal
-from deerflow_extension_api.plugins import ActionContext
+from nkyel_extension_api.auth import ExtensionPrincipal
+from nkyel_extension_api.plugins import ActionContext
 from langchain_core.messages import AIMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
-from deerflow.extensions.plugin_tools import build_plugin_tools
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.plugin_tools import build_plugin_tools
 
 
 @pytest.fixture
 def bookmarks(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-bookmarks"))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-bookmarks"))
 
     def load():
-        loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_bookmarks:install", config={"enabled": True, "storage_path": str(tmp_path / "bookmarks.sqlite")})])
+        loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_bookmarks:install", config={"enabled": True, "storage_path": str(tmp_path / "bookmarks.sqlite")})])
         assert not diagnostics
         return loaded
 

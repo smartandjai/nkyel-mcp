@@ -28,7 +28,7 @@ from app.channels.message_bus import (
     OutboundMessage,
     ResolvedAttachment,
 )
-from deerflow.utils.file_io import await_drained
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +133,7 @@ class DiscordChannel(Channel):
 
         # Session tracking: channel_id -> Discord thread_id (in-memory, persisted to JSON).
         # Uses a dedicated JSON file next to the channel store's state, separate from
-        # the ChannelStore itself, which maps IM conversations to DeerFlow thread IDs.
+        # the ChannelStore itself, which maps IM conversations to nkyel thread IDs.
         self._active_threads: dict[str, str] = {}
         # Dedupe claims recorded for messages not yet committed to the bus, by
         # Discord message id. Each is settled once: a commit hands it to the
@@ -156,7 +156,7 @@ class DiscordChannel(Channel):
         if channels_dir is not None:
             self._thread_store_path = Path(channels_dir) / "discord_threads.json"
         else:
-            self._thread_store_path = Path.home() / ".deer-flow" / "channels" / "discord_threads.json"
+            self._thread_store_path = Path.home() / ".nkyel" / "channels" / "discord_threads.json"
 
         # Typing indicator management
         self._typing_tasks: dict[str, asyncio.Task] = {}
@@ -1024,7 +1024,7 @@ class DiscordChannel(Channel):
             },
             status="connected",
         )
-        await self._run_on_discord_loop(self._send_connection_reply(message, "Discord connected to DeerFlow."))
+        await self._run_on_discord_loop(self._send_connection_reply(message, "Discord connected to nkyel."))
         return True
 
     @staticmethod
@@ -1247,7 +1247,7 @@ class DiscordChannel(Channel):
                 )
                 return None
 
-            thread_name = f"deerflow-{message.author.display_name}-{message.id}"[:100]
+            thread_name = f"nkyel-{message.author.display_name}-{message.id}"[:100]
             return await message.create_thread(name=thread_name)
         except self._discord_module.errors.HTTPException as exc:
             if exc.code == 50024:

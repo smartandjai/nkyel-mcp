@@ -4,15 +4,15 @@ import os
 
 import pytest
 
-from deerflow.community.lightrag.client import LightRAGClient
-from deerflow.community.lightrag.formatting import normalize_retrieval_result
-from deerflow.knowledge import format_result, sources_from_messages
+from nkyel.community.lightrag.client import LightRAGClient
+from nkyel.community.lightrag.formatting import normalize_retrieval_result
+from nkyel.knowledge import format_result, sources_from_messages
 
 
 @pytest.mark.live
 @pytest.mark.anyio
 async def test_lightrag_live_evidence_contract() -> None:
-    if os.getenv("DEER_FLOW_RUN_LIVE_TESTS") != "1":
+    if os.getenv("NKYEL_RUN_LIVE_TESTS") != "1":
         pytest.skip("live knowledge checks are opt-in")
     base_url, query = os.getenv("LIGHTRAG_BASE_URL"), os.getenv("LIGHTRAG_EVIDENCE_QUERY")
     if not base_url or not query:

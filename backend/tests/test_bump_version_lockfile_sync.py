@@ -11,8 +11,8 @@ step therefore left the lock pinned to the *previous* version.
 Measured on ``3a862780`` (``main``, version ``2.1.0-rc0``) before this fix::
 
     $ scripts/bump_version.sh 2.2.0        # documented step, exits 0, self-verifies
-    $ sed -n '/name = "deer-flow"/,+1p' backend/uv.lock
-    name = "deer-flow"
+    $ sed -n '/name = "nkyel"/,+1p' backend/uv.lock
+    name = "nkyel"
     version = "2.1.0rc0"                   # still the old version
     $ cd backend && uv lock --check        # .github/workflows/lint-check.yml:59
     error: The lockfile at `uv.lock` needs to be updated, but `--check` was provided.
@@ -48,10 +48,10 @@ pytestmark = pytest.mark.skipif(
 # Minimal versions of the three files bump_version.sh rewrites, plus the lock
 # entry uv writes for the root ("virtual") package. Only the fields the script
 # touches are present, so a stray rewrite shows up as a diff.
-PYPROJECT = '[project]\nname = "deer-flow"\nversion = "2.1.0-rc0"\n'
-PACKAGE_JSON = '{\n  "name": "deer-flow-frontend",\n  "version": "2.1.0-rc0",\n  "private": true\n}\n'
-CHART = 'apiVersion: v2\nname: deer-flow\nversion: 2.1.0-rc0\nappVersion: "2.1.0-rc0"\n'
-UV_LOCK = 'version = 1\n\n[[package]]\nname = "deer-flow"\nversion = "2.1.0rc0"\nsource = { virtual = "." }\n'
+PYPROJECT = '[project]\nname = "nkyel"\nversion = "2.1.0-rc0"\n'
+PACKAGE_JSON = '{\n  "name": "nkyel-frontend",\n  "version": "2.1.0-rc0",\n  "private": true\n}\n'
+CHART = 'apiVersion: v2\nname: nkyel\nversion: 2.1.0-rc0\nappVersion: "2.1.0-rc0"\n'
+UV_LOCK = 'version = 1\n\n[[package]]\nname = "nkyel"\nversion = "2.1.0rc0"\nsource = { virtual = "." }\n'
 
 # Emulates the uv behavior the release flow depends on: `uv lock` records the
 # pyproject version in the root lock entry, in uv's PEP 440 form (for these
@@ -77,7 +77,7 @@ lock_text = lock_path.read_text(encoding="utf-8")
 pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
 declared = re.search(r'(?m)^version\\s*=\\s*"([^"]+)"', pyproject).group(1)
 normalized = declared.replace("-", "")
-recorded = re.search(r'(?m)^name = "deer-flow"\\nversion = "([^"]+)"', lock_text).group(1)
+recorded = re.search(r'(?m)^name = "nkyel"\\nversion = "([^"]+)"', lock_text).group(1)
 
 if args == ["lock", "--check"]:
     sys.exit(0 if recorded == normalized else "The lockfile at `uv.lock` needs to be updated, but `--check` was provided.")
@@ -90,7 +90,7 @@ def _write_sandbox(root: Path) -> Path:
     (root / "scripts").mkdir(parents=True)
     (root / "backend").mkdir()
     (root / "frontend").mkdir()
-    (root / "deploy" / "helm" / "deer-flow").mkdir(parents=True)
+    (root / "deploy" / "helm" / "nkyel").mkdir(parents=True)
 
     for name in ("bump_version.sh", "verify_versions.sh"):
         shutil.copy2(REPO_ROOT / "scripts" / name, root / "scripts" / name)
@@ -98,7 +98,7 @@ def _write_sandbox(root: Path) -> Path:
     (root / "backend" / "pyproject.toml").write_text(PYPROJECT, encoding="utf-8")
     (root / "backend" / "uv.lock").write_text(UV_LOCK, encoding="utf-8")
     (root / "frontend" / "package.json").write_text(PACKAGE_JSON, encoding="utf-8")
-    (root / "deploy" / "helm" / "deer-flow" / "Chart.yaml").write_text(CHART, encoding="utf-8")
+    (root / "deploy" / "helm" / "nkyel" / "Chart.yaml").write_text(CHART, encoding="utf-8")
     return root
 
 

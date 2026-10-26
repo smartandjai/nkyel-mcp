@@ -16,7 +16,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.integrations import lark_cli
+from nkyel.integrations import lark_cli
 
 
 class _ContendedFakeMsvcrt:

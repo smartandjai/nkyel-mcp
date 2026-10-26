@@ -19,7 +19,7 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from deerflow.mcp_scope import mcp_session_scope_key
+from nkyel.mcp_scope import mcp_session_scope_key
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
@@ -31,7 +31,7 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.runtime import Runtime
 from mcp.types import CallToolResult, TextContent
 
-from deerflow.mcp import tools as mcp_tools
+from nkyel.mcp import tools as mcp_tools
 
 
 class _FakePool:
@@ -214,7 +214,7 @@ def _running_studio_server(
                 "http": {"app": "./auth_shim.py:langgraph_app"},
                 "env": {
                     "AUTH_JWT_SECRET": "test-secret-key-for-langgraph-route-tests-min-32",
-                    "DEER_FLOW_AUTH_DISABLED": "1",
+                    "NKYEL_AUTH_DISABLED": "1",
                     "LANGSMITH_TRACING": "false",
                 },
             }
@@ -289,7 +289,7 @@ def _running_studio_server(
 
 @pytest.fixture(scope="module")
 def studio_client(tmp_path_factory: pytest.TempPathFactory) -> Iterator[httpx.Client]:
-    """Run the locked dev server with a tiny graph and DeerFlow's real auth."""
+    """Run the locked dev server with a tiny graph and nkyel's real auth."""
     runtime_dir = tmp_path_factory.mktemp("langgraph-studio-routes")
     with _running_studio_server(
         runtime_dir,
@@ -379,7 +379,7 @@ def test_studio_registered_graph_supplies_server_owned_mcp_incarnation(
             thread_id,
             context={
                 "thread_incarnation": "attacker",
-                "__deerflow_thread_incarnation_metadata_guard": False,
+                "__nkyel_thread_incarnation_metadata_guard": False,
                 "user_id": "attacker",
                 "thread_id": "attacker",
                 "run_id": "attacker",
@@ -462,7 +462,7 @@ def test_studio_implicit_thread_creation_preserves_searchable_metadata(
             "project_tag": project_tag,
             "user_id": "attacker",
             "thread_incarnation": "attacker",
-            "__deerflow_thread_incarnation_metadata_guard": False,
+            "__nkyel_thread_incarnation_metadata_guard": False,
         },
         "config": {
             "metadata": {
@@ -470,7 +470,7 @@ def test_studio_implicit_thread_creation_preserves_searchable_metadata(
                 "config_tag": "retained",
                 "user_id": "config-attacker",
                 "thread_incarnation": "config-attacker",
-                "__deerflow_thread_incarnation_metadata_guard": False,
+                "__nkyel_thread_incarnation_metadata_guard": False,
             },
         },
     }
@@ -487,7 +487,7 @@ def test_studio_implicit_thread_creation_preserves_searchable_metadata(
     assert metadata["config_tag"] == "retained"
     assert metadata["user_id"] == "langgraph-studio-user"
     assert metadata["thread_incarnation"] not in {"attacker", "config-attacker"}
-    assert "__deerflow_thread_incarnation_metadata_guard" not in metadata
+    assert "__nkyel_thread_incarnation_metadata_guard" not in metadata
     assert tool_message["content"][0]["text"] == mcp_session_scope_key(
         user_id="langgraph-studio-user",
         thread_id=thread_id,

@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from langchain.tools import ToolRuntime
 
-from deerflow.sandbox.lease import SandboxLeaseManager
-from deerflow.tools.builtins.view_image_tool import view_image_tool
+from nkyel.sandbox.lease import SandboxLeaseManager
+from nkyel.tools.builtins.view_image_tool import view_image_tool
 
 PNG_BYTES = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
 
@@ -84,7 +84,7 @@ async def test_view_image_ainvoke_drains_download_before_lease_release(tmp_path,
         user_id="user-1",
     )
     monkeypatch.setattr(
-        "deerflow.sandbox.sandbox_provider.get_sandbox_provider",
+        "nkyel.sandbox.sandbox_provider.get_sandbox_provider",
         lambda: provider,
     )
     runtime = _runtime(tmp_path, sandbox.id)

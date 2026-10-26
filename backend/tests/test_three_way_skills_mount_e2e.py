@@ -17,22 +17,22 @@ from unittest.mock import patch
 import pytest
 from _host_path_helpers import posix_path
 
-from deerflow.config.extensions_config import ExtensionsConfig, SkillStateConfig
-from deerflow.config.paths import Paths
-from deerflow.sandbox.local.local_sandbox import PathMapping
-from deerflow.sandbox.local.local_sandbox_provider import LocalSandboxProvider
-from deerflow.sandbox.tools import read_file_tool
-from deerflow.skills.projection import (
+from nkyel.config.extensions_config import ExtensionsConfig, SkillStateConfig
+from nkyel.config.paths import Paths
+from nkyel.sandbox.local.local_sandbox import PathMapping
+from nkyel.sandbox.local.local_sandbox_provider import LocalSandboxProvider
+from nkyel.sandbox.tools import read_file_tool
+from nkyel.skills.projection import (
     ensure_thread_skill_projection,
     rebuild_skill_projections,
 )
-from deerflow.skills.storage import reset_user_skill_storage
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
-from deerflow.skills.types import SKILL_MD_FILE, Skill, SkillCategory
+from nkyel.skills.storage import reset_user_skill_storage
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.skills.types import SKILL_MD_FILE, Skill, SkillCategory
 
-_AIO_MODULE = "deerflow.community.aio_sandbox.aio_sandbox_provider"
+_AIO_MODULE = "nkyel.community.aio_sandbox.aio_sandbox_provider"
 _AIO_GET_CONFIG = f"{_AIO_MODULE}.get_app_config"
-_LOCAL_HOST_BASH_ALLOWED = "deerflow.sandbox.local.local_sandbox_provider.is_host_bash_allowed"
+_LOCAL_HOST_BASH_ALLOWED = "nkyel.sandbox.local.local_sandbox_provider.is_host_bash_allowed"
 
 
 def _write_skill(base: Path, name: str, description: str = "test skill") -> Path:
@@ -47,16 +47,16 @@ def _write_skill(base: Path, name: str, description: str = "test skill") -> Path
 
 
 def _build_config(skills_root: Path):
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     return SimpleNamespace(
         skills=SimpleNamespace(
             container_path="/mnt/skills",
             get_skills_path=lambda sk=skills_root: sk,
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         ),
         sandbox=SandboxConfig(
-            use="deerflow.sandbox.local:LocalSandboxProvider",
+            use="nkyel.sandbox.local:LocalSandboxProvider",
             mounts=[],
         ),
     )
@@ -100,7 +100,7 @@ class TestThreeWayMountEndToEnd:
     def test_local_public_skill_mounted(self, skills_fs):
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             idx = _local_mounts(provider, "thread-1", user_id="user-1")
         assert "/mnt/skills/public" in idx
@@ -120,8 +120,8 @@ class TestThreeWayMountEndToEnd:
             root.mkdir(parents=True, exist_ok=True)
 
         with (
-            patch("deerflow.config.get_app_config", return_value=cfg),
-            patch("deerflow.config.paths.get_paths", return_value=paths),
+            patch("nkyel.config.get_app_config", return_value=cfg),
+            patch("nkyel.config.paths.get_paths", return_value=paths),
             patch.object(LocalSandboxProvider, "_ensure_skills_projection", side_effect=[OSError("transient"), projection]),
         ):
             provider = LocalSandboxProvider()
@@ -135,7 +135,7 @@ class TestThreeWayMountEndToEnd:
     def test_local_per_user_custom_skill_mounted(self, skills_fs):
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             idx = _local_mounts(provider, "thread-1", user_id="user-1")
         assert "/mnt/skills/custom" in idx
@@ -144,7 +144,7 @@ class TestThreeWayMountEndToEnd:
     def test_local_managed_integrations_use_per_user_projection(self, skills_fs):
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             idx = _local_mounts(provider, "thread-1", user_id="user-1")
         assert "/mnt/skills/integrations" in idx
@@ -154,7 +154,7 @@ class TestThreeWayMountEndToEnd:
     def test_local_legacy_mounted_for_user_without_custom(self, skills_fs):
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             idx = _local_mounts(provider, "thread-1", user_id="noob")
         assert "/mnt/skills/legacy" in idx
@@ -163,7 +163,7 @@ class TestThreeWayMountEndToEnd:
     def test_local_legacy_not_mounted_when_user_has_custom(self, skills_fs):
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             idx = _local_mounts(provider, "thread-1", user_id="user-1")
         assert "/mnt/skills/legacy" in idx
@@ -173,7 +173,7 @@ class TestThreeWayMountEndToEnd:
         (skills_fs["users_dir"] / "ghost" / "skills" / "custom" / "dangling-dir").mkdir(parents=True, exist_ok=True)
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             idx = _local_mounts(provider, "thread-1", user_id="ghost")
         assert "/mnt/skills/legacy" in idx
@@ -183,7 +183,7 @@ class TestThreeWayMountEndToEnd:
     def test_local_read_file_resolves_public_and_custom(self, skills_fs):
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             sid = provider.acquire("thread-1", user_id="user-1")
         sandbox = provider.get(sid)
@@ -193,7 +193,7 @@ class TestThreeWayMountEndToEnd:
     def test_local_read_file_resolves_legacy_skill(self, skills_fs):
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             sid = provider.acquire("thread-1", user_id="noob")
         sandbox = provider.get(sid)
@@ -206,7 +206,7 @@ class TestThreeWayMountEndToEnd:
         Acquire-time ``PathMapping`` must remain authoritative for both full and
         ranged reads; the tool layer must never reconstruct a raw host path.
         """
-        from deerflow.runtime.user_context import reset_current_user, set_current_user
+        from nkyel.runtime.user_context import reset_current_user, set_current_user
 
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
@@ -214,10 +214,10 @@ class TestThreeWayMountEndToEnd:
         reset_user_skill_storage()
 
         with (
-            patch("deerflow.config.get_app_config", return_value=cfg),
-            patch("deerflow.config.paths.get_paths", return_value=paths),
-            patch("deerflow.config.extensions_config.ExtensionsConfig.from_file", return_value=extensions),
-            patch("deerflow.config.extensions_config.get_extensions_config", return_value=extensions),
+            patch("nkyel.config.get_app_config", return_value=cfg),
+            patch("nkyel.config.paths.get_paths", return_value=paths),
+            patch("nkyel.config.extensions_config.ExtensionsConfig.from_file", return_value=extensions),
+            patch("nkyel.config.extensions_config.get_extensions_config", return_value=extensions),
         ):
             provider = LocalSandboxProvider()
             sandbox_ids = {
@@ -231,8 +231,8 @@ class TestThreeWayMountEndToEnd:
             def _must_not_pre_resolve(_path: str) -> str:
                 raise AssertionError("skill paths must stay virtual until the sandbox provider")
 
-            monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", _sandbox_for)
-            monkeypatch.setattr("deerflow.sandbox.tools._resolve_skills_path", _must_not_pre_resolve)
+            monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", _sandbox_for)
+            monkeypatch.setattr("nkyel.sandbox.tools._resolve_skills_path", _must_not_pre_resolve)
 
             token = set_current_user(SimpleNamespace(id="wrong-context-user"))
             try:
@@ -274,12 +274,12 @@ class TestThreeWayMountEndToEnd:
 
     def test_registry_to_sandbox_full_pipeline(self, skills_fs):
         """Model's exact path: storage category → get_container_file_path → sandbox.read_file."""
-        from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+        from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
 
-        with patch("deerflow.config.get_app_config", return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.get_app_config", return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             provider = LocalSandboxProvider()
             sid_user = provider.acquire("t1", user_id="user-1")
             sid_noob = provider.acquire("t2", user_id="noob")
@@ -287,7 +287,7 @@ class TestThreeWayMountEndToEnd:
         sandbox_noob = provider.get(sid_noob)
 
         # user-1 storage: sees public + custom, no legacy
-        with patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.paths.get_paths", return_value=paths):
             storage = UserScopedSkillStorage(user_id="user-1", host_path=str(skills_fs["root"]))
             skills = list(storage._iter_skill_files())
         by_name = {sf.parent.name: (cat, sf) for cat, _root, sf in skills}
@@ -311,7 +311,7 @@ class TestThreeWayMountEndToEnd:
         assert "usr-skill" in sandbox_user.read_file(cp)
 
         # noob storage: sees public + legacy (no per-user custom)
-        with patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch("nkyel.config.paths.get_paths", return_value=paths):
             storage = UserScopedSkillStorage(user_id="noob", host_path=str(skills_fs["root"]))
             skills = list(storage._iter_skill_files())
         by_name = {sf.parent.name: (cat, sf) for cat, _root, sf in skills}
@@ -332,10 +332,10 @@ class TestThreeWayMountEndToEnd:
         extensions = ExtensionsConfig(skills={"secret-skill": SkillStateConfig(enabled=False)})
 
         with (
-            patch("deerflow.config.get_app_config", return_value=cfg),
-            patch("deerflow.config.paths.get_paths", return_value=paths),
-            patch("deerflow.config.extensions_config.ExtensionsConfig.from_file", return_value=extensions),
-            patch("deerflow.config.extensions_config.get_extensions_config", return_value=extensions),
+            patch("nkyel.config.get_app_config", return_value=cfg),
+            patch("nkyel.config.paths.get_paths", return_value=paths),
+            patch("nkyel.config.extensions_config.ExtensionsConfig.from_file", return_value=extensions),
+            patch("nkyel.config.extensions_config.get_extensions_config", return_value=extensions),
         ):
             storage = UserScopedSkillStorage("user-1", host_path=str(skills_root), app_config=cfg)
             rebuild_skill_projections(storage)
@@ -354,7 +354,7 @@ class TestThreeWayMountEndToEnd:
                 },
                 context={"thread_id": "thread-1", "user_id": "user-1"},
             )
-            monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda _runtime: sandbox)
+            monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda _runtime: sandbox)
             virtual_path = "/mnt/skills/public/secret-skill/SKILL.md"
 
             disabled = sandbox.execute_command(f"cat {virtual_path}")
@@ -393,14 +393,14 @@ class TestThreeWayMountEndToEnd:
         extensions = ExtensionsConfig()
 
         with (
-            patch("deerflow.config.get_app_config", return_value=cfg),
-            patch("deerflow.config.paths.get_paths", return_value=paths),
+            patch("nkyel.config.get_app_config", return_value=cfg),
+            patch("nkyel.config.paths.get_paths", return_value=paths),
             patch(
-                "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+                "nkyel.config.extensions_config.ExtensionsConfig.from_file",
                 return_value=extensions,
             ),
             patch(
-                "deerflow.config.extensions_config.get_extensions_config",
+                "nkyel.config.extensions_config.get_extensions_config",
                 return_value=extensions,
             ),
             # The provider enforces a thread view only while host bash is off.
@@ -469,14 +469,14 @@ class TestThreeWayMountEndToEnd:
         extensions = ExtensionsConfig()
 
         with (
-            patch("deerflow.config.get_app_config", return_value=cfg),
-            patch("deerflow.config.paths.get_paths", return_value=paths),
+            patch("nkyel.config.get_app_config", return_value=cfg),
+            patch("nkyel.config.paths.get_paths", return_value=paths),
             patch(
-                "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+                "nkyel.config.extensions_config.ExtensionsConfig.from_file",
                 return_value=extensions,
             ),
             patch(
-                "deerflow.config.extensions_config.get_extensions_config",
+                "nkyel.config.extensions_config.get_extensions_config",
                 return_value=extensions,
             ),
             # The provider enforces a thread view only while host bash is off.
@@ -529,7 +529,7 @@ class TestThreeWayMountEndToEnd:
         allowed, SandboxMiddleware no longer refreshes that view, so the
         provider must not mount it: later unrestricted runs on the thread would
         otherwise keep the old allowlist and never see newly added skills."""
-        from deerflow.sandbox.middleware import SandboxMiddleware
+        from nkyel.sandbox.middleware import SandboxMiddleware
 
         skills_root = tmp_path / "skills"
         _write_skill(skills_root / "public", "allowed-skill", "ALLOWED_MARKER")
@@ -540,10 +540,10 @@ class TestThreeWayMountEndToEnd:
         extensions = ExtensionsConfig()
 
         with (
-            patch("deerflow.config.get_app_config", return_value=cfg),
-            patch("deerflow.config.paths.get_paths", return_value=paths),
-            patch("deerflow.config.extensions_config.ExtensionsConfig.from_file", return_value=extensions),
-            patch("deerflow.config.extensions_config.get_extensions_config", return_value=extensions),
+            patch("nkyel.config.get_app_config", return_value=cfg),
+            patch("nkyel.config.paths.get_paths", return_value=paths),
+            patch("nkyel.config.extensions_config.ExtensionsConfig.from_file", return_value=extensions),
+            patch("nkyel.config.extensions_config.get_extensions_config", return_value=extensions),
         ):
             storage = UserScopedSkillStorage("user-1", host_path=str(skills_root), app_config=cfg)
             provider = LocalSandboxProvider()
@@ -551,8 +551,8 @@ class TestThreeWayMountEndToEnd:
             def run(available_skills, *, host_bash: bool):
                 with (
                     patch(_LOCAL_HOST_BASH_ALLOWED, return_value=host_bash),
-                    patch("deerflow.sandbox.middleware.get_sandbox_provider", return_value=provider),
-                    patch("deerflow.skills.storage.get_or_new_user_skill_storage", return_value=storage),
+                    patch("nkyel.sandbox.middleware.get_sandbox_provider", return_value=provider),
+                    patch("nkyel.skills.storage.get_or_new_user_skill_storage", return_value=storage),
                 ):
                     SandboxMiddleware(available_skills=available_skills)._prepare_agent_skill_projection("thread-switch", user_id="user-1")
                     sandbox = provider.get(provider.acquire("thread-switch", user_id="user-1"))
@@ -594,7 +594,7 @@ class TestThreeWayMountEndToEnd:
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
         monkeypatch.setattr(aio_mod, "get_paths", lambda: paths)
-        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             mounts = aio_mod.AioSandboxProvider._get_skills_mounts(user_id="user-1")
         idx = {m[1]: m for m in mounts}
         assert "/mnt/skills/custom" in idx
@@ -605,7 +605,7 @@ class TestThreeWayMountEndToEnd:
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
         monkeypatch.setattr(aio_mod, "get_paths", lambda: paths)
-        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             mounts = aio_mod.AioSandboxProvider._get_skills_mounts(user_id="noob")
         idx = {m[1]: m for m in mounts}
         assert "/mnt/skills/legacy" in idx
@@ -614,7 +614,7 @@ class TestThreeWayMountEndToEnd:
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
         monkeypatch.setattr(aio_mod, "get_paths", lambda: paths)
-        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             mounts = aio_mod.AioSandboxProvider._get_skills_mounts(user_id="user-1")
         idx = {m[1]: m for m in mounts}
         assert "/mnt/skills/legacy" in idx
@@ -624,7 +624,7 @@ class TestThreeWayMountEndToEnd:
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
         monkeypatch.setattr(aio_mod, "get_paths", lambda: paths)
-        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             mounts = aio_mod.AioSandboxProvider._get_skills_mounts(user_id="ghost")
         idx = {m[1]: m for m in mounts}
         assert "/mnt/skills/legacy" in idx
@@ -633,13 +633,13 @@ class TestThreeWayMountEndToEnd:
 
     def test_aio_extra_mounts_translate_to_docker_bind_mounts(self, skills_fs, aio_mod, monkeypatch):
         """extra_mounts → _format_container_mount → correct Docker --mount args."""
-        from deerflow.community.aio_sandbox.local_backend import _format_container_mount
+        from nkyel.community.aio_sandbox.local_backend import _format_container_mount
 
         cfg = _build_config(skills_fs["root"])
         paths = Paths(base_dir=skills_fs["users_dir"].parent)
         monkeypatch.setattr(aio_mod, "get_paths", lambda: paths)
 
-        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("deerflow.config.paths.get_paths", return_value=paths):
+        with patch(_AIO_GET_CONFIG, return_value=cfg), patch("nkyel.config.paths.get_paths", return_value=paths):
             extra = aio_mod.AioSandboxProvider._get_extra_mounts(
                 aio_mod.AioSandboxProvider.__new__(aio_mod.AioSandboxProvider),
                 "thread-1",

@@ -6,13 +6,13 @@ from dataclasses import FrozenInstanceError, dataclass, replace
 from types import MappingProxyType, SimpleNamespace
 
 import pytest
-from deerflow_extension_api.plugins import ModelTool, PluginContribution
+from nkyel_extension_api.plugins import ModelTool, PluginContribution
 from langchain_core.messages import AIMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from deerflow.extensions.plugin_tools import build_plugin_tools
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions.plugin_tools import build_plugin_tools
+from nkyel.extensions.registry import ExtensionRegistry
 
 
 @pytest.fixture
@@ -87,7 +87,7 @@ def test_group_filter_and_name_collision_fail_closed(installed):
 
 def test_built_tools_carry_host_recorded_plugin_provenance(installed):
     """The tag is written at construction, from registry-validated values."""
-    from deerflow.tools.tool_provenance import get_plugin_source, is_plugin_tool, resolve_tool_provenance
+    from nkyel.tools.tool_provenance import get_plugin_source, is_plugin_tool, resolve_tool_provenance
 
     loaded, plugin, _ = installed
     (tool,) = build_plugin_tools(loaded)
@@ -108,9 +108,9 @@ def test_built_tools_carry_host_recorded_plugin_provenance(installed):
 def test_assembly_keeps_ordinary_and_unaffected_plugin_tools_on_collision(installed, monkeypatch, caplog, source):
     from langchain_core.tools import Tool
 
-    from deerflow.config.extensions_config import ExtensionsConfig
-    from deerflow.extensions.plugin_tools import plugin_tool_name
-    from deerflow.tools import tools as assembly
+    from nkyel.config.extensions_config import ExtensionsConfig
+    from nkyel.extensions.plugin_tools import plugin_tool_name
+    from nkyel.tools import tools as assembly
 
     loaded, plugin, _ = installed
     name = plugin_tool_name(plugin.namespace, "search")
@@ -130,8 +130,8 @@ def test_assembly_keeps_ordinary_and_unaffected_plugin_tools_on_collision(instal
     monkeypatch.setattr(assembly, "is_host_bash_allowed", lambda config: False)
     monkeypatch.setattr(assembly, "resolve_variable", lambda *args: ordinary)
     monkeypatch.setattr(ExtensionsConfig, "from_file", lambda: SimpleNamespace(get_enabled_mcp_servers=lambda: {"test": {}}))
-    monkeypatch.setattr("deerflow.mcp.cache.get_cached_mcp_tools", lambda: [ordinary])
-    monkeypatch.setattr("deerflow.tools.builtins.invoke_acp_agent_tool.build_invoke_acp_agent_tool", lambda agents: ordinary)
+    monkeypatch.setattr("nkyel.mcp.cache.get_cached_mcp_tools", lambda: [ordinary])
+    monkeypatch.setattr("nkyel.tools.builtins.invoke_acp_agent_tool.build_invoke_acp_agent_tool", lambda agents: ordinary)
 
     result = assembly.get_available_tools(app_config=config, extensions=registry.build(), include_mcp=source == "mcp", include_upload_tool=False)
     # Model-bound built-ins are assembled independently of BUILTIN_TOOLS.
@@ -152,7 +152,7 @@ def test_assembly_keeps_ordinary_and_unaffected_plugin_tools_on_collision(instal
 async def test_model_tool_receives_run_control_from_host_runtime(installed):
     from unittest.mock import Mock
 
-    from deerflow_extension_api import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api import AGENT_RUNS_CONTEXT_KEY
 
     loaded, plugin, calls = installed
     (tool,) = build_plugin_tools(loaded)
@@ -213,7 +213,7 @@ async def test_opt_in_mode_rejects_legacy_tuple_through_real_tool_node(installed
 @pytest.mark.asyncio
 @pytest.mark.parametrize("artifact", [None, {"rows": [{"label": "故障", "score": 0.9}]}])
 async def test_typed_result_separates_content_from_artifact_and_preserves_identity(installed, artifact):
-    from deerflow_extension_api import PluginToolResult
+    from nkyel_extension_api import PluginToolResult
 
     _, plugin, _ = installed
     contexts = []
@@ -233,7 +233,7 @@ async def test_typed_result_separates_content_from_artifact_and_preserves_identi
 
 @pytest.mark.asyncio
 async def test_artifact_is_independent_json_snapshot(installed):
-    from deerflow_extension_api import PluginToolResult
+    from nkyel_extension_api import PluginToolResult
 
     _, plugin, _ = installed
     rows = [{"label": "original"}]
@@ -252,7 +252,7 @@ async def test_artifact_is_independent_json_snapshot(installed):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("kind", ["plain", "tuple", "bad-content", "list-artifact", "nan", "object", "int-key", "bool-key", "null-key", "float-key", "key-collision", "nested-key", "list-key", "tuple-key"])
 async def test_opt_in_invalid_result_is_sanitized_without_artifact(installed, kind):
-    from deerflow_extension_api import PluginToolResult
+    from nkyel_extension_api import PluginToolResult
 
     _, plugin, _ = installed
     values = {
@@ -285,7 +285,7 @@ async def test_opt_in_invalid_result_is_sanitized_without_artifact(installed, ki
 @pytest.mark.asyncio
 @pytest.mark.parametrize("over_limit", [False, True])
 async def test_artifact_mode_combines_utf8_content_and_artifact_budget(installed, over_limit):
-    from deerflow_extension_api import PluginToolResult
+    from nkyel_extension_api import PluginToolResult
 
     _, plugin, _ = installed
     artifact = {"value": "中" * 1000}
@@ -323,7 +323,7 @@ async def test_default_mode_keeps_legacy_json_encoding(installed, value):
 
 @pytest.mark.asyncio
 async def test_default_mode_cannot_serialize_typed_artifact_result(installed):
-    from deerflow_extension_api import PluginToolResult
+    from nkyel_extension_api import PluginToolResult
 
     _, plugin, _ = installed
     result = PluginToolResult("visible", {"sensitive": "secret"})
@@ -367,7 +367,7 @@ async def test_artifact_mode_propagates_caller_cancellation(installed):
 
 
 def test_new_contract_keeps_old_positional_signature_and_is_frozen(installed):
-    from deerflow_extension_api import PluginToolResult
+    from nkyel_extension_api import PluginToolResult
 
     _, plugin, _ = installed
     old = plugin.tools[0]

@@ -118,7 +118,7 @@ def limits_exhausted_error(exc: Any) -> HTTPException:
 
 def repository_error(exc: Exception) -> HTTPException:
     """Map a scheduled-task repository exception to its coded error."""
-    from deerflow.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict, ScheduledTaskLimitsExhausted, ScheduledTaskQuotaExceeded
+    from nkyel.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict, ScheduledTaskLimitsExhausted, ScheduledTaskQuotaExceeded
 
     if isinstance(exc, ActiveScheduledTaskMutationConflict):
         return active_occurrence_error(exc.status)

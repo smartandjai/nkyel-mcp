@@ -5,7 +5,7 @@ An ``OSError`` raised while the router resolves, reads or writes
 custom-agent and user-profile routes already return a fixed detail for exactly
 this reason (#7255, and ``routers/AGENTS.md`` states the rule); the five MCP
 mutation routes still concatenated the exception text into the 500 body, so a
-caller learned where ``DEER_FLOW_HOME`` lives on the server.
+caller learned where ``NKYEL_HOME`` lives on the server.
 
 Each test drives one handler to the write step and asserts the response carries
 a fixed detail while the exception itself never reaches the caller. The full
@@ -35,7 +35,7 @@ from app.gateway.routers.mcp import (
 
 pytestmark = pytest.mark.asyncio
 
-HOST_PATH = "/srv/private/deer-flow/extensions_config.json"
+HOST_PATH = "/srv/private/nkyel/extensions_config.json"
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ def written_config(tmp_path: Path, monkeypatch) -> Path:
         '{"mcpServers": {"remote": {"enabled": true, "type": "http", "url": "https://example.test/mcp"}}, "skills": {}}',
         encoding="utf-8",
     )
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
 
     async def _noop_admin(_request, **_kwargs) -> None:
         return None

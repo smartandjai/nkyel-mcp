@@ -5,10 +5,10 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import event
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.mcp_scope import THREAD_INCARNATION_CONTEXT_KEY
-from deerflow.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.subagent_batches import SubagentBatchRepository
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.mcp_scope import THREAD_INCARNATION_CONTEXT_KEY
+from nkyel.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.subagent_batches import SubagentBatchRepository
 
 _MISSING = object()
 

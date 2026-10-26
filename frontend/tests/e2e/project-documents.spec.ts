@@ -13,7 +13,7 @@ function seedProject(): Parameters<typeof mockLangGraphAPI>[1] {
         thread_id: THREAD_ID,
         title: "Project chat",
         updated_at: "2026-09-10T10:00:00Z",
-        metadata: { deerflow_project_id: PROJECT_ID },
+        metadata: { nkyel_project_id: PROJECT_ID },
       },
     ],
   };
@@ -217,7 +217,7 @@ test("a project member thread renders no injected <project> text in the message 
         thread_id: THREAD_ID,
         title: "Project chat",
         updated_at: "2026-09-10T10:00:00Z",
-        metadata: { deerflow_project_id: PROJECT_ID },
+        metadata: { nkyel_project_id: PROJECT_ID },
         messages: [
           {
             type: "human",

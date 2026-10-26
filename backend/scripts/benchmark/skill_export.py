@@ -23,8 +23,8 @@ try:
 except ImportError:  # pragma: no cover - Windows only
     resource = None  # type: ignore[assignment]
 
-from deerflow.skills import export
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.skills import export
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
 
 class Tracker:

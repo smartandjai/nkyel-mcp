@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     ExtensionRuntimeDeps,
     ModelInvocationFailed,
     ModelInvocationRequest,
@@ -16,8 +16,8 @@ from deerflow_extension_api import (
 )
 from langchain_core.messages import AIMessage
 
-from deerflow.extensions.gateway import start_services, stop_services
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.gateway import start_services, stop_services
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
 
 
 class Service:
@@ -30,7 +30,7 @@ class Service:
 
 @pytest.fixture
 def host(monkeypatch):
-    from deerflow.extensions import model_invocation
+    from nkyel.extensions import model_invocation
 
     model = SimpleNamespace(ainvoke=AsyncMock(return_value=AIMessage(content='{"label":"positive"}', usage_metadata={"input_tokens": 8, "output_tokens": 4, "total_tokens": 12})))
     factory = Mock(return_value=model)
@@ -46,7 +46,7 @@ def host(monkeypatch):
                 services.append(service)
                 registry.service(service)
 
-        monkeypatch.setattr("deerflow.extensions.loader.resolve_variable", lambda _: install)
+        monkeypatch.setattr("nkyel.extensions.loader.resolve_variable", lambda _: install)
         specs = [ExtensionSpec(use="example:install", host_access={"model_invocation": grant} if grant else {}) for grant in grants]
         loaded, diagnostics = load_extensions(specs)
         assert not diagnostics
@@ -206,9 +206,9 @@ async def test_doc_classification_example_uses_public_contract(host):
 async def test_real_host_factory_preserves_tracing_and_text_contract(monkeypatch):
     from langchain_core.callbacks import BaseCallbackHandler
 
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.model_config import ModelConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.model_config import ModelConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     traces = []
 
@@ -218,11 +218,11 @@ async def test_real_host_factory_preserves_tracing_and_text_contract(monkeypatch
 
     config = AppConfig(
         models=[ModelConfig(name="host-model", model="fake", use="langchain_core.language_models.fake_chat_models:FakeListChatModel", responses=['{"label":"negative"}'])],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
     )
     service = Service()
-    monkeypatch.setattr("deerflow.extensions.loader.resolve_variable", lambda _: lambda registry, _: registry.service(service))
-    monkeypatch.setattr("deerflow.models.factory.build_tracing_callbacks", lambda: [Observer()])
+    monkeypatch.setattr("nkyel.extensions.loader.resolve_variable", lambda _: lambda registry, _: registry.service(service))
+    monkeypatch.setattr("nkyel.models.factory.build_tracing_callbacks", lambda: [Observer()])
     loaded, diagnostics = load_extensions([ExtensionSpec(use="real:install", host_access={"model_invocation": GRANT})])
     assert not diagnostics
     assert not await start_services(loaded, config, None)
@@ -324,7 +324,7 @@ async def test_failed_duplicate_install_does_not_grant_prior_service(monkeypatch
         if config:
             raise RuntimeError("install failed after registration")
 
-    monkeypatch.setattr("deerflow.extensions.loader.resolve_variable", lambda _: install)
+    monkeypatch.setattr("nkyel.extensions.loader.resolve_variable", lambda _: install)
     loaded, diagnostics = load_extensions(
         [
             ExtensionSpec(use="same:install"),
@@ -506,7 +506,7 @@ async def test_pending_caller_cancellation_at_invocation_entry_propagates(host):
 async def test_validation_deadline_does_not_block_event_loop(host, monkeypatch, exit_kind):
     import time
 
-    from deerflow.extensions import model_invocation
+    from nkyel.extensions import model_invocation
 
     processes = []
     popen = model_invocation.subprocess.Popen

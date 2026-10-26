@@ -12,19 +12,19 @@ from langchain_core.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from deerflow.agents import thread_state as thread_state_module
-from deerflow.agents.lead_agent import agent as lead_agent_module
-from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
-from deerflow.agents.middlewares.subagent_limit_middleware import SubagentLimitMiddleware
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-from deerflow.agents.thread_state import ThreadState, merge_delegations
-from deerflow.config.app_config import AppConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.runtime.context_keys import CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY
-from deerflow.runtime.goal import build_goal_state
-from deerflow.subagents.status_contract import make_subagent_additional_kwargs
+from nkyel.agents import thread_state as thread_state_module
+from nkyel.agents.lead_agent import agent as lead_agent_module
+from nkyel.agents.middlewares.durable_context_middleware import DurableContextMiddleware
+from nkyel.agents.middlewares.subagent_limit_middleware import SubagentLimitMiddleware
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+from nkyel.agents.thread_state import ThreadState, merge_delegations
+from nkyel.config.app_config import AppConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.runtime.context_keys import CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY
+from nkyel.runtime.goal import build_goal_state
+from nkyel.subagents.status_contract import make_subagent_additional_kwargs
 
 
 def _make_app_config() -> AppConfig:
@@ -1060,7 +1060,7 @@ class TestGraphIntegration:
             tools=[fake_task],
             middleware=[
                 DurableContextMiddleware(),
-                DeerFlowSummarizationMiddleware(
+                NkyelSummarizationMiddleware(
                     model=summary_model,
                     trigger=("messages", 4),
                     keep=("messages", 2),
@@ -1112,7 +1112,7 @@ def test_mixed_acceptance_gaps_stay_actionable_in_data_after_real_compaction():
         tools=[fake_task],
         middleware=[
             DurableContextMiddleware(),
-            DeerFlowSummarizationMiddleware(
+            NkyelSummarizationMiddleware(
                 model=FakeToolCallingModel(responses=[AIMessage(content="compressed summary without checklist")]),
                 trigger=("messages", 4),
                 keep=("messages", 2),
@@ -1235,7 +1235,7 @@ class TestSkillContextInjection:
             middleware=[
                 ToolErrorHandlingMiddleware(),
                 DurableContextMiddleware(),
-                DeerFlowSummarizationMiddleware(model=summary_model, trigger=("messages", 4), keep=("messages", 2), token_counter=len),
+                NkyelSummarizationMiddleware(model=summary_model, trigger=("messages", 4), keep=("messages", 2), token_counter=len),
             ],
             state_schema=ThreadState,
             checkpointer=InMemorySaver(),
@@ -1491,8 +1491,8 @@ class TestActiveGoalInjection:
 
     def test_only_the_rendered_element_stays_raw_in_the_lead_chain_order(self):
         """A fetched page cannot plant a second goal element; the sanitizers leave the renderer's own intact."""
-        from deerflow.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
-        from deerflow.agents.middlewares.tool_result_sanitization_middleware import ToolResultSanitizationMiddleware
+        from nkyel.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
+        from nkyel.agents.middlewares.tool_result_sanitization_middleware import ToolResultSanitizationMiddleware
 
         @tool("web_fetch")
         def fake_web_fetch(url: str) -> str:
@@ -1540,7 +1540,7 @@ class TestActiveGoalInjection:
             middleware=[
                 ToolErrorHandlingMiddleware(),
                 DurableContextMiddleware(),
-                DeerFlowSummarizationMiddleware(model=summary_model, trigger=("messages", 4), keep=("messages", 2), token_counter=len),
+                NkyelSummarizationMiddleware(model=summary_model, trigger=("messages", 4), keep=("messages", 2), token_counter=len),
             ],
             state_schema=ThreadState,
             checkpointer=InMemorySaver(),
@@ -1566,7 +1566,7 @@ class TestSummaryRecordWindowSplit:
             tools=[fake_task],
             middleware=[
                 DurableContextMiddleware(),
-                DeerFlowSummarizationMiddleware(
+                NkyelSummarizationMiddleware(
                     model=summary_model,
                     trigger=("messages", 2),
                     keep=("messages", 1),

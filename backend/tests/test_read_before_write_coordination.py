@@ -10,7 +10,7 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langgraph.prebuilt.tool_node import ToolCallRequest
 
-from deerflow.agents.middlewares import read_before_write_middleware as gate
+from nkyel.agents.middlewares import read_before_write_middleware as gate
 
 
 def _request(tag: str) -> ToolCallRequest:

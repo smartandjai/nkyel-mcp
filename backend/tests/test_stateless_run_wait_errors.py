@@ -11,9 +11,9 @@ from _router_auth_helpers import make_authed_test_app
 from langgraph_sdk.client import LangGraphClient
 
 from app.gateway.routers import runs
-from deerflow.runtime import DisconnectMode, RunStatus
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.stream_bridge.memory import MemoryStreamBridge
+from nkyel.runtime import DisconnectMode, RunStatus
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.stream_bridge.memory import MemoryStreamBridge
 
 
 @pytest_asyncio.fixture

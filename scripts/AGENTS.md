@@ -1,6 +1,6 @@
 ## Support Bundle Runtime Home
 
-Thread manifests use a nonempty `DEER_FLOW_HOME` exclusively, resolving relative
+Thread manifests use a nonempty `NKYEL_HOME` exclusively, resolving relative
 values from the checkout like the local launcher. Read root `.env` path settings
 without exporting secrets; dotenv overrides shell exports, including empty values.
 Expand unquoted leading tildes, preserving quoted literals. If python-dotenv is
@@ -11,15 +11,15 @@ Resolve `$NAME`, `${NAME}` and `${NAME:-literal}` in unquoted/double-quoted
 values using a private environment with checkout `PWD` and earlier dotenv
 assignments. Single-quoted values and escaped dollars stay literal. Parse the
 file without sourcing it or executing command substitutions.
-When home is unset and `DEER_FLOW_PROJECT_ROOT` is configured, search the launcher's
-`backend/.deer-flow` first, then the standalone harness project root. Scan both
+When home is unset and `NKYEL_PROJECT_ROOT` is configured, search the launcher's
+`backend/.nkyel` first, then the standalone harness project root. Scan both
 legacy threads and user-scoped threads in that root. With no override, retain
-the two checkout layouts. Display an external home as `{DEER_FLOW_HOME}` rather
+the two checkout layouts. Display an external home as `{NKYEL_HOME}` rather
 than its absolute host path, and never include file contents in the manifest.
 Coverage lives in `backend/tests/test_support_bundle.py`.
 This lookup follows the local launcher's root `.env`; it does not discover
-`backend/.env` or `DEER_FLOW_ENV_FILE` used by standalone Gateway launches.
-For those launches, export the effective `DEER_FLOW_HOME` when collecting a bundle
+`backend/.env` or `NKYEL_ENV_FILE` used by standalone Gateway launches.
+For those launches, export the effective `NKYEL_HOME` when collecting a bundle
 and ensure the checkout `.env` does not override it. Tests clear all three runtime
 path variables and compare storage defaults with the launcher's actual shell blocks.
 
@@ -56,14 +56,14 @@ trimming its contents. Offline CLI coverage:
 
 ## Service Startup Contracts
 
-`serve.sh` reads `DEER_FLOW_GATEWAY_STARTUP_TIMEOUT` after root `.env` for
+`serve.sh` reads `NKYEL_GATEWAY_STARTUP_TIMEOUT` after root `.env` for
 local Gateway port readiness (positive integer seconds, default 30). Reject
 invalid values before cleanup/startup except `--stop`; keep frontend/nginx waits.
 Launcher/wait-loop tests (processes, readiness and time stubbed):
 `backend/tests/test_serve_gateway_startup_timeout.py`.
 
 Both launchers call `sandbox-mode.sh` via Bash; keep it Bash/awk-only.
-Dev passes `$PROJECT_ROOT/config.yaml`; prod passes `$DEER_FLOW_CONFIG_PATH`.
+Dev passes `$PROJECT_ROOT/config.yaml`; prod passes `$NKYEL_CONFIG_PATH`.
 For AIO, omitted/blank/empty-quoted/YAML-null URLs (including comments) select
 `aio`; preserve quoting so `"null"` and `"~"` remain nonempty strings.
 This is not a general YAML parser or URL validator; aliases, multiline values
@@ -71,7 +71,7 @@ and environment expansion are out of scope. Offline helper and launcher tests:
 `backend/tests/test_docker_sandbox_mode_detection.py`.
 
 The setup wizard offers Webz.io as a news-only `web_search` provider using
-`deerflow.community.webz.tools:web_search_tool` and `WEBZ_API_KEY`. Keep its
+`nkyel.community.webz.tools:web_search_tool` and `WEBZ_API_KEY`. Keep its
 entry aligned with the credential check in `doctor.py` and the example config.
 The adapter uses async HTTPS requests, offloads lazy config loading, and maps
 `source` to provider `domain`; explicit `published_from` overrides recency.
@@ -88,8 +88,8 @@ indentless lists are supported; nested option names and block-scalar text
 must not enable the browser extra. Keep the detector standard-library-only
 because it runs before dependency synchronization. Read UTF-8 config files
 with or without a leading BOM so the first section remains detectable.
-`detect_uv_extras.py` checks an existing `DEER_FLOW_CONFIG_PATH` first, then
-`DEER_FLOW_PROJECT_ROOT/config.yaml`, before the legacy checkout candidates.
+`detect_uv_extras.py` checks an existing `NKYEL_CONFIG_PATH` first, then
+`NKYEL_PROJECT_ROOT/config.yaml`, before the legacy checkout candidates.
 Keep this lookup standard-library-only; test shadowing checkout configs and
 the CLI under `python -S` in `backend/tests/test_detect_uv_extras.py`.
 For Discord and Buzz, detect the provider extra when either legacy
@@ -141,8 +141,8 @@ the `env_file` value); shell exports still win. Pinned by
 `deploy.sh` never sources the repo-root `.env`; Compose reads it via
 `--env-file`, and shell exports outrank that file during interpolation (an
 exported-but-empty variable still wins). So `BETTER_AUTH_SECRET`,
-`DEER_FLOW_INTERNAL_AUTH_TOKEN` and `DEER_FLOW_CREDENTIALS_KEY` resolve shell →
-`.env` → persisted file under `DEER_FLOW_HOME` → freshly generated, and a
+`NKYEL_INTERNAL_AUTH_TOKEN` and `NKYEL_CREDENTIALS_KEY` resolve shell →
+`.env` → persisted file under `NKYEL_HOME` → freshly generated, and a
 `.env`-provided value is left
 unexported so Compose parses it itself. Whether `.env` provides one is
 Compose's answer, not a `KEY=VALUE` grep: Compose also accepts `KEY: VALUE`
@@ -161,9 +161,9 @@ Gateway itself generates in that runtime home, via a noclobber (`O_EXCL`)
 create that reads a concurrent winner back.
 `backend/tests/test_deploy_dotenv_secrets.py` pins the order and the probe;
 its real-Compose cases run against the installed `docker` CLI and against any
-standalone binaries listed in `DEER_FLOW_TEST_COMPOSE_BINARIES`.
+standalone binaries listed in `NKYEL_TEST_COMPOSE_BINARIES`.
 
-Deployment commands check `DEER_FLOW_HOME` writability before setup and check
+Deployment commands check `NKYEL_HOME` writability before setup and check
 persisted secret readability only when shell/Compose dotenv overrides are absent.
 Both failures identify the affected path and print the recursive ownership
 recovery hint for the runtime home. Existing secrets are only read, so a
@@ -174,13 +174,13 @@ resolution/generation so permission damage cannot prevent teardown. Coverage:
 `doctor.py` checks the config file the Gateway would load, not a fixed
 `<checkout>/config.yaml`. It mirrors how `serve.sh` hands the two
 config-location variables to the Gateway: `.env` values for
-`DEER_FLOW_CONFIG_PATH` / `DEER_FLOW_PROJECT_ROOT` override the shell (other
+`NKYEL_CONFIG_PATH` / `NKYEL_PROJECT_ROOT` override the shell (other
 keys stay shell-first), an unquoted leading `~` in them expands as `source`
 does (a quoted one stays literal), and an unset or empty
-`DEER_FLOW_PROJECT_ROOT` becomes the checkout. It then asks the harness
+`NKYEL_PROJECT_ROOT` becomes the checkout. It then asks the harness
 (`AppConfig.resolve_config_path`) instead of re-implementing its order. An
-override the Gateway would reject (`DEER_FLOW_CONFIG_PATH` missing,
-`DEER_FLOW_PROJECT_ROOT` not a directory) fails `config.yaml found` with the
+override the Gateway would reject (`NKYEL_CONFIG_PATH` missing,
+`NKYEL_PROJECT_ROOT` not a directory) fails `config.yaml found` with the
 Gateway's error, and the config-dependent checks skip. Any failure to import
 the harness is reported, never raised: doctor diagnoses broken environments.
 Pinned by `backend/tests/test_doctor.py::TestMainConfigResolution`.
@@ -204,9 +204,9 @@ need not be on `PATH`.
 
 `config-upgrade.sh` upgrades the file the Gateway loads by asking the harness
 (`AppConfig.resolve_config_path`) rather than copying its lookup order. It
-defaults `DEER_FLOW_PROJECT_ROOT` to the checkout, as `serve.sh` does, so
+defaults `NKYEL_PROJECT_ROOT` to the checkout, as `serve.sh` does, so
 `<checkout>/config.yaml` wins over a legacy `backend/config.yaml`. A missing
-`DEER_FLOW_CONFIG_PATH` or invalid project root is an error, never a fallback.
+`NKYEL_CONFIG_PATH` or invalid project root is an error, never a fallback.
 Only "no config anywhere" creates `<checkout>/config.yaml` from the example.
 `backend/tests/test_config_version.py::test_config_upgrade_*` pins this.
 
@@ -237,12 +237,12 @@ put it in `mingw64/bin/`. Bash and sh stay at `<root>/bin` and `<root>/usr/bin`
 in both layouts. `backend/tests/support/shell.py` mirrors the same rule for the
 shell-script suites.
 
-`make clean` deletes `backend/.deer-flow` (database, users, threads, uploads,
-secrets), which both compose stacks mount into `deer-flow-gateway`. Its recipe
+`make clean` deletes `backend/.nkyel` (database, users, threads, uploads,
+secrets), which both compose stacks mount into `nkyel-gateway`. Its recipe
 runs `check-data-not-in-use.sh` before `make stop` (which would stop a live
 stack's sandboxes) and refuses while that container runs; an absent or
 unreachable Docker passes. `make stop` must still run before the delete: it
-stops `deer-flow-sandbox*` containers, whose thread mounts live in that tree.
+stops `nkyel-sandbox*` containers, whose thread mounts live in that tree.
 `cleanup-containers.sh` must verify an anchored `<prefix>-` name after Docker's
 substring `name=` filter, and use the same rule for Apple Container IDs. Parse
 Apple Container JSON without interpolating the prefix into Python source; bad
@@ -282,9 +282,9 @@ consumed digest to `file_sha256` and remove it from the preapproval list.
 ## Backend Static Analysis Commands
 
 The root `detect-thread-boundaries` target statically inventories execution
-boundaries under `backend/app/` and `backend/packages/harness/deerflow/`. It
+boundaries under `backend/app/` and `backend/packages/harness/nkyel/`. It
 prints a concise count by execution domain and writes the complete, versioned
-JSON payload to `.deer-flow/thread-boundary-inventory.json`. Every finding has
+JSON payload to `.nkyel/thread-boundary-inventory.json`. Every finding has
 a stable `boundary_kind`: `asyncio_default_executor`, `dedicated_executor`,
 `anyio_worker_thread`, `direct_event_loop_blocking`, `separate_event_loop`, or
 `unresolved_dynamic_boundary`.
@@ -302,7 +302,7 @@ To supplement the static scan with configured runtime types, run:
 ```bash
 python scripts/detect_thread_boundaries.py \
   --runtime-config config.yaml \
-  --json-output .deer-flow/thread-boundary-inventory.json
+  --json-output .nkyel/thread-boundary-inventory.json
 ```
 
 Runtime inspection imports configured tool objects and model classes so it can
@@ -313,12 +313,12 @@ models, or call external services; import failures remain in the JSON as
 coverage live in `tests/support/detectors/thread_boundaries.py` and
 `tests/test_detect_thread_boundaries.py`.
 
-The `detect-blocking-io` target parses `app/`, `packages/harness/deerflow/`,
+The `detect-blocking-io` target parses `app/`, `packages/harness/nkyel/`,
 and `scripts/` with AST. By default it reports only blocking IO candidates that
 are inside async code, reachable from async code in the same file, or reachable
 from sync-only `AgentMiddleware` before/after hooks that LangGraph can execute
 on the async graph path. It prints a concise summary and writes complete JSON
-findings to `.deer-flow/blocking-io-findings.json` at the repository root
+findings to `.nkyel/blocking-io-findings.json` at the repository root
 (both `make detect-blocking-io` from the repo root and `cd backend && make
 detect-blocking-io` resolve to the same repo-root path). JSON findings include
 `priority`, `location`, `blocking_call`, `event_loop_exposure`, `reason`, and
@@ -420,9 +420,9 @@ Regression tests related to Docker/provisioner behavior:
 
 Blocking-IO runtime gate (`tests/blocking_io/`):
 - Wraps every item under `tests/blocking_io/` with a strict Blockbuster
-  context scoped to `app.*` and `deerflow.*` (see
+  context scoped to `app.*` and `nkyel.*` (see
   `tests/support/detectors/blocking_io_runtime.py`). Any sync blocking IO
-  call whose stack passes through DeerFlow business code while running on
+  call whose stack passes through nkyel business code while running on
   the asyncio event loop raises `BlockingError` and fails the test.
 - Regression anchors live there: `test_skills_load.py` (locks the
   `asyncio.to_thread` offload around `LocalSkillStorage.load_skills`, fix
@@ -461,7 +461,7 @@ Blocking-IO runtime gate (`tests/blocking_io/`):
   hard-fail.
 
 Boundary check (harness → app import firewall):
-- `tests/test_harness_boundary.py` — ensures `packages/harness/deerflow/` never imports from `app.*`
+- `tests/test_harness_boundary.py` — ensures `packages/harness/nkyel/` never imports from `app.*`
 
 Memory backend async boundary:
 - `MemoryMiddleware.aafter_agent` calls `MemoryManager.aadd`; network-backed
@@ -508,7 +508,7 @@ invalid bytes; no provider calls. Doctor covers both `_run` streams/pnpm capture
 
 ## Production dotenv selection
 
-`deploy.sh` resolves `DEER_FLOW_COMPOSE_ENV_FILE` from the checkout before
+`deploy.sh` resolves `NKYEL_COMPOSE_ENV_FILE` from the checkout before
 creating state or probing secrets. Keep Compose interpolation, Gateway and
 provisioner env files, secret probes, and UV_EXTRAS discovery on that one path.
 Normalize host paths for Git Bash; quote path arguments rather than sourcing

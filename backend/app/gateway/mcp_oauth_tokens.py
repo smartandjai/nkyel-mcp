@@ -5,8 +5,8 @@ import logging
 from collections.abc import Collection
 from contextlib import asynccontextmanager
 
-from deerflow.config.app_config import AppConfig
-from deerflow.mcp.oauth_store import McpOAuthTokenStore, McpOAuthTokenStoreUnavailable, get_mcp_oauth_token_store, set_mcp_oauth_token_store
+from nkyel.config.app_config import AppConfig
+from nkyel.mcp.oauth_store import McpOAuthTokenStore, McpOAuthTokenStoreUnavailable, get_mcp_oauth_token_store, set_mcp_oauth_token_store
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ def build_mcp_oauth_token_store(app_config: AppConfig) -> McpOAuthTokenStore | N
     """The ``mcp_oauth_tokens`` store for a sqlite/postgres database, else ``None`` (tokens stay in process).
 
     The store opens the shared synchronous engine
-    (``deerflow.persistence.agents.sql.get_sync_sessionmaker``) because token
+    (``nkyel.persistence.agents.sql.get_sync_sessionmaker``) because token
     refreshes run on whichever loop calls the tool. Its table comes from the
     persistence bootstrap, which runs before any tool call; the credentials
     key loads on the first refresh_token use.
@@ -23,8 +23,8 @@ def build_mcp_oauth_token_store(app_config: AppConfig) -> McpOAuthTokenStore | N
     database = getattr(app_config, "database", None)
     if getattr(database, "backend", None) not in ("sqlite", "postgres"):
         return None
-    from deerflow.persistence.agents.sql import get_sync_sessionmaker
-    from deerflow.persistence.mcp_oauth_tokens import SqlMcpOAuthTokenRepository
+    from nkyel.persistence.agents.sql import get_sync_sessionmaker
+    from nkyel.persistence.mcp_oauth_tokens import SqlMcpOAuthTokenRepository
 
     return McpOAuthTokenStore(SqlMcpOAuthTokenRepository(get_sync_sessionmaker(database.app_sync_sqlalchemy_url)))
 

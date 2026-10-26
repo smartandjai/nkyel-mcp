@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.sandbox_config import SandboxConfig, SandboxNetworkConfig
+from nkyel.config.sandbox_config import SandboxConfig, SandboxNetworkConfig
 
 
 def test_sandbox_network_defaults_to_open() -> None:

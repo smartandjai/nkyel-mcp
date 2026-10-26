@@ -32,7 +32,7 @@ describe("runtime GitHub stars", () => {
     );
     const response = await GET();
     expect(fetch).toHaveBeenCalledWith(
-      "https://api.github.com/repos/bytedance/deer-flow",
+      "https://api.github.com/repos/bytedance/nkyel",
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer runtime-test-token",

@@ -53,7 +53,7 @@ const context: SidecarContext = {
 
 test("finds the latest sidecar thread for a parent thread", async () => {
   const sidecar = makeThread("sidecar-1", {
-    deerflow_sidecar: true,
+    nkyel_sidecar: true,
     parent_thread_id: "parent-1",
   });
   const search = rs.fn().mockResolvedValue([sidecar]);
@@ -67,7 +67,7 @@ test("finds the latest sidecar thread for a parent thread", async () => {
 
   expect(search).toHaveBeenCalledWith({
     metadata: {
-      deerflow_sidecar: true,
+      nkyel_sidecar: true,
       parent_thread_id: "parent-1",
     },
     limit: 1,
@@ -91,7 +91,7 @@ test("ignores malformed sidecar search results", async () => {
 test("ignores sidecar search results from another parent thread", async () => {
   const search = rs.fn().mockResolvedValue([
     makeThread("sidecar-1", {
-      deerflow_sidecar: true,
+      nkyel_sidecar: true,
       parent_thread_id: "parent-2",
     }),
   ]);

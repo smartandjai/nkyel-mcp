@@ -1,6 +1,6 @@
 # Agent run control for extensions
 
-`deerflow_extension_api.AgentRuns` is an optional, host-bound capability for
+`nkyel_extension_api.AgentRuns` is an optional, host-bound capability for
 creating and continuing **full Agent runs**. Runs use Gateway's normal admission,
 Agent assembly, tools, middleware, checkpoints, run records, and cancellation.
 It is distinct from `ModelInvoker`, which makes one bounded model invocation.
@@ -14,7 +14,7 @@ host modules. An unsupported host returns `None` from `resolve_agent_runs` and
 raises `NotImplementedError` from the required variant.
 
 ```python
-from deerflow_extension_api import ActionContext
+from nkyel_extension_api import ActionContext
 
 async def begin(payload, context: ActionContext):
     runs = context.agent_runs

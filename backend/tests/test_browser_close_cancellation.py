@@ -6,8 +6,8 @@ from typing import Any, cast
 
 import pytest
 
-import deerflow.community.browser_automation.session as session_module
-from deerflow.community.browser_automation.session import BrowserSession, BrowserSessionManager
+import nkyel.community.browser_automation.session as session_module
+from nkyel.community.browser_automation.session import BrowserSession, BrowserSessionManager
 
 
 class _ControllablePrivateLoop:

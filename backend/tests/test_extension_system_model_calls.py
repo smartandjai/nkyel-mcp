@@ -10,7 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     EXTENSION_TASK_STORE_KEY,
     ExtensionData,
     SystemModelRequest,
@@ -20,7 +20,7 @@ from deerflow_extension_api import (
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.runtime import Runtime
 
-from deerflow.extensions.notify import (
+from nkyel.extensions.notify import (
     dispatch_system_model_observation,
     notify_system_model_call,
     observe_system_model_call,
@@ -29,7 +29,7 @@ from deerflow.extensions.notify import (
     suspend_extension_system_observations,
     task_store_for_system_call,
 )
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions.registry import ExtensionRegistry
 
 
 class _Observer:
@@ -281,7 +281,7 @@ class _GoalModel:
 
 @pytest.mark.asyncio
 async def test_goal_evaluator_observes_success_and_failure_with_explicit_snapshot():
-    from deerflow.runtime.goal import evaluate_goal_completion
+    from nkyel.runtime.goal import evaluate_goal_completion
 
     observer = _Observer()
     extensions = _extensions(observer)
@@ -315,8 +315,8 @@ async def test_goal_evaluator_observes_success_and_failure_with_explicit_snapsho
 
 @pytest.mark.asyncio
 async def test_title_middleware_uses_build_bound_snapshot_and_live_task_store(monkeypatch):
-    from deerflow.agents.middlewares import title_middleware as title_module
-    from deerflow.config.title_config import TitleConfig
+    from nkyel.agents.middlewares import title_middleware as title_module
+    from nkyel.config.title_config import TitleConfig
 
     observer = _Observer()
     extensions = _extensions(observer)
@@ -359,8 +359,8 @@ async def test_title_middleware_uses_build_bound_snapshot_and_live_task_store(mo
 
 @pytest.mark.asyncio
 async def test_async_summarization_observes_each_provider_attempt_and_live_store():
-    from deerflow.agents.middlewares.summarization_middleware import (
-        DeerFlowSummarizationMiddleware,
+    from nkyel.agents.middlewares.summarization_middleware import (
+        NkyelSummarizationMiddleware,
     )
 
     observer = _Observer()
@@ -375,7 +375,7 @@ async def test_async_summarization_observes_each_provider_attempt_and_live_store
         async def ainvoke(self, prompt, config=None):
             return SimpleNamespace(text="  compact summary  ")
 
-    middleware = DeerFlowSummarizationMiddleware.__new__(DeerFlowSummarizationMiddleware)
+    middleware = NkyelSummarizationMiddleware.__new__(NkyelSummarizationMiddleware)
     middleware._extensions = extensions
     middleware._app_config = None
     middleware.trim_tokens_to_summarize = None
@@ -394,8 +394,8 @@ async def test_async_summarization_observes_each_provider_attempt_and_live_store
 
 @pytest.mark.asyncio
 async def test_summarization_public_hook_propagates_the_live_task_store():
-    from deerflow.agents.middlewares.summarization_middleware import (
-        DeerFlowSummarizationMiddleware,
+    from nkyel.agents.middlewares.summarization_middleware import (
+        NkyelSummarizationMiddleware,
     )
 
     observer = _Observer()
@@ -404,7 +404,7 @@ async def test_summarization_public_hook_propagates_the_live_task_store():
     model = MagicMock()
     model.with_config.return_value = model
     model.ainvoke = AsyncMock(return_value=SimpleNamespace(text="compressed"))
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=model,
         trigger=("messages", 4),
         keep=("messages", 2),
@@ -431,8 +431,8 @@ async def test_summarization_public_hook_propagates_the_live_task_store():
 
 @pytest.mark.asyncio
 async def test_memory_callback_dispatches_the_captured_snapshot_and_live_store():
-    from deerflow.agents.memory.manager import LangfuseMemoryCallbacks
-    from deerflow.extensions import reset_loaded_extensions, set_loaded_extensions
+    from nkyel.agents.memory.manager import LangfuseMemoryCallbacks
+    from nkyel.extensions import reset_loaded_extensions, set_loaded_extensions
 
     first = _Observer()
     second = _Observer()
@@ -472,8 +472,8 @@ def test_memory_callback_does_not_swallow_interpreter_shutdown(monkeypatch):
     # Fail-open covers the bridge's own failures, not a process teardown
     # signal — the same boundary the DeerMem-side call site pins in
     # `test_memory_updater.py`.
-    from deerflow.agents.memory.manager import LangfuseMemoryCallbacks
-    from deerflow.extensions import notify as notify_module
+    from nkyel.agents.memory.manager import LangfuseMemoryCallbacks
+    from nkyel.extensions import notify as notify_module
 
     def _teardown(coro, what):
         coro.close()
@@ -494,8 +494,8 @@ def test_memory_callback_does_not_swallow_interpreter_shutdown(monkeypatch):
 
 
 def test_memory_callback_contains_bridge_failures(monkeypatch):
-    from deerflow.agents.memory.manager import LangfuseMemoryCallbacks
-    from deerflow.extensions import notify as notify_module
+    from nkyel.agents.memory.manager import LangfuseMemoryCallbacks
+    from nkyel.extensions import notify as notify_module
 
     def _broken(coro, what):
         coro.close()
@@ -520,7 +520,7 @@ async def test_system_model_failure_logs_identify_the_task_scope(caplog):
         async def on_system_model_call(self, app_store, task_store, kind, request, result):
             raise RuntimeError("observer broke")
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.extensions.notify"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.extensions.notify"):
         await notify_system_model_call(
             _extensions(_Broken()),
             ExtensionData("summary-live-task"),
@@ -529,7 +529,7 @@ async def test_system_model_failure_logs_identify_the_task_scope(caplog):
             SystemModelResult(response="ok"),
         )
 
-    messages = [record.getMessage() for record in caplog.records if record.name == "deerflow.extensions.notify"]
+    messages = [record.getMessage() for record in caplog.records if record.name == "nkyel.extensions.notify"]
     assert any("summary-live-task" in message and "goal" in message for message in messages)
 
 

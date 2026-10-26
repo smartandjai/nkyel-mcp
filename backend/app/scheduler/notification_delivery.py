@@ -22,7 +22,7 @@ from app.channels.base import ChannelUnavailable
 from app.channels.capabilities import supports_proactive_group_notifications, supports_proactive_notifications
 from app.channels.notification_groups import is_notification_group
 from app.scheduler.notification_text import DEFAULT_NOTIFICATION_LOCALE, redact_egress_text, render_notification_text, wants_result_summary
-from deerflow.persistence.user.im_notifications import (
+from nkyel.persistence.user.im_notifications import (
     DISABLED_BY_OWNER,
     IM_RUNTIME_NOTIFICATION_EVENTS,
     RUNTIME_NOTIFICATION_SOURCE_KINDS,

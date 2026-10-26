@@ -13,10 +13,10 @@ from app.gateway.authz import (
 )
 from app.gateway.deps import get_config, get_optional_user_from_request
 from app.gateway.internal_auth import get_trusted_internal_owner_user_id
-from deerflow.config.app_config import AppConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.models.reasoning import reasoning_capabilities_payload, resolve_reasoning_contract
-from deerflow.models.selection import ModelScope, resolve_model_control
+from nkyel.config.app_config import AppConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.models.reasoning import reasoning_capabilities_payload, resolve_reasoning_contract
+from nkyel.models.selection import ModelScope, resolve_model_control
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ async def _resolve_bound_owner_for_model_list(request: Request) -> object | None
     synthetic user whose role is popped to ``default_role`` when the
     authorization principal is built, so the filtered list reflects the
     default role — not the account the conversation actually belongs to.
-    When the call carries a trusted ``X-DeerFlow-Owner-User-Id`` header, the
+    When the call carries a trusted ``X-nkyel-Owner-User-Id`` header, the
     channel acts on behalf of that owner (same identity run admission
     stamps), and the list must be filtered with the owner's role so commands
     like ``/model`` gate on the same principal the run would.
@@ -45,7 +45,7 @@ class ReasoningEffortCapabilitiesResponse(BaseModel):
 
     values: list[str] = Field(..., description="Accepted effort values (provider vocabulary)")
     default: str | None = Field(default=None, description="Effort applied when the caller does not choose one")
-    aliases: dict[str, str] = Field(default_factory=dict, description="Generic DeerFlow value -> provider value")
+    aliases: dict[str, str] = Field(default_factory=dict, description="Generic nkyel value -> provider value")
 
 
 class ReasoningCapabilitiesResponse(BaseModel):

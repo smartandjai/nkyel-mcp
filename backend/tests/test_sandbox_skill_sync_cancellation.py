@@ -6,10 +6,10 @@ import threading
 import pytest
 from langgraph.runtime import Runtime
 
-from deerflow.sandbox.middleware import SandboxMiddleware
-from deerflow.sandbox.sandbox import Sandbox
-from deerflow.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
-from deerflow.sandbox.search import GrepMatch
+from nkyel.sandbox.middleware import SandboxMiddleware
+from nkyel.sandbox.sandbox import Sandbox
+from nkyel.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
+from nkyel.sandbox.search import GrepMatch
 
 
 class _SandboxStub(Sandbox):

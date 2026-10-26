@@ -5,8 +5,8 @@ import threading
 
 import pytest
 
-from deerflow.sandbox.lease import SandboxLeaseManager
-from deerflow.sandbox.sandbox_provider import SandboxProvider
+from nkyel.sandbox.lease import SandboxLeaseManager
+from nkyel.sandbox.sandbox_provider import SandboxProvider
 
 
 class _BlockingReleaseProvider(SandboxProvider):

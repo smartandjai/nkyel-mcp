@@ -38,8 +38,8 @@ from app.gateway.routers.mcp import (
     update_mcp_server,
     update_mcp_server_state,
 )
-from deerflow.config.extensions_config import ExtensionsConfig, McpServerConfig
-from deerflow.mcp.tasks.runtime import set_mcp_task_config_snapshot
+from nkyel.config.extensions_config import ExtensionsConfig, McpServerConfig
+from nkyel.mcp.tasks.runtime import set_mcp_task_config_snapshot
 
 # ---------------------------------------------------------------------------
 # _mask_server_config
@@ -1845,7 +1845,7 @@ async def test_mcp_create_without_existing_config_uses_resolvable_project_root(o
         return expected_path if expected_path.exists() else None
 
     monkeypatch.chdir(working_dir)
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(project_dir))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(project_dir))
     monkeypatch.setattr(mcp_router.ExtensionsConfig, "resolve_config_path", resolve_created_config)
     monkeypatch.setattr(mcp_router, "get_extensions_config", lambda: SimpleNamespace(skills={}))
     monkeypatch.setattr(mcp_router, "reload_extensions_config", lambda: ExtensionsConfig.from_file(str(expected_path)))
@@ -1869,19 +1869,19 @@ async def test_skill_toggle_and_mcp_create_share_one_new_config(first_writer, mo
     """With no config anywhere, the first skill toggle and the first MCP edit
     must create and then reuse ONE file that resolution reads back."""
     from app.gateway.routers import skills as skills_router
-    from deerflow.config import extensions_config as extensions_config_module
+    from nkyel.config import extensions_config as extensions_config_module
 
     project_dir = tmp_path / "project"
     working_dir = tmp_path / "runtime" / "nested"
     project_dir.mkdir()
     working_dir.mkdir(parents=True)
-    for name in ("DEER_FLOW_CONFIG_PATH", "DEER_FLOW_EXTENSIONS_CONFIG_PATH", "DEER_FLOW_HOME", "DEER_FLOW_SKILLS_PATH"):
+    for name in ("NKYEL_CONFIG_PATH", "NKYEL_EXTENSIONS_CONFIG_PATH", "NKYEL_HOME", "NKYEL_SKILLS_PATH"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(project_dir))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(project_dir))
     monkeypatch.chdir(working_dir)
     # Real resolver, but its legacy search anchored on an empty fake checkout
     # so a developer's own extensions_config.json can never be found or written.
-    fake_module_file = tmp_path / "fake-backend" / "packages" / "harness" / "deerflow" / "config" / "extensions_config.py"
+    fake_module_file = tmp_path / "fake-backend" / "packages" / "harness" / "nkyel" / "config" / "extensions_config.py"
     fake_module_file.parent.mkdir(parents=True)
     fake_module_file.write_text("", encoding="utf-8")
     monkeypatch.setattr(extensions_config_module, "__file__", str(fake_module_file))

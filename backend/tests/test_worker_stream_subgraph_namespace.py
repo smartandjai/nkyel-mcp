@@ -22,15 +22,15 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from packaging.version import Version
 
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import RunRecord, RunStartOutcome
-from deerflow.runtime.runs.schemas import DisconnectMode, RunStatus
-from deerflow.runtime.runs.worker import (
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import RunRecord, RunStartOutcome
+from nkyel.runtime.runs.schemas import DisconnectMode, RunStatus
+from nkyel.runtime.runs.worker import (
     _compose_sse_event,
     _publish_stream_item,
     _unpack_stream_item,
 )
-from deerflow.runtime.stream_bridge.memory import MemoryStreamBridge
+from nkyel.runtime.stream_bridge.memory import MemoryStreamBridge
 
 SUBAGENT_NS = ("tools:call_subagent_1",)
 
@@ -275,27 +275,27 @@ _THREAD_ID = "thread-subgraph-stream-integration"
 def real_executor_module():
     """Swap the conftest MagicMock for the real subagent executor module.
 
-    conftest.py mocks ``deerflow.subagents.executor`` to break a package-init
-    import cycle; by the time this fixture runs every other deerflow module is
+    conftest.py mocks ``nkyel.subagents.executor`` to break a package-init
+    import cycle; by the time this fixture runs every other nkyel module is
     already imported, so a fresh import of the real module is safe.
     """
-    original = sys.modules.get("deerflow.subagents.executor")
-    sys.modules.pop("deerflow.subagents.executor", None)
-    subagents_pkg = sys.modules.get("deerflow.subagents")
+    original = sys.modules.get("nkyel.subagents.executor")
+    sys.modules.pop("nkyel.subagents.executor", None)
+    subagents_pkg = sys.modules.get("nkyel.subagents")
     if subagents_pkg is not None and hasattr(subagents_pkg, "executor"):
         delattr(subagents_pkg, "executor")
 
-    module = importlib.import_module("deerflow.subagents.executor")
+    module = importlib.import_module("nkyel.subagents.executor")
     # Hermetic in CI (no config.yaml) — same defaults as test_subagent_executor.
     module.get_app_config = lambda: SimpleNamespace(tool_search=SimpleNamespace(enabled=False))
     module.build_tracing_callbacks = lambda: []
     yield module
 
     if original is not None:
-        sys.modules["deerflow.subagents.executor"] = original
+        sys.modules["nkyel.subagents.executor"] = original
     else:
-        sys.modules.pop("deerflow.subagents.executor", None)
-    subagents_pkg = sys.modules.get("deerflow.subagents")
+        sys.modules.pop("nkyel.subagents.executor", None)
+    subagents_pkg = sys.modules.get("nkyel.subagents")
     if subagents_pkg is not None and hasattr(subagents_pkg, "executor"):
         delattr(subagents_pkg, "executor")
 
@@ -380,7 +380,7 @@ def _build_delegating_parent_graph(executor_module, monkeypatch, *, child_emits_
     production task tool does (root-graph ``get_stream_writer``).
 
     With ``child_emits_error_fallback`` the child stream contains an assistant
-    message carrying the ``deerflow_error_fallback`` marker (not as its final
+    message carrying the ``nkyel_error_fallback`` marker (not as its final
     message, so the delegation itself still completes) — the shape whose leak
     would mark the *parent* run as errored (#4399).
 
@@ -391,7 +391,7 @@ def _build_delegating_parent_graph(executor_module, monkeypatch, *, child_emits_
     from langgraph.config import get_stream_writer
     from langgraph.graph import END, START, MessagesState, StateGraph
 
-    from deerflow.subagents.config import SubagentConfig
+    from nkyel.subagents.config import SubagentConfig
 
     child_builder = StateGraph(MessagesState)
     child_builder.add_node(
@@ -417,7 +417,7 @@ def _build_delegating_parent_graph(executor_module, monkeypatch, *, child_emits_
                 AIMessage(
                     content="child provider failed after retries",
                     id="child-fallback-sentinel",
-                    additional_kwargs={"deerflow_error_fallback": True},
+                    additional_kwargs={"nkyel_error_fallback": True},
                 )
             ]
         },
@@ -632,7 +632,7 @@ class TestMessageSeqStamping:
 
     @staticmethod
     async def _seeded_store():
-        from deerflow.runtime.events.store.memory import MemoryRunEventStore
+        from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
         store = MemoryRunEventStore()
         await store.put(
@@ -646,7 +646,7 @@ class TestMessageSeqStamping:
 
     @pytest.mark.asyncio
     async def test_root_values_frame_stamps_a_persisted_message(self):
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         bridge = _FakeBridge()
         await _publish_stream_item(
@@ -661,13 +661,13 @@ class TestMessageSeqStamping:
         )
 
         _run, _event, payload = bridge.published[0]
-        assert payload["messages"][0]["additional_kwargs"]["deerflow_seq"] == 1
+        assert payload["messages"][0]["additional_kwargs"]["nkyel_seq"] == 1
 
     @pytest.mark.asyncio
     async def test_a_message_not_in_the_feed_is_left_unstamped(self):
         """A message still streaming has no seq yet — and needs none: appending
         it at the tail is already its correct position."""
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         bridge = _FakeBridge()
         await _publish_stream_item(
@@ -682,12 +682,12 @@ class TestMessageSeqStamping:
         )
 
         _run, _event, payload = bridge.published[0]
-        assert "deerflow_seq" not in (payload["messages"][0].get("additional_kwargs") or {})
+        assert "nkyel_seq" not in (payload["messages"][0].get("additional_kwargs") or {})
 
     @pytest.mark.asyncio
     async def test_subgraph_frames_are_not_stamped(self):
         """A subagent frame does not belong to the thread feed's ordering."""
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         bridge = _FakeBridge()
         await _publish_stream_item(
@@ -702,7 +702,7 @@ class TestMessageSeqStamping:
         )
 
         _run, _event, payload = bridge.published[0]
-        assert "deerflow_seq" not in (payload["messages"][0].get("additional_kwargs") or {})
+        assert "nkyel_seq" not in (payload["messages"][0].get("additional_kwargs") or {})
 
     @pytest.mark.asyncio
     async def test_no_stamper_publishes_the_frame_unchanged(self):
@@ -718,13 +718,13 @@ class TestMessageSeqStamping:
         )
 
         _run, _event, payload = bridge.published[0]
-        assert "deerflow_seq" not in (payload["messages"][0].get("additional_kwargs") or {})
+        assert "nkyel_seq" not in (payload["messages"][0].get("additional_kwargs") or {})
 
     @pytest.mark.asyncio
     async def test_a_resolved_identity_is_not_looked_up_twice(self):
         """Only a frame carrying messages it has not seen costs a query — in a
         real run that is the compaction frame, not every frame."""
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         store = await self._seeded_store()
         calls: list[list[str]] = []
@@ -763,7 +763,7 @@ class TestMessageSeqStamping:
         afterwards rolls past the history page and compacts is exactly the
         misplacement this stamper exists to prevent (#4696 review).
         """
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         store = await self._seeded_store()
         generation = 0
@@ -771,7 +771,7 @@ class TestMessageSeqStamping:
         frame = {"messages": [{"type": "ai", "id": "a1", "content": "…"}]}
 
         first = await stamper.stamp(dict(frame))
-        assert "deerflow_seq" not in (first["messages"][0].get("additional_kwargs") or {})
+        assert "nkyel_seq" not in (first["messages"][0].get("additional_kwargs") or {})
 
         await store.put(
             thread_id="t1",
@@ -783,7 +783,7 @@ class TestMessageSeqStamping:
         generation += 1
 
         second = await stamper.stamp(dict(frame))
-        assert second["messages"][0]["additional_kwargs"]["deerflow_seq"] == 2
+        assert second["messages"][0]["additional_kwargs"]["nkyel_seq"] == 2
 
     @pytest.mark.asyncio
     async def test_a_miss_is_not_retried_while_the_feed_is_unchanged(self):
@@ -793,7 +793,7 @@ class TestMessageSeqStamping:
         carries a streaming message — a query per frame on exactly the long
         threads this stamper is careful to cost one query in.
         """
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         store = await self._seeded_store()
         calls: list[list[str]] = []
@@ -819,7 +819,7 @@ class TestMessageSeqStamping:
         The except clause degrades the frame to "no seq"; treating that answer
         as final would make one failed query as permanent as a real miss.
         """
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         store = await self._seeded_store()
         generation = 0
@@ -838,11 +838,11 @@ class TestMessageSeqStamping:
         frame = {"messages": [{"type": "human", "id": "u1__user", "content": "MARK-FIRST"}]}
 
         first = await stamper.stamp(dict(frame))
-        assert "deerflow_seq" not in (first["messages"][0].get("additional_kwargs") or {})
+        assert "nkyel_seq" not in (first["messages"][0].get("additional_kwargs") or {})
 
         generation += 1
         second = await stamper.stamp(dict(frame))
-        assert second["messages"][0]["additional_kwargs"]["deerflow_seq"] == 1
+        assert second["messages"][0]["additional_kwargs"]["nkyel_seq"] == 1
 
     @pytest.mark.asyncio
     async def test_a_resolved_identity_survives_a_feed_advance(self):
@@ -851,7 +851,7 @@ class TestMessageSeqStamping:
         The feed's earliest-seq-wins rule makes a resolved answer final, so an
         advancing feed must not turn the positive cache into a per-write query.
         """
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         store = await self._seeded_store()
         calls: list[list[str]] = []
@@ -871,7 +871,7 @@ class TestMessageSeqStamping:
         stamped = await stamper.stamp(dict(frame))
 
         assert len(calls) == 1
-        assert stamped["messages"][0]["additional_kwargs"]["deerflow_seq"] == 1
+        assert stamped["messages"][0]["additional_kwargs"]["nkyel_seq"] == 1
 
     @pytest.mark.asyncio
     async def test_the_run_stamper_re_asks_after_the_journal_writes(self):
@@ -881,8 +881,8 @@ class TestMessageSeqStamping:
         one connected to the journal, and a lambda pointing at the wrong object
         fails silently — the stamper simply keeps every miss.
         """
-        from deerflow.runtime.journal import RunJournal
-        from deerflow.runtime.runs.worker import _build_seq_stamper
+        from nkyel.runtime.journal import RunJournal
+        from nkyel.runtime.runs.worker import _build_seq_stamper
 
         store = await self._seeded_store()
         journal = RunJournal("r1", "t1", store, flush_threshold=100)
@@ -890,7 +890,7 @@ class TestMessageSeqStamping:
         frame = {"messages": [{"type": "ai", "id": "a1", "content": "…"}]}
 
         first = await stamper.stamp(dict(frame))
-        assert "deerflow_seq" not in (first["messages"][0].get("additional_kwargs") or {})
+        assert "nkyel_seq" not in (first["messages"][0].get("additional_kwargs") or {})
 
         journal._put(
             event_type="llm.ai.response",
@@ -900,17 +900,17 @@ class TestMessageSeqStamping:
         await journal.flush()
 
         second = await stamper.stamp(dict(frame))
-        assert second["messages"][0]["additional_kwargs"]["deerflow_seq"] == 2
+        assert second["messages"][0]["additional_kwargs"]["nkyel_seq"] == 2
 
     @pytest.mark.asyncio
     async def test_a_run_without_a_journal_still_builds_a_stamper(self):
         """No writer to report feed growth is not a reason to stop stamping."""
-        from deerflow.runtime.runs.worker import _build_seq_stamper
+        from nkyel.runtime.runs.worker import _build_seq_stamper
 
         stamper = _build_seq_stamper(await self._seeded_store(), "t1", None)
 
         stamped = await stamper.stamp({"messages": [{"type": "human", "id": "u1__user", "content": "MARK-FIRST"}]})
-        assert stamped["messages"][0]["additional_kwargs"]["deerflow_seq"] == 1
+        assert stamped["messages"][0]["additional_kwargs"]["nkyel_seq"] == 1
 
     @pytest.mark.asyncio
     @pytest.mark.no_auto_user
@@ -924,9 +924,9 @@ class TestMessageSeqStamping:
         exactly the background runs that need it. The stamper therefore
         soft-resolves the id once, when it is built, the same way the
         worker's write paths beside it do (unset → no filter)."""
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-        from deerflow.runtime.events.store.db import DbRunEventStore
-        from deerflow.runtime.runs.worker import _MessageSeqStamper
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.runtime.events.store.db import DbRunEventStore
+        from nkyel.runtime.runs.worker import _MessageSeqStamper
 
         url = f"sqlite+aiosqlite:///{tmp_path / 'seqs.db'}"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -955,6 +955,6 @@ class TestMessageSeqStamping:
             )
 
             _run, _event, payload = bridge.published[0]
-            assert payload["messages"][0]["additional_kwargs"]["deerflow_seq"] == 1
+            assert payload["messages"][0]["additional_kwargs"]["nkyel_seq"] == 1
         finally:
             await close_engine()

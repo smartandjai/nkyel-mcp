@@ -27,10 +27,10 @@ from app.gateway.internal_auth import INTERNAL_SYSTEM_ROLE
 from app.gateway.scheduled_task_errors import active_occurrence_error, repository_error, scheduler_error, tool_error_payload
 from app.gateway.scheduled_task_validation import prepare_resume_updates, validate_scheduled_task_create, validate_scheduled_task_update
 from app.scheduler.service import TASK_CHANGED_ERROR
-from deerflow.agents.interaction_policy import RunInteractionMode, RunInteractionPolicy
-from deerflow.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict
-from deerflow.scheduler import host_notes
-from deerflow.scheduler.runtime import SchedulerCapabilityMode, SchedulerRunCapability, scheduler_tools_enabled
+from nkyel.agents.interaction_policy import RunInteractionMode, RunInteractionPolicy
+from nkyel.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict
+from nkyel.scheduler import host_notes
+from nkyel.scheduler.runtime import SchedulerCapabilityMode, SchedulerRunCapability, scheduler_tools_enabled
 
 _MANAGE_PERMISSIONS = {
     "create": frozenset({"threads:write", "runs:create"}),

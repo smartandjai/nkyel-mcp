@@ -1,18 +1,18 @@
 ---
 title: 生命周期与观察者
-description: 四种通知类贡献：每次 Lead 运行和子 Agent 的任务生命周期、DeerFlow 自己发起的系统模型调用、每个组装完成的 Agent 的描述与指纹，以及每次上下文压缩的事件。涵盖各自的时机、载荷、存储和失败行为。
+description: 四种通知类贡献：每次 Lead 运行和子 Agent 的任务生命周期、nkyel 自己发起的系统模型调用、每个组装完成的 Agent 的描述与指纹，以及每次上下文压缩的事件。涵盖各自的时机、载荷、存储和失败行为。
 ---
 
 import { Callout } from "nextra/components";
 
 # 生命周期与观察者
 
-中间件看到的是 Agent 内部的每次模型调用和工具调用。本章的四种贡献看到的是这些调用周围和旁边的事件：任务开始与结束、DeerFlow 自己的模型调用、Agent 被组装、上下文被压缩。它们都无法改变宿主的行为，并且都按[运行时模型](/docs/harness/extensions/runtime)中的规则故障放行。
+中间件看到的是 Agent 内部的每次模型调用和工具调用。本章的四种贡献看到的是这些调用周围和旁边的事件：任务开始与结束、nkyel 自己的模型调用、Agent 被组装、上下文被压缩。它们都无法改变宿主的行为，并且都按[运行时模型](/docs/harness/extensions/runtime)中的规则故障放行。
 
 | 贡献                         | 注册方法                                 | 调用时机                           | 同步还是异步       | 收到的存储          |
 | ---------------------------- | ---------------------------------------- | ---------------------------------- | ------------------ | ------------------- |
 | `TaskLifecycleContributor`   | `registry.task_lifecycle()`              | 每次 Lead 运行和子 Agent 的开始与结束 | 异步，被等待     | 任务存储            |
-| `SystemModelCallObserver`    | `registry.system_model_observer()`       | 每次 DeerFlow 自有模型调用之后     | 异步               | 任务存储，或分离存储 |
+| `SystemModelCallObserver`    | `registry.system_model_observer()`       | 每次 nkyel 自有模型调用之后     | 异步               | 任务存储，或分离存储 |
 | `AgentAssemblyObserver`      | `registry.agent_assembly_observer()`     | 每次 Agent 构建结束时              | **同步**           | 仅应用存储          |
 | `ContextCompactionObserver`  | `registry.context_compaction_observer()` | 每次摘要压缩之后                   | 异步，即发即弃     | 分离存储            |
 
@@ -138,7 +138,7 @@ class SystemModelCallObserver(Protocol):
     ) -> None: ...
 ```
 
-DeerFlow 会为自己发起一些模型调用，这些调用不经过 Agent 的模型调用链，所以中间件看不到。这个观察者报告它们：
+nkyel 会为自己发起一些模型调用，这些调用不经过 Agent 的模型调用链，所以中间件看不到。这个观察者报告它们：
 
 | `kind`          | 调用                                   | 报告方式                         | 存储              |
 | --------------- | -------------------------------------- | -------------------------------- | ----------------- |
@@ -225,7 +225,7 @@ class AgentAssemblyObserver(Protocol):
 
 | 字段                  | 含义                                                                           | 计入指纹 |
 | --------------------- | ------------------------------------------------------------------------------ | -------- |
-| `namespace`           | `"deerflow"`                                                                   | 是       |
+| `namespace`           | `"nkyel"`                                                                   | 是       |
 | `agent_name`          | `lead-agent`、自定义 Agent 名、`bootstrap` 或子 Agent 名                        | 是       |
 | `requested_model`     | 调用方请求的模型（如果有）                                                     | **否**   |
 | `effective_model`     | 实际发给提供商的模型                                                           | 是       |
@@ -246,7 +246,7 @@ class AgentAssemblyObserver(Protocol):
 - 排除 `requested_model`，因为只有 `effective_model` 会到达提供商。
 - 贡献的中间件按它包裹的类来描述，`extension` 字段写明贡献它的入口点，所以两个扩展的中间件不会合并成一项。
 
-`image_digest` 和 `git_commit` 来自环境变量 `DEER_FLOW_IMAGE_DIGEST` 和 `DEER_FLOW_GIT_COMMIT`，未设置时为 `unknown`。
+`image_digest` 和 `git_commit` 来自环境变量 `NKYEL_IMAGE_DIGEST` 和 `NKYEL_GIT_COMMIT`，未设置时为 `unknown`。
 
 ### 声明中间件的策略
 
@@ -262,7 +262,7 @@ class ToolTimer(AgentMiddleware):
         return {"slow_ms": self.slow_ms}
 ```
 
-描述里就会记录 `MiddlewareDescriptor(name="ToolTimer", ..., policy_parameters={"slow_ms": 200}, extension="deerflow_extension_hello:install")`。值必须可 JSON 序列化：长文本请先哈希，而不是直接嵌入。契约包也导出了宿主使用的辅助函数，让扩展能算出完全相同的哈希：
+描述里就会记录 `MiddlewareDescriptor(name="ToolTimer", ..., policy_parameters={"slow_ms": 200}, extension="nkyel_extension_hello:install")`。值必须可 JSON 序列化：长文本请先哈希，而不是直接嵌入。契约包也导出了宿主使用的辅助函数，让扩展能算出完全相同的哈希：
 
 - `canonical_json(value)`：键排序、无多余空白的 JSON。遇到无法序列化的值会抛出 `TypeError`，而不是退回 `repr`。
 - `canonical_hash(value)`：`canonical_json(value)` 的 SHA-256 十六进制摘要。

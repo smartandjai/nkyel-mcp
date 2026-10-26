@@ -8,9 +8,9 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool as as_tool
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.agents.middlewares.token_budget_middleware import TokenBudgetMiddleware
-from deerflow.config.token_budget_config import TokenBudgetConfig
-from deerflow.models.claude_provider import ClaudeChatModel
+from nkyel.agents.middlewares.token_budget_middleware import TokenBudgetMiddleware
+from nkyel.config.token_budget_config import TokenBudgetConfig
+from nkyel.models.claude_provider import ClaudeChatModel
 
 
 def _make_runtime(thread_id="test-thread", run_id="test-run"):

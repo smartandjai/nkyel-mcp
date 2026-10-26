@@ -2,7 +2,7 @@
 
 import pytest
 
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
 
 @pytest.fixture(params=["memory", "jsonl", "sqlite"])
@@ -10,12 +10,12 @@ async def window_store(request, tmp_path):
     if request.param == "memory":
         yield MemoryRunEventStore()
     elif request.param == "jsonl":
-        from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
+        from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
 
         yield JsonlRunEventStore(base_dir=tmp_path)
     else:
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-        from deerflow.runtime.events.store.db import DbRunEventStore
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.runtime.events.store.db import DbRunEventStore
 
         await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'events.db'}", sqlite_dir=str(tmp_path))
         try:

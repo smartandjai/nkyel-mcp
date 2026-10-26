@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock, Mock
 import httpx
 import pytest
 
-from deerflow.community.jina_ai import jina_client
-from deerflow.community.jina_ai.jina_client import JinaClient
+from nkyel.community.jina_ai import jina_client
+from nkyel.community.jina_ai.jina_client import JinaClient
 
 pytestmark = pytest.mark.anyio
 
@@ -221,7 +221,7 @@ async def test_invalid_settings_do_not_send(requests, options):
 
 
 async def test_tool_forwards_settings(monkeypatch):
-    from deerflow.community.jina_ai import tools
+    from nkyel.community.jina_ai import tools
 
     crawl = AsyncMock(return_value="Error: test")
     config = SimpleNamespace(model_extra={"max_retries": 2, "retry_budget_seconds": 12.5})

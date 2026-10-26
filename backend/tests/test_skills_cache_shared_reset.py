@@ -2,7 +2,7 @@
 
 ``SkillStorage.load_skills()`` rescans disk and re-reads ``extensions_config.json``
 on every call, so the only state that can go stale between Gateway replicas is
-the prompt layer in ``deerflow.agents.lead_agent.prompt``: the global
+the prompt layer in ``nkyel.agents.lead_agent.prompt``: the global
 enabled-skills cache, the per-``(app_config, user_id)`` cache and the rendered
 ``<skill_system>`` LRU. Every skill mutation handled by one replica therefore
 publishes ``.<extensions config>.skills-cache-reset.json`` beside the shared
@@ -28,20 +28,20 @@ from _router_auth_helpers import make_authed_test_app
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import deerflow.config.shared_reset_marker as shared_reset_marker_module
+import nkyel.config.shared_reset_marker as shared_reset_marker_module
 from app.gateway.auth.models import User
 from app.gateway.deps import get_config
 from app.gateway.routers import skills as skills_router
-from deerflow.agents.lead_agent import prompt as prompt_module
-from deerflow.config.authorization_config import AuthorizationConfig
-from deerflow.config.extensions_config import ExtensionsConfig, reset_extensions_config
-from deerflow.config.file_signature import get_config_signature
-from deerflow.config.paths import Paths
-from deerflow.config.shared_reset_marker import SharedResetChange, SharedResetMarkerTracker
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
-from deerflow.skills.types import Skill
-from deerflow.tools import skill_manage_tool as skill_manage_module
+from nkyel.agents.lead_agent import prompt as prompt_module
+from nkyel.config.authorization_config import AuthorizationConfig
+from nkyel.config.extensions_config import ExtensionsConfig, reset_extensions_config
+from nkyel.config.file_signature import get_config_signature
+from nkyel.config.paths import Paths
+from nkyel.config.shared_reset_marker import SharedResetChange, SharedResetMarkerTracker
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.skills.types import Skill
+from nkyel.tools import skill_manage_tool as skill_manage_module
 
 _PROCESS_MESSAGE = "Skill caches invalidated; subsequent runs in this Gateway process will rescan the latest skills."
 
@@ -75,7 +75,7 @@ def shared_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     config_path = tmp_path / "shared" / "extensions_config.json"
     config_path.parent.mkdir()
     config_path.write_text(json.dumps({"mcpServers": {}, "skills": {}}), encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
     reset_extensions_config()
     clock = _Clock()
     monkeypatch.setattr(prompt_module, "_skills_cache_reset_tracker", SharedResetMarkerTracker(prompt_module.SKILLS_CACHE_RESET_MARKER, clock=clock))
@@ -103,7 +103,7 @@ def _write_public_skill(root: Path, name: str, description: str) -> None:
 
 def _skills_config(skills_root: Path) -> SimpleNamespace:
     return SimpleNamespace(
-        skills=SimpleNamespace(container_path="/mnt/skills", use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage", get_skills_path=lambda: skills_root),
+        skills=SimpleNamespace(container_path="/mnt/skills", use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage", get_skills_path=lambda: skills_root),
         skill_evolution=SimpleNamespace(enabled=False, moderation_model_name=None),
     )
 
@@ -267,7 +267,7 @@ def _skill_content(name: str, description: str = "Demo skill") -> str:
 
 
 async def _allow_scan(*_args, **_kwargs):
-    from deerflow.skills.security_scanner import ScanResult
+    from nkyel.skills.security_scanner import ScanResult
 
     return ScanResult(decision="allow", reason="ok")
 
@@ -284,12 +284,12 @@ def custom_skill_app(shared_config, monkeypatch: pytest.MonkeyPatch, tmp_path: P
     custom_dir.mkdir(parents=True)
     (custom_dir / "SKILL.md").write_text(_skill_content("demo-skill"), encoding="utf-8")
     config = SimpleNamespace(
-        skills=SimpleNamespace(get_skills_path=lambda: skills_root, container_path="/mnt/skills", use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage"),
+        skills=SimpleNamespace(get_skills_path=lambda: skills_root, container_path="/mnt/skills", use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage"),
         skill_evolution=SimpleNamespace(enabled=True, moderation_model_name=None),
     )
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     monkeypatch.setattr(skills_router, "scan_skill_content", _allow_scan)
     monkeypatch.setattr(skills_router, "get_effective_user_id", lambda: "default")
     events: list[tuple[str, str | None]] = []
@@ -347,7 +347,7 @@ def test_archive_install_publishes_marker(shared_config, custom_skill_app, monke
         zf.writestr("install-skill/SKILL.md", _skill_content("install-skill"))
     storage = UserScopedSkillStorage("default", host_path=str(custom_skill_app.skills_root))
     monkeypatch.setattr(skills_router, "_get_user_skill_storage", lambda cfg: storage)
-    monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _allow_scan)
+    monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _allow_scan)
     monkeypatch.setattr(skills_router, "resolve_thread_virtual_path", lambda thread_id, path: archive)
 
     with TestClient(custom_skill_app.app) as client:
@@ -412,7 +412,7 @@ def test_public_skill_toggle_publishes_global_marker(shared_config, monkeypatch)
 
 
 def test_custom_skill_toggle_publishes_user_scoped_marker(shared_config, monkeypatch) -> None:
-    from deerflow.skills.storage import user_scoped_skill_storage as uss_module
+    from nkyel.skills.storage import user_scoped_skill_storage as uss_module
 
     enabled_state = {"value": True}
 
@@ -460,7 +460,7 @@ def test_custom_skill_toggle_publishes_user_scoped_marker(shared_config, monkeyp
 
 def _make_reload_app() -> FastAPI:
     config = SimpleNamespace(
-        skills=SimpleNamespace(get_skills_path=lambda: "/tmp/skills", container_path="/mnt/skills", use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage"),
+        skills=SimpleNamespace(get_skills_path=lambda: "/tmp/skills", container_path="/mnt/skills", use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage"),
         skill_evolution=SimpleNamespace(enabled=True, moderation_model_name=None),
     )
     app = make_authed_test_app(user_factory=_make_admin_user)
@@ -605,7 +605,7 @@ def test_install_marker_publication_failure_is_500_not_404(shared_config, custom
         zf.writestr("install-skill/SKILL.md", _skill_content("install-skill"))
     storage = UserScopedSkillStorage("default", host_path=str(custom_skill_app.skills_root))
     monkeypatch.setattr(skills_router, "_get_user_skill_storage", lambda cfg: storage)
-    monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _allow_scan)
+    monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _allow_scan)
     monkeypatch.setattr(skills_router, "resolve_thread_virtual_path", lambda thread_id, path: archive)
 
     with TestClient(custom_skill_app.app) as client:
@@ -725,13 +725,13 @@ def agent_skill_tool(shared_config, monkeypatch: pytest.MonkeyPatch, tmp_path: P
     skills_root = tmp_path / "skills"
     skill_dir = _user_custom_dir(tmp_path, _AGENT_USER) / _AGENT_SKILL
     config = SimpleNamespace(
-        skills=SimpleNamespace(get_skills_path=lambda: skills_root, container_path="/mnt/skills", use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage"),
+        skills=SimpleNamespace(get_skills_path=lambda: skills_root, container_path="/mnt/skills", use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage"),
         skill_evolution=SimpleNamespace(enabled=True, moderation_model_name=None),
     )
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.skills.security_scanner.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.skills.security_scanner.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     monkeypatch.setattr(skill_manage_module, "scan_skill_content", _allow_scan)
     events: list[tuple[str, str | None]] = []
     publish_threads: list[int] = []

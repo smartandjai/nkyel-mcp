@@ -15,11 +15,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 from blockbuster import BlockingError
 
-from deerflow.community.browser_automation import tools as browser_tools
-from deerflow.community.browser_automation.egress import BrowserEgressProxy
-from deerflow.community.browserless import tools as browserless_tools
-from deerflow.community.crawl4ai import tools as crawl4ai_tools
-from deerflow.community.url_safety import resolve_host_addresses
+from nkyel.community.browser_automation import tools as browser_tools
+from nkyel.community.browser_automation.egress import BrowserEgressProxy
+from nkyel.community.browserless import tools as browserless_tools
+from nkyel.community.crawl4ai import tools as crawl4ai_tools
+from nkyel.community.url_safety import resolve_host_addresses
 
 pytestmark = pytest.mark.asyncio
 
@@ -139,7 +139,7 @@ async def test_browser_navigate_and_capture_resolves_off_loop(tmp_path, loopback
 async def test_browser_request_guard_resolves_off_loop(loopback_dns: list[str]) -> None:
     # The context route guard screens every redirect hop and subresource on the
     # shared Playwright loop, which also pumps Live frames for every session.
-    from deerflow.community.browser_automation.session import BrowserSession
+    from nkyel.community.browser_automation.session import BrowserSession
 
     captured = {}
 

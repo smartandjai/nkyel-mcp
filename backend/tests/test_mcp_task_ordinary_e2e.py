@@ -7,19 +7,19 @@ import pytest
 import pytest_asyncio
 
 from app.mcp_tasks import McpTaskService
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp.task_tool_caller import McpTaskToolCaller
-from deerflow.mcp.tasks import (
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp.task_tool_caller import McpTaskToolCaller
+from nkyel.mcp.tasks import (
     ORDINARY_MCP_TASK_DRIVER,
     McpTaskDriverRegistry,
     OrdinaryMcpTaskDriver,
     TaskSubmitRequest,
 )
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.mcp_tasks import McpTaskRepository
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
-from deerflow.runtime.user_context import get_current_user, reset_current_user, set_current_user
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.mcp_tasks import McpTaskRepository
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.runtime.user_context import get_current_user, reset_current_user, set_current_user
 
 
 @pytest_asyncio.fixture(autouse=True)

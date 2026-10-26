@@ -8,7 +8,7 @@ from langchain_core.language_models.fake_chat_models import FakeMessagesListChat
 from langchain_core.messages import AIMessage
 
 from app.gateway.routers import input_polish
-from deerflow.utils import oneshot_llm
+from nkyel.utils import oneshot_llm
 
 
 def _config(

@@ -115,12 +115,12 @@ class Transport:
 
 
 async def run_one(case, arm, repetition, output, config, provider):
-    from deerflow.config.app_config import AppConfig
-    from deerflow.extensions.registry import ExtensionRegistry
-    from deerflow.subagents.config import SubagentConfig
-    from deerflow.subagents.context_snapshot import ParentContextSnapshot
-    from deerflow.subagents.executor import SubagentExecutor
-    from deerflow.tools.builtins.task_tool import task_tool
+    from nkyel.config.app_config import AppConfig
+    from nkyel.extensions.registry import ExtensionRegistry
+    from nkyel.subagents.config import SubagentConfig
+    from nkyel.subagents.context_snapshot import ParentContextSnapshot
+    from nkyel.subagents.executor import SubagentExecutor
+    from nkyel.tools.builtins.task_tool import task_tool
 
     job_id = f"{case.name}__{repetition}__{arm}"
     directory = output / job_id
@@ -177,7 +177,7 @@ async def run_one(case, arm, repetition, output, config, provider):
         app_config = AppConfig.model_validate(
             {
                 "models": [{"name": "eval", "use": "langchain_openai:ChatOpenAI", "model": provider[2], "context_window": config["context_window"]}],
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "authorization": {"enabled": False},
                 "skills": {"deferred_discovery": False},
                 "tool_search": {"enabled": False},
@@ -259,9 +259,9 @@ async def run_live(args):
     random.Random(config["order_seed"]).shuffle(jobs)
     source_paths = list(ROOT.glob("*.py")) + [
         args.config.resolve(),
-        REPO / "backend/packages/harness/deerflow/subagents/context_snapshot.py",
-        REPO / "backend/packages/harness/deerflow/subagents/executor.py",
-        REPO / "backend/packages/harness/deerflow/tools/builtins/task_tool.py",
+        REPO / "backend/packages/harness/nkyel/subagents/context_snapshot.py",
+        REPO / "backend/packages/harness/nkyel/subagents/executor.py",
+        REPO / "backend/packages/harness/nkyel/tools/builtins/task_tool.py",
     ]
     metadata = {
         "config": config,
@@ -273,15 +273,15 @@ async def run_live(args):
         "git_revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "git_dirty": bool(subprocess.check_output(["git", "status", "--porcelain"], cwd=REPO, text=True)),
         "sha256": {str(path.relative_to(REPO)) if path.is_relative_to(REPO) else "external-config": hashlib.sha256(path.read_bytes()).hexdigest() for path in source_paths},
-        "versions": {name: importlib.metadata.version(name) for name in ("deerflow-harness", "langchain", "langgraph", "langchain-openai", "httpx")},
+        "versions": {name: importlib.metadata.version(name) for name in ("nkyel-harness", "langchain", "langgraph", "langchain-openai", "httpx")},
         "jobs": [f"{case.name}__{rep}__{arm}" for case, arm, rep in jobs],
     }
     (output / "run.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
-    env = {"DEER_FLOW_HOME": str(output / "runtime"), "LANGCHAIN_TRACING_V2": "false", "LANGSMITH_TRACING": "false"}
+    env = {"NKYEL_HOME": str(output / "runtime"), "LANGCHAIN_TRACING_V2": "false", "LANGSMITH_TRACING": "false"}
     with patch.dict(os.environ, env):
-        import deerflow.subagents.executor as executor_module
+        import nkyel.subagents.executor as executor_module
 
         # Scope instrumentation to this standalone run and restore it afterward.
         with patch.object(executor_module, "create_chat_model", side_effect=lambda *a, **kw: CURRENT_MODEL.get()), patch.object(executor_module, "build_tracing_callbacks", return_value=[]):

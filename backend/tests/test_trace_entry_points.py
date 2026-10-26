@@ -1,8 +1,8 @@
 """Trace binding at the entry points that no ASGI middleware can reach.
 
 ``TraceMiddleware`` covers Gateway HTTP traffic (``test_trace_middleware.py``)
-and ``DeerFlowClient.stream`` covers embedded callers
-(``test_client_langfuse_metadata.py``). The remaining ways work enters DeerFlow
+and ``NkyelClient.stream`` covers embedded callers
+(``test_client_langfuse_metadata.py``). The remaining ways work enters nkyel
 hold no HTTP request at all: the scheduled-task poller, MCP task notification
 runs, and IM channels, which keep long-lived provider connections. Each must
 bind a trace id of its own, scoped to one unit of work, or everything
@@ -22,8 +22,8 @@ from app.channels.manager import ChannelManager
 from app.channels.message_bus import InboundMessage, MessageBus
 from app.channels.store import JsonChannelStore
 from app.scheduler.service import ScheduledTaskService
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.trace_context import get_current_trace_id, request_trace_context
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.trace_context import get_current_trace_id, request_trace_context
 
 # --------------------------------------------------------------------------
 # Scheduled tasks
@@ -231,7 +231,7 @@ async def test_inbound_messages_are_handled_under_distinct_trace_scopes(tmp_path
 @pytest.fixture
 def _stub_app_config():
     """Keep the launchers independent from a developer-local config.yaml."""
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     yield
     reset_app_config()
 

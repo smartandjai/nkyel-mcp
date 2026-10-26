@@ -56,10 +56,10 @@ def test_copy_preserves_original_error_when_cleanup_fails(monkeypatch, caplog, k
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             with pytest.raises(expected_type) as raised:
                 skills_router._copy_uploaded_skill_archive(source)
         if kind == "read":
@@ -87,7 +87,7 @@ def test_copy_success_returns_the_uploaded_bytes():
     destination = skills_router._copy_uploaded_skill_archive(BytesIO(payload))
     try:
         assert destination.read_bytes() == payload
-        assert destination.name.startswith("deerflow-skill-")
+        assert destination.name.startswith("nkyel-skill-")
         assert destination.suffix == ".skill"
     finally:
         destination.unlink(missing_ok=True)
@@ -152,10 +152,10 @@ async def test_upload_finally_preserves_install_outcome(tmp_path, monkeypatch, c
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             if outcome == "success":
                 result = await skills_router.upload_and_install_skill(SimpleNamespace(), SimpleNamespace())
                 assert result == response
@@ -218,7 +218,7 @@ async def test_upload_finally_close_failure_still_discards_and_preserves_outcome
         monkeypatch.setattr(Path, "unlink", unlink)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             if outcome == "success":
                 result = await skills_router.upload_and_install_skill(SimpleNamespace(), SimpleNamespace())
                 assert result == response

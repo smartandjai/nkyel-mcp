@@ -10,8 +10,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.community.aio_sandbox import local_backend as local_backend_module
-from deerflow.community.aio_sandbox.local_backend import (
+from nkyel.community.aio_sandbox import local_backend as local_backend_module
+from nkyel.community.aio_sandbox.local_backend import (
     LocalContainerBackend,
     _ContainerInspection,
     _docker_server_is_desktop,
@@ -21,15 +21,15 @@ from deerflow.community.aio_sandbox.local_backend import (
     _redact_container_command_for_log,
     _resolve_docker_bind_host,
 )
-from deerflow.community.aio_sandbox.sandbox_info import SandboxInfo
-from deerflow.utils.network import get_free_port, release_port
+from nkyel.community.aio_sandbox.sandbox_info import SandboxInfo
+from nkyel.utils.network import get_free_port, release_port
 
 
 def test_sandbox_info_does_not_serialize_or_repr_relay_credentials():
     info = SandboxInfo(
         sandbox_id="sandbox-id",
         sandbox_url="http://localhost:8080",
-        request_headers={"X-DeerFlow-Relay-Token": "secret-token"},
+        request_headers={"X-nkyel-Relay-Token": "secret-token"},
         requires_replacement=True,
     )
 
@@ -39,11 +39,11 @@ def test_sandbox_info_does_not_serialize_or_repr_relay_credentials():
 
 
 def test_format_container_mount_uses_mount_syntax_for_docker_windows_paths():
-    args = _format_container_mount("docker", "D:/deer-flow/backend/.deer-flow/threads", "/mnt/threads", False)
+    args = _format_container_mount("docker", "D:/nkyel/backend/.nkyel/threads", "/mnt/threads", False)
 
     assert args == [
         "--mount",
-        "type=bind,src=D:/deer-flow/backend/.deer-flow/threads,dst=/mnt/threads",
+        "type=bind,src=D:/nkyel/backend/.nkyel/threads,dst=/mnt/threads",
     ]
 
 
@@ -137,7 +137,7 @@ def test_start_container_logs_redacted_env_values(monkeypatch, caplog):
 
     monkeypatch.setattr("subprocess.run", fake_run)
 
-    with caplog.at_level(logging.INFO, logger="deerflow.community.aio_sandbox.local_backend"):
+    with caplog.at_level(logging.INFO, logger="nkyel.community.aio_sandbox.local_backend"):
         backend._start_container("sandbox-test", 18080)
 
     joined_cmd = " ".join(captured_cmd)
@@ -232,7 +232,7 @@ def test_darwin_open_keeps_docker_to_reconcile_restricted_sandbox(monkeypatch):
             return SimpleNamespace(stdout="container 0.7.0\n", stderr="", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr("deerflow.community.aio_sandbox.local_backend.platform.system", lambda: "Darwin")
+    monkeypatch.setattr("nkyel.community.aio_sandbox.local_backend.platform.system", lambda: "Darwin")
     monkeypatch.setattr("subprocess.run", fake_run)
 
     backend = LocalContainerBackend(
@@ -251,12 +251,12 @@ def test_darwin_open_keeps_docker_to_reconcile_restricted_sandbox(monkeypatch):
                 1.0,
                 None,
                 {
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": "transition",
-                    "deerflow.network_mode": "allowlist",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": "transition",
+                    "nkyel.network_mode": "allowlist",
                 },
                 "sandbox:latest",
-                frozenset({"deer-flow-sandbox-net-old"}),
+                frozenset({"nkyel-sandbox-net-old"}),
             )
         },
     )
@@ -267,7 +267,7 @@ def test_darwin_open_keeps_docker_to_reconcile_restricted_sandbox(monkeypatch):
     assert [info.sandbox_id for info in infos] == ["transition"]
     assert infos[0].requires_replacement is True
     assert ["container", "--version"] in commands
-    assert any("label=deerflow.role=sandbox" in command for command in commands)
+    assert any("label=nkyel.role=sandbox" in command for command in commands)
 
 
 def test_darwin_open_uses_apple_container_without_managed_docker_sandboxes(monkeypatch):
@@ -281,7 +281,7 @@ def test_darwin_open_uses_apple_container_without_managed_docker_sandboxes(monke
             return SimpleNamespace(stdout="other-sandbox-collision\n", stderr="", returncode=0)
         raise AssertionError(f"unexpected command: {cmd}")
 
-    monkeypatch.setattr("deerflow.community.aio_sandbox.local_backend.platform.system", lambda: "Darwin")
+    monkeypatch.setattr("nkyel.community.aio_sandbox.local_backend.platform.system", lambda: "Darwin")
     monkeypatch.setattr("subprocess.run", fake_run)
 
     backend = LocalContainerBackend(
@@ -294,7 +294,7 @@ def test_darwin_open_uses_apple_container_without_managed_docker_sandboxes(monke
     )
 
     assert backend.runtime == "container"
-    assert any("label=deerflow.role=sandbox" in command for command in commands)
+    assert any("label=nkyel.role=sandbox" in command for command in commands)
 
 
 def _restricted_backend() -> LocalContainerBackend:
@@ -337,14 +337,14 @@ def test_open_create_labels_sandbox_identity_and_mode(monkeypatch):
         return "container-id"
 
     monkeypatch.setattr(backend, "_start_container", fake_start)
-    monkeypatch.setattr("deerflow.community.aio_sandbox.local_backend.get_free_port", lambda start_port=None: 18080)
+    monkeypatch.setattr("nkyel.community.aio_sandbox.local_backend.get_free_port", lambda start_port=None: 18080)
 
     backend.create(thread_id="thread", sandbox_id="labelled-open")
 
     assert captured["labels"] == {
-        "deerflow.sandbox_id": "labelled-open",
-        "deerflow.role": "sandbox",
-        "deerflow.network_mode": "open",
+        "nkyel.sandbox_id": "labelled-open",
+        "nkyel.role": "sandbox",
+        "nkyel.network_mode": "open",
     }
 
 
@@ -363,7 +363,7 @@ def test_create_internal_network_isolates_both_gateway_families_and_labels_polic
     create = commands[0]
     assert "com.docker.network.bridge.gateway_mode_ipv4=isolated" in create
     assert "com.docker.network.bridge.gateway_mode_ipv6=isolated" in create
-    assert f"deerflow.network_policy_digest={backend._network_policy_digest()}" in create
+    assert f"nkyel.network_policy_digest={backend._network_policy_digest()}" in create
 
 
 def test_create_egress_network_is_per_sandbox_and_disables_inter_container_traffic(monkeypatch):
@@ -381,8 +381,8 @@ def test_create_egress_network_is_per_sandbox_and_disables_inter_container_traff
     create = commands[0]
     assert "--internal" not in create
     assert "com.docker.network.bridge.enable_icc=false" in create
-    assert "deerflow.role=egress-network" in create
-    assert f"deerflow.network_policy_digest={backend._network_policy_digest()}" in create
+    assert "nkyel.role=egress-network" in create
+    assert f"nkyel.network_policy_digest={backend._network_policy_digest()}" in create
 
 
 def test_restricted_resource_status_requires_matching_policy_image_and_network():
@@ -455,7 +455,7 @@ def test_restricted_resource_status_requires_matching_policy_image_and_network()
     inspections[proxy_name] = _ContainerInspection(
         created_at=1.0,
         host_port=18080,
-        labels={**backend._restricted_labels(sandbox_id, "network-proxy"), "deerflow.network_policy_digest": "stale"},
+        labels={**backend._restricted_labels(sandbox_id, "network-proxy"), "nkyel.network_policy_digest": "stale"},
         image="proxy:latest",
         networks=frozenset({egress_network_name, network_name}),
         relay_token="test-relay-token-that-is-at-least-32-bytes",
@@ -482,15 +482,15 @@ def test_restricted_sandbox_has_no_published_port_and_forces_proxy_env(monkeypat
     backend._start_container(
         "sandbox-test",
         18080,
-        network_override="deer-flow-sandbox-net-test",
+        network_override="nkyel-sandbox-net-test",
         publish_port=False,
-        extra_environment={"HTTP_PROXY": "http://deer-flow-netproxy-test:3128"},
+        extra_environment={"HTTP_PROXY": "http://nkyel-netproxy-test:3128"},
     )
 
     assert "-p" not in captured_cmd
-    assert captured_cmd[captured_cmd.index("--network") + 1] == "deer-flow-sandbox-net-test"
+    assert captured_cmd[captured_cmd.index("--network") + 1] == "nkyel-sandbox-net-test"
     proxy_values = [captured_cmd[index + 1] for index, value in enumerate(captured_cmd) if value == "-e" and captured_cmd[index + 1].startswith("HTTP_PROXY=")]
-    assert proxy_values[-1] == "HTTP_PROXY=http://deer-flow-netproxy-test:3128"
+    assert proxy_values[-1] == "HTTP_PROXY=http://nkyel-netproxy-test:3128"
 
 
 def test_restricted_start_configures_shell_and_aio_browser_proxy(monkeypatch):
@@ -600,7 +600,7 @@ def test_network_proxy_uses_read_only_root_and_bounded_policy_storage(monkeypatc
     assert create[create.index("--tmpfs") + 1] == "/tmp:rw,noexec,nosuid,size=16m"
     assert "--cap-drop=ALL" in create
     assert "no-new-privileges" in create
-    assert "DEERFLOW_RELAY_TOKEN=test-relay-token" in create
+    assert "NKYEL_RELAY_TOKEN=test-relay-token" in create
 
 
 def test_start_container_filters_nested_config_mounts_for_policy_scoped_skills(
@@ -672,22 +672,22 @@ def _capture_start_container_command(monkeypatch, backend: LocalContainerBackend
 
 
 def test_resolve_docker_bind_host_defaults_loopback_for_localhost(monkeypatch):
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_HOST", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_HOST", raising=False)
 
     assert _resolve_docker_bind_host() == "127.0.0.1"
 
 
 def test_resolve_docker_bind_host_follows_host_gateway_mapping_for_dood(monkeypatch):
     """The bind follows what host.docker.internal actually resolves to."""
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "host.docker.internal")
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "host.docker.internal")
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_server_is_desktop",
+        "nkyel.community.aio_sandbox.local_backend._docker_server_is_desktop",
         lambda: False,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: "192.168.64.1",
     )
 
@@ -706,14 +706,14 @@ def test_resolve_docker_bind_host_follows_host_gateway_mapping_for_dood(monkeypa
 )
 def test_resolve_docker_bind_host_uses_loopback_on_docker_desktop(monkeypatch, sandbox_host):
     """Docker Desktop cannot bind to internal VM gateway IPs, so default to 127.0.0.1."""
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", sandbox_host)
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", sandbox_host)
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_server_is_desktop",
+        "nkyel.community.aio_sandbox.local_backend._docker_server_is_desktop",
         lambda: True,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: "192.168.65.254",
     )
 
@@ -722,14 +722,14 @@ def test_resolve_docker_bind_host_uses_loopback_on_docker_desktop(monkeypatch, s
 
 def test_resolve_docker_bind_host_preserves_custom_host_on_docker_desktop(monkeypatch):
     """Custom non-loopback sandbox host on Docker Desktop binds the resolved address."""
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "desktop-box")
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "desktop-box")
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_server_is_desktop",
+        "nkyel.community.aio_sandbox.local_backend._docker_server_is_desktop",
         lambda: True,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: "192.0.2.55",
     )
 
@@ -737,11 +737,11 @@ def test_resolve_docker_bind_host_preserves_custom_host_on_docker_desktop(monkey
 
 
 def test_resolve_docker_bind_host_explicit_override_precedes_desktop_detection(monkeypatch):
-    """Explicit DEER_FLOW_SANDBOX_BIND_HOST takes precedence even on Docker Desktop."""
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "192.0.2.10")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "host.docker.internal")
+    """Explicit NKYEL_SANDBOX_BIND_HOST takes precedence even on Docker Desktop."""
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "192.0.2.10")
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "host.docker.internal")
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_server_is_desktop",
+        "nkyel.community.aio_sandbox.local_backend._docker_server_is_desktop",
         lambda: True,
     )
 
@@ -750,14 +750,14 @@ def test_resolve_docker_bind_host_explicit_override_precedes_desktop_detection(m
 
 def test_resolve_docker_bind_host_brackets_ipv6_host_gateway(monkeypatch):
     """An IPv6 host-gateway mapping binds the bracketed IPv6 address."""
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "host.docker.internal")
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "host.docker.internal")
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_server_is_desktop",
+        "nkyel.community.aio_sandbox.local_backend._docker_server_is_desktop",
         lambda: False,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: "[fd00::1]",
     )
 
@@ -771,53 +771,53 @@ def test_resolve_docker_bind_host_brackets_bare_ipv6_override(monkeypatch):
     (``[fd00::1]:port:8080``); operators writing the escape hatch naturally
     give the bare address, so it must be normalized before use.
     """
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "fd00::1")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "fd00::1")
     assert _resolve_docker_bind_host() == "[fd00::1]"
 
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "[fd00::1]")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "[fd00::1]")
     assert _resolve_docker_bind_host() == "[fd00::1]"
 
     # IPv4 literals pass through unchanged.
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "192.168.64.1")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "192.168.64.1")
     assert _resolve_docker_bind_host() == "192.168.64.1"
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "0.0.0.0")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "0.0.0.0")
     assert _resolve_docker_bind_host() == "0.0.0.0"
 
 
 def test_resolve_docker_bind_host_resolves_hostname_override(monkeypatch):
     """-p requires an IP literal as the host part, so a hostname override
     resolves to the address the daemon actually maps before use."""
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "host.docker.internal")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "host.docker.internal")
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: "192.168.64.1" if host == "host.docker.internal" else None,
     )
     assert _resolve_docker_bind_host() == "192.168.64.1"
 
 
 def test_resolve_docker_bind_host_rejects_unresolvable_hostname_override(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "not-a-resolvable-host.invalid")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "not-a-resolvable-host.invalid")
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: None,
     )
-    with pytest.raises(RuntimeError, match="DEER_FLOW_SANDBOX_BIND_HOST"):
+    with pytest.raises(RuntimeError, match="NKYEL_SANDBOX_BIND_HOST"):
         _resolve_docker_bind_host()
 
 
 def test_resolve_docker_bind_host_uses_discovered_bridge_gateway_when_resolution_fails(monkeypatch):
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "host.docker.internal")
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "host.docker.internal")
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_server_is_desktop",
+        "nkyel.community.aio_sandbox.local_backend._docker_server_is_desktop",
         lambda: False,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: None,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_bridge_gateway_ip",
+        "nkyel.community.aio_sandbox.local_backend._docker_bridge_gateway_ip",
         lambda: "192.168.64.1",
     )
 
@@ -825,18 +825,18 @@ def test_resolve_docker_bind_host_uses_discovered_bridge_gateway_when_resolution
 
 
 def test_resolve_docker_bind_host_falls_back_to_static_bridge_gateway(monkeypatch):
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "host.docker.internal")
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "host.docker.internal")
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_server_is_desktop",
+        "nkyel.community.aio_sandbox.local_backend._docker_server_is_desktop",
         lambda: False,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: None,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_bridge_gateway_ip",
+        "nkyel.community.aio_sandbox.local_backend._docker_bridge_gateway_ip",
         lambda: None,
     )
 
@@ -844,14 +844,14 @@ def test_resolve_docker_bind_host_falls_back_to_static_bridge_gateway(monkeypatc
 
 
 def test_resolve_docker_bind_host_uses_ipv6_loopback_for_ipv6_sandbox_host(monkeypatch):
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "[::1]")
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "[::1]")
 
     assert _resolve_docker_bind_host() == "[::1]"
 
 
 def test_resolve_docker_bind_host_logs_selected_bind_reason(caplog):
-    with caplog.at_level(logging.DEBUG, logger="deerflow.community.aio_sandbox.local_backend"):
+    with caplog.at_level(logging.DEBUG, logger="nkyel.community.aio_sandbox.local_backend"):
         assert _resolve_docker_bind_host(sandbox_host="localhost", bind_host="") == "127.0.0.1"
 
     messages = "\n".join(record.getMessage() for record in caplog.records)
@@ -859,32 +859,32 @@ def test_resolve_docker_bind_host_logs_selected_bind_reason(caplog):
 
 
 def test_resolve_docker_bind_host_allows_explicit_override(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "localhost")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "192.0.2.10")
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "localhost")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "192.0.2.10")
 
     assert _resolve_docker_bind_host() == "192.0.2.10"
 
 
 def test_resolve_docker_bind_host_allows_restoring_legacy_broad_bind(monkeypatch):
-    """DEER_FLOW_SANDBOX_BIND_HOST=0.0.0.0 restores the pre-hardening bind."""
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "host.docker.internal")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "0.0.0.0")
+    """NKYEL_SANDBOX_BIND_HOST=0.0.0.0 restores the pre-hardening bind."""
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "host.docker.internal")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "0.0.0.0")
 
     assert _resolve_docker_bind_host() == "0.0.0.0"
 
 
 def _clear_hardening_env(monkeypatch):
     for var in (
-        "DEER_FLOW_SANDBOX_HOST",
-        "DEER_FLOW_SANDBOX_BIND_HOST",
-        "DEER_FLOW_SANDBOX_SECCOMP_UNCONFINED",
-        "DEER_FLOW_SANDBOX_SECCOMP_PROFILE",
-        "DEER_FLOW_SANDBOX_MEMORY",
-        "DEER_FLOW_SANDBOX_CPUS",
-        "DEER_FLOW_SANDBOX_PIDS_LIMIT",
-        "DEER_FLOW_SANDBOX_CONTAINER_USER",
-        "DEER_FLOW_SANDBOX_NETWORK",
-        "DEER_FLOW_SANDBOX_IMAGE_STARTUP_CAPS",
+        "NKYEL_SANDBOX_HOST",
+        "NKYEL_SANDBOX_BIND_HOST",
+        "NKYEL_SANDBOX_SECCOMP_UNCONFINED",
+        "NKYEL_SANDBOX_SECCOMP_PROFILE",
+        "NKYEL_SANDBOX_MEMORY",
+        "NKYEL_SANDBOX_CPUS",
+        "NKYEL_SANDBOX_PIDS_LIMIT",
+        "NKYEL_SANDBOX_CONTAINER_USER",
+        "NKYEL_SANDBOX_NETWORK",
+        "NKYEL_SANDBOX_IMAGE_STARTUP_CAPS",
     ):
         monkeypatch.delenv(var, raising=False)
 
@@ -897,8 +897,8 @@ def test_start_container_binds_local_docker_port_to_loopback_by_default(monkeypa
         config_mounts=[],
         environment={},
     )
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_HOST", raising=False)
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_HOST", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
@@ -914,8 +914,8 @@ def test_start_container_brackets_bare_ipv6_bind_override(monkeypatch):
         config_mounts=[],
         environment={},
     )
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "host.docker.internal")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "fd00::1")
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "host.docker.internal")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "fd00::1")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
@@ -931,14 +931,14 @@ def test_start_container_binds_dood_port_to_bridge_gateway(monkeypatch):
         config_mounts=[],
         environment={},
     )
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "host.docker.internal")
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "host.docker.internal")
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
+        "nkyel.community.aio_sandbox.local_backend._resolve_sandbox_host_address",
         lambda host: None,
     )
     monkeypatch.setattr(
-        "deerflow.community.aio_sandbox.local_backend._docker_bridge_gateway_ip",
+        "nkyel.community.aio_sandbox.local_backend._docker_bridge_gateway_ip",
         lambda: "172.17.0.1",
     )
 
@@ -955,8 +955,8 @@ def test_start_container_binds_ipv6_sandbox_host_to_ipv6_loopback(monkeypatch):
         config_mounts=[],
         environment={},
     )
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", "[::1]")
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", "[::1]")
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
@@ -971,7 +971,7 @@ def test_start_container_keeps_apple_container_port_format(monkeypatch):
         config_mounts=[],
         environment={},
     )
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "127.0.0.1")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "127.0.0.1")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend, runtime="container")
 
@@ -1022,7 +1022,7 @@ def test_start_container_seccomp_can_opt_out_to_default_profile(monkeypatch):
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_SECCOMP_UNCONFINED", "0")
+    monkeypatch.setenv("NKYEL_SANDBOX_SECCOMP_UNCONFINED", "0")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
@@ -1043,7 +1043,7 @@ def test_start_container_seccomp_profile_env_selects_custom_profile(monkeypatch)
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_SECCOMP_PROFILE", "/etc/docker/chromium-seccomp.json")
+    monkeypatch.setenv("NKYEL_SANDBOX_SECCOMP_PROFILE", "/etc/docker/chromium-seccomp.json")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
@@ -1065,9 +1065,9 @@ def test_resolve_sandbox_host_address_formats_and_filters(monkeypatch):
             return [(socket_module.AF_INET, None, None, "", ("0.0.0.0", 0))]
         raise OSError("no such host")
 
-    monkeypatch.setattr("deerflow.community.aio_sandbox.local_backend.socket.getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr("nkyel.community.aio_sandbox.local_backend.socket.getaddrinfo", fake_getaddrinfo)
 
-    from deerflow.community.aio_sandbox.local_backend import _resolve_sandbox_host_address
+    from nkyel.community.aio_sandbox.local_backend import _resolve_sandbox_host_address
 
     assert _resolve_sandbox_host_address("v4host") == "203.0.113.7"
     # zone ids are stripped and IPv6 is bracketed for docker -p syntax
@@ -1086,9 +1086,9 @@ def test_start_container_resource_limits_env_override(monkeypatch):
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_MEMORY", "4g")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_CPUS", "4")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_PIDS_LIMIT", "1024")
+    monkeypatch.setenv("NKYEL_SANDBOX_MEMORY", "4g")
+    monkeypatch.setenv("NKYEL_SANDBOX_CPUS", "4")
+    monkeypatch.setenv("NKYEL_SANDBOX_PIDS_LIMIT", "1024")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
@@ -1106,9 +1106,9 @@ def test_start_container_resource_limits_can_be_disabled(monkeypatch):
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_MEMORY", "0")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_CPUS", "none")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_PIDS_LIMIT", "0")
+    monkeypatch.setenv("NKYEL_SANDBOX_MEMORY", "0")
+    monkeypatch.setenv("NKYEL_SANDBOX_CPUS", "none")
+    monkeypatch.setenv("NKYEL_SANDBOX_PIDS_LIMIT", "0")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
@@ -1126,13 +1126,13 @@ def test_start_container_passes_through_user_and_network(monkeypatch):
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_CONTAINER_USER", "1000:1000")
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "deer-flow-sandbox-egress")
+    monkeypatch.setenv("NKYEL_SANDBOX_CONTAINER_USER", "1000:1000")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "nkyel-sandbox-egress")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
     assert captured_cmd[captured_cmd.index("--user") + 1] == "1000:1000"
-    assert captured_cmd[captured_cmd.index("--network") + 1] == "deer-flow-sandbox-egress"
+    assert captured_cmd[captured_cmd.index("--network") + 1] == "nkyel-sandbox-egress"
 
 
 def test_start_container_rejects_host_networking(monkeypatch):
@@ -1146,9 +1146,9 @@ def test_start_container_rejects_host_networking(monkeypatch):
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "host")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "host")
 
-    with pytest.raises(RuntimeError, match="DEER_FLOW_SANDBOX_NETWORK"):
+    with pytest.raises(RuntimeError, match="NKYEL_SANDBOX_NETWORK"):
         _capture_start_container_command(monkeypatch, backend)
 
 
@@ -1161,9 +1161,9 @@ def test_start_container_rejects_shared_container_network_namespace(monkeypatch)
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "container:gateway")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "container:gateway")
 
-    with pytest.raises(RuntimeError, match="DEER_FLOW_SANDBOX_NETWORK"):
+    with pytest.raises(RuntimeError, match="NKYEL_SANDBOX_NETWORK"):
         _capture_start_container_command(monkeypatch, backend)
 
 
@@ -1179,7 +1179,7 @@ def test_start_container_rejects_none_network(monkeypatch):
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "none")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "none")
 
     with pytest.raises(RuntimeError, match="loopback-only"):
         _capture_start_container_command(monkeypatch, backend)
@@ -1195,7 +1195,7 @@ def test_start_container_does_not_add_docker_hardening_to_apple_container(monkey
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_BIND_HOST", "127.0.0.1")
+    monkeypatch.setenv("NKYEL_SANDBOX_BIND_HOST", "127.0.0.1")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend, runtime="container")
 
@@ -1290,9 +1290,9 @@ def test_discover_replaces_container_with_insufficient_shell_capacity(monkeypatc
                 created_at=1.0,
                 host_port=18080,
                 labels={
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": "existing",
-                    "deerflow.network_mode": "open",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": "existing",
+                    "nkyel.network_mode": "open",
                 },
                 image="sandbox:latest",
                 networks=frozenset({"bridge"}),
@@ -1326,9 +1326,9 @@ def test_list_running_marks_insufficient_shell_capacity_for_fenced_replacement(m
                 created_at=1.0,
                 host_port=18080,
                 labels={
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": "existing",
-                    "deerflow.network_mode": "open",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": "existing",
+                    "nkyel.network_mode": "open",
                 },
                 image="sandbox:latest",
                 networks=frozenset({"bridge"}),
@@ -1355,9 +1355,9 @@ def test_restricted_discovery_uses_proxy_relay_port(monkeypatch):
             1.0,
             None,
             {
-                "deerflow.role": "sandbox",
-                "deerflow.sandbox_id": "existing",
-                "deerflow.network_mode": "allowlist",
+                "nkyel.role": "sandbox",
+                "nkyel.sandbox_id": "existing",
+                "nkyel.network_mode": "allowlist",
             },
             "sandbox:latest",
             frozenset(),
@@ -1379,14 +1379,14 @@ def test_restricted_discovery_uses_proxy_relay_port(monkeypatch):
         readiness.append(kwargs)
         return True
 
-    monkeypatch.setattr("deerflow.community.aio_sandbox.local_backend.wait_for_sandbox_ready", fake_ready)
+    monkeypatch.setattr("nkyel.community.aio_sandbox.local_backend.wait_for_sandbox_ready", fake_ready)
 
     info = backend.discover("existing")
 
     assert info is not None
     assert info.container_name == "sandbox-existing"
     assert info.sandbox_url == "http://localhost:18080"
-    assert info.request_headers == {"X-DeerFlow-Relay-Token": "test-relay-token-that-is-at-least-32-bytes"}
+    assert info.request_headers == {"X-nkyel-Relay-Token": "test-relay-token-that-is-at-least-32-bytes"}
     assert readiness == [{"timeout": 5, "headers": info.request_headers}]
 
 
@@ -1404,9 +1404,9 @@ def test_restricted_discovery_reports_stale_policy_without_removing_resources(mo
                 1.0,
                 None,
                 {
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": "stale",
-                    "deerflow.network_mode": "allowlist",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": "stale",
+                    "nkyel.network_mode": "allowlist",
                 },
                 "sandbox:latest",
                 frozenset(),
@@ -1465,9 +1465,9 @@ def test_restricted_discovery_reports_labelled_open_sandbox_for_fenced_replaceme
                 1.0,
                 18080,
                 {
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": "labelled-open",
-                    "deerflow.network_mode": "open",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": "labelled-open",
+                    "nkyel.network_mode": "open",
                 },
                 "sandbox:latest",
                 frozenset({"bridge"}),
@@ -1499,12 +1499,12 @@ def test_open_discovery_reports_restricted_sandbox_for_fenced_replacement(monkey
                 1.0,
                 None,
                 {
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": "old-restricted",
-                    "deerflow.network_mode": "allowlist",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": "old-restricted",
+                    "nkyel.network_mode": "allowlist",
                 },
                 "sandbox:latest",
-                frozenset({"deer-flow-sandbox-net-old"}),
+                frozenset({"nkyel-sandbox-net-old"}),
             )
         },
     )
@@ -1595,9 +1595,9 @@ def test_restricted_list_reconciliation_reports_stale_policy_without_removing_re
                 1.0,
                 None,
                 {
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": "stale",
-                    "deerflow.network_mode": "allowlist",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": "stale",
+                    "nkyel.network_mode": "allowlist",
                 },
                 "sandbox:latest",
                 frozenset(),
@@ -1605,7 +1605,7 @@ def test_restricted_list_reconciliation_reports_stale_policy_without_removing_re
             proxy_name: _ContainerInspection(
                 1.0,
                 18080,
-                {"deerflow.role": "network-proxy", "deerflow.sandbox_id": "stale"},
+                {"nkyel.role": "network-proxy", "nkyel.sandbox_id": "stale"},
                 "proxy:latest",
                 frozenset(),
             ),
@@ -1650,7 +1650,7 @@ def test_restricted_list_reports_legacy_open_sandbox_for_fenced_replacement(monk
     assert len(infos) == 1
     assert infos[0].requires_replacement is True
     assert infos[0].sandbox_url == ""
-    assert "label=deerflow.role=sandbox" not in commands[0]
+    assert "label=nkyel.role=sandbox" not in commands[0]
 
 
 def test_open_list_reports_restricted_sandbox_for_fenced_replacement(monkeypatch):
@@ -1667,12 +1667,12 @@ def test_open_list_reports_restricted_sandbox_for_fenced_replacement(monkeypatch
                 1.0,
                 None,
                 {
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": "old-restricted",
-                    "deerflow.network_mode": "isolated",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": "old-restricted",
+                    "nkyel.network_mode": "isolated",
                 },
                 "sandbox:latest",
-                frozenset({"deer-flow-sandbox-net-old"}),
+                frozenset({"nkyel-sandbox-net-old"}),
             )
         },
     )
@@ -1687,9 +1687,9 @@ def test_open_list_reports_restricted_sandbox_for_fenced_replacement(monkeypatch
 def test_restricted_list_running_excludes_sidecars_for_overlapping_custom_prefix(monkeypatch):
     backend = _backend_for_inspect_tests()
     backend._network_mode = "allowlist"
-    backend._container_prefix = "deer-flow"
+    backend._container_prefix = "nkyel"
     sandbox_id = "live"
-    sandbox_name = "deer-flow-live"
+    sandbox_name = "nkyel-live"
     proxy_name, _ = backend._resource_names(sandbox_id)
     commands: list[list[str]] = []
 
@@ -1711,9 +1711,9 @@ def test_restricted_list_running_excludes_sidecars_for_overlapping_custom_prefix
                 1.0,
                 None,
                 {
-                    "deerflow.role": "sandbox",
-                    "deerflow.sandbox_id": sandbox_id,
-                    "deerflow.network_mode": "allowlist",
+                    "nkyel.role": "sandbox",
+                    "nkyel.sandbox_id": sandbox_id,
+                    "nkyel.network_mode": "allowlist",
                 },
                 "sandbox:latest",
                 frozenset(),
@@ -1721,7 +1721,7 @@ def test_restricted_list_running_excludes_sidecars_for_overlapping_custom_prefix
             proxy_name: _ContainerInspection(
                 1.0,
                 18080,
-                {"deerflow.role": "network-proxy", "deerflow.sandbox_id": sandbox_id},
+                {"nkyel.role": "network-proxy", "nkyel.sandbox_id": sandbox_id},
                 "proxy:latest",
                 frozenset(),
                 "test-relay-token-that-is-at-least-32-bytes",
@@ -1741,7 +1741,7 @@ def test_restricted_list_running_excludes_sidecars_for_overlapping_custom_prefix
 
     assert [info.sandbox_id for info in infos] == [sandbox_id]
     assert checked == [sandbox_id]
-    assert "label=deerflow.role=sandbox" not in commands[0]
+    assert "label=nkyel.role=sandbox" not in commands[0]
     sidecar_as_sandbox_id = proxy_name[len(backend._container_prefix) + 1 :]
     fabricated_proxy_name, _ = backend._resource_names(sidecar_as_sandbox_id)
     assert fabricated_proxy_name not in {name for batch in inspected_batches for name in batch}
@@ -1813,7 +1813,7 @@ def test_deny_pending_network_policy_events_uses_atomic_proxy_command(monkeypatc
 
     assert backend.deny_pending_network_policy_events("existing") is True
     proxy_name, _ = backend._resource_names("existing")
-    assert commands == [["docker", "exec", proxy_name, "python", "/tmp/deerflow-network-proxy.py", "deny-pending"]]
+    assert commands == [["docker", "exec", proxy_name, "python", "/tmp/nkyel-network-proxy.py", "deny-pending"]]
 
 
 def test_is_container_running_false_on_apple_container_not_found(monkeypatch):
@@ -1869,7 +1869,7 @@ def test_absence_requires_runtime_confirmation(monkeypatch, runtime):
 @pytest.mark.parametrize(
     "error",
     [
-        'Failed to initialize: unable to resolve docker endpoint: context "deerflow-container-review-missing": context not found: open /synthetic-home/.docker/contexts/meta/context/meta.json: no such file or directory',
+        'Failed to initialize: unable to resolve docker endpoint: context "nkyel-container-review-missing": context not found: open /synthetic-home/.docker/contexts/meta/context/meta.json: no such file or directory',
         'unable to resolve docker endpoint: context "sandbox-missing": context not found',
         "Error: container runtime not found while inspecting sandbox-missing",
         "OCI runtime failed for container sandbox-missing: executable file not found in $PATH",
@@ -1979,7 +1979,7 @@ def test_inspect_runtime_keeps_apple_resource_with_unknown_generation(monkeypatc
 
 @pytest.mark.parametrize("stopped", [False, True])
 def test_destroy_retry_releases_port_recovered_from_runtime_metadata(monkeypatch, stopped):
-    from deerflow.utils.network import PortAllocator
+    from nkyel.utils.network import PortAllocator
 
     backend = _backend_for_inspect_tests()
     allocator = PortAllocator()
@@ -2021,7 +2021,7 @@ def test_destroy_retry_releases_port_recovered_from_runtime_metadata(monkeypatch
 def test_inspect_runtime_recovers_restricted_proxy_port_without_losing_main_identity(monkeypatch, proxy_missing, persisted_mode):
     backend = _backend_for_inspect_tests()
     proxy_name, _ = backend._resource_names("existing")
-    entry = {"Id": "main-generation", "Name": "/sandbox-existing", "Config": {"Labels": {"deerflow.network_mode": persisted_mode}}}
+    entry = {"Id": "main-generation", "Name": "/sandbox-existing", "Config": {"Labels": {"nkyel.network_mode": persisted_mode}}}
     proxy = {"Id": "proxy-generation", "Name": f"/{proxy_name}", "HostConfig": {"PortBindings": {"8080/tcp": [{"HostPort": "18080"}]}}}
 
     def runtime(cmd, **kwargs):
@@ -2039,7 +2039,7 @@ def test_inspect_runtime_recovers_restricted_proxy_port_without_losing_main_iden
 def test_inspect_runtime_propagates_unknown_proxy_port_probe(monkeypatch):
     backend = _backend_for_inspect_tests()
     proxy_name, _ = backend._resource_names("existing")
-    entry = {"Id": "main-generation", "Name": "/sandbox-existing", "Config": {"Labels": {"deerflow.network_mode": "allowlist"}}}
+    entry = {"Id": "main-generation", "Name": "/sandbox-existing", "Config": {"Labels": {"nkyel.network_mode": "allowlist"}}}
 
     def runtime(cmd, **kwargs):
         if cmd[-1] == proxy_name:
@@ -2103,7 +2103,7 @@ def test_destroy_releases_port_after_both_containers_are_removed_despite_network
 def test_confirmed_absent_teardown_releases_a_timed_out_but_removed_generations_port_once(monkeypatch):
     from concurrent.futures import ThreadPoolExecutor
 
-    from deerflow.utils.network import PortAllocator
+    from nkyel.utils.network import PortAllocator
 
     backend = _backend_for_inspect_tests()
     allocator = PortAllocator()
@@ -2120,7 +2120,7 @@ def test_confirmed_absent_teardown_releases_a_timed_out_but_removed_generations_
     def runtime(cmd, **kwargs):
         nonlocal removed
         if "stop" in cmd:
-            if cmd[-1].startswith("deer-flow-netproxy-"):
+            if cmd[-1].startswith("nkyel-netproxy-"):
                 raise subprocess.CalledProcessError(1, cmd, stderr=f"Error: No such container: {cmd[-1]}")
             if cmd[-1] == "removed-generation":
                 removed = True
@@ -2397,7 +2397,7 @@ def test_apple_present_unknown_generation_does_not_inherit_pending_port(monkeypa
 
 @pytest.mark.parametrize("runtime", ["container", "docker"])
 def test_successful_unknown_generation_retry_does_not_release_a_reused_port_again(monkeypatch, runtime):
-    from deerflow.utils.network import PortAllocator
+    from nkyel.utils.network import PortAllocator
 
     backend = _backend_for_inspect_tests()
     backend._runtime = runtime
@@ -2458,7 +2458,7 @@ def test_absent_teardown_deduplicates_a_legacy_reservation_that_later_learns_its
 
 @pytest.mark.parametrize("failed_stage", ["proxy-stop", "proxy-remove", "main-stop"])
 def test_restricted_partial_destroy_keeps_a_retryable_main_and_releases_port_once(monkeypatch, failed_stage):
-    from deerflow.utils.network import PortAllocator
+    from nkyel.utils.network import PortAllocator
 
     backend = _backend_for_inspect_tests()
     backend._network_mode = "allowlist"
@@ -2473,7 +2473,7 @@ def test_restricted_partial_destroy_keeps_a_retryable_main_and_releases_port_onc
 
     monkeypatch.setattr(local_backend_module, "release_port", release)
     proxy_name, _ = backend._resource_names("existing")
-    main = {"Id": "main-generation", "Name": "/sandbox-existing", "Config": {"Labels": {"deerflow.network_mode": "allowlist"}}}
+    main = {"Id": "main-generation", "Name": "/sandbox-existing", "Config": {"Labels": {"nkyel.network_mode": "allowlist"}}}
     proxy = {"Id": "proxy-generation", "Name": f"/{proxy_name}", "HostConfig": {"PortBindings": {"8080/tcp": [{"HostPort": str(port)}]}}}
     removed = set()
     failed = False
@@ -2640,7 +2640,7 @@ def test_docker_discovery_preserves_runtime_generation(monkeypatch):
         {
             "Id": "docker-generation",
             "Name": "/sandbox-existing",
-            "Config": {"Image": "sandbox:latest", "Labels": {"deerflow.role": "sandbox", "deerflow.sandbox_id": "existing", "deerflow.network_mode": "open"}},
+            "Config": {"Image": "sandbox:latest", "Labels": {"nkyel.role": "sandbox", "nkyel.sandbox_id": "existing", "nkyel.network_mode": "open"}},
             "NetworkSettings": {"Ports": {"8080/tcp": [{"HostPort": "18080"}]}},
         }
     ]
@@ -2683,16 +2683,16 @@ def test_start_container_rejects_extended_network_syntax_host(monkeypatch):
     the raw string must not dodge the rejection."""
     backend = _backend_for_inspect_tests()
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "name=host")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "name=host")
 
-    with pytest.raises(RuntimeError, match="DEER_FLOW_SANDBOX_NETWORK"):
+    with pytest.raises(RuntimeError, match="NKYEL_SANDBOX_NETWORK"):
         _capture_start_container_command(monkeypatch, backend)
 
 
 def test_start_container_rejects_extended_network_syntax_none(monkeypatch):
     backend = _backend_for_inspect_tests()
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "name=none")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "name=none")
 
     with pytest.raises(RuntimeError, match="loopback-only"):
         _capture_start_container_command(monkeypatch, backend)
@@ -2701,9 +2701,9 @@ def test_start_container_rejects_extended_network_syntax_none(monkeypatch):
 def test_start_container_rejects_extended_network_syntax_container(monkeypatch):
     backend = _backend_for_inspect_tests()
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "name=container:gateway")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "name=container:gateway")
 
-    with pytest.raises(RuntimeError, match="DEER_FLOW_SANDBOX_NETWORK"):
+    with pytest.raises(RuntimeError, match="NKYEL_SANDBOX_NETWORK"):
         _capture_start_container_command(monkeypatch, backend)
 
 
@@ -2711,11 +2711,11 @@ def test_start_container_passes_extended_network_syntax_for_custom_networks(monk
     """The legit name=<custom-net> long form (and network IDs) keep working."""
     backend = _backend_for_inspect_tests()
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "name=deer-flow-sandbox-egress")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "name=nkyel-sandbox-egress")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
-    assert captured_cmd[captured_cmd.index("--network") + 1] == "name=deer-flow-sandbox-egress"
+    assert captured_cmd[captured_cmd.index("--network") + 1] == "name=nkyel-sandbox-egress"
 
 
 @pytest.mark.parametrize("sandbox_host", ["fd00::1", "[fd00::1]"])
@@ -2723,7 +2723,7 @@ def test_discover_brackets_ipv6_sandbox_host_for_url(monkeypatch, sandbox_host):
     """Both IPv6 input forms must yield the same bracketed URL authority:
     the bare form used to produce the malformed http://fd00::1:<port>."""
     backend = _backend_for_inspect_tests()
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", sandbox_host)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", sandbox_host)
     monkeypatch.setattr(backend, "_is_container_running", lambda name: True)
     monkeypatch.setattr(
         backend,
@@ -2745,7 +2745,7 @@ def test_discover_brackets_ipv6_sandbox_host_for_url(monkeypatch, sandbox_host):
         seen_urls.append(url)
         return True
 
-    monkeypatch.setattr("deerflow.community.aio_sandbox.local_backend.wait_for_sandbox_ready", fake_ready)
+    monkeypatch.setattr("nkyel.community.aio_sandbox.local_backend.wait_for_sandbox_ready", fake_ready)
 
     info = backend.discover("sbx-ipv6")
 
@@ -2756,13 +2756,13 @@ def test_discover_brackets_ipv6_sandbox_host_for_url(monkeypatch, sandbox_host):
 @pytest.mark.parametrize("sandbox_host", ["fd00::1", "[fd00::1]"])
 def test_create_brackets_ipv6_sandbox_host_for_url(monkeypatch, sandbox_host):
     backend = _backend_for_inspect_tests()
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_HOST", sandbox_host)
+    monkeypatch.setenv("NKYEL_SANDBOX_HOST", sandbox_host)
     monkeypatch.setattr(
         backend,
         "_start_container",
         lambda name, port, mounts=None, **_kwargs: "container-id",
     )
-    monkeypatch.setattr("deerflow.community.aio_sandbox.local_backend.get_free_port", lambda start_port=None: 18082)
+    monkeypatch.setattr("nkyel.community.aio_sandbox.local_backend.get_free_port", lambda start_port=None: 18082)
 
     info = backend.create(thread_id="t", sandbox_id="sbx-ipv6")
 
@@ -2772,7 +2772,7 @@ def test_create_brackets_ipv6_sandbox_host_for_url(monkeypatch, sandbox_host):
 def test_resolve_sandbox_host_address_accepts_bracketed_ipv6(monkeypatch):
     """The bracketed form must resolve (unbracketed for getaddrinfo) instead
     of failing through to the IPv4 bridge fallback."""
-    from deerflow.community.aio_sandbox.local_backend import _resolve_sandbox_host_address
+    from nkyel.community.aio_sandbox.local_backend import _resolve_sandbox_host_address
 
     infos = [(socket.AF_INET6, socket.SOCK_STREAM, 0, "", ("fd00::1", 0, 0, 0))]
 
@@ -2780,7 +2780,7 @@ def test_resolve_sandbox_host_address_accepts_bracketed_ipv6(monkeypatch):
         assert host == "fd00::1", f"getaddrinfo must receive the unbracketed form, got {host!r}"
         return infos
 
-    monkeypatch.setattr("deerflow.community.aio_sandbox.local_backend.socket.getaddrinfo", fake_getaddrinfo)
+    monkeypatch.setattr("nkyel.community.aio_sandbox.local_backend.socket.getaddrinfo", fake_getaddrinfo)
 
     assert _resolve_sandbox_host_address("[fd00::1]") == "[fd00::1]"
 
@@ -2801,16 +2801,16 @@ def test_start_container_rejects_host_with_additional_long_syntax_fields(monkeyp
     select the host network and must not dodge the rejection."""
     backend = _backend_for_inspect_tests()
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", network)
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", network)
 
-    with pytest.raises(RuntimeError, match="DEER_FLOW_SANDBOX_NETWORK"):
+    with pytest.raises(RuntimeError, match="NKYEL_SANDBOX_NETWORK"):
         _capture_start_container_command(monkeypatch, backend)
 
 
 def test_start_container_rejects_none_with_additional_long_syntax_fields(monkeypatch):
     backend = _backend_for_inspect_tests()
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "gw-priority=0,name=none")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "gw-priority=0,name=none")
 
     with pytest.raises(RuntimeError, match="loopback-only"):
         _capture_start_container_command(monkeypatch, backend)
@@ -2819,9 +2819,9 @@ def test_start_container_rejects_none_with_additional_long_syntax_fields(monkeyp
 def test_start_container_rejects_container_mode_with_additional_long_syntax_fields(monkeypatch):
     backend = _backend_for_inspect_tests()
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "name=container:gateway,gw-priority=0")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "name=container:gateway,gw-priority=0")
 
-    with pytest.raises(RuntimeError, match="DEER_FLOW_SANDBOX_NETWORK"):
+    with pytest.raises(RuntimeError, match="NKYEL_SANDBOX_NETWORK"):
         _capture_start_container_command(monkeypatch, backend)
 
 
@@ -2829,7 +2829,7 @@ def test_start_container_passes_long_syntax_custom_network_with_fields(monkeypat
     """A legit long-syntax value with extra fields keeps passing through verbatim."""
     backend = _backend_for_inspect_tests()
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_NETWORK", "name=egressnet,gw-priority=1")
+    monkeypatch.setenv("NKYEL_SANDBOX_NETWORK", "name=egressnet,gw-priority=1")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 
@@ -2838,7 +2838,7 @@ def test_start_container_passes_long_syntax_custom_network_with_fields(monkeypat
 
 def test_effective_network_target_last_name_field_wins():
     """Docker's parser lets a later name= field overwrite an earlier one."""
-    from deerflow.community.aio_sandbox.local_backend import _effective_docker_network_target as target
+    from nkyel.community.aio_sandbox.local_backend import _effective_docker_network_target as target
 
     assert target("name=host,name=egressnet") == "egressnet"
     assert target("name=egressnet,name=host") == "host"
@@ -2870,8 +2870,8 @@ def _assert_image_starts_under_hardened_capabilities(
     sandbox_id: str,
     failure_label: str,
 ) -> None:
-    from deerflow.community.aio_sandbox.backend import SANDBOX_LOCAL_PROVIDER_READY_TIMEOUT
-    from deerflow.community.aio_sandbox.local_backend import wait_for_sandbox_ready
+    from nkyel.community.aio_sandbox.backend import SANDBOX_LOCAL_PROVIDER_READY_TIMEOUT
+    from nkyel.community.aio_sandbox.local_backend import wait_for_sandbox_ready
 
     if not _docker_daemon_available():
         pytest.skip("requires a running Docker daemon")
@@ -2938,7 +2938,7 @@ def test_default_image_starts_under_hardened_capabilities(monkeypatch):
     """
     _assert_image_starts_under_hardened_capabilities(
         monkeypatch,
-        image=os.environ.get("DEER_FLOW_SANDBOX_SMOKE_IMAGE", _DEFAULT_AIO_IMAGE),
+        image=os.environ.get("NKYEL_SANDBOX_SMOKE_IMAGE", _DEFAULT_AIO_IMAGE),
         sandbox_id="caps-smoke-default",
         failure_label="configured/default image",
     )
@@ -2954,7 +2954,7 @@ def test_aio_1_11_image_starts_with_fowner_capability(monkeypatch):
     """
     _assert_image_starts_under_hardened_capabilities(
         monkeypatch,
-        image=os.environ.get("DEER_FLOW_SANDBOX_FOWNER_SMOKE_IMAGE", _FOWNER_REGRESSION_AIO_IMAGE),
+        image=os.environ.get("NKYEL_SANDBOX_FOWNER_SMOKE_IMAGE", _FOWNER_REGRESSION_AIO_IMAGE),
         sandbox_id="caps-smoke-fowner-1-11",
         failure_label="AIO 1.11.0 FOWNER regression image",
     )
@@ -2966,7 +2966,7 @@ def test_restricted_network_proxy_enforces_and_approves_real_traffic(monkeypatch
     if not _docker_daemon_available():
         pytest.skip("requires a running Docker daemon")
 
-    image = os.environ.get("DEER_FLOW_SANDBOX_NETWORK_SMOKE_IMAGE", "python:3.12-alpine")
+    image = os.environ.get("NKYEL_SANDBOX_NETWORK_SMOKE_IMAGE", "python:3.12-alpine")
     backend = LocalContainerBackend(
         image=image,
         base_port=18310,
@@ -2981,7 +2981,7 @@ def test_restricted_network_proxy_enforces_and_approves_real_traffic(monkeypatch
             "proxy_image": image,
         },
     )
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_BIND_HOST", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_BIND_HOST", raising=False)
     sandbox_id = "network-live"
     container_name = f"sandbox-policy-smoke-{sandbox_id}"
     proxy_name, network_name = backend._resource_names(sandbox_id)
@@ -3077,7 +3077,7 @@ def test_restricted_network_proxy_enforces_and_approves_real_traffic(monkeypatch
                     "--max-time",
                     "2",
                     "-H",
-                    f"X-DeerFlow-Relay-Token: {relay_token}",
+                    f"X-nkyel-Relay-Token: {relay_token}",
                     sandbox_url,
                 ],
                 capture_output=True,
@@ -3128,7 +3128,7 @@ def test_start_container_preinitialized_image_can_drop_startup_caps(monkeypatch)
     """A custom, pre-initialized non-root image never runs the root handoff,
     so CHOWN/FOWNER/SETUID/SETGID/DAC_OVERRIDE must not stay available for
     the container's lifetime (chown/chmod on bind mounts, UID/GID
-    impersonation). Opting out with DEER_FLOW_SANDBOX_IMAGE_STARTUP_CAPS=0
+    impersonation). Opting out with NKYEL_SANDBOX_IMAGE_STARTUP_CAPS=0
     drops every capability."""
     backend = LocalContainerBackend(
         image="my-preinitialized-sandbox:latest",
@@ -3138,7 +3138,7 @@ def test_start_container_preinitialized_image_can_drop_startup_caps(monkeypatch)
         environment={},
     )
     _clear_hardening_env(monkeypatch)
-    monkeypatch.setenv("DEER_FLOW_SANDBOX_IMAGE_STARTUP_CAPS", "0")
+    monkeypatch.setenv("NKYEL_SANDBOX_IMAGE_STARTUP_CAPS", "0")
 
     captured_cmd = _capture_start_container_command(monkeypatch, backend)
 

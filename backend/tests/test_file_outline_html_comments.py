@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.uploads.companions import register_companion
-from deerflow.utils.file_outline import MAX_OUTLINE_ENTRIES, extract_outline, extract_outline_for_file
+from nkyel.uploads.companions import register_companion
+from nkyel.utils.file_outline import MAX_OUTLINE_ENTRIES, extract_outline, extract_outline_for_file
 
 
 @pytest.mark.parametrize("indent", ["", " ", "  ", "   "])

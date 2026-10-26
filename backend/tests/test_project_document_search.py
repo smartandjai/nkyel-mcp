@@ -12,10 +12,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.projects import tools as tools_mod
-from deerflow.projects.documents import add_staged_document, original_file_path, stage_document_bytes
-from deerflow.projects.tools import _search_project_documents_impl
-from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+from nkyel.projects import tools as tools_mod
+from nkyel.projects.documents import add_staged_document, original_file_path, stage_document_bytes
+from nkyel.projects.tools import _search_project_documents_impl
+from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
 pytestmark = pytest.mark.anyio
 
@@ -25,11 +25,11 @@ _USER = "u1"
 @pytest.fixture
 async def env(tmp_path, monkeypatch):
     """Real SQLite repos + a real per-user projects layout on disk."""
-    import deerflow.config.paths as paths_mod
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
+    import nkyel.config.paths as paths_mod
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setattr(paths_mod, "_paths", None)
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}", sqlite_dir=str(tmp_path))
     sf = get_session_factory()
@@ -134,7 +134,7 @@ class TestUnicodeOffsets:
         row = await _shelve(env, name="doc.txt", data=body.encode())
         result = await _search(env, "needle")
         offset = result["results"][0]["offset"]
-        from deerflow.projects.tools import _read_project_document_impl
+        from nkyel.projects.tools import _read_project_document_impl
 
         page = json.loads(await _read_project_document_impl(_runtime(project_id=env.project["id"]), document_id=row["id"], offset=offset, limit=20))
         assert page["content"].startswith("needle")
@@ -150,7 +150,7 @@ class TestNeverConvert:
             calls += 1
             return ""
 
-        from deerflow.projects import documents as documents_mod
+        from nkyel.projects import documents as documents_mod
 
         monkeypatch.setattr(documents_mod, "convert_file_to_markdown", counting_convert)
         await _shelve(env, name="slides.pdf", data=b"%PDF-1.4 fake")
@@ -219,7 +219,7 @@ class TestBudgetsAndCoverage:
         materialized snapshot — a search makes exactly one list_active call
         for the whole shelf, no matter where the budget trips."""
         _budgets(monkeypatch, 10, 10)
-        from deerflow.persistence.projects import ProjectDocumentRepository
+        from nkyel.persistence.projects import ProjectDocumentRepository
 
         calls = 0
         real_list_active = ProjectDocumentRepository.list_active
@@ -347,14 +347,14 @@ class TestStableSnapshot:
 
 class TestConfig:
     def test_search_budget_defaults_and_bounds(self):
-        from deerflow.config.projects_config import ProjectsConfig
+        from nkyel.config.projects_config import ProjectsConfig
 
         cfg = ProjectsConfig()
         assert cfg.search_max_chars_per_document == 1_000_000
         assert cfg.search_max_total_chars == 8_000_000
 
     def test_combo_violation_resets_both_keys(self):
-        from deerflow.config.projects_config import ProjectsConfig
+        from nkyel.config.projects_config import ProjectsConfig
 
         cfg = ProjectsConfig(search_max_chars_per_document=5000, search_max_total_chars=1000)
         assert cfg.search_max_chars_per_document == 1_000_000

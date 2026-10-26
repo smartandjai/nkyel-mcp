@@ -35,9 +35,9 @@ from langgraph.store.memory import InMemoryStore
 
 from app.gateway.auth.models import User
 from app.gateway.routers import runs
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-from deerflow.runtime import ConflictError
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+from nkyel.runtime import ConflictError
 
 USER_A = User(email="owner-a@example.com", password_hash="x", system_role="user", id=uuid4())
 USER_B = User(email="intruder-b@example.com", password_hash="x", system_role="user", id=uuid4())
@@ -51,7 +51,7 @@ THREAD_SHARED = "thread-shared-null-owner"
 def _stub_app_config():
     """Inject a minimal AppConfig so the allowed path (which builds a
     RunContext via ``get_config()``) never reads config.yaml from disk."""
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     yield
     reset_app_config()
 
@@ -171,7 +171,7 @@ def test_stream_shared_thread_passes_owner_check():
 
 def test_stream_internal_role_scoped_by_owner_header():
     """IM channels run with the internal system role on behalf of the
-    connection owner named in X-DeerFlow-Owner-User-Id — the owner check is
+    connection owner named in X-nkyel-Owner-User-Id — the owner check is
     scoped to that owner rather than bypassed."""
     from app.gateway.internal_auth import INTERNAL_OWNER_USER_ID_HEADER_NAME
 

@@ -1,10 +1,10 @@
 # API Reference
 
-This document provides a complete reference for the DeerFlow backend APIs.
+This document provides a complete reference for the nkyel backend APIs.
 
 ## Overview
 
-DeerFlow backend exposes two sets of APIs:
+nkyel backend exposes two sets of APIs:
 
 1. **LangGraph-compatible API** - Agent interactions, threads, and streaming (`/api/langgraph/*`)
 2. **Gateway API** - Models, MCP, skills, uploads, and artifacts (`/api/*`)
@@ -345,14 +345,14 @@ does not accept this header and keeps the existing missing-stream close of
 
 **Stream Mode Compatibility:**
 - Use: `values`, `messages-tuple`, `custom`, `updates`, `debug`, `tasks`, `checkpoints`
-- Unsupported modes, including `messages`, `events`, and `tools`, return `422` before a run is created. DeerFlow never substitutes `values` for an unsupported mode.
+- Unsupported modes, including `messages`, `events`, and `tools`, return `422` before a run is created. nkyel never substitutes `values` for an unsupported mode.
 
 **Run Option Compatibility:**
 - Supported concurrency strategies: `reject`, `rollback`, and `interrupt`
-- Compatibility default: `if_not_exists="create"`; this matches DeerFlow's current behavior
+- Compatibility default: `if_not_exists="create"`; this matches nkyel's current behavior
 - Artifact delivery is enforced automatically when a run creates or modifies regular files under `/mnt/user-data/outputs`. `present_files` must present at least one path produced by the current run (or a directory containing it), and the terminal receipt must be persisted; presenting only an unrelated file does not satisfy delivery. Runs without changed outputs retain ordinary conversational behavior. `artifact_delivery` is not a client-settable run option.
 - Unsupported options return `422`: `webhook`, `stream_resumable=true`, `after_seconds`, `feedback_keys`, any non-null `on_completion` value (including the SDK values `"complete"` and `"continue"`), `if_not_exists="reject"`, and `multitask_strategy="enqueue"`
-- `stream_resumable=false` is accepted: it is the LangGraph SDK's default and requests the non-resumable stream DeerFlow already serves
+- `stream_resumable=false` is accepted: it is the LangGraph SDK's default and requests the non-resumable stream nkyel already serves
 - Undeclared SDK options, including `checkpoint_during` and `durability`, also return `422` instead of being silently discarded
 
 **Request Validation:**
@@ -384,7 +384,7 @@ the next request without restarting the Gateway. IM channel runs get the same
 default unless a channel `session.config` sets `recursion_limit` (GitHub channel
 runs have their own floor; see
 [CONFIGURATION.md](CONFIGURATION.md#recursion-limits)); embedded
-`DeerFlowClient` runs retain their own defaults and override paths.
+`NkyelClient` runs retain their own defaults and override paths.
 
 **Configurable Options:**
 - `model_name` (string): Override the default model
@@ -465,7 +465,7 @@ no block; only the current request's value applies.
   Changing or omitting it can invalidate reuse of the following conversation
   prefix. Actual cache hits, cost and latency depend on the model provider;
   offline message-order tests do not establish those outcomes.
-- Subagents and embedded `DeerFlowClient` runs do not receive it; the lead
+- Subagents and embedded `NkyelClient` runs do not receive it; the lead
   agent decides the user-facing output shape. Runs the server starts
   (schedules, IM channels, GitHub agents, MCP notifications, and extensions
   unless the plugin passes a `client`) carry none, even on a thread a custom
@@ -494,7 +494,7 @@ Gateway API callers can attach up to three explicit references to create/stream/
 ```json
 {
   "input": {"messages": [{"role": "user", "content": "Use the requirements agreed in the referenced conversation."}]},
-  "conversation_references": ["https://deerflow.example/workspace/chats/source-thread"]
+  "conversation_references": ["https://nkyel.example/workspace/chats/source-thread"]
 }
 ```
 
@@ -514,7 +514,7 @@ builds a fixed body and drops unknown keys) may send the same list as
 ```json
 {
   "input": {"messages": [{"role": "user", "content": "Use the requirements agreed in the referenced conversation."}]},
-  "context": {"conversation_references": ["https://deerflow.example/workspace/chats/source-thread"]}
+  "context": {"conversation_references": ["https://nkyel.example/workspace/chats/source-thread"]}
 }
 ```
 
@@ -692,7 +692,7 @@ Base URL: `/api`
 ### Custom Agent portability
 
 `GET /api/agents/{name}/export` downloads a version-1 JSON package for a
-caller-owned Custom Agent. The package uses `format: "deerflow.custom-agent"`
+caller-owned Custom Agent. The package uses `format: "nkyel.custom-agent"`
 and contains the portable Agent configuration plus SOUL. It excludes memory
 contents, conversations, credentials, and deployment-owned GitHub bindings.
 
@@ -704,7 +704,7 @@ the existing Agent. Import is create-only and never restores runtime state.
 
 ```json
 {
-  "format": "deerflow.custom-agent",
+  "format": "nkyel.custom-agent",
   "version": 1,
   "agent": {
     "name": "research-lead",
@@ -842,7 +842,7 @@ Content-Type: application/json
 
 Requires an authenticated admin session. API-managed `stdio` MCP servers may
 only use allowed executable names for `command` (default: `npx`, `uvx`). Set
-`DEER_FLOW_MCP_STDIO_COMMAND_ALLOWLIST` to a comma-separated list when a
+`NKYEL_MCP_STDIO_COMMAND_ALLOWLIST` to a comma-separated list when a
 deployment needs additional trusted launchers.
 
 **Request Body:**
@@ -897,7 +897,7 @@ endpoint. Disabling a server does not require its command to be allowlisted, and
 invalid commands on other servers do not block the update. The endpoint
 preserves secrets, environment-variable placeholders, skills, custom server
 fields, and other top-level extensions config. SSE/HTTP targets may use either
-DeerFlow's `type` field or the MCP-spec `transport` field.
+nkyel's `type` field or the MCP-spec `transport` field.
 
 **Request Body:**
 ```json
@@ -1355,11 +1355,11 @@ Content-Type: multipart/form-data
     {
       "filename": "document.pdf",
       "size": 1234567,
-      "path": ".deer-flow/threads/abc123/user-data/uploads/document.pdf",
+      "path": ".nkyel/threads/abc123/user-data/uploads/document.pdf",
       "virtual_path": "/mnt/user-data/uploads/document.pdf",
       "artifact_url": "/api/threads/abc123/artifacts/mnt/user-data/uploads/document.pdf",
       "markdown_file": "document.md",
-      "markdown_path": ".deer-flow/threads/abc123/user-data/uploads/document.md",
+      "markdown_path": ".nkyel/threads/abc123/user-data/uploads/document.md",
       "markdown_virtual_path": "/mnt/user-data/uploads/document.md",
       "markdown_artifact_url": "/api/threads/abc123/artifacts/mnt/user-data/uploads/document.md"
     }
@@ -1392,7 +1392,7 @@ GET /api/threads/{thread_id}/uploads/list
     {
       "filename": "document.pdf",
       "size": 1234567,
-      "path": ".deer-flow/threads/abc123/user-data/uploads/document.pdf",
+      "path": ".nkyel/threads/abc123/user-data/uploads/document.pdf",
       "virtual_path": "/mnt/user-data/uploads/document.pdf",
       "artifact_url": "/api/threads/abc123/artifacts/mnt/user-data/uploads/document.pdf",
       "extension": ".pdf",
@@ -1421,7 +1421,7 @@ DELETE /api/threads/{thread_id}/uploads/{filename}
 
 ### Thread Cleanup
 
-Remove DeerFlow-managed local thread files under `.deer-flow/threads/{thread_id}` after the LangGraph thread itself has been deleted.
+Remove nkyel-managed local thread files under `.nkyel/threads/{thread_id}` after the LangGraph thread itself has been deleted.
 
 ```http
 DELETE /api/threads/{thread_id}
@@ -1448,7 +1448,7 @@ an extension, an MCP notification) carry a server-owned origin in their
 metadata, and so does a thread the server creates for one:
 
 ```json
-{ "deerflow_origin": { "kind": "im_channel", "provider": "feishu" } }
+{ "nkyel_origin": { "kind": "im_channel", "provider": "feishu" } }
 ```
 
 `kind` is one of `schedule`, `im_channel`, `github`, `extension`,
@@ -1459,7 +1459,7 @@ admission drops it from `metadata` and `config.metadata`, and only server-side
 launchers and the internal channel caller may stamp it. The run's kind is also
 stored as `runs.origin_kind` (`null` for interactive and pre-upgrade runs). IM
 threads keep `metadata.channel_source` as their marker. This key is unrelated to
-the message-level `additional_kwargs.deerflow_scheduled_origin` of a scheduled
+the message-level `additional_kwargs.nkyel_scheduled_origin` of a scheduled
 prompt.
 
 **Activity feed.** Requires SQL persistence (`503` on the memory backend);
@@ -1842,7 +1842,7 @@ can manage tasks and scheduled runs can stop their own schedule.
 ignored, and it never reaches the run config, the checkpoint or the prompt.
 
 **Scheduled run messages.** A scheduled run's prompt message has the id
-`scheduled-<task_run_id>` and carries `additional_kwargs.deerflow_scheduled_origin`
+`scheduled-<task_run_id>` and carries `additional_kwargs.nkyel_scheduled_origin`
 (`task_id`, `task_run_id`, `trigger`, `run_number`, `scheduled_for`, `timezone`,
 `schedule_type`, `task_title`, `instructions`, `stop_condition`,
 `standing_notes`), the user-written parts a client shows instead of the
@@ -1876,7 +1876,7 @@ instance, or a disconnect whose channel fails to stop there, answers `400` and
 stores nothing (under `channels.leader_lease` a non-holder stores the save and
 the holder applies it on its next renewal tick). With a SQLite or
 PostgreSQL database the values are stored encrypted with
-`DEER_FLOW_CREDENTIALS_KEY` and shared by every Gateway instance; without a
+`NKYEL_CREDENTIALS_KEY` and shared by every Gateway instance; without a
 usable key a save answers `503`. See `backend/docs/IM_CHANNEL_CONNECTIONS.md`.
 
 ---
@@ -1902,20 +1902,20 @@ return a coded object instead; see [Scheduled Tasks](#scheduled-tasks)):
 
 ## Authentication
 
-DeerFlow supports four HTTP identity sources. They share the same thread/run isolation rules but differ in whether a row is created in `users` and how external identities are mapped. See [AUTH_DESIGN.md](AUTH_DESIGN.md) for the full design.
+nkyel supports four HTTP identity sources. They share the same thread/run isolation rules but differ in whether a row is created in `users` and how external identities are mapped. See [AUTH_DESIGN.md](AUTH_DESIGN.md) for the full design.
 
 | Model | Entry | `users` table | Isolation key |
 |---|---|---|---|
 | Browser session | `access_token` cookie after login/register | Yes | `users.id` |
 | OIDC / SSO | OAuth callback → cookie | Yes | `users.id` (see [SSO.md](SSO.md)) |
 | IM channel binding | Connect code + `channel_connections` | Bound to registered user | `channel_connections.owner_user_id` |
-| **Internal Auth** | `X-DeerFlow-Internal-Token` + `X-DeerFlow-Owner-User-Id` | **No** | Owner string on `threads_meta.user_id` |
+| **Internal Auth** | `X-nkyel-Internal-Token` + `X-nkyel-Owner-User-Id` | **No** | Owner string on `threads_meta.user_id` |
 
-**IM channel binding** and **Internal Auth** are both *platform-trust* integrations: DeerFlow trusts the channel/platform to authenticate end users. IM bindings persist the mapping in `channel_connections` / `channel_conversations` and require a DeerFlow `users` row. Internal Auth lets a platform call the Gateway API directly with a deployment-shared token and a per-request owner header—no `users` row, but thread/run/checkpoint isolation works the same way.
+**IM channel binding** and **Internal Auth** are both *platform-trust* integrations: nkyel trusts the channel/platform to authenticate end users. IM bindings persist the mapping in `channel_connections` / `channel_conversations` and require a nkyel `users` row. Internal Auth lets a platform call the Gateway API directly with a deployment-shared token and a per-request owner header—no `users` row, but thread/run/checkpoint isolation works the same way.
 
 ### Browser session (default)
 
-DeerFlow enforces authentication for all non-public HTTP routes. Public routes are limited to health/docs metadata and these public auth endpoints:
+nkyel enforces authentication for all non-public HTTP routes. Public routes are limited to health/docs metadata and these public auth endpoints:
 
 - `POST /api/v1/auth/initialize` creates the first admin account when no admin exists.
 - `POST /api/v1/auth/login/local` logs in with email/password and sets an HttpOnly `access_token` cookie.
@@ -1936,22 +1936,22 @@ User isolation is enforced from the authenticated user context:
 - Thread files live under `{base_dir}/users/{user_id}/threads/{thread_id}/user-data/` and are exposed inside the sandbox as `/mnt/user-data/`.
 - Memory and custom agents are stored under `{base_dir}/users/{user_id}/...`.
 
-Note: MCP outbound connections can still use OAuth for configured HTTP/SSE MCP servers; that is separate from DeerFlow API authentication.
+Note: MCP outbound connections can still use OAuth for configured HTTP/SSE MCP servers; that is separate from nkyel API authentication.
 
 ### Internal Auth (platform HTTP integration)
 
 For server-to-server integrations (e.g. a Feishu or WeCom/Enterprise WeChat bot backend), configure:
 
 ```bash
-export DEER_FLOW_INTERNAL_AUTH_TOKEN="<long-random-secret>"
+export NKYEL_INTERNAL_AUTH_TOKEN="<long-random-secret>"
 ```
 
 | Header | Required | Description |
 |---|---|---|
-| `X-DeerFlow-Internal-Token` | Yes | Must match `DEER_FLOW_INTERNAL_AUTH_TOKEN`; missing/invalid → `401` |
-| `X-DeerFlow-Owner-User-Id` | Yes for per-user isolation | Platform user id (e.g. `feishu_ou_alice`, `wecom_user_bob`); omit → `default` bucket |
+| `X-nkyel-Internal-Token` | Yes | Must match `NKYEL_INTERNAL_AUTH_TOKEN`; missing/invalid → `401` |
+| `X-nkyel-Owner-User-Id` | Yes for per-user isolation | Platform user id (e.g. `feishu_ou_alice`, `wecom_user_bob`); omit → `default` bucket |
 
-Does **not** use browser cookies or CSRF tokens. Does **not** insert into `users`; sets `threads_meta.user_id` / `runs.user_id` from the owner header. DeerFlow validates only the platform token—not whether the owner id represents a real end user; user validity is entirely the platform's responsibility. See [AUTH_DESIGN.md — Internal Auth](AUTH_DESIGN.md#internal-auth-direct-http) for trust boundaries, persistence, and security notes.
+Does **not** use browser cookies or CSRF tokens. Does **not** insert into `users`; sets `threads_meta.user_id` / `runs.user_id` from the owner header. nkyel validates only the platform token—not whether the owner id represents a real end user; user validity is entirely the platform's responsibility. See [AUTH_DESIGN.md — Internal Auth](AUTH_DESIGN.md#internal-auth-direct-http) for trust boundaries, persistence, and security notes.
 
 Use the standard Gateway thread/run endpoints (`POST /api/threads`, `POST /api/threads/{thread_id}/runs/stream`, etc.) with the headers above on every request.
 
@@ -1991,7 +1991,7 @@ Accept: text/event-stream
 ```
 
 Both endpoints return `Content-Location: /api/threads/{thread_id}/runs/{run_id}`.
-The DeerFlow web UI and LangGraph SDK clients rely on this header to discover the
+The nkyel web UI and LangGraph SDK clients rely on this header to discover the
 assigned `thread_id` and `run_id` on the first message of a new chat.
 
 Every SSE response (both create endpoints above, `GET /api/threads/{thread_id}/runs/{run_id}/join`
@@ -2242,7 +2242,7 @@ Omit the field or use null to include both. Filtering applies before `limit` and
 `metadata` and `status` filters when needed.
 
 Archive with `PATCH /api/threads/{thread_id}` and body
-`{"metadata":{"deerflow_archived":true}}`; use false to restore. The flag must be
+`{"metadata":{"nkyel_archived":true}}`; use false to restore. The flag must be
 a JSON boolean. Writes containing only boolean pin/archive flags preserve
 `updated_at` and all other metadata. The owner-checked endpoint returns the normal
 thread metadata response; original thread and artifact URLs remain available.

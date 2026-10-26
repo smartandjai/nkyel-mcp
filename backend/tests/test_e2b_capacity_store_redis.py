@@ -9,15 +9,15 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from deerflow.community.e2b_sandbox.capacity import (
+from nkyel.community.e2b_sandbox.capacity import (
     CapacityBackendError,
     RedisE2BCapacityStore,
     ReserveStatus,
     make_e2b_capacity_store,
 )
-from deerflow.config.sandbox_config import SandboxOwnershipConfig
+from nkyel.config.sandbox_config import SandboxOwnershipConfig
 
-REDIS_URL = os.environ.get("DEER_FLOW_TEST_REDIS_URL", "redis://localhost:6379/15")
+REDIS_URL = os.environ.get("NKYEL_TEST_REDIS_URL", "redis://localhost:6379/15")
 pytestmark = pytest.mark.integration
 
 
@@ -31,7 +31,7 @@ def make_store():
         probe.close()
         pytest.skip(f"Redis not reachable at {REDIS_URL}")
 
-    prefix = f"deerflow:test:{uuid.uuid4().hex}"
+    prefix = f"nkyel:test:{uuid.uuid4().hex}"
     stores = []
 
     def make(hard_limit: int = 1):

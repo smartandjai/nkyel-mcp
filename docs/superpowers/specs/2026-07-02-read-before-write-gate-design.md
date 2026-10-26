@@ -16,7 +16,7 @@
 
 **read-mark 与上下文存活的绑定**（issue 第三小项）：
 
-- mark 不落 ThreadState，而是附着在 `read_file` 返回的 `ToolMessage.additional_kwargs["deerflow_read_mark"]` 上（`{path, hash}`）。
+- mark 不落 ThreadState，而是附着在 `read_file` 返回的 `ToolMessage.additional_kwargs["nkyel_read_mark"]` 上（`{path, hash}`）。
 - 闸校验时从 `state["messages"]` 由新到旧扫描该路径的 mark。总结（summarization）删掉该 ToolMessage ⇒ mark 自然消失 ⇒ 闸拦截。"闸通过但内容已被总结删掉"被结构性排除，无需保留区，也无需 summarization hook。
 - 推论：同一轮并行 read+write 同一文件会被拦——此时模型尚未看到读结果，拦截语义正确。
 
@@ -32,12 +32,12 @@
 
 ## 实现结构
 
-- 新文件 `packages/harness/deerflow/agents/middlewares/read_before_write_middleware.py`：`ReadBeforeWriteMiddleware(AgentMiddleware)`，实现 `wrap_tool_call` / `awrap_tool_call`。
+- 新文件 `packages/harness/nkyel/agents/middlewares/read_before_write_middleware.py`：`ReadBeforeWriteMiddleware(AgentMiddleware)`，实现 `wrap_tool_call` / `awrap_tool_call`。
   - 读状态由中间件逻辑持有/解释，工具零改动、不持状态（issue 要求）。
-  - 当前文件内容读取复用 `deerflow.sandbox.tools` 的路径解析与沙箱读取逻辑（提取一个共享 helper，避免复制 `_resolve_*` 细节）；对 local 与 AIO 沙箱一致生效。
+  - 当前文件内容读取复用 `nkyel.sandbox.tools` 的路径解析与沙箱读取逻辑（提取一个共享 helper，避免复制 `_resolve_*` 细节）；对 local 与 AIO 沙箱一致生效。
   - mark 的路径键：对 agent 提供的虚拟路径做 `posixpath.normpath` 规范化。
 - 装配位置：`tool_error_handling_middleware.py::_build_runtime_middlewares` 的 `tail` 层、`SandboxAuditMiddleware` 之后 / `ToolErrorHandlingMiddleware` 之前 → lead 与 subagent 共同生效（issue：通用机制）。#3809 的链序 pin 测试同步更新。
-- 配置：新增 `deerflow/config/read_before_write_config.py`（`enabled: bool = True`），挂到 `AppConfig.read_before_write`；`config.example.yaml` 增段并 bump `config_version`。默认开启（issue 第 4 点：护栏要真正生效）。
+- 配置：新增 `nkyel/config/read_before_write_config.py`（`enabled: bool = True`），挂到 `AppConfig.read_before_write`；`config.example.yaml` 增段并 bump `config_version`。默认开启（issue 第 4 点：护栏要真正生效）。
 - 工具描述：`write_file` / `str_replace` docstring 增补"目标文件已存在时须先读到当前版本，过期写入会被拒绝"的提示，使模型可自解释错误。
 
 ## 已知边界（记录，不在本项处理）

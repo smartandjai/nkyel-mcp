@@ -6,10 +6,10 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from deerflow_extension_api import AgentRun, AgentRunError, ExtensionPrincipal
-from deerflow_extension_api.plugins import ActionContext, ToolContext
+from nkyel_extension_api import AgentRun, AgentRunError, ExtensionPrincipal
+from nkyel_extension_api.plugins import ActionContext, ToolContext
 
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
 
 
 class Runs:
@@ -72,8 +72,8 @@ class Runs:
 
 @pytest.fixture
 def plugin(tmp_path, monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-agent-teams"))
-    loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_agent_teams:install", config={"enabled": True, "storage_path": str(tmp_path / "teams.sqlite")})])
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-agent-teams"))
+    loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_agent_teams:install", config={"enabled": True, "storage_path": str(tmp_path / "teams.sqlite")})])
     assert not diagnostics
     ((_, declaration),) = loaded.plugins
     actions = {a.name: a.handler for a in declaration.backend}
@@ -181,7 +181,7 @@ async def test_peer_handoff_delivers_result_and_cannot_impersonate_member(plugin
 
 @pytest.mark.asyncio
 async def test_native_mentions_route_once_and_reject_foreign_access(plugin):
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
     from langchain_core.messages import HumanMessage
 
     _, actions, service = plugin
@@ -202,7 +202,7 @@ async def test_native_mentions_route_once_and_reject_foreign_access(plugin):
 
 @pytest.mark.asyncio
 async def test_restart_requires_reconnect_and_preserves_existing_run(plugin):
-    from deerflow_extension_agent_teams.service import Teams
+    from nkyel_extension_agent_teams.service import Teams
 
     _, actions, service = plugin
     runs = Runs()
@@ -279,7 +279,7 @@ async def queue_active_budget_jobs(actions, runs):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("wait_kind", ["interrupt", "clarification"])
 async def test_unadmitted_conversation_waits_do_not_consume_other_teams_active_budget(plugin, wait_kind):
-    from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
 
     _, actions, service = plugin
     runs = Runs()
@@ -371,7 +371,7 @@ async def test_externally_advanced_state_is_never_misattributed(plugin):
 async def test_service_lock_prevents_two_workers_and_releases_on_shutdown(plugin):
     import sqlite3
 
-    from deerflow_extension_agent_teams.service import Teams
+    from nkyel_extension_agent_teams.service import Teams
 
     _, _, first = plugin
     second = Teams(first.store.path)
@@ -388,12 +388,12 @@ async def test_service_lock_prevents_two_workers_and_releases_on_shutdown(plugin
 
 @pytest.mark.asyncio
 async def test_real_tool_node_enforces_team_owner_and_current_thread(plugin):
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
     from langchain_core.messages import AIMessage
     from langgraph.graph import END, START, MessagesState, StateGraph
     from langgraph.prebuilt import ToolNode
 
-    from deerflow.extensions.plugin_tools import build_plugin_tools
+    from nkyel.extensions.plugin_tools import build_plugin_tools
 
     loaded, actions, service = plugin
     runs = Runs()
@@ -415,25 +415,25 @@ async def test_real_tool_node_enforces_team_owner_and_current_thread(plugin):
 
 @pytest.mark.asyncio
 async def test_mention_middleware_runs_in_real_lead_pipeline(plugin, monkeypatch, tmp_path):
-    from deerflow_extension_api import EXTENSION_TASK_STORE_KEY, ExtensionData
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api import EXTENSION_TASK_STORE_KEY, ExtensionData
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
     from langchain.agents import create_agent
     from langchain_core.language_models.fake_chat_models import FakeListChatModel
     from langchain_core.messages import HumanMessage
 
-    from deerflow.agents.lead_agent.agent import build_middlewares
-    from deerflow.agents.thread_state import ThreadState
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.paths import Paths
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.agents.lead_agent.agent import build_middlewares
+    from nkyel.agents.thread_state import ThreadState
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.paths import Paths
+    from nkyel.config.sandbox_config import SandboxConfig
 
     loaded, actions, service = plugin
     runs = Runs()
     team = await create(actions, runs)
     await runs.create_thread(assistant_id="lead_agent", thread_id="source", metadata={})
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", Paths(str(tmp_path)))
-    config = AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", Paths(str(tmp_path)))
+    config = AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
     config.title.enabled = config.memory.enabled = config.summarization.enabled = False
     stack = build_middlewares(config={"configurable": {}}, model_name="offline", app_config=config, extensions=loaded, memory_enabled=False, owns_agent_skill_projection=False)
     graph = create_agent(FakeListChatModel(responses=["Request sent."]), middleware=stack, state_schema=ThreadState)
@@ -490,7 +490,7 @@ async def test_host_dynamic_context_id_rewrite_preserves_result_attribution(plug
 
 @pytest.mark.asyncio
 async def test_shared_thread_access_does_not_grant_foreign_team_access(plugin):
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
     from langchain_core.messages import HumanMessage
 
     _, actions, service = plugin
@@ -599,7 +599,7 @@ async def test_activity_reads_legacy_jobs_and_bounds_projection(plugin):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("created_threads", [1, 2])
 async def test_reconnect_recovers_incomplete_creation_only_after_all_threads_exist(plugin, monkeypatch, created_threads):
-    from deerflow_extension_agent_teams.service import Teams
+    from nkyel_extension_agent_teams.service import Teams
 
     _, actions, service = plugin
     runs = Runs()
@@ -721,14 +721,14 @@ async def test_request_capacity_reserves_all_receipts_and_keeps_retries_idempote
 @pytest.mark.parametrize("source_kind", ["peer", "mention", "receipt"])
 @pytest.mark.parametrize("rounds", [1, 2])
 async def test_real_clarification_waits_and_continues_with_human_messages(plugin, monkeypatch, source_kind, rounds):
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
     from langchain.agents import create_agent
     from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
     from langchain_core.messages import AIMessage, HumanMessage
     from langgraph.checkpoint.memory import InMemorySaver
 
-    from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
-    from deerflow.tools.builtins.clarification_tool import ask_clarification_tool
+    from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from nkyel.tools.builtins.clarification_tool import ask_clarification_tool
 
     class Model(FakeMessagesListChatModel):
         def bind_tools(self, tools, **kwargs):
@@ -781,7 +781,7 @@ async def test_real_clarification_waits_and_continues_with_human_messages(plugin
     for index in range(rounds):
         await actions["resume"]({"team_id": team["id"], "job_id": waiting["id"], "response": "staging", "request_id": "answer"}, context(runs))
         if source_kind == "mention" and index == 0:
-            from deerflow_extension_agent_teams.service import Teams
+            from nkyel_extension_agent_teams.service import Teams
 
             start = runs.start
             attempts = []
@@ -876,7 +876,7 @@ async def test_external_member_tool_call_does_not_inherit_an_unstarted_team_requ
 async def test_clarification_never_overwrites_an_external_conversation_turn(plugin, stage):
     from langchain_core.messages import AIMessage
 
-    from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
 
     _, actions, service = plugin
     runs = Runs()
@@ -911,7 +911,7 @@ async def test_clarification_never_overwrites_an_external_conversation_turn(plug
 
 @pytest.mark.asyncio
 async def test_cancel_reconciles_a_clarification_response_with_lost_admission_ack(plugin, monkeypatch):
-    from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
 
     _, actions, service = plugin
     runs = Runs()
@@ -956,7 +956,7 @@ async def waiting_job(actions, service, runs, *, clarification=False):
     await service.tick()
     runs.finish(sent["id"], interrupted=not clarification)
     if clarification:
-        from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
+        from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
 
         request = SimpleNamespace(tool_call={"name": "ask_clarification", "id": "question", "args": {"question": "Which environment?", "clarification_type": "missing_info"}}, runtime=None)
         command = ClarificationMiddleware().wrap_tool_call(request, lambda _: pytest.fail("intercept clarification"))
@@ -1333,7 +1333,7 @@ async def test_pending_resumes_wait_for_slots_and_cancel_without_admitting_an_an
 
 @pytest.mark.asyncio
 async def test_frozen_slots_survive_disconnection_and_service_restart(plugin, monkeypatch):
-    from deerflow_extension_agent_teams.service import Teams
+    from nkyel_extension_agent_teams.service import Teams
 
     _, actions, service = plugin
     runs = Runs()
@@ -1366,7 +1366,7 @@ async def test_frozen_slots_survive_disconnection_and_service_restart(plugin, mo
 
 @pytest.mark.asyncio
 async def test_receipts_for_a_shared_source_are_serialized_across_teams(plugin):
-    from deerflow_extension_agent_teams.service import identity
+    from nkyel_extension_agent_teams.service import identity
 
     _, actions, service = plugin
     runs = Runs()
@@ -1399,7 +1399,7 @@ async def test_receipts_for_a_shared_source_are_serialized_across_teams(plugin):
 
 @pytest.mark.asyncio
 async def test_startup_snapshot_failure_releases_the_process_lock(plugin, monkeypatch):
-    from deerflow_extension_agent_teams.service import Teams
+    from nkyel_extension_agent_teams.service import Teams
 
     _, _, service = plugin
     db = service.db
@@ -1591,7 +1591,7 @@ def test_pending_projection_backfills_legacy_rows_and_uses_an_index(plugin, tmp_
     import sqlite3
     from contextlib import closing
 
-    from deerflow_extension_agent_teams.store import Store
+    from nkyel_extension_agent_teams.store import Store
 
     path = tmp_path / "legacy.sqlite"
     states = ["completed", "queued", "waiting_input", "resuming", "unknown-legacy-state"]
@@ -1615,7 +1615,7 @@ def test_legacy_backfill_finishes_reading_before_updating_the_scanned_table(plug
     import sqlite3
     from contextlib import closing
 
-    from deerflow_extension_agent_teams.store import Store
+    from nkyel_extension_agent_teams.store import Store
 
     class BackfillCursor(sqlite3.Cursor):
         def fetchall(self):
@@ -1654,7 +1654,7 @@ def test_failed_projection_backfill_rolls_back_schema_and_rows(plugin, tmp_path)
     import sqlite3
     from contextlib import closing
 
-    from deerflow_extension_agent_teams.store import Store
+    from nkyel_extension_agent_teams.store import Store
 
     path = tmp_path / "invalid-legacy.sqlite"
     with closing(sqlite3.connect(path)) as db, db:
@@ -1671,7 +1671,7 @@ def test_failed_projection_backfill_rolls_back_schema_and_rows(plugin, tmp_path)
 
 @pytest.mark.asyncio
 async def test_history_results_remain_retrievable_after_shared_messages_rotate_and_restart(plugin):
-    from deerflow_extension_agent_teams.service import Teams
+    from nkyel_extension_agent_teams.service import Teams
 
     _, actions, service = plugin
     runs = Runs()
@@ -1855,12 +1855,12 @@ async def test_history_result_search_pages_filter_jobs_and_exclude_delivery_rece
 
 @pytest.mark.asyncio
 async def test_history_tools_dispatch_through_real_tool_node_and_continue_a_peer_handoff(plugin):
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
     from langchain_core.messages import AIMessage
     from langgraph.graph import END, START, MessagesState, StateGraph
     from langgraph.prebuilt import ToolNode
 
-    from deerflow.extensions.plugin_tools import build_plugin_tools
+    from nkyel.extensions.plugin_tools import build_plugin_tools
 
     loaded, actions, service = plugin
     runs = Runs()
@@ -1926,7 +1926,7 @@ async def test_history_result_pages_and_reads_bound_the_complete_escaped_json(pl
 
 @pytest.mark.asyncio
 async def test_history_result_cursors_support_non_hex_job_ids_and_expiry(plugin, monkeypatch):
-    from deerflow_extension_agent_teams import service as module
+    from nkyel_extension_agent_teams import service as module
 
     _, actions, service = plugin
     runs = Runs()

@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DETECT_SCRIPT_PATH = REPO_ROOT / "scripts" / "detect_uv_extras.py"
 
 
-spec = importlib.util.spec_from_file_location("deerflow_detect_uv_extras", DETECT_SCRIPT_PATH)
+spec = importlib.util.spec_from_file_location("nkyel_detect_uv_extras", DETECT_SCRIPT_PATH)
 assert spec is not None and spec.loader is not None
 detect = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(detect)
@@ -28,10 +28,10 @@ def isolated_cwd(tmp_path, monkeypatch):
     """Isolate `find_config_file()` from the real repo by chdir + clearing env."""
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("UV_EXTRAS", raising=False)
-    monkeypatch.delenv("DEER_FLOW_CONFIG_PATH", raising=False)
-    monkeypatch.delenv("DEER_FLOW_PROJECT_ROOT", raising=False)
-    monkeypatch.delenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", raising=False)
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_OWNERSHIP_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_CONFIG_PATH", raising=False)
+    monkeypatch.delenv("NKYEL_PROJECT_ROOT", raising=False)
+    monkeypatch.delenv("NKYEL_STREAM_BRIDGE_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_OWNERSHIP_REDIS_URL", raising=False)
     return tmp_path
 
 
@@ -162,7 +162,7 @@ def test_detect_from_config_postgres_via_checkpointer(tmp_path):
 
 def test_detect_from_config_sqlite_returns_no_extras(tmp_path):
     cfg = tmp_path / "config.yaml"
-    cfg.write_text("database:\n  backend: sqlite\n  sqlite_dir: .deer-flow/data\n")
+    cfg.write_text("database:\n  backend: sqlite\n  sqlite_dir: .nkyel/data\n")
     assert detect.detect_from_config(cfg) == []
 
 
@@ -175,7 +175,7 @@ def test_detect_from_config_redis_via_stream_bridge(tmp_path):
 def test_detect_from_config_browser_via_browser_navigate_tool(tmp_path):
     cfg = tmp_path / "config.yaml"
     cfg.write_text(
-        "tools:\n  - name: browser_navigate\n    group: browser\n    use: deerflow.community.browser_automation.tools:browser_navigate_tool\n",
+        "tools:\n  - name: browser_navigate\n    group: browser\n    use: nkyel.community.browser_automation.tools:browser_navigate_tool\n",
     )
     assert detect.detect_from_config(cfg) == ["browser"]
 
@@ -201,7 +201,7 @@ def test_detect_from_config_ignores_commented_browser_tool(tmp_path):
 def test_detect_browser_name_after_other_fields(tmp_path, indent, first_key):
     """A tool mapping's field order must not change its required extras."""
     fields = {
-        "use": "deerflow.community.browser_automation.tools:browser_navigate_tool",
+        "use": "nkyel.community.browser_automation.tools:browser_navigate_tool",
         "group": "browser",
     }
     second_key = "group" if first_key == "use" else "use"
@@ -425,7 +425,7 @@ def test_detect_from_config_ignores_use_in_nested_model_mapping(tmp_path):
     """
     cfg = tmp_path / "config.yaml"
     cfg.write_text(
-        "models:\n  - name: doubao\n    use: deerflow.models.patched_deepseek:PatchedChatDeepSeek\n    when_thinking_enabled:\n      use: langchain_ollama:ChatOllama\n",
+        "models:\n  - name: doubao\n    use: nkyel.models.patched_deepseek:PatchedChatDeepSeek\n    when_thinking_enabled:\n      use: langchain_ollama:ChatOllama\n",
     )
     assert detect.detect_from_config(cfg) == []
 
@@ -471,7 +471,7 @@ def test_detect_from_config_ignores_use_in_nested_indentless_sequence(tmp_path):
     """A `- use:` item inside a model option is not that model's provider."""
     cfg = tmp_path / "config.yaml"
     cfg.write_text(
-        "models:\n- name: x\n  use: deerflow.models.patched_deepseek:PatchedChatDeepSeek\n  fallbacks:\n  - use: langchain_ollama:ChatOllama\n",
+        "models:\n- name: x\n  use: nkyel.models.patched_deepseek:PatchedChatDeepSeek\n  fallbacks:\n  - use: langchain_ollama:ChatOllama\n",
     )
     assert detect.detect_from_config(cfg) == []
 
@@ -529,13 +529,13 @@ def test_resolve_extras_env_supports_multiple(isolated_cwd, monkeypatch):
 
 
 def test_resolve_extras_detects_redis_url_env_without_config(isolated_cwd, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("NKYEL_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
     assert detect.resolve_extras() == ["redis"]
 
 
 def test_resolve_extras_combines_uv_extras_with_redis_url_env(isolated_cwd, monkeypatch):
     monkeypatch.setenv("UV_EXTRAS", "postgres")
-    monkeypatch.setenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("NKYEL_STREAM_BRIDGE_REDIS_URL", "redis://redis:6379/0")
     assert detect.resolve_extras() == ["postgres", "redis"]
 
 
@@ -549,7 +549,7 @@ def test_resolve_extras_respects_explicit_config_path(tmp_path, monkeypatch):
     elsewhere = tmp_path / "elsewhere.yaml"
     elsewhere.write_text("database:\n  backend: postgres\n")
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(elsewhere))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(elsewhere))
 
     assert detect.resolve_extras() == ["postgres"]
 
@@ -584,7 +584,7 @@ def test_resolve_extras_prefers_project_root_config(isolated_cwd, monkeypatch, c
     project.mkdir()
     config = project / "config.yaml"
     config.write_text("database:\n  backend: postgres\nmodels:\n  - use: langchain_ollama:ChatOllama\n", encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(project))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(project))
 
     assert detect.find_config_file() == config
     assert detect.resolve_extras() == ["ollama", "postgres"]
@@ -599,8 +599,8 @@ def test_resolve_extras_explicit_config_overrides_project_root(isolated_cwd, mon
     (project / "config.yaml").write_text("database:\n  backend: postgres\n", encoding="utf-8")
     explicit = isolated_cwd / "explicit.yaml"
     explicit.write_text("stream_bridge:\n  type: redis\n", encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(project))
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(explicit))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(project))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(explicit))
 
     assert detect.find_config_file() == explicit
     assert detect.resolve_extras() == ["redis"]
@@ -610,6 +610,6 @@ def test_resolve_extras_project_without_config_keeps_legacy_fallback(isolated_cw
     project = isolated_cwd / "external project"
     project.mkdir()
     (isolated_cwd / "config.yaml").write_text("database:\n  backend: postgres\n", encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(project))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(project))
 
     assert detect.resolve_extras() == ["postgres"]

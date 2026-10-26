@@ -23,7 +23,7 @@ benchmark module's clock binding. Keep asyncio's clock real, initialize
 `Trace.started` from the controlled clock, and advance ticks at event gates.
 
 `test_doctor_script.py` runs a copied doctor from a temporary checkout with an
-empty-model config. Drop inherited `DEER_FLOW_*`, `PYTHONPATH` and `PYTHONHOME`
+empty-model config. Drop inherited `NKYEL_*`, `PYTHONPATH` and `PYTHONHOME`
 from child processes; cover help, invalid flags, normal reporting and an
 unrelated parent config that stays untouched. Keep argument parsing at the CLI
 entry point so in-process `doctor.main()` callers do not consume pytest's argv.
@@ -64,8 +64,8 @@ Runtime-callback cleanup tests keep DEBUG capture enabled and implement graph
 checkpoint reads. Fixture-only exception tracebacks can retain the journal;
 preserve the strict weak-reference assertion rather than clearing captured logs.
 
-Config-upgrade checkout fixtures clear inherited `DEER_FLOW_CONFIG_PATH`,
-`DEER_FLOW_PROJECT_ROOT` and `DEER_FLOW_ENV_FILE` before applying explicit test
+Config-upgrade checkout fixtures clear inherited `NKYEL_CONFIG_PATH`,
+`NKYEL_PROJECT_ROOT` and `NKYEL_ENV_FILE` before applying explicit test
 overrides. Exercise selector leaks through the real script with temporary
 configs; assert that the simulated developer config and its backup stay untouched.
 
@@ -364,7 +364,7 @@ operations atomic, and verify that a full scan does not hold the cache lock.
 
 - default-executor saturation and queueing;
 - cancellation of an awaiter while an already-started synchronous worker continues;
-- isolation between the asyncio default executor and DeerFlow's dedicated file-I/O executor.
+- isolation between the asyncio default executor and nkyel's dedicated file-I/O executor.
 
 Use explicit synchronization such as `threading.Event` rather than sleep-based timing thresholds for worker lifecycle assertions. Every test must release blocked workers and restore any process-global monkeypatches so teardown cannot leak threads or state into later tests.
 
@@ -375,7 +375,7 @@ Stress/soak testing, AnyIO worker instrumentation, Uvicorn multi-process behavio
 `test_managed_deepseek.py` exercises real SDK request serialization and SSE parsing
 with an HTTP double; do not replace the provider classes with successful stubs.
 `test_managed_deepseek_live.py` uses the same production probe/model configuration
-against DeepSeek only with `DEER_FLOW_RUN_LIVE_TESTS=1` and
+against DeepSeek only with `NKYEL_RUN_LIVE_TESTS=1` and
 `DEEPSEEK_TEST_API_KEY`, never in CI. Keep credentials and provider payloads out of
 committed evidence. A passing connectivity probe does not establish full agent
 compatibility; distinguish protocol assertions from observed live behavior.
@@ -461,7 +461,7 @@ through to the chart-managed Secret, not name the Secret after the value.
 
 `test_helm_database_secret_precedence.py` pins that the gateway's `DATABASE_URL`
 and the postgres StatefulSet's `POSTGRES_PASSWORD` resolve the same Secret in
-every branch of `deer-flow.databaseUserSecret`, and that only the chart-managed
+every branch of `nkyel.databaseUserSecret`, and that only the chart-managed
 branch renders a Secret. Teaching one consumer a new Secret source without the
 other has to fail here. The falsy cases exist because `or` returns its last
 operand even when falsy, which would name the Secret `false`.

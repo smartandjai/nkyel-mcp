@@ -14,7 +14,7 @@ from app.gateway.deps import (
     get_subagent_batch_repo,
     get_subagent_batch_service,
 )
-from deerflow.utils.thread_id import ThreadId
+from nkyel.utils.thread_id import ThreadId
 
 router = APIRouter(prefix="/api/threads/{thread_id}/subagent-batches", tags=["subagent-batches"])
 _ITEM_STATUSES = {"pending", "queued", "leased", "running", "succeeded", "failed", "cancelled"}

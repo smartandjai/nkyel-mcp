@@ -12,7 +12,7 @@ grace-period tests instead of silently outgrowing the deployments.
 from __future__ import annotations
 
 from app.gateway.deps import _RUN_DRAIN_TIMEOUT_SECONDS
-from deerflow.config.memory_config import MemoryConfig
+from nkyel.config.memory_config import MemoryConfig
 
 #: Teardown steps in ``app.gateway.app.lifespan`` that each wait up to
 #: ``_SHUTDOWN_HOOK_TIMEOUT_SECONDS`` before proceeding. They run one after

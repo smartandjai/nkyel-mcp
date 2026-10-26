@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.config.secret_file import InvalidSecretFileError, read_or_create_secret_file
+from nkyel.config.secret_file import InvalidSecretFileError, read_or_create_secret_file
 
 
 def test_creates_a_missing_file_with_owner_only_permissions(tmp_path: Path) -> None:
@@ -153,7 +153,7 @@ def test_an_abandoned_empty_file_is_replaced(tmp_path: Path, caplog: pytest.LogC
     path = tmp_path / ".secret"
     path.touch()
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.config.secret_file"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.config.secret_file"):
         value = read_or_create_secret_file(path, lambda: "fresh-value", settle_seconds=0.05)
 
     assert value == "fresh-value"
@@ -223,7 +223,7 @@ def test_waits_for_a_peer_that_holds_the_replacement_claim(tmp_path: Path) -> No
 
 
 def test_a_claim_left_by_a_crashed_replacer_is_refused_after_a_bounded_wait(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("deerflow.config.secret_file._CLAIM_WAIT_SECONDS", 0.2)
+    monkeypatch.setattr("nkyel.config.secret_file._CLAIM_WAIT_SECONDS", 0.2)
     path = tmp_path / ".secret"
     path.touch()
     claim = tmp_path / ".secret.replacing"
@@ -239,7 +239,7 @@ def test_a_late_replacer_does_not_overwrite_a_published_replacement(tmp_path: Pa
     """A process that saw the empty file before a peer's replacement landed must back off."""
     path = tmp_path / ".secret"
     path.write_text("peer-value", encoding="utf-8")
-    from deerflow.config.secret_file import _publish_under_claim
+    from nkyel.config.secret_file import _publish_under_claim
 
     assert _publish_under_claim(path, lambda: "late-value", replace_empty=True) is True
     assert path.read_text(encoding="utf-8") == "peer-value"
@@ -269,7 +269,7 @@ def test_a_failed_write_leaves_no_empty_file_for_peers_to_wait_on(tmp_path: Path
     def broken_write(_fd: int, _data: bytes) -> None:
         raise OSError("disk full")
 
-    monkeypatch.setattr("deerflow.config.secret_file._write_all", broken_write)
+    monkeypatch.setattr("nkyel.config.secret_file._write_all", broken_write)
 
     with pytest.raises(OSError, match="disk full"):
         read_or_create_secret_file(path, lambda: "value")
@@ -279,7 +279,7 @@ def test_a_failed_write_leaves_no_empty_file_for_peers_to_wait_on(tmp_path: Path
 
 def _pause_one_creator(monkeypatch: pytest.MonkeyPatch, thread_name: str, *, fail: bool = False) -> tuple[threading.Event, threading.Event]:
     """Hold ``thread_name`` inside its secret write until released; the other threads write normally."""
-    import deerflow.config.secret_file as secret_file
+    import nkyel.config.secret_file as secret_file
 
     entered = threading.Event()
     release = threading.Event()

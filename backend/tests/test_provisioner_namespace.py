@@ -27,16 +27,16 @@ def _core_v1(provisioner_module, *, read_status: int | None = 404, create_status
 def test_ensure_namespace_treats_a_concurrent_create_as_already_existing(monkeypatch, provisioner_module, caplog):
     core_v1 = _core_v1(provisioner_module, create_status=409)
     monkeypatch.setattr(provisioner_module, "core_v1", core_v1)
-    monkeypatch.setattr(provisioner_module, "K8S_NAMESPACE", "deer-flow-race")
+    monkeypatch.setattr(provisioner_module, "K8S_NAMESPACE", "nkyel-race")
 
     with caplog.at_level(logging.INFO, logger=provisioner_module.logger.name):
         provisioner_module._ensure_namespace()
 
     core_v1.create_namespace.assert_called_once()
-    assert core_v1.create_namespace.call_args.args[0].metadata.name == "deer-flow-race"
+    assert core_v1.create_namespace.call_args.args[0].metadata.name == "nkyel-race"
     messages = [record.getMessage() for record in caplog.records if record.name == provisioner_module.logger.name]
-    assert "Namespace 'deer-flow-race' was created concurrently; using it" in messages
-    assert "Created namespace 'deer-flow-race'" not in messages
+    assert "Namespace 'nkyel-race' was created concurrently; using it" in messages
+    assert "Created namespace 'nkyel-race'" not in messages
 
 
 def test_ensure_namespace_creates_a_missing_namespace(monkeypatch, provisioner_module):

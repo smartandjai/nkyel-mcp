@@ -2,9 +2,9 @@
 
 import pytest
 
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.runtime import RunManager, RunStatus
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.runtime import RunManager, RunStatus
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 class AbsorbingStore(MemoryRunStore):

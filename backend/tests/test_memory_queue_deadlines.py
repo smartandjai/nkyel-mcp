@@ -4,10 +4,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.queue import MemoryUpdateQueue
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.queue import MemoryUpdateQueue
 
-MODULE = "deerflow.agents.memory.backends.deermem.deermem.core.queue"
+MODULE = "nkyel.agents.memory.backends.deermem.deermem.core.queue"
 
 
 def test_other_users_cannot_postpone_or_accelerate_a_conversation() -> None:

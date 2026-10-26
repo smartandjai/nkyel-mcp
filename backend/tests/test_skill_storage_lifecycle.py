@@ -20,9 +20,9 @@ import threading
 import time
 from pathlib import Path
 
-import deerflow.skills.storage as skill_storage
-from deerflow.config.paths import Paths
-from deerflow.skills.storage import SkillStorage
+import nkyel.skills.storage as skill_storage
+from nkyel.config.paths import Paths
+from nkyel.skills.storage import SkillStorage
 
 
 class SlowSkillStorage(SkillStorage):
@@ -87,8 +87,8 @@ _APP_CONFIG = _AppConfig()
 
 
 def _patch_storage_resolution(monkeypatch, cls=SlowSkillStorage) -> None:
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: _APP_CONFIG)
-    monkeypatch.setattr("deerflow.reflection.resolve_class", lambda *args, **kwargs: cls)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: _APP_CONFIG)
+    monkeypatch.setattr("nkyel.reflection.resolve_class", lambda *args, **kwargs: cls)
 
 
 def test_get_or_new_skill_storage_constructs_one_singleton_under_concurrent_access(monkeypatch):
@@ -227,12 +227,12 @@ class SlowUserSkillStorage(SkillStorage):
 
 
 def _patch_user_storage_resolution(monkeypatch, cls=SlowUserSkillStorage) -> None:
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: _APP_CONFIG)
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=Path("/tmp")))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: _APP_CONFIG)
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=Path("/tmp")))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     # get_or_new_user_skill_storage calls UserScopedSkillStorage(user_id, **kwargs)
     # directly — not via resolve_class. Patch the class reference in the module.
-    monkeypatch.setattr("deerflow.skills.storage.UserScopedSkillStorage", cls)
+    monkeypatch.setattr("nkyel.skills.storage.UserScopedSkillStorage", cls)
 
 
 def test_get_or_new_user_skill_storage_constructs_one_per_user_under_concurrent_access(monkeypatch):
@@ -332,7 +332,7 @@ def test_reset_user_skill_storage_normalises_cache_key(monkeypatch):
     ``make_safe_user_id(user_id)`` but ``reset`` would try to pop by the raw
     ID — a silent cache-invalidation failure.
     """
-    from deerflow.config.paths import make_safe_user_id
+    from nkyel.config.paths import make_safe_user_id
 
     skill_storage.reset_skill_storage()
     SlowUserSkillStorage.instances_created = 0

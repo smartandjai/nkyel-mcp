@@ -27,12 +27,12 @@ import app.gateway.authz as authz
 from app.gateway.auth_middleware import AuthMiddleware
 from app.gateway.authz import Permissions
 from app.gateway.internal_auth import create_internal_auth_headers
-from deerflow.config.app_config import reset_app_config
-from deerflow.config.extensions_config import reset_extensions_config
+from nkyel.config.app_config import reset_app_config
+from nkyel.config.extensions_config import reset_extensions_config
 
 pytestmark = pytest.mark.asyncio
 
-_SANDBOX = "sandbox:\n  use: deerflow.sandbox.local:LocalSandboxProvider\n"
+_SANDBOX = "sandbox:\n  use: nkyel.sandbox.local:LocalSandboxProvider\n"
 _DISABLED = _SANDBOX + "authorization:\n  enabled: false\n"
 _RBAC = (
     _SANDBOX
@@ -41,7 +41,7 @@ _RBAC = (
   fail_closed: true
   default_role: user
   provider:
-    use: deerflow.authz.rbac:RbacAuthorizationProvider
+    use: nkyel.authz.rbac:RbacAuthorizationProvider
     config:
       roles:
         user:
@@ -55,8 +55,8 @@ _RBAC = (
 def write_configs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     config_path = tmp_path / "config.yaml"
     extensions_path = tmp_path / "extensions_config.json"
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(config_path))
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(extensions_path))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(extensions_path))
     # Start from an empty route provider cache and restore it afterwards.
     monkeypatch.setattr(authz, "_route_provider_cache", {})
     monkeypatch.setattr(authz, "_route_provider_config_id", None)

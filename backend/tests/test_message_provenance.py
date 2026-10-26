@@ -5,7 +5,7 @@ An observer cannot reconstruct this after the fact: by the time a message
 reaches the model-call boundary, its producer is no longer recoverable.
 """
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     MESSAGE_CONTENT_KIND_KEY,
     MESSAGE_PRODUCER_ENTITY_ID_KEY,
     MESSAGE_PRODUCER_KIND_KEY,
@@ -16,7 +16,7 @@ from deerflow_extension_api import (
 )
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from deerflow.utils.messages import UNTRUSTED_INPUT_KEY
+from nkyel.utils.messages import UNTRUSTED_INPUT_KEY
 
 
 def test_kwargs_round_trip_through_a_message():
@@ -87,7 +87,7 @@ class TestDynamicContextStamping:
     def _inject(self):
         from langchain_core.messages import HumanMessage
 
-        from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+        from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
 
         middleware = DynamicContextMiddleware()
         return middleware._inject({"messages": [HumanMessage(content="hello", id="u1")]})
@@ -111,7 +111,7 @@ class TestDynamicContextMemoryStamping:
     def test_the_memory_block_is_stamped_as_memory(self, monkeypatch):
         from langchain_core.messages import HumanMessage
 
-        from deerflow.agents.middlewares import dynamic_context_middleware as module
+        from nkyel.agents.middlewares import dynamic_context_middleware as module
 
         monkeypatch.setattr(module.DynamicContextMiddleware, "_build_full_reminder", lambda self, runtime=None, *, query=None: ("<system-reminder></system-reminder>", "some recalled memory"))
         middleware = module.DynamicContextMiddleware()
@@ -132,7 +132,7 @@ class TestDurableContextStamping:
 
         from langchain.agents.middleware.types import ModelRequest
 
-        from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
+        from nkyel.agents.middlewares.durable_context_middleware import DurableContextMiddleware
 
         middleware = DurableContextMiddleware()
         request = ModelRequest(
@@ -172,7 +172,7 @@ class TestSystemMessageCoalescingStamping:
         from langchain.agents.middleware.types import ModelRequest
         from langchain_core.messages import SystemMessage
 
-        from deerflow.agents.middlewares.system_message_coalescing_middleware import _coalesce_request
+        from nkyel.agents.middlewares.system_message_coalescing_middleware import _coalesce_request
 
         request = ModelRequest(
             model=SimpleNamespace(),
@@ -191,7 +191,7 @@ class TestViewImageStamping:
     """The hidden image-details message is stamped as an image payload."""
 
     def test_the_image_context_message_is_stamped(self):
-        from deerflow.agents.middlewares.view_image_middleware import ViewImageMiddleware
+        from nkyel.agents.middlewares.view_image_middleware import ViewImageMiddleware
 
         message = ViewImageMiddleware._create_image_context_message(["some image content"])
         provenance = read_provenance(message)
@@ -206,7 +206,7 @@ class TestSkillActivationStamping:
     def test_the_activation_message_is_stamped(self):
         from langchain_core.messages import HumanMessage
 
-        from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+        from nkyel.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
 
         target = HumanMessage(content="/some-skill do the thing", id="u1")
         message = SkillActivationMiddleware._make_activation_message(target, "activation reminder text")
@@ -228,7 +228,7 @@ class TestStateWritesCannotForgeServerOwnedMetadata:
 
     @staticmethod
     def _forged() -> dict:
-        from deerflow.agents.middlewares.tool_transform_meta import TOOL_TRANSFORMS_KEY
+        from nkyel.agents.middlewares.tool_transform_meta import TOOL_TRANSFORMS_KEY
 
         return {
             MESSAGE_CONTENT_KIND_KEY: "memory",
@@ -251,7 +251,7 @@ class TestStateWritesCannotForgeServerOwnedMetadata:
         cleaned = strip_server_owned_state_metadata(values)["messages"][0]
 
         assert not (PROVENANCE_KEYS & set(cleaned.additional_kwargs))
-        assert "deerflow_tool_transforms" not in cleaned.additional_kwargs
+        assert "nkyel_tool_transforms" not in cleaned.additional_kwargs
         # Caller-owned keys must survive — this strips forgeries, not payload.
         assert cleaned.additional_kwargs["hide_from_ui"] is True
         assert cleaned.additional_kwargs["custom"] == "keep-me"
@@ -267,7 +267,7 @@ class TestStateWritesCannotForgeServerOwnedMetadata:
         cleaned = strip_server_owned_state_metadata(values)["messages"][0]
 
         assert not (PROVENANCE_KEYS & set(cleaned.additional_kwargs))
-        assert "deerflow_tool_transforms" not in cleaned.additional_kwargs
+        assert "nkyel_tool_transforms" not in cleaned.additional_kwargs
         assert cleaned.additional_kwargs["hide_from_ui"] is True
         assert cleaned.additional_kwargs["custom"] == "keep-me"
         assert cleaned.additional_kwargs[UNTRUSTED_INPUT_KEY] is True
@@ -291,7 +291,7 @@ class TestStateWritesCannotForgeServerOwnedMetadata:
         from langchain_core.messages.utils import convert_to_messages
 
         from app.gateway.services import strip_server_owned_state_metadata
-        from deerflow.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
+        from nkyel.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
 
         class _Request:
             def __init__(self, messages):
@@ -324,7 +324,7 @@ class TestStateWritesCannotForgeServerOwnedMetadata:
         the message-shaped stripper alone would let a forged
         ``receipt_verdict`` straight into the checkpoint (PR #5076 review)."""
         from app.gateway.services import strip_server_owned_state_metadata
-        from deerflow.agents.middlewares.delegation_ledger import render_delegation_ledger
+        from nkyel.agents.middlewares.delegation_ledger import render_delegation_ledger
 
         values = {
             "delegations": [

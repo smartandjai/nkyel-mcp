@@ -1,7 +1,7 @@
 """Explicit ``reload_app_config(config_path)`` must pin that file for later reads.
 
 Mirrors the ``_extensions_config_source`` contract: once an explicit path is
-reloaded, ``get_app_config()`` (and therefore ``DeerFlowClient(config_path=...)``)
+reloaded, ``get_app_config()`` (and therefore ``NkyelClient(config_path=...)``)
 must keep following that file instead of ambient default resolution.
 """
 
@@ -14,29 +14,29 @@ from pathlib import Path
 import pytest
 import yaml
 
-import deerflow.config.app_config as app_config_module
-from deerflow.client import DeerFlowClient
-from deerflow.config.acp_config import load_acp_config_from_dict
-from deerflow.config.agents_api_config import load_agents_api_config_from_dict
-from deerflow.config.app_config import (
+import nkyel.config.app_config as app_config_module
+from nkyel.client import NkyelClient
+from nkyel.config.acp_config import load_acp_config_from_dict
+from nkyel.config.agents_api_config import load_agents_api_config_from_dict
+from nkyel.config.app_config import (
     AppConfig,
     get_app_config,
     reload_app_config,
     reset_app_config,
     set_app_config,
 )
-from deerflow.config.checkpointer_config import load_checkpointer_config_from_dict
-from deerflow.config.extensions_config import reset_extensions_config
-from deerflow.config.guardrails_config import load_guardrails_config_from_dict
-from deerflow.config.memory_config import load_memory_config_from_dict
-from deerflow.config.stream_bridge_config import load_stream_bridge_config_from_dict
-from deerflow.config.subagents_config import load_subagents_config_from_dict
-from deerflow.config.summarization_config import load_summarization_config_from_dict
-from deerflow.config.title_config import load_title_config_from_dict
-from deerflow.config.tool_search_config import load_tool_search_config_from_dict
-from deerflow.runtime.checkpointer import reset_checkpointer
-from deerflow.runtime.store import reset_store
-from deerflow.storage import reset_blob_store
+from nkyel.config.checkpointer_config import load_checkpointer_config_from_dict
+from nkyel.config.extensions_config import reset_extensions_config
+from nkyel.config.guardrails_config import load_guardrails_config_from_dict
+from nkyel.config.memory_config import load_memory_config_from_dict
+from nkyel.config.stream_bridge_config import load_stream_bridge_config_from_dict
+from nkyel.config.subagents_config import load_subagents_config_from_dict
+from nkyel.config.summarization_config import load_summarization_config_from_dict
+from nkyel.config.title_config import load_title_config_from_dict
+from nkyel.config.tool_search_config import load_tool_search_config_from_dict
+from nkyel.runtime.checkpointer import reset_checkpointer
+from nkyel.runtime.store import reset_store
+from nkyel.storage import reset_blob_store
 
 
 def _reset_singletons() -> None:
@@ -61,7 +61,7 @@ def _write_config(path: Path, *, model_name: str) -> None:
     path.write_text(
         yaml.safe_dump(
             {
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "models": [
                     {
                         "name": model_name,
@@ -82,8 +82,8 @@ def _model_names(config: AppConfig) -> list[str]:
 @pytest.fixture
 def isolated_project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Point ambient resolution at an empty tmp project root (no config.yaml)."""
-    monkeypatch.delenv("DEER_FLOW_CONFIG_PATH", raising=False)
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.delenv("NKYEL_CONFIG_PATH", raising=False)
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(tmp_path))
     # Avoid legacy monorepo candidates finding the checkout's config.yaml.
     monkeypatch.setattr(
         app_config_module,
@@ -110,7 +110,7 @@ def test_client_config_path_overrides_sibling_default(isolated_project: Path) ->
     custom = isolated_project / "custom.yaml"
     _write_config(custom, model_name="custom-model")
 
-    client = DeerFlowClient(config_path=str(custom))
+    client = NkyelClient(config_path=str(custom))
     assert _model_names(client._app_config) == ["custom-model"]
     assert _model_names(get_app_config()) == ["custom-model"]
 
@@ -119,7 +119,7 @@ def test_client_config_path_works_with_no_default_config(isolated_project: Path)
     custom = isolated_project / "only-custom.yaml"
     _write_config(custom, model_name="custom-model")
 
-    client = DeerFlowClient(config_path=str(custom))
+    client = NkyelClient(config_path=str(custom))
     assert _model_names(client._app_config) == ["custom-model"]
     assert _model_names(get_app_config()) == ["custom-model"]
 
@@ -179,7 +179,7 @@ def test_relative_explicit_pin_survives_working_directory_changes(isolated_proje
         _write_config(decoy, model_name="decoy-model")
     monkeypatch.chdir(isolated_project)
     if entrypoint == "client":
-        DeerFlowClient(config_path="custom/config.yaml")
+        NkyelClient(config_path="custom/config.yaml")
     else:
         reload_app_config("custom/config.yaml")
 

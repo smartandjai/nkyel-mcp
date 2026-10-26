@@ -10,14 +10,14 @@ from langchain.agents import create_agent
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-from deerflow.agents.middlewares.tool_progress_middleware import ToolProgressMiddleware
-from deerflow.agents.middlewares.tool_receipt import TOOL_RECEIPT_KEY
-from deerflow.agents.middlewares.tool_receipt_middleware import ToolReceiptMiddleware
-from deerflow.agents.middlewares.tool_result_meta import TOOL_META_KEY, normalize_tool_message
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.tool_progress_config import ToolProgressConfig
+from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+from nkyel.agents.middlewares.tool_progress_middleware import ToolProgressMiddleware
+from nkyel.agents.middlewares.tool_receipt import TOOL_RECEIPT_KEY
+from nkyel.agents.middlewares.tool_receipt_middleware import ToolReceiptMiddleware
+from nkyel.agents.middlewares.tool_result_meta import TOOL_META_KEY, normalize_tool_message
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.tool_progress_config import ToolProgressConfig
 
 
 @pytest.mark.parametrize("error", ["Unauthorized", {"code": 401, "message": "Unauthorized"}, ["missing config"], 500, True, "no results found"])
@@ -67,8 +67,8 @@ class _ScriptedModel(GenericFakeChatModel):
 @pytest.mark.parametrize("first_kind", ["json_error", "success", "missing", "truncated"])
 @pytest.mark.asyncio
 async def test_native_read_file_keeps_followup_reads_available(tmp_path, monkeypatch, mode, progress_enabled, first_kind):
-    from deerflow.sandbox import tools as sandbox_tools
-    from deerflow.sandbox.local.local_sandbox import LocalSandbox
+    from nkyel.sandbox import tools as sandbox_tools
+    from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
     outputs = tmp_path / "outputs"
     outputs.mkdir()

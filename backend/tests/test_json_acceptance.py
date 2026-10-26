@@ -10,20 +10,20 @@ from unittest.mock import Mock
 
 import pytest
 
-from deerflow.subagents.acceptance_checks import check_acceptance_criteria, parse_file_criterion
+from nkyel.subagents.acceptance_checks import check_acceptance_criteria, parse_file_criterion
 
 
 @pytest.mark.parametrize("sandbox_id", ["local", "local:thread-1"])
 @pytest.mark.parametrize("content", [b"{}", b"{invalid", None])
 def test_local_json_rechecks_revoked_sandbox_grant(tmp_path, monkeypatch, sandbox_id, content):
     """Retained sandbox IDs do not retain grants; revocation prevents file reads and syntax verdicts."""
-    from deerflow.authz.rbac import RbacAuthorizationProvider
-    from deerflow.config.authorization_config import AuthorizationConfig
+    from nkyel.authz.rbac import RbacAuthorizationProvider
+    from nkyel.config.authorization_config import AuthorizationConfig
 
     config = SimpleNamespace(authorization=AuthorizationConfig(enabled=True))
     provider = RbacAuthorizationProvider(roles={"user": {"sandbox": {"allow": "*"}}})
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.authz.sandbox_authz.resolve_authorization_provider", lambda config: provider)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.authz.sandbox_authz.resolve_authorization_provider", lambda config: provider)
     runtime = SimpleNamespace(
         state={"sandbox": {"sandbox_id": sandbox_id}},
         context={"thread_id": "thread-1", "user_id": "user-1", "user_role": "user"},
@@ -102,7 +102,7 @@ def remote_sandbox(tmp_path, monkeypatch):
             pytest.fail("JSON acceptance must not fall back to unbounded full-content reads")
 
     sandbox = ShellSandbox()
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime=None: sandbox)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime=None: sandbox)
     return sandbox
 
 

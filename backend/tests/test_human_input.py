@@ -1,4 +1,4 @@
-from deerflow.agents.human_input import read_human_input_response
+from nkyel.agents.human_input import read_human_input_response
 
 
 def _text_response(value: str):

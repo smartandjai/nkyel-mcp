@@ -12,14 +12,14 @@ import pytest
 from langchain_core.messages import HumanMessage, ToolMessage
 from langgraph.types import Command
 
-from deerflow.agents.middlewares.tool_progress_middleware import (
+from nkyel.agents.middlewares.tool_progress_middleware import (
     ToolProgressMiddleware,
     is_near_duplicate,
     word_set,
 )
-from deerflow.agents.middlewares.tool_result_meta import TOOL_META_KEY
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.agents.middlewares.tool_result_meta import TOOL_META_KEY
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -1008,7 +1008,7 @@ def test_assess_and_transition_blocked_state_immediate_stop_is_idempotent():
     This test verifies that re-entering with a blocked state + stop-action meta
     stays blocked and does not corrupt the block_reason.
     """
-    from deerflow.agents.middlewares.tool_progress_middleware import ToolPhaseState
+    from nkyel.agents.middlewares.tool_progress_middleware import ToolPhaseState
 
     mw = _make_mw()
     blocked_state = ToolPhaseState(
@@ -1022,7 +1022,7 @@ def test_assess_and_transition_blocked_state_immediate_stop_is_idempotent():
         recoverable_by_model=False,
         recommended_next_action="stop",
     )[TOOL_META_KEY]
-    from deerflow.agents.middlewares.tool_result_meta import ToolResultMeta
+    from nkyel.agents.middlewares.tool_result_meta import ToolResultMeta
 
     auth_meta = ToolResultMeta(**auth_meta_kwargs)
 
@@ -1041,7 +1041,7 @@ def test_assess_and_transition_blocked_state_non_stop_increments_count():
     same tool: the second thread's _assess_and_transition receives a stale
     'blocked' snapshot.  The result must remain blocked.
     """
-    from deerflow.agents.middlewares.tool_progress_middleware import ToolPhaseState
+    from nkyel.agents.middlewares.tool_progress_middleware import ToolPhaseState
 
     mw = _make_mw(stagnation_threshold=2, warn_escalation_count=1)
     blocked_state = ToolPhaseState(
@@ -1055,7 +1055,7 @@ def test_assess_and_transition_blocked_state_non_stop_increments_count():
         recoverable_by_model=False,
         recommended_next_action="summarize",
     )[TOOL_META_KEY]
-    from deerflow.agents.middlewares.tool_result_meta import ToolResultMeta
+    from nkyel.agents.middlewares.tool_result_meta import ToolResultMeta
 
     rate_meta = ToolResultMeta(**rate_meta_kwargs)
 
@@ -1076,7 +1076,7 @@ def test_assess_and_transition_blocked_recoverable_does_not_regress_to_warned():
     the `warned` branch because recoverable_by_model=True, demoting the phase from
     blocked back to warned. This test locks the fixed behavior.
     """
-    from deerflow.agents.middlewares.tool_progress_middleware import ToolPhaseState
+    from nkyel.agents.middlewares.tool_progress_middleware import ToolPhaseState
 
     mw = _make_mw(stagnation_threshold=2, warn_escalation_count=1)
     blocked_state = ToolPhaseState(
@@ -1091,7 +1091,7 @@ def test_assess_and_transition_blocked_recoverable_does_not_regress_to_warned():
         recoverable_by_model=True,
         recommended_next_action="rewrite_query",
     )[TOOL_META_KEY]
-    from deerflow.agents.middlewares.tool_result_meta import ToolResultMeta
+    from nkyel.agents.middlewares.tool_result_meta import ToolResultMeta
 
     no_results_meta = ToolResultMeta(**no_results_meta_kwargs)
 
@@ -1142,7 +1142,7 @@ def test_command_result_passthrough():
 
 
 def test_from_config():
-    from deerflow.config.tool_progress_config import ToolProgressConfig
+    from nkyel.config.tool_progress_config import ToolProgressConfig
 
     cfg = ToolProgressConfig(
         enabled=True,
@@ -1165,7 +1165,7 @@ def test_from_config_empty_exempt_tools_clears_exemptions():
     because set() is falsy in Python. The fix uses `is not None` so an explicit
     empty set from config actually disables all exemptions.
     """
-    from deerflow.config.tool_progress_config import ToolProgressConfig
+    from nkyel.config.tool_progress_config import ToolProgressConfig
 
     cfg = ToolProgressConfig(enabled=True, exempt_tools=set())
     mw = ToolProgressMiddleware.from_config(cfg)
@@ -1182,7 +1182,7 @@ def test_exempt_tools_none_uses_defaults():
 
 def test_from_config_default_exempt_tools_round_trip():
     """Default exempt_tools from config must match the __init__ default."""
-    from deerflow.config.tool_progress_config import ToolProgressConfig
+    from nkyel.config.tool_progress_config import ToolProgressConfig
 
     cfg = ToolProgressConfig(enabled=True)
     mw = ToolProgressMiddleware.from_config(cfg)
@@ -1194,7 +1194,7 @@ def test_from_config_default_exempt_tools_round_trip():
 
 
 def test_wrap_tool_call_malformed_meta_passthrough():
-    """Malformed deerflow_tool_meta dict must not crash the middleware."""
+    """Malformed nkyel_tool_meta dict must not crash the middleware."""
     mw = _make_mw()
     rt = _make_runtime()
     req = _make_tool_request(runtime=rt)
@@ -1216,7 +1216,7 @@ def test_wrap_tool_call_malformed_meta_passthrough():
 
 
 def test_missing_meta_on_non_exempt_tool_emits_warning(caplog):
-    """When deerflow_tool_meta is completely absent for a non-exempt tool,
+    """When nkyel_tool_meta is completely absent for a non-exempt tool,
     the middleware must emit a warning pointing to the likely ordering misconfiguration.
     """
     import logging
@@ -1232,10 +1232,10 @@ def test_missing_meta_on_non_exempt_tool_emits_warning(caplog):
         additional_kwargs={},  # no TOOL_META_KEY at all
     )
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.agents.middlewares.tool_progress_middleware"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.agents.middlewares.tool_progress_middleware"):
         mw.wrap_tool_call(req, lambda _r: no_meta_msg)
 
-    assert any("deerflow_tool_meta missing" in r.message for r in caplog.records), "Expected a warning about missing meta for non-exempt tool"
+    assert any("nkyel_tool_meta missing" in r.message for r in caplog.records), "Expected a warning about missing meta for non-exempt tool"
 
 
 # ---------------------------------------------------------------------------
@@ -1326,7 +1326,7 @@ async def test_awrap_tool_call_command_result_passthrough():
 
 @pytest.mark.anyio
 async def test_awrap_tool_call_malformed_meta_passthrough():
-    """Malformed deerflow_tool_meta dict must not crash the middleware."""
+    """Malformed nkyel_tool_meta dict must not crash the middleware."""
     mw = _make_mw()
     rt = _make_runtime()
     req = _make_tool_request(runtime=rt)
@@ -1422,7 +1422,7 @@ async def test_awrap_model_call_drains_and_injects_hints():
 # ---------------------------------------------------------------------------
 # Logging behavior
 
-_MW_LOGGER = "deerflow.agents.middlewares.tool_progress_middleware"
+_MW_LOGGER = "nkyel.agents.middlewares.tool_progress_middleware"
 
 
 def test_log_active_to_warned_emits_info(caplog):
@@ -1827,7 +1827,7 @@ def test_tool_progress_and_loop_detection_coexist_without_interfering():
     """
     from langchain_core.messages import AIMessage
 
-    from deerflow.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
+    from nkyel.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
 
     tp_mw = _make_mw(stagnation_threshold=2, warn_escalation_count=5, inject_assessment=True)
     ld_mw = LoopDetectionMiddleware(warn_threshold=3, hard_limit=10)

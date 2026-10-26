@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.scheduler_config import SchedulerConfig
+from nkyel.config.scheduler_config import SchedulerConfig
 
 
 def test_scheduler_config_defaults():

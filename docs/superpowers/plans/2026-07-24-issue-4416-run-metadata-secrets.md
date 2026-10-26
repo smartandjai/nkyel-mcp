@@ -4,7 +4,7 @@
 
 **Goal:** Reject the legacy top-level `metadata.auth_token` field before a run can persist anything, preserve request-scoped MCP credentials in `config.context.secrets`, and hide the legacy key from historical API responses.
 
-**Architecture:** `deerflow.runtime.secret_context` remains the single owner of secret-carrier and legacy-key policy. `app.gateway.services.start_run()` is the sole new-run admission boundary; API serializers call the same non-mutating metadata redactor only to hide historical records, without changing stores or callback implementations.
+**Architecture:** `nkyel.runtime.secret_context` remains the single owner of secret-carrier and legacy-key policy. `app.gateway.services.start_run()` is the sole new-run admission boundary; API serializers call the same non-mutating metadata redactor only to hide historical records, without changing stores or callback implementations.
 
 **Tech Stack:** Python 3.12, FastAPI, Pydantic v2, LangGraph/LangChain runnable context, pytest/anyio, ruff.
 
@@ -13,7 +13,7 @@
 - Reject only the exact top-level metadata key `auth_token`; do not add heuristic matching for names such as `token`, `api_key`, or nested arbitrary metadata.
 - Return HTTP 422 with migration guidance to `config.context.secrets`.
 - Validate before `RunManager.create_or_reject()`, thread upsert/status changes, `build_run_config()`, callback creation, `RunJournal` event emission, and background task creation.
-- Reuse `backend/packages/harness/deerflow/runtime/secret_context.py`; do not maintain duplicate secret-key lists in stores, callbacks, routers, or response models.
+- Reuse `backend/packages/harness/nkyel/runtime/secret_context.py`; do not maintain duplicate secret-key lists in stores, callbacks, routers, or response models.
 - Historical API hiding must not mutate the stored run, thread, checkpoint, or event object.
 - Independent `POST /api/threads` and `PATCH /api/threads/{thread_id}` metadata contracts are outside #4416; they do not admit a run and must not silently adopt a second policy behavior.
 - Existing nested values in `config.context.secrets` must remain available to the live MCP interceptor while remaining absent from persisted run config.
@@ -26,7 +26,7 @@
 
 **Files:**
 - Create: `backend/tests/test_run_metadata_secret_safety.py`
-- Modify: `backend/packages/harness/deerflow/runtime/secret_context.py`
+- Modify: `backend/packages/harness/nkyel/runtime/secret_context.py`
 
 **Interfaces:**
 - Consumes: existing `redact_config_secrets(config: Any) -> Any`.
@@ -37,7 +37,7 @@
 ```python
 import pytest
 
-from deerflow.runtime.secret_context import (
+from nkyel.runtime.secret_context import (
     LegacyRunMetadataSecretError,
     redact_metadata_secrets,
     validate_run_metadata_secrets,
@@ -132,7 +132,7 @@ Expected: all Task 1 tests pass.
 - [ ] **Step 5: Commit the policy unit**
 
 ```bash
-git add backend/packages/harness/deerflow/runtime/secret_context.py backend/tests/test_run_metadata_secret_safety.py
+git add backend/packages/harness/nkyel/runtime/secret_context.py backend/tests/test_run_metadata_secret_safety.py
 git commit -m "fix(security): centralize legacy run metadata policy"
 ```
 
@@ -157,9 +157,9 @@ def _make_start_run_persistence_context():
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.store.memory import InMemoryStore
 
-    from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-    from deerflow.runtime import RunManager
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+    from nkyel.runtime import RunManager
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     run_store = MemoryRunStore()
     thread_store = MemoryThreadMetaStore(InMemoryStore())
@@ -376,7 +376,7 @@ assert response.metadata == {"token_usage": 7}
 assert record.metadata["auth_token"] == "legacy-secret"
 ```
 
-Import `RunRecord` from `deerflow.runtime.runs.manager` and `DisconnectMode` / `RunStatus` from `deerflow.runtime.runs.schemas`.
+Import `RunRecord` from `nkyel.runtime.runs.manager` and `DisconnectMode` / `RunStatus` from `nkyel.runtime.runs.schemas`.
 
 For each thread response model:
 
@@ -670,7 +670,7 @@ Update `backend/AGENTS.md` to state:
 - `secret_context.py` owns admission and output-redaction policy;
 - historical API hiding does not delete old database/event/log/snapshot/backup material;
 - deployments that previously used `metadata.auth_token` must rotate the credential and clean all retained copies;
-- restarting or upgrading DeerFlow does not perform that cleanup.
+- restarting or upgrading nkyel does not perform that cleanup.
 
 - [ ] **Step 7: Commit supported flow and docs**
 
@@ -713,7 +713,7 @@ Expected: all selected tests pass.
 ```bash
 cd backend
 .venv/bin/ruff format \
-  packages/harness/deerflow/runtime/secret_context.py \
+  packages/harness/nkyel/runtime/secret_context.py \
   app/gateway/services.py \
   app/gateway/routers/thread_runs.py \
   app/gateway/routers/threads.py \
@@ -723,7 +723,7 @@ cd backend
   tests/test_mcp_session_pool.py \
   tests/test_skill_request_scoped_secrets.py
 .venv/bin/ruff format --check \
-  packages/harness/deerflow/runtime/secret_context.py \
+  packages/harness/nkyel/runtime/secret_context.py \
   app/gateway/services.py \
   app/gateway/routers/thread_runs.py \
   app/gateway/routers/threads.py \
@@ -741,7 +741,7 @@ Expected: no files require further formatting.
 ```bash
 cd backend
 .venv/bin/ruff check \
-  packages/harness/deerflow/runtime/secret_context.py \
+  packages/harness/nkyel/runtime/secret_context.py \
   app/gateway/services.py \
   app/gateway/routers/thread_runs.py \
   app/gateway/routers/threads.py \
@@ -779,7 +779,7 @@ If Step 2 changed files:
 
 ```bash
 git add \
-  backend/packages/harness/deerflow/runtime/secret_context.py \
+  backend/packages/harness/nkyel/runtime/secret_context.py \
   backend/app/gateway/services.py \
   backend/app/gateway/routers/thread_runs.py \
   backend/app/gateway/routers/threads.py \

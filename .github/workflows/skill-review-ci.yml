@@ -6,7 +6,7 @@ on:
     paths:
       - "skills/public/**"
       - "tests/skills/**"
-      - "backend/packages/harness/deerflow/skills/review/**"
+      - "backend/packages/harness/nkyel/skills/review/**"
       - "contracts/skill_review/**"
       - "scripts/review_changed_public_skills.py"
       - "scripts/skill_review_waivers.py"
@@ -19,7 +19,7 @@ on:
     paths:
       - "skills/public/**"
       - "tests/skills/**"
-      - "backend/packages/harness/deerflow/skills/review/**"
+      - "backend/packages/harness/nkyel/skills/review/**"
       - "contracts/skill_review/**"
       - "scripts/review_changed_public_skills.py"
       - "scripts/skill_review_waivers.py"

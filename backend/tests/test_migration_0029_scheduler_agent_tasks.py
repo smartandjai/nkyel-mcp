@@ -17,10 +17,10 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.base import Base
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence import bootstrap
+from nkyel.persistence.base import Base
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
 
 REVISION = "0029_scheduler_agent_tasks"
 NEXT = "0030_notification_claim_tokens"

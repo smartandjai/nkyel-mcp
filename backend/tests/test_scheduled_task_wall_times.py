@@ -14,8 +14,8 @@ from app.gateway.scheduled_task_validation import (
     validate_scheduled_task_create,
     validate_scheduled_task_update,
 )
-from deerflow.config.scheduler_config import SchedulerConfig
-from deerflow.scheduler.schedules import next_run_at
+from nkyel.config.scheduler_config import SchedulerConfig
+from nkyel.scheduler.schedules import next_run_at
 
 NOW = datetime(2026, 10, 22, tzinfo=UTC)
 GAPS = [

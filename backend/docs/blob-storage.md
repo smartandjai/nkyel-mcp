@@ -11,7 +11,7 @@ On a single gateway both are correct. Behind a load balancer, the instance handl
 
 ## Contract
 
-`deerflow/storage/contract.py`
+`nkyel/storage/contract.py`
 
 - `BlobRef` — `{sha256, size, kind, content_type}`. The digest is the address, so writes are idempotent and dedup is free.
 - `BlobStore` — plain ABC, tiered like `MemoryStorage`:
@@ -25,7 +25,7 @@ Reads **verify the digest**. A content-addressed store that silently returns wro
 
 ## Backend
 
-`deerflow/storage/backends/local_fs/` (default)
+`nkyel/storage/backends/local_fs/` (default)
 
 ```
 <root>/<kind>/<sha256[:2]>/<sha256>          the bytes
@@ -45,7 +45,7 @@ blob_storage:
   enabled: true                # default false
   backend: local_fs            # folder name under storage/backends/, or module.Class / module:Class
   backend_config:
-    root: /mnt/shared/deerflow-blobs   # default: {runtime_home}/blobs, absolute
+    root: /mnt/shared/nkyel-blobs   # default: {runtime_home}/blobs, absolute
 ```
 
 Fail-fast on an unresolvable backend (`ValueError`), mirroring `MemoryConfig.manager_class`: blobs are persistent state, so silently substituting a different backend would strand previously written content.
@@ -118,7 +118,7 @@ This is also the seam [#5188](https://github.com/bytedance/deer-flow/issues/5188
 
 ## Adding a backend
 
-`packages/harness/deerflow/storage/AGENTS.md` owns the depth — the drop-in
+`packages/harness/nkyel/storage/AGENTS.md` owns the depth — the drop-in
 folder contract, the portability rule and the durability rules a new backend has
 to keep. In short:
 

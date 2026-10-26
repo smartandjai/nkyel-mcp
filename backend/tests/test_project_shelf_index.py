@@ -1,6 +1,6 @@
 """Tests for the bounded <documents> shelf index (Phase-2 spec §7.1-§7.2, §10.4/§10.10).
 
-Two halves: the pure renderer in ``deerflow/projects/context.py`` (entry cap,
+Two halves: the pure renderer in ``nkyel/projects/context.py`` (entry cap,
 UTF-8 byte cap, no partial entry, honest count/shown, actionable overflow
 note, tag escaping, empty-shelf absence) and its request-scoped delivery
 through ``DynamicContextMiddleware`` (exactly one block per model call,
@@ -16,15 +16,15 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
-from deerflow.projects.context import (
+from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+from nkyel.projects.context import (
     is_project_context_message,
     render_documents_block,
     resolve_project_context,
 )
-from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 pytestmark = pytest.mark.anyio
 
@@ -287,7 +287,7 @@ class TestShelfJournalFingerprint:
         snapshot = _snapshot()
         _wrap(mw, _base_messages(), _runtime(snapshot, journal=journal))
         await journal.flush()
-        from deerflow.projects.context import render_project_block
+        from nkyel.projects.context import render_project_block
 
         expected = hashlib.sha256(render_project_block(snapshot).encode("utf-8")).hexdigest()
         events = await store.list_events("t-1", "run-1", event_types=["context:memory"])
@@ -303,9 +303,9 @@ class TestShelfJournalFingerprint:
 class TestResolveShelfSnapshot:
     @pytest.fixture
     async def repos(self, tmp_path):
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-        from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
-        from deerflow.persistence.thread_meta import ThreadMetaRepository
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
+        from nkyel.persistence.thread_meta import ThreadMetaRepository
 
         url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
         await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -315,7 +315,7 @@ class TestResolveShelfSnapshot:
 
     @pytest.fixture
     def user_a(self):
-        from deerflow.runtime.user_context import reset_current_user, set_current_user
+        from nkyel.runtime.user_context import reset_current_user, set_current_user
 
         token = set_current_user(SimpleNamespace(id="user-a"))
         yield "user-a"
@@ -336,8 +336,8 @@ class TestResolveShelfSnapshot:
 
         from sqlalchemy import update
 
-        from deerflow.persistence.engine import get_session_factory
-        from deerflow.persistence.projects.model import ProjectDocumentRow
+        from nkyel.persistence.engine import get_session_factory
+        from nkyel.persistence.projects.model import ProjectDocumentRow
 
         async with get_session_factory()() as session:
             for i, document_id in enumerate(("d0", "d1", "d2")):
@@ -381,8 +381,8 @@ class TestResolveShelfSnapshot:
         for i in range(6):
             await doc_repo.insert_active(project["id"], document_id=f"d{i}", name=f"f{i}", relpath=f"r{i}", sha256=f"{i}" * 64, size_bytes=1)
 
-        from deerflow.config.projects_config import ProjectsConfig
-        from deerflow.projects import context as context_mod
+        from nkyel.config.projects_config import ProjectsConfig
+        from nkyel.projects import context as context_mod
 
         monkeypatch.setattr(context_mod, "_projects_config", lambda: ProjectsConfig(shelf_index_max_entries=4))
         snapshot = await resolve_project_context(thread_store, project_repo, "t-1", doc_repo)

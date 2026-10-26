@@ -1,8 +1,8 @@
-"""End-to-end demo: SafetyFinishReasonMiddleware on the real DeerFlow lead-agent.
+"""End-to-end demo: SafetyFinishReasonMiddleware on the real nkyel lead-agent.
 
 What it proves
 --------------
-- The real ``make_lead_agent`` / ``DeerFlowClient`` pipeline is built (full
+- The real ``make_lead_agent`` / ``NkyelClient`` pipeline is built (full
   18-middleware chain, sandbox, tools, etc.).
 - A model that returns ``finish_reason='content_filter'`` + ``tool_calls``
   triggers SafetyFinishReasonMiddleware.
@@ -85,12 +85,12 @@ class _ContentFilteredFakeModel(BaseChatModel):
 def main() -> int:
     # Inject the fake model BEFORE constructing the client. Both the
     # client module and the lead-agent module bind ``create_chat_model``
-    # at import time via ``from deerflow.models import create_chat_model``,
+    # at import time via ``from nkyel.models import create_chat_model``,
     # so we patch both attribute slots — the source-of-truth patch on
     # ``factory.create_chat_model`` doesn't propagate back into already-
     # imported names.
-    import deerflow.agents.lead_agent.agent as lead_agent_module
-    import deerflow.client as client_module
+    import nkyel.agents.lead_agent.agent as lead_agent_module
+    import nkyel.client as client_module
 
     fake = _ContentFilteredFakeModel()
     originals = {
@@ -104,10 +104,10 @@ def main() -> int:
     lead_agent_module.create_chat_model = fake_create_chat_model
     client_module.create_chat_model = fake_create_chat_model
 
-    from deerflow.client import DeerFlowClient
+    from nkyel.client import NkyelClient
 
     try:
-        client = DeerFlowClient()
+        client = NkyelClient()
 
         print("\n=== Streaming a turn through the real lead-agent ===")
         events: list[dict[str, Any]] = []

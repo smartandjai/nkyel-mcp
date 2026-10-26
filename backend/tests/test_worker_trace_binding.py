@@ -1,7 +1,7 @@
 """``run_agent`` stamps the request trace id onto everything it hands the graph.
 
 The trace ContextVar is the only source. These tests pin the other half of
-that contract: a ``deerflow_trace_id`` arriving on the run request is a
+that contract: a ``nkyel_trace_id`` arriving on the run request is a
 caller's echo of a past output, not an input, and must not survive into the
 runtime context, the run metadata, or the checkpoint. Otherwise a client can
 make the most durable surfaces of a run disagree with the ``X-Trace-Id`` and
@@ -14,11 +14,11 @@ import asyncio
 
 import pytest
 
-from deerflow.runtime.context_keys import CHECKPOINT_AGENT_NAME_METADATA_KEY, DEFAULT_AGENT_NAME_METADATA_VALUE
-from deerflow.runtime.runs.manager import RunRecord, RunStartOutcome
-from deerflow.runtime.runs.schemas import DisconnectMode, RunStatus
-from deerflow.runtime.runs.worker import RunContext, _build_runtime_context, run_agent
-from deerflow.trace_context import DEERFLOW_TRACE_METADATA_KEY, get_current_trace_id, request_trace_context
+from nkyel.runtime.context_keys import CHECKPOINT_AGENT_NAME_METADATA_KEY, DEFAULT_AGENT_NAME_METADATA_VALUE
+from nkyel.runtime.runs.manager import RunRecord, RunStartOutcome
+from nkyel.runtime.runs.schemas import DisconnectMode, RunStatus
+from nkyel.runtime.runs.worker import RunContext, _build_runtime_context, run_agent
+from nkyel.trace_context import NKYEL_TRACE_METADATA_KEY, get_current_trace_id, request_trace_context
 
 
 class _FakeAgent:
@@ -109,8 +109,8 @@ async def test_runtime_context_and_metadata_carry_the_bound_trace_id():
     with request_trace_context("gateway-issued"):
         captured = await _run({"configurable": {"thread_id": "thread-trace-binding"}})
 
-    assert captured["context"][DEERFLOW_TRACE_METADATA_KEY] == "gateway-issued"
-    assert captured["metadata"][DEERFLOW_TRACE_METADATA_KEY] == "gateway-issued"
+    assert captured["context"][NKYEL_TRACE_METADATA_KEY] == "gateway-issued"
+    assert captured["metadata"][NKYEL_TRACE_METADATA_KEY] == "gateway-issued"
 
 
 @pytest.mark.asyncio
@@ -119,11 +119,11 @@ async def test_caller_supplied_metadata_trace_id_is_overwritten():
         captured = await _run(
             {
                 "configurable": {"thread_id": "thread-trace-binding"},
-                "metadata": {DEERFLOW_TRACE_METADATA_KEY: "forged", "caller_key": "kept"},
+                "metadata": {NKYEL_TRACE_METADATA_KEY: "forged", "caller_key": "kept"},
             }
         )
 
-    assert captured["metadata"][DEERFLOW_TRACE_METADATA_KEY] == "gateway-issued"
+    assert captured["metadata"][NKYEL_TRACE_METADATA_KEY] == "gateway-issued"
     # Only the server-owned key is replaced.
     assert captured["metadata"]["caller_key"] == "kept"
 
@@ -131,17 +131,17 @@ async def test_caller_supplied_metadata_trace_id_is_overwritten():
 @pytest.mark.asyncio
 async def test_caller_supplied_context_trace_id_is_overwritten():
     """``config['context']`` is a second, separate way in. The Gateway filters
-    ``__``-prefixed keys out of it, but ``deerflow_trace_id`` carries no prefix
+    ``__``-prefixed keys out of it, but ``nkyel_trace_id`` carries no prefix
     and embedded harness callers pass through no such filter at all."""
     with request_trace_context("gateway-issued"):
         captured = await _run(
             {
                 "configurable": {"thread_id": "thread-trace-binding"},
-                "context": {DEERFLOW_TRACE_METADATA_KEY: "forged", "agent_name": "kept"},
+                "context": {NKYEL_TRACE_METADATA_KEY: "forged", "agent_name": "kept"},
             }
         )
 
-    assert captured["context"][DEERFLOW_TRACE_METADATA_KEY] == "gateway-issued"
+    assert captured["context"][NKYEL_TRACE_METADATA_KEY] == "gateway-issued"
     assert captured["context"]["agent_name"] == "kept"
 
 
@@ -202,12 +202,12 @@ async def test_both_forks_agree_when_the_caller_forges_both():
         captured = await _run(
             {
                 "configurable": {"thread_id": "thread-trace-binding"},
-                "metadata": {DEERFLOW_TRACE_METADATA_KEY: "forged-metadata"},
-                "context": {DEERFLOW_TRACE_METADATA_KEY: "forged-context"},
+                "metadata": {NKYEL_TRACE_METADATA_KEY: "forged-metadata"},
+                "context": {NKYEL_TRACE_METADATA_KEY: "forged-context"},
             }
         )
 
-    assert captured["metadata"][DEERFLOW_TRACE_METADATA_KEY] == captured["context"][DEERFLOW_TRACE_METADATA_KEY] == "gateway-issued"
+    assert captured["metadata"][NKYEL_TRACE_METADATA_KEY] == captured["context"][NKYEL_TRACE_METADATA_KEY] == "gateway-issued"
 
 
 @pytest.mark.asyncio
@@ -218,8 +218,8 @@ async def test_run_without_an_ambient_trace_still_gets_one():
 
     captured = await _run({"configurable": {"thread_id": "thread-trace-binding"}})
 
-    assert captured["metadata"][DEERFLOW_TRACE_METADATA_KEY]
-    assert captured["context"][DEERFLOW_TRACE_METADATA_KEY] == captured["metadata"][DEERFLOW_TRACE_METADATA_KEY]
+    assert captured["metadata"][NKYEL_TRACE_METADATA_KEY]
+    assert captured["context"][NKYEL_TRACE_METADATA_KEY] == captured["metadata"][NKYEL_TRACE_METADATA_KEY]
 
 
 def test_build_runtime_context_drops_a_caller_supplied_trace_id():
@@ -233,8 +233,8 @@ def test_build_runtime_context_drops_a_caller_supplied_trace_id():
     runtime_ctx = _build_runtime_context(
         "thread-1",
         "run-1",
-        {DEERFLOW_TRACE_METADATA_KEY: "forged", "agent_name": "kept"},
+        {NKYEL_TRACE_METADATA_KEY: "forged", "agent_name": "kept"},
     )
 
-    assert DEERFLOW_TRACE_METADATA_KEY not in runtime_ctx
+    assert NKYEL_TRACE_METADATA_KEY not in runtime_ctx
     assert runtime_ctx["agent_name"] == "kept"

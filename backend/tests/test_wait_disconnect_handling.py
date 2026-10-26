@@ -28,9 +28,9 @@ import anyio
 import pytest
 from _router_auth_helpers import call_unwrapped
 
-from deerflow.runtime import ORPHAN_RECOVERY_STOP_REASON, CancelOutcome, RunManager, RunRecord, RunStatus
-from deerflow.runtime.runs.schemas import DisconnectMode
-from deerflow.runtime.stream_bridge.memory import MemoryStreamBridge
+from nkyel.runtime import ORPHAN_RECOVERY_STOP_REASON, CancelOutcome, RunManager, RunRecord, RunStatus
+from nkyel.runtime.runs.schemas import DisconnectMode
+from nkyel.runtime.stream_bridge.memory import MemoryStreamBridge
 
 THREAD_ID = "thread-wait-3265"
 
@@ -453,7 +453,7 @@ class TestWaitForRunCompletion:
     def test_sse_consumer_preserves_tail_events_after_durable_terminal_status(self) -> None:
         """A durable terminal row must not overtake delayed error and END events."""
         from app.gateway.services import sse_consumer
-        from deerflow.runtime.runs.store.memory import MemoryRunStore
+        from nkyel.runtime.runs.store.memory import MemoryRunStore
 
         async def run() -> None:
             store = MemoryRunStore()
@@ -495,7 +495,7 @@ class TestWaitForRunCompletion:
     def test_wait_preserves_tail_events_after_durable_terminal_status(self) -> None:
         """The wait path must remain blocked until the real END is published."""
         from app.gateway.services import wait_for_run_completion
-        from deerflow.runtime.runs.store.memory import MemoryRunStore
+        from nkyel.runtime.runs.store.memory import MemoryRunStore
 
         async def run() -> None:
             store = MemoryRunStore()
@@ -533,7 +533,7 @@ class TestWaitForRunCompletion:
     ) -> None:
         """A recovered orphan may synthesize END when its publisher is gone."""
         from app.gateway.services import sse_consumer
-        from deerflow.runtime.runs.store.memory import MemoryRunStore
+        from nkyel.runtime.runs.store.memory import MemoryRunStore
 
         async def run() -> None:
             store = MemoryRunStore()
@@ -565,7 +565,7 @@ class TestWaitForRunCompletion:
     def test_wait_uses_explicit_orphan_recovery_liveness_boundary(self) -> None:
         """The non-streaming consumer shares the recovered-orphan boundary."""
         from app.gateway.services import wait_for_run_completion
-        from deerflow.runtime.runs.store.memory import MemoryRunStore
+        from nkyel.runtime.runs.store.memory import MemoryRunStore
 
         async def run() -> None:
             store = MemoryRunStore()
@@ -605,8 +605,8 @@ class TestWaitForRunCompletion:
         from datetime import UTC, datetime, timedelta
 
         from app.gateway.services import wait_for_run_completion
-        from deerflow.config.run_ownership_config import RunOwnershipConfig
-        from deerflow.runtime.runs.store.memory import MemoryRunStore
+        from nkyel.config.run_ownership_config import RunOwnershipConfig
+        from nkyel.runtime.runs.store.memory import MemoryRunStore
 
         async def run() -> None:
             store = MemoryRunStore()
@@ -650,12 +650,12 @@ async def test_scheduler_recovery_completes_subscribed_consumers(tmp_path, consu
     from datetime import UTC, datetime, timedelta
 
     from app.gateway.services import sse_consumer, wait_for_run_completion
-    from deerflow.config.database_config import DatabaseConfig
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-    from deerflow.persistence.run import RunRepository
-    from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-    from deerflow.runtime import RunManager, RunStatus
+    from nkyel.config.database_config import DatabaseConfig
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+    from nkyel.persistence.run import RunRepository
+    from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+    from nkyel.runtime import RunManager, RunStatus
 
     await init_engine_from_config(DatabaseConfig(backend="sqlite", sqlite_dir=str(tmp_path)))
     consumer_task = None

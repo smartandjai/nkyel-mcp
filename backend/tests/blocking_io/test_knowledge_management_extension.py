@@ -6,14 +6,14 @@ from pathlib import Path
 
 import httpx
 import pytest
-from deerflow_extension_api.auth import ExtensionPrincipal
+from nkyel_extension_api.auth import ExtensionPrincipal
 
 
 @pytest.mark.asyncio
 async def test_management_http_client_setup_is_off_loop(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[3] / "examples/deerflow-extension-knowledge-management"))
-    from deerflow_extension_knowledge_management.contracts import IngestRequest, ManagementContext
-    from deerflow_extension_knowledge_management.weknora import WeKnoraManagement
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[3] / "examples/nkyel-extension-knowledge-management"))
+    from nkyel_extension_knowledge_management.contracts import IngestRequest, ManagementContext
+    from nkyel_extension_knowledge_management.weknora import WeKnoraManagement
 
     monkeypatch.setenv("MANAGEMENT_BLOCKING_KEY", "synthetic")
     provider = WeKnoraManagement(

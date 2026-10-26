@@ -8,22 +8,22 @@ from types import SimpleNamespace
 
 import pytest
 import pytest_asyncio
-from deerflow_extension_api.completed_run_evidence import CompletedRunSnapshot
-from deerflow_extension_api.host_capabilities import HostCapabilityError
+from nkyel_extension_api.completed_run_evidence import CompletedRunSnapshot
+from nkyel_extension_api.host_capabilities import HostCapabilityError
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
-from deerflow.config.paths import Paths
-from deerflow.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
-from deerflow.extensions.host_access import BoundHostAccess, HostAccess
-from deerflow.persistence.base import Base
-from deerflow.persistence.run.model import CompletedRunSnapshotRow, RunRow
-from deerflow.persistence.skill_mutations.model import SkillAssetRow, SkillOperationRow, SkillProposalRow
-from deerflow.persistence.user.model import UserRow
-from deerflow.skills.mutations.guard import SkillMutationRuntime, configure_mutation_runtime
-from deerflow.skills.mutations.repository import SkillMutationRepository
-from deerflow.skills.mutations.scanner import ScanVerdict
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config.paths import Paths
+from nkyel.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
+from nkyel.extensions.host_access import BoundHostAccess, HostAccess
+from nkyel.persistence.base import Base
+from nkyel.persistence.run.model import CompletedRunSnapshotRow, RunRow
+from nkyel.persistence.skill_mutations.model import SkillAssetRow, SkillOperationRow, SkillProposalRow
+from nkyel.persistence.user.model import UserRow
+from nkyel.skills.mutations.guard import SkillMutationRuntime, configure_mutation_runtime
+from nkyel.skills.mutations.repository import SkillMutationRepository
+from nkyel.skills.mutations.scanner import ScanVerdict
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="host skill mutation tests require POSIX filesystem primitives")
 
@@ -33,11 +33,11 @@ NEW = CONTENT.replace("\nA\n", "\nB\n")
 
 @pytest_asyncio.fixture
 async def host(tmp_path, monkeypatch):
-    assert importlib.util.find_spec("deerflow.skills.mutations.service") is not None, "bound mutation service is missing"
-    from deerflow.skills.mutations.recovery import SkillMutationRecovery
-    from deerflow.skills.mutations.service import HostSkillMutationService
+    assert importlib.util.find_spec("nkyel.skills.mutations.service") is not None, "bound mutation service is missing"
+    from nkyel.skills.mutations.recovery import SkillMutationRecovery
+    from nkyel.skills.mutations.service import HostSkillMutationService
 
-    monkeypatch.setattr("deerflow.config.paths._paths", Paths(base_dir=tmp_path / "home"))
+    monkeypatch.setattr("nkyel.config.paths._paths", Paths(base_dir=tmp_path / "home"))
     storage = UserScopedSkillStorage("owner", host_path=str(tmp_path / "skills"))
     root = storage.get_custom_skill_dir("example")
     root.mkdir(parents=True)
@@ -187,7 +187,7 @@ async def test_commit_maps_malformed_assessment_to_contract_error(host):
 
 @pytest.mark.asyncio
 async def test_commit_bounds_serialized_assessment_bytes(host):
-    from deerflow_extension_api.skill_mutations import AssessmentRef
+    from nkyel_extension_api.skill_mutations import AssessmentRef
 
     proposal = await stage(host)
     await host.service.check(proposal_id=proposal.proposal_id)
@@ -198,7 +198,7 @@ async def test_commit_bounds_serialized_assessment_bytes(host):
 
 @pytest.mark.asyncio
 async def test_commit_persists_valid_assessment(host):
-    from deerflow_extension_api.skill_mutations import AssessmentRef
+    from nkyel_extension_api.skill_mutations import AssessmentRef
 
     proposal = await stage(host)
     await host.service.check(proposal_id=proposal.proposal_id)
@@ -282,7 +282,7 @@ async def test_recovery_classifies_disk_without_replaying(host, monkeypatch, dis
     def interrupted(*_):
         raise RuntimeError("simulated process exit after PREPARED")
 
-    monkeypatch.setattr("deerflow.skills.mutations.service.publish_prepared", interrupted)
+    monkeypatch.setattr("nkyel.skills.mutations.service.publish_prepared", interrupted)
     proposal = await stage(host)
     await host.service.check(proposal_id=proposal.proposal_id)
     response = await host.service.commit(proposal_id=proposal.proposal_id, idempotency_key="crash")
@@ -310,7 +310,7 @@ async def test_gc_keeps_live_recovery_blobs_and_terminal_metadata(host, monkeypa
     def interrupted(*_):
         raise RuntimeError("simulated exit")
 
-    monkeypatch.setattr("deerflow.skills.mutations.service.publish_prepared", interrupted)
+    monkeypatch.setattr("nkyel.skills.mutations.service.publish_prepared", interrupted)
     proposal = await stage(host)
     await host.service.check(proposal_id=proposal.proposal_id)
     response = await host.service.commit(proposal_id=proposal.proposal_id, idempotency_key="crash")
@@ -375,7 +375,7 @@ async def test_recovery_does_not_claim_applied_when_durability_barrier_fails(hos
     def interrupted(*_):
         raise RuntimeError("simulated exit")
 
-    monkeypatch.setattr("deerflow.skills.mutations.service.publish_prepared", interrupted)
+    monkeypatch.setattr("nkyel.skills.mutations.service.publish_prepared", interrupted)
     proposal = await stage(host)
     await host.service.check(proposal_id=proposal.proposal_id)
     response = await host.service.commit(proposal_id=proposal.proposal_id, idempotency_key="crash")
@@ -386,14 +386,14 @@ async def test_recovery_does_not_claim_applied_when_durability_barrier_fails(hos
     def failed_fsync(_):
         raise OSError("disk error")
 
-    monkeypatch.setattr("deerflow.skills.mutations.publication.os.fsync", failed_fsync)
+    monkeypatch.setattr("nkyel.skills.mutations.publication.os.fsync", failed_fsync)
     with pytest.raises(HostCapabilityError, match="NEEDS_REPAIR"):
         host.recovery.recover_operation(operation.operation_id)
     assert host.recovery.get_operation(operation.operation_id).publication == "PREPARED"
 
 
 def test_replace_collision_does_not_remove_existing_file(host):
-    from deerflow.skills.mutations.publication import replace_main
+    from nkyel.skills.mutations.publication import replace_main
 
     root = host.storage.get_custom_skill_dir("example")
     temporary = root.parent / ".host-mutation-collision"
@@ -419,7 +419,7 @@ async def test_managed_reader_lazily_recovers_accepted_publication(host, monkeyp
     def interrupted(*_):
         raise RuntimeError("simulated exit")
 
-    monkeypatch.setattr("deerflow.skills.mutations.service.publish_prepared", interrupted)
+    monkeypatch.setattr("nkyel.skills.mutations.service.publish_prepared", interrupted)
     proposal = await stage(host)
     await host.service.check(proposal_id=proposal.proposal_id)
     operation = await host.service.commit(proposal_id=proposal.proposal_id, idempotency_key="crash")
@@ -439,7 +439,7 @@ async def test_failed_legacy_write_after_publication_is_recoverable(host, monkey
     def no_space(*_args, **_kwargs):
         raise OSError("no space left on device")
 
-    monkeypatch.setattr("deerflow.skills.storage.user_scoped_skill_storage.tempfile.NamedTemporaryFile", no_space)
+    monkeypatch.setattr("nkyel.skills.storage.user_scoped_skill_storage.tempfile.NamedTemporaryFile", no_space)
     with pytest.raises(OSError, match="no space"):
         host.storage.write_custom_skill("example", "SKILL.md", NEW + "manual")
 
@@ -469,7 +469,7 @@ async def test_history_mirror_is_compact_and_deduplicated_by_operation(host):
 
 @pytest.mark.asyncio
 async def test_history_mirror_failure_does_not_change_publication(host, monkeypatch):
-    import deerflow.skills.mutations.history as history
+    import nkyel.skills.mutations.history as history
 
     def fail(*_):
         raise OSError("mirror unavailable")
@@ -581,7 +581,7 @@ async def test_recovery_quarantines_missing_or_corrupt_blobs(host, monkeypatch, 
     def interrupted(*_):
         raise RuntimeError("simulated exit")
 
-    monkeypatch.setattr("deerflow.skills.mutations.service.publish_prepared", interrupted)
+    monkeypatch.setattr("nkyel.skills.mutations.service.publish_prepared", interrupted)
     proposal = await stage(host)
     await host.service.check(proposal_id=proposal.proposal_id)
     operation = await host.service.commit(proposal_id=proposal.proposal_id, idempotency_key="crash")
@@ -598,7 +598,7 @@ async def test_recovery_quarantines_missing_or_corrupt_blobs(host, monkeypatch, 
 
 @pytest.mark.asyncio
 async def test_revert_rejects_blob_with_wrong_digest(host):
-    from deerflow.skills.mutations.codec import decode_package, encode_package
+    from nkyel.skills.mutations.codec import decode_package, encode_package
 
     _, operation = await publish(host)
     with host.sessions.begin() as session:
@@ -613,7 +613,7 @@ async def test_aborted_later_attempt_preserves_previous_revert_head(host, monkey
     _, first = await publish(host)
     proposal = await stage(host, key="stage-later", content=NEW + "later")
     await host.service.check(proposal_id=proposal.proposal_id)
-    import deerflow.skills.mutations.service as service_module
+    import nkyel.skills.mutations.service as service_module
 
     publish_prepared = service_module.publish_prepared
 
@@ -650,7 +650,7 @@ async def test_legacy_writer_immediately_supersedes_old_operation_view(host):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failure", [asyncio.CancelledError, TimeoutError])
 async def test_interrupted_check_clears_lease_without_caching_unavailable(host, failure):
-    from deerflow.persistence.skill_mutations.model import SkillScanAttemptRow
+    from nkyel.persistence.skill_mutations.model import SkillScanAttemptRow
 
     proposal = await stage(host)
     scan = host.scanner.scan
@@ -709,7 +709,7 @@ async def test_admin_recovery_reports_unresolved_barrier_and_allows_retry(host, 
     def interrupted(*_):
         raise RuntimeError("simulated process exit after PREPARED")
 
-    monkeypatch.setattr("deerflow.skills.mutations.service.publish_prepared", interrupted)
+    monkeypatch.setattr("nkyel.skills.mutations.service.publish_prepared", interrupted)
     proposal = await stage(host)
     await host.service.check(proposal_id=proposal.proposal_id)
     operation = await host.service.commit(proposal_id=proposal.proposal_id, idempotency_key="recover-retry")

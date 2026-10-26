@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.skills.frontmatter import split_skill_markdown
-from deerflow.skills.parser import parse_skill_file
-from deerflow.skills.validation import validate_skill_frontmatter_text
+from nkyel.skills.frontmatter import split_skill_markdown
+from nkyel.skills.parser import parse_skill_file
+from nkyel.skills.validation import validate_skill_frontmatter_text
 
 
 @pytest.mark.parametrize("closing", ["---suffix", "----", "--- body text"])

@@ -9,12 +9,12 @@ from types import SimpleNamespace
 import pytest
 from fastapi import FastAPI
 
-from deerflow.extensions import (
+from nkyel.extensions import (
     get_runtime_diagnostics,
     initialize_runtime_diagnostics,
     reset_runtime_diagnostics,
 )
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions.registry import ExtensionRegistry
 
 
 @pytest.fixture(autouse=True)
@@ -44,12 +44,12 @@ def _patch_runtime_resources(monkeypatch, events: list[str]) -> None:
     async def close_engine() -> None:
         events.append("engine_close")
 
-    monkeypatch.setattr("deerflow.runtime.make_stream_bridge", lambda _config: _resource(object()))
-    monkeypatch.setattr("deerflow.runtime.make_store", lambda _config: _resource(object()))
-    monkeypatch.setattr("deerflow.runtime.checkpointer.async_provider.make_checkpointer", lambda _config: _resource(object()))
-    monkeypatch.setattr("deerflow.persistence.engine.init_engine_from_config", init_engine)
-    monkeypatch.setattr("deerflow.persistence.engine.close_engine", close_engine)
-    monkeypatch.setattr("deerflow.persistence.engine.get_session_factory", lambda: None)
+    monkeypatch.setattr("nkyel.runtime.make_stream_bridge", lambda _config: _resource(object()))
+    monkeypatch.setattr("nkyel.runtime.make_store", lambda _config: _resource(object()))
+    monkeypatch.setattr("nkyel.runtime.checkpointer.async_provider.make_checkpointer", lambda _config: _resource(object()))
+    monkeypatch.setattr("nkyel.persistence.engine.init_engine_from_config", init_engine)
+    monkeypatch.setattr("nkyel.persistence.engine.close_engine", close_engine)
+    monkeypatch.setattr("nkyel.persistence.engine.get_session_factory", lambda: None)
 
 
 @pytest.mark.asyncio
@@ -79,8 +79,8 @@ async def test_host_capabilities_outlive_extension_stop_and_close_before_databas
         async def stop(self):
             events.append("service_stop")
 
-    monkeypatch.setattr("deerflow.extensions.host_capabilities.HostCapabilities", Host)
-    monkeypatch.setattr("deerflow.persistence.thread_meta.make_thread_store", lambda *_: (_ for _ in ()).throw(RuntimeError("later failure")))
+    monkeypatch.setattr("nkyel.extensions.host_capabilities.HostCapabilities", Host)
+    monkeypatch.setattr("nkyel.persistence.thread_meta.make_thread_store", lambda *_: (_ for _ in ()).throw(RuntimeError("later failure")))
     registry = ExtensionRegistry()
     with registry.attributed_to("example:install"):
         registry.service(Service())
@@ -105,9 +105,9 @@ async def test_runtime_owns_engine_cleanup_before_initialization(monkeypatch):
     async def close_engine() -> None:
         events.append("engine_close")
 
-    monkeypatch.setattr("deerflow.runtime.make_stream_bridge", lambda _config: _resource(object()))
-    monkeypatch.setattr("deerflow.persistence.engine.init_engine_from_config", fail_engine_init)
-    monkeypatch.setattr("deerflow.persistence.engine.close_engine", close_engine)
+    monkeypatch.setattr("nkyel.runtime.make_stream_bridge", lambda _config: _resource(object()))
+    monkeypatch.setattr("nkyel.persistence.engine.init_engine_from_config", fail_engine_init)
+    monkeypatch.setattr("nkyel.persistence.engine.close_engine", close_engine)
 
     with pytest.raises(RuntimeError, match="schema bootstrap failed"):
         async with langgraph_runtime(
@@ -121,7 +121,7 @@ async def test_runtime_owns_engine_cleanup_before_initialization(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_later_startup_failure_stops_same_snapshot_and_appends_diagnostics(monkeypatch):
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
     from app.gateway.deps import langgraph_runtime
 
     events: list[str] = []
@@ -156,7 +156,7 @@ async def test_later_startup_failure_stops_same_snapshot_and_appends_diagnostics
 
     _patch_runtime_resources(monkeypatch, events)
     monkeypatch.setattr(
-        "deerflow.persistence.thread_meta.make_thread_store",
+        "nkyel.persistence.thread_meta.make_thread_store",
         lambda _sf, _store: (_ for _ in ()).throw(RuntimeError("thread store failed")),
     )
 
@@ -273,7 +273,7 @@ async def test_host_cancellation_does_not_abandon_extension_service_shutdown(mon
 
     _patch_runtime_resources(monkeypatch, events)
     monkeypatch.setattr(
-        "deerflow.persistence.thread_meta.make_thread_store",
+        "nkyel.persistence.thread_meta.make_thread_store",
         lambda _sf, _store: (_ for _ in ()).throw(RuntimeError("later startup failure")),
     )
     app = FastAPI()

@@ -37,9 +37,7 @@ export function WorkspaceHeader({ className }: { className?: string }) {
                 "text-primary block pt-1 font-serif group-hover/workspace-header:hidden",
                 isMobile && "hidden",
               )}
-            >
-              DF
-            </div>
+            >NK</div>
             <WorkspaceSidebarTrigger
               className={cn(
                 "pl-2",
@@ -51,11 +49,11 @@ export function WorkspaceHeader({ className }: { className?: string }) {
           <div className="flex items-center justify-between gap-2">
             {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" ? (
               <Link href="/" className="text-primary ml-2 font-serif">
-                DeerFlow
+                nkyel
               </Link>
             ) : (
               <div className="text-primary ml-2 cursor-default font-serif">
-                DeerFlow
+                nkyel
               </div>
             )}
             <WorkspaceSidebarTrigger />

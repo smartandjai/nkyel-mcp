@@ -33,7 +33,7 @@ const models: Model[] = [
 describe("favorite model persistence", () => {
   test("encodes the user id in the versioned storage key", () => {
     expect(favoritesKey("person+a/b@example.com")).toBe(
-      "deerflow.model-favorites.v1:person%2Ba%2Fb%40example.com",
+      "nkyel.model-favorites.v1:person%2Ba%2Fb%40example.com",
     );
   });
 

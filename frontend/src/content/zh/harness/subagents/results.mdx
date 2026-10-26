@@ -7,7 +7,7 @@ import { Callout } from "nextra/components";
 
 # 结果与验收
 
-子 Agent 交回的报告是它的**自述**。DeerFlow 在自述之外叠加了三层可核对的证据：运行时的状态与截断原因、工具回执的引用核对、验收标准的确定性检查。本章解释每一层的含义，以及 Lead Agent 该怎么读它们。
+子 Agent 交回的报告是它的**自述**。nkyel 在自述之外叠加了三层可核对的证据：运行时的状态与截断原因、工具回执的引用核对、验收标准的确定性检查。本章解释每一层的含义，以及 Lead Agent 该怎么读它们。
 
 ## 终态
 
@@ -41,7 +41,7 @@ import { Callout } from "nextra/components";
 
 ### 失败的判定依据
 
-`LLMErrorHandlingMiddleware` 把供应商异常转换成一条带 `deerflow_error_fallback` 标记的助手消息，让子图能干净地结束。执行器只检查**最后一条**助手消息是否带该标记：带标记归为 `failed`，错误文本来自消息正文或 `error_detail`；不带标记的、哪怕看起来像错误的文字，仍然是 `completed` 的正常结果。只看最后一条是有意为之，因为子 Agent 与父线程共享 `thread_id`，历史里可能残留父 Agent 的旧标记。
+`LLMErrorHandlingMiddleware` 把供应商异常转换成一条带 `nkyel_error_fallback` 标记的助手消息，让子图能干净地结束。执行器只检查**最后一条**助手消息是否带该标记：带标记归为 `failed`，错误文本来自消息正文或 `error_detail`；不带标记的、哪怕看起来像错误的文字，仍然是 `completed` 的正常结果。只看最后一条是有意为之，因为子 Agent 与父线程共享 `thread_id`，历史里可能残留父 Agent 的旧标记。
 
 ## 报告契约与回执引用
 

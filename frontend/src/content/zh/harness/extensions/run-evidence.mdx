@@ -75,7 +75,7 @@ Gateway 依据请求的认证信息绑定读取器，绝不依据调用方发送
 
 ### 返回类型
 
-所有返回类型都是 `deerflow_extension_api` 中的冻结 dataclass。
+所有返回类型都是 `nkyel_extension_api` 中的冻结 dataclass。
 
 **`RunStatusView`**：一个运行的生命周期状态。
 
@@ -165,7 +165,7 @@ Gateway 依据请求的认证信息绑定读取器，绝不依据调用方发送
 
 这个服务轮询读取器，为每个已完成的运行记录它持久化了多少条各类型的事件。游标只保存在内存里，所以重启后会从头重新扫描。真正的导出器会把游标和它的产出存放在一起。
 
-```python filename="deerflow_extension_digest/__init__.py"
+```python filename="nkyel_extension_digest/__init__.py"
 """Count persisted event types for every finished run."""
 
 from __future__ import annotations
@@ -176,7 +176,7 @@ from collections import Counter
 from collections.abc import Mapping
 from typing import Any
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     ExtensionRegistry,
     ExtensionRuntimeDeps,
     InvalidRunEvidenceCursor,
@@ -262,7 +262,7 @@ def install(registry: ExtensionRegistry, config: Mapping[str, Any]) -> None:
 
 这个路由分页返回已登录用户最近发生变化的运行。它使用请求读取器，所以由宿主保证每个调用方只能看到自己的运行。它声明 `api="0.2.3"`，因为请求读取器辅助函数最早随该契约版本发布。
 
-```python filename="deerflow_extension_myruns/__init__.py"
+```python filename="nkyel_extension_myruns/__init__.py"
 """List the caller's own recently changed runs."""
 
 from __future__ import annotations
@@ -270,7 +270,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     ExtensionRegistry,
     InvalidRunEvidenceCursor,
     RunEvidenceReader,

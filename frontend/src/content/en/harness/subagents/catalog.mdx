@@ -86,7 +86,7 @@ Administrators add reusable workers under **Settings → Subagents**. Each defin
 
 Built-in and `config.yaml` definitions appear in the same catalog as read-only entries.
 
-Storage follows the Custom Agent backend: `agent_storage.backend: file` writes one atomic JSON file per definition under `DEER_FLOW_HOME/managed-subagents/`; `agent_storage.backend: db` stores them in the shared application database for multi-instance deployments. These definitions are deployment-wide, not user-scoped. The API lives at `/api/subagents`: any user can list the catalog (system prompts are shown to administrators only), while create, update, and delete require an administrator. The runtime caches definitions for about one second.
+Storage follows the Custom Agent backend: `agent_storage.backend: file` writes one atomic JSON file per definition under `NKYEL_HOME/managed-subagents/`; `agent_storage.backend: db` stores them in the shared application database for multi-instance deployments. These definitions are deployment-wide, not user-scoped. The API lives at `/api/subagents`: any user can list the catalog (system prompts are shown to administrators only), while create, update, and delete require an administrator. The runtime caches definitions for about one second.
 
 ## Custom Agent delegation scope
 
@@ -102,7 +102,7 @@ The allowlist is snapshotted into run metadata when a run starts and enforced ag
 
 ## External ACP agents
 
-Besides built-in and custom subagents, DeerFlow can delegate to external agents that run as separate processes over the **Agent Client Protocol (ACP)**, including third-party CLIs wrapped with an ACP adapter.
+Besides built-in and custom subagents, nkyel can delegate to external agents that run as separate processes over the **Agent Client Protocol (ACP)**, including third-party CLIs wrapped with an ACP adapter.
 
 ```yaml
 acp_agents:

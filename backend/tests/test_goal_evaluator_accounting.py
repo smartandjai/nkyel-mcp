@@ -15,15 +15,15 @@ from langgraph.graph import END, START, StateGraph
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.gateway.routers.console import _ModelPricing, _run_cost
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.persistence.base import Base
-from deerflow.persistence.run.sql import RunRepository
-from deerflow.runtime import goal
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.persistence.base import Base
+from nkyel.persistence.run.sql import RunRepository
+from nkyel.runtime import goal
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 class ScriptedModel(BaseChatModel):
@@ -149,7 +149,7 @@ async def test_evaluator_external_usage_is_json_safe_and_source_deduplicated():
 
 @pytest.mark.asyncio
 async def test_paid_evaluator_usage_survives_post_response_observer_failure(monkeypatch):
-    from deerflow.extensions import notify
+    from nkyel.extensions import notify
 
     model = ScriptedModel(answer='{"satisfied": true}', identifier="critic-model", reported_usage={"input_tokens": 20, "output_tokens": 5, "total_tokens": 25})
     journal = RunJournal("run", "thread", MemoryRunEventStore())

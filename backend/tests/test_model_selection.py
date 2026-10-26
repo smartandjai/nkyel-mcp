@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.models.selection import resolve_model_control
+from nkyel.models.selection import resolve_model_control
 
 
 def model(name, label, aliases=()):
@@ -112,11 +112,11 @@ def test_catalog_and_source_text_remain_unchanged():
 
 @pytest.mark.parametrize("fail_closed", [True, False])
 def test_explicit_model_denial_never_falls_back(monkeypatch, fail_closed):
-    from deerflow.authz.provider import AuthzDecision
-    from deerflow.models.selection import authorize_selected_model
+    from nkyel.authz.provider import AuthzDecision
+    from nkyel.models.selection import authorize_selected_model
 
     provider = SimpleNamespace(authorize=lambda request: AuthzDecision(allow=False))
-    monkeypatch.setattr("deerflow.authz.runtime.resolve_authorization_provider", lambda _: provider)
+    monkeypatch.setattr("nkyel.authz.runtime.resolve_authorization_provider", lambda _: provider)
     config = SimpleNamespace(get_model_config=lambda _: DS, authorization=SimpleNamespace(enabled=True, fail_closed=fail_closed, default_role="user"))
     with pytest.raises(ValueError, match="not available"):
         authorize_selected_model(DS.name, context={"user_id": "alice"}, app_config=config)
@@ -124,12 +124,12 @@ def test_explicit_model_denial_never_falls_back(monkeypatch, fail_closed):
 
 @pytest.mark.parametrize("fail_closed", [True, False])
 def test_provider_failure_retains_configured_policy(monkeypatch, fail_closed):
-    from deerflow.models.selection import authorize_selected_model
+    from nkyel.models.selection import authorize_selected_model
 
     def unavailable(_):
         raise RuntimeError("offline")
 
-    monkeypatch.setattr("deerflow.authz.runtime.resolve_authorization_provider", unavailable)
+    monkeypatch.setattr("nkyel.authz.runtime.resolve_authorization_provider", unavailable)
     config = SimpleNamespace(get_model_config=lambda _: DS, authorization=SimpleNamespace(enabled=True, fail_closed=fail_closed, default_role="user"))
     if fail_closed:
         with pytest.raises(ValueError, match="authorization is unavailable"):
@@ -139,8 +139,8 @@ def test_provider_failure_retains_configured_policy(monkeypatch, fail_closed):
 
 
 def test_selected_model_is_in_the_task_schema_without_mutating_the_shared_tool():
-    from deerflow.models.selection import bind_selected_task_model
-    from deerflow.tools.builtins.task_tool import task_tool
+    from nkyel.models.selection import bind_selected_task_model
+    from nkyel.tools.builtins.task_tool import task_tool
 
     original = task_tool.tool_call_schema.model_json_schema()
     selected = bind_selected_task_model([task_tool], "child-B")[0]

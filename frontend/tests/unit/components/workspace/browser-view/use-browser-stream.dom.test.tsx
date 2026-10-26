@@ -56,7 +56,7 @@ afterEach(() => {
 });
 
 describe("useBrowserStream", () => {
-  // Regression coverage for bytedance/deer-flow#7296.
+  // Regression coverage for bytedance/nkyel#7296.
   test("times out a silent handshake and reconnects after the existing backoff", () => {
     rs.useFakeTimers();
     rs.stubGlobal("WebSocket", FakeWebSocket as unknown as typeof WebSocket);

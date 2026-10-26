@@ -19,8 +19,8 @@ patching ``get_memory_config``.
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import (
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import (
     MemoryUpdater,
     _build_staleness_section,
     _effective_fact_staleness_age,

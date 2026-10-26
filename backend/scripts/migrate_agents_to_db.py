@@ -32,13 +32,13 @@ import asyncio
 import logging
 import sys
 
-from deerflow.config.app_config import get_app_config
-from deerflow.persistence.agents.base import AgentExistsError
-from deerflow.persistence.agents.file import FileAgentStore
-from deerflow.persistence.agents.sql import SqlAgentStore
-from deerflow.persistence.managed_subagents.base import ManagedSubagentExistsError
-from deerflow.persistence.managed_subagents.file import FileManagedSubagentStore
-from deerflow.persistence.managed_subagents.sql import SqlManagedSubagentStore
+from nkyel.config.app_config import get_app_config
+from nkyel.persistence.agents.base import AgentExistsError
+from nkyel.persistence.agents.file import FileAgentStore
+from nkyel.persistence.agents.sql import SqlAgentStore
+from nkyel.persistence.managed_subagents.base import ManagedSubagentExistsError
+from nkyel.persistence.managed_subagents.file import FileManagedSubagentStore
+from nkyel.persistence.managed_subagents.sql import SqlManagedSubagentStore
 
 logger = logging.getLogger("migrate_agents_to_db")
 
@@ -81,7 +81,7 @@ def main() -> int:
 
     # Ensure the schema exists (creates both definition tables via the same
     # Alembic bootstrap the gateway runs) before the sync stores write rows.
-    from deerflow.persistence.engine import init_engine_from_config
+    from nkyel.persistence.engine import init_engine_from_config
 
     asyncio.run(init_engine_from_config(config.database))
 

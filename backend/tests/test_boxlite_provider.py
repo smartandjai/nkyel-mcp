@@ -20,10 +20,10 @@ import types
 import pytest
 from pydantic import ValidationError
 
-from deerflow.community.boxlite.box import BoxliteBox
-from deerflow.community.boxlite.provider import BoxliteProvider, _import_simplebox
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.trace_context import get_current_trace_id, request_trace_context
+from nkyel.community.boxlite.box import BoxliteBox
+from nkyel.community.boxlite.provider import BoxliteProvider, _import_simplebox
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.trace_context import get_current_trace_id, request_trace_context
 
 _LEGACY_COLLIDING_IDENTITIES = (
     ("user-9721", "thread-9721"),
@@ -101,24 +101,24 @@ def _no_existing_boxlite_boxes(monkeypatch: pytest.MonkeyPatch) -> None:
         def default():
             return _EmptyRuntime()
 
-    monkeypatch.setattr("deerflow.community.boxlite.provider._import_sync_boxlite_runtime", lambda: _EmptyBoxlite)
+    monkeypatch.setattr("nkyel.community.boxlite.provider._import_sync_boxlite_runtime", lambda: _EmptyBoxlite)
 
 
 def test_import_simplebox_missing_raises_actionable(monkeypatch: pytest.MonkeyPatch) -> None:
     _no_boxlite(monkeypatch)
-    with pytest.raises(ImportError, match=r"deerflow-harness\[boxlite\]"):
+    with pytest.raises(ImportError, match=r"nkyel-harness\[boxlite\]"):
         _import_simplebox()
 
 
 def test_acquire_without_boxlite_raises_and_shuts_down_cleanly(monkeypatch: pytest.MonkeyPatch) -> None:
     # Stub config so the provider constructs without a config.yaml on disk.
     stub = types.SimpleNamespace(sandbox=types.SimpleNamespace())
-    monkeypatch.setattr("deerflow.community.boxlite.provider.get_app_config", lambda: stub)
+    monkeypatch.setattr("nkyel.community.boxlite.provider.get_app_config", lambda: stub)
     _no_boxlite(monkeypatch)
 
     provider = BoxliteProvider()
     try:
-        with pytest.raises(ImportError, match=r"deerflow-harness\[boxlite\]"):
+        with pytest.raises(ImportError, match=r"nkyel-harness\[boxlite\]"):
             provider.acquire("thread-1", user_id="u")
     finally:
         provider.shutdown()  # must not raise even though no box was ever created
@@ -189,7 +189,7 @@ def test_execute_command_appends_exit_marker_when_failure_has_output(monkeypatch
 
 def test_execute_command_bridge_timeout_appends_exit_marker() -> None:
     """The real loop-bridge deadline produces exit code 124 (#6847)."""
-    from deerflow.community.boxlite.provider import _EventLoopThread
+    from nkyel.community.boxlite.provider import _EventLoopThread
 
     started, cancelled = threading.Event(), threading.Event()
     terminal_failures = []
@@ -349,7 +349,7 @@ def test_execute_command_closed_box_returns_without_error_log(caplog) -> None:
     box = BoxliteBox("box-id", box=_FakeBox(name="box-id"), run=_fake_run)
     box.close()
 
-    with caplog.at_level(logging.ERROR, logger="deerflow.community.boxlite.box"):
+    with caplog.at_level(logging.ERROR, logger="nkyel.community.boxlite.box"):
         output = box.execute_command("echo hi")
 
     assert output == "Error: sandbox has been closed"
@@ -359,7 +359,7 @@ def test_execute_command_closed_box_returns_without_error_log(caplog) -> None:
 def test_sandbox_id_deterministic(monkeypatch):
     """_sandbox_id produces the same id for the same inputs."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     provider = BoxliteProvider()
@@ -372,7 +372,7 @@ def test_sandbox_id_deterministic(monkeypatch):
 def test_sandbox_id_different_users(monkeypatch):
     """Different users produce different ids for the same thread."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     provider = BoxliteProvider()
@@ -384,7 +384,7 @@ def test_sandbox_id_different_users(monkeypatch):
 def test_sandbox_id_different_threads(monkeypatch):
     """Different threads produce different ids for the same user."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     provider = BoxliteProvider()
@@ -396,7 +396,7 @@ def test_sandbox_id_different_threads(monkeypatch):
 def test_idle_timeout_zero_is_preserved_and_disables_reaper(monkeypatch):
     """idle_timeout=0 is a valid config value and disables the reaper thread."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"idle_timeout": 0}),
     )
 
@@ -408,9 +408,9 @@ def test_idle_timeout_zero_is_preserved_and_disables_reaper(monkeypatch):
 
 
 def test_create_box_passes_prefixed_sandbox_id_as_name(monkeypatch):
-    """_create_box gives BoxLite a DeerFlow-owned name prefix."""
+    """_create_box gives BoxLite a nkyel-owned name prefix."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     # Inject fake SimpleBox and fake loop runner
@@ -422,7 +422,7 @@ def test_create_box_passes_prefixed_sandbox_id_as_name(monkeypatch):
             created_boxes.append(kwargs)
 
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _RecordingBox,
     )
 
@@ -432,14 +432,14 @@ def test_create_box_passes_prefixed_sandbox_id_as_name(monkeypatch):
 
     box = provider._create_box("test-sandbox-id")
     assert len(created_boxes) == 1
-    assert created_boxes[0]["name"] == "deer-flow-boxlite-test-sandbox-id"
+    assert created_boxes[0]["name"] == "nkyel-boxlite-test-sandbox-id"
     assert box.id == "test-sandbox-id"
 
 
 def test_startup_reconciliation_adopts_prefixed_existing_boxes(monkeypatch):
-    """Existing DeerFlow-named BoxLite boxes are adopted into the warm pool."""
+    """Existing nkyel-named BoxLite boxes are adopted into the warm pool."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     stopped: list[str] = []
@@ -457,13 +457,13 @@ def test_startup_reconciliation_adopts_prefixed_existing_boxes(monkeypatch):
 
         def list_info(self):
             return [
-                types.SimpleNamespace(name="deer-flow-boxlite-adopted"),
+                types.SimpleNamespace(name="nkyel-boxlite-adopted"),
                 types.SimpleNamespace(name="unrelated-box"),
                 types.SimpleNamespace(name=None),
             ]
 
         def get(self, name):
-            if name == "deer-flow-boxlite-adopted":
+            if name == "nkyel-boxlite-adopted":
                 return _NativeBox()
             raise AssertionError(f"unexpected box lookup: {name}")
 
@@ -472,7 +472,7 @@ def test_startup_reconciliation_adopts_prefixed_existing_boxes(monkeypatch):
         def default():
             return _Runtime()
 
-    monkeypatch.setattr("deerflow.community.boxlite.provider._import_sync_boxlite_runtime", lambda: _Boxlite)
+    monkeypatch.setattr("nkyel.community.boxlite.provider._import_sync_boxlite_runtime", lambda: _Boxlite)
 
     provider = BoxliteProvider()
 
@@ -487,11 +487,11 @@ def test_startup_reconciliation_adopts_prefixed_existing_boxes(monkeypatch):
 def test_release_parks_in_warm_pool(monkeypatch):
     """After release, box is in warm pool, not destroyed."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -519,11 +519,11 @@ def test_release_parks_in_warm_pool(monkeypatch):
 def test_acquire_reclaims_from_warm_pool(monkeypatch):
     """acquire reclaims a warm pool box for the same thread."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -551,11 +551,11 @@ async def test_acquire_async_propagates_request_trace_context(monkeypatch):
     ``request_trace_context()`` as unset and logs ``trace_id=-``.
     """
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -597,7 +597,7 @@ def test_sandbox_config_rejects_non_finite_health_check_skip_seconds(value):
     """
     with pytest.raises(ValidationError):
         SandboxConfig(
-            use="deerflow.community.boxlite.provider:BoxliteProvider",
+            use="nkyel.community.boxlite.provider:BoxliteProvider",
             health_check_skip_seconds=value,
         )
 
@@ -605,11 +605,11 @@ def test_sandbox_config_rejects_non_finite_health_check_skip_seconds(value):
 def test_explicit_recent_reclaim_skip_avoids_health_check(monkeypatch):
     """A configured skip window can reclaim recently released boxes without a ping."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"health_check_skip_seconds": 5}),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -635,11 +635,11 @@ def test_explicit_recent_reclaim_skip_avoids_health_check(monkeypatch):
 
 def test_recent_reclaim_validates_by_default(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -670,11 +670,11 @@ def test_recent_reclaim_validates_by_default(monkeypatch):
 
 def test_default_recent_reclaim_drops_dead_warm_box(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -703,11 +703,11 @@ def test_default_recent_reclaim_drops_dead_warm_box(monkeypatch):
 
 def test_dead_active_box_invalidation_closes_adapter(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"health_check_skip_seconds": 5}),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -735,14 +735,14 @@ def test_dead_active_box_invalidation_closes_adapter(monkeypatch):
 def test_adopted_warm_pool_box_still_health_checks(monkeypatch):
     """Startup-adopted boxes must still pass a health check before reclaim."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"health_check_skip_seconds": 5}),
     )
 
     provider = BoxliteProvider()
     adopted = BoxliteBox(
         "adopted",
-        _FakeBox(name="deer-flow-boxlite-adopted"),
+        _FakeBox(name="nkyel-boxlite-adopted"),
         _fake_run,
         default_env={},
     )
@@ -771,11 +771,11 @@ def test_adopted_warm_pool_box_still_health_checks(monkeypatch):
 
 def test_dead_active_box_is_invalidated_after_command_failure(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"health_check_skip_seconds": 5}),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -805,11 +805,11 @@ def test_dead_active_box_is_invalidated_after_command_failure(monkeypatch):
 
 def test_stale_closed_adapter_cannot_invalidate_recreated_box(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"health_check_skip_seconds": 5}),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -846,11 +846,11 @@ def test_stale_closed_adapter_cannot_invalidate_recreated_box(monkeypatch):
 def test_acquire_different_threads_dont_reclaim_each_other(monkeypatch):
     """Thread A's box can't be reclaimed by thread B."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -870,11 +870,11 @@ def test_acquire_different_threads_dont_reclaim_each_other(monkeypatch):
 def test_warm_pool_reclaim_failed_health_check_creates_new(monkeypatch):
     """Dead warm pool box is evicted and a new one created."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -903,11 +903,11 @@ def test_warm_pool_reclaim_failed_health_check_creates_new(monkeypatch):
 def test_concurrent_same_thread_acquire_creates_one_box(monkeypatch):
     """Concurrent acquires for one thread serialize before creating a named box."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -947,11 +947,11 @@ def test_concurrent_same_thread_acquire_creates_one_box(monkeypatch):
 def test_release_during_shutdown_closes_instead_of_reparking(monkeypatch):
     """release() must not park a VM after shutdown has begun."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -974,11 +974,11 @@ def test_release_during_shutdown_closes_instead_of_reparking(monkeypatch):
 def test_reset_parks_running_resources_for_later_cleanup(monkeypatch):
     """reset() stops thread reuse but leaves VMs tracked for cleanup."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -1020,11 +1020,11 @@ def test_reset_parks_running_resources_for_later_cleanup(monkeypatch):
 def test_reset_parked_resources_are_reaped_after_idle_timeout(monkeypatch):
     """VMs parked by reset remain visible to warm-pool idle cleanup."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -1055,11 +1055,11 @@ def test_reset_parked_resources_are_reaped_after_idle_timeout(monkeypatch):
 def test_idle_reaper_destroys_expired_warm_boxes(monkeypatch):
     """Idle reaper daemon destroys warm pool boxes that exceed the idle timeout."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -1094,11 +1094,11 @@ def test_idle_reaper_destroys_expired_warm_boxes(monkeypatch):
 def test_replica_enforcement_evicts_oldest_warm(monkeypatch):
     """When warm pool exceeds replica limit, the oldest box is evicted."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"replicas": 2}),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -1142,11 +1142,11 @@ def test_replica_enforcement_evicts_oldest_warm(monkeypatch):
 def test_replica_enforcement_counts_active_and_warm(monkeypatch):
     """replicas caps active + warm boxes, not warm boxes alone."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"replicas": 2}),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -1172,8 +1172,8 @@ def test_replica_enforcement_counts_active_and_warm(monkeypatch):
 
 @pytest.mark.parametrize("thread_id", [None, "thread-late"])
 def test_shutdown_rejects_and_closes_box_created_by_inflight_acquire(monkeypatch, thread_id):
-    monkeypatch.setattr("deerflow.community.boxlite.provider.get_app_config", lambda: _stub_config({"idle_timeout": 0}))
-    monkeypatch.setattr("deerflow.community.boxlite.provider._import_simplebox", lambda: _FakeBox)
+    monkeypatch.setattr("nkyel.community.boxlite.provider.get_app_config", lambda: _stub_config({"idle_timeout": 0}))
+    monkeypatch.setattr("nkyel.community.boxlite.provider._import_simplebox", lambda: _FakeBox)
     provider = BoxliteProvider()
     created = threading.Event()
     resume_create = threading.Event()
@@ -1253,8 +1253,8 @@ def test_shutdown_rejects_and_closes_box_created_by_inflight_acquire(monkeypatch
 
 
 def test_shutdown_acquire_drain_timeout_keeps_resources_owned_for_retry(monkeypatch):
-    monkeypatch.setattr("deerflow.community.boxlite.provider.get_app_config", lambda: _stub_config({"idle_timeout": 0}))
-    monkeypatch.setattr("deerflow.community.boxlite.provider._import_simplebox", lambda: _FakeBox)
+    monkeypatch.setattr("nkyel.community.boxlite.provider.get_app_config", lambda: _stub_config({"idle_timeout": 0}))
+    monkeypatch.setattr("nkyel.community.boxlite.provider._import_simplebox", lambda: _FakeBox)
     provider = BoxliteProvider()
     existing_id = provider.acquire("thread-existing", user_id="u1")
     existing_box = provider.get(existing_id)
@@ -1308,10 +1308,10 @@ def test_shutdown_acquire_drain_timeout_keeps_resources_owned_for_retry(monkeypa
 
 
 def test_shutdown_retries_only_private_loop_cleanup_after_join_timeout(monkeypatch):
-    from deerflow.community.boxlite.provider import _BoxliteLoopShutdownTimeout
+    from nkyel.community.boxlite.provider import _BoxliteLoopShutdownTimeout
 
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config({"idle_timeout": 0}),
     )
 
@@ -1352,11 +1352,11 @@ def test_shutdown_retries_only_private_loop_cleanup_after_join_timeout(monkeypat
 def test_shutdown_stops_idle_reaper_and_destroys_all_boxes(monkeypatch):
     """shutdown stops the idle reaper thread and destroys all active + warm boxes."""
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
 
@@ -1412,11 +1412,11 @@ def test_wider_id_separates_known_legacy_collision():
 
 def test_forced_collision_never_overwrites_active_tenant(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider._import_simplebox",
+        "nkyel.community.boxlite.provider._import_simplebox",
         lambda: _FakeBox,
     )
     monkeypatch.setattr(
@@ -1447,7 +1447,7 @@ def test_forced_collision_never_overwrites_active_tenant(monkeypatch):
 
 def test_late_same_tenant_collision_reuses_active_box(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
 
@@ -1456,13 +1456,13 @@ def test_late_same_tenant_collision_reuses_active_box(monkeypatch):
     key = ("user-a", "thread-a")
     active = BoxliteBox(
         sandbox_id,
-        _FakeBox(name=f"deer-flow-boxlite-{sandbox_id}"),
+        _FakeBox(name=f"nkyel-boxlite-{sandbox_id}"),
         _fake_run,
         default_env={},
     )
     duplicate = BoxliteBox(
         sandbox_id,
-        _FakeBox(name=f"deer-flow-boxlite-{sandbox_id}"),
+        _FakeBox(name=f"nkyel-boxlite-{sandbox_id}"),
         _fake_run,
         default_env={},
     )
@@ -1490,20 +1490,20 @@ def test_late_same_tenant_collision_reuses_active_box(monkeypatch):
 
 def test_failed_health_check_does_not_remove_swapped_warm_entry(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.community.boxlite.provider.get_app_config",
+        "nkyel.community.boxlite.provider.get_app_config",
         lambda: _stub_config(),
     )
 
     provider = BoxliteProvider()
     stale = BoxliteBox(
         "shared-id",
-        _FakeBox(name="deer-flow-boxlite-shared-id"),
+        _FakeBox(name="nkyel-boxlite-shared-id"),
         _fake_run,
         default_env={},
     )
     replacement = BoxliteBox(
         "shared-id",
-        _FakeBox(name="deer-flow-boxlite-shared-id"),
+        _FakeBox(name="nkyel-boxlite-shared-id"),
         _fake_run,
         default_env={},
     )
@@ -1536,7 +1536,7 @@ def test_failed_health_check_does_not_remove_swapped_warm_entry(monkeypatch):
 
 
 def test_sandbox_id_matches_shared_identity():
-    from deerflow.sandbox.identity import derive_sandbox_scope_token
+    from nkyel.sandbox.identity import derive_sandbox_scope_token
 
     assert BoxliteProvider._sandbox_id("t-1", "u-1") == derive_sandbox_scope_token(user_id="u-1", thread_id="t-1")
 
@@ -1548,7 +1548,7 @@ def test_sandbox_id_none_user_quirk_pinned():
     two disagree). NOT fixed here — unifying the resolution is a separate
     behavior-changing decision with its own follow-up issue.
     """
-    from deerflow.sandbox.identity import derive_sandbox_scope_token
+    from nkyel.sandbox.identity import derive_sandbox_scope_token
 
     assert BoxliteProvider._sandbox_id("t-1", None) == derive_sandbox_scope_token(user_id="None", thread_id="t-1")
 
@@ -1752,7 +1752,7 @@ def test_grep_single_file_path_with_matching_glob(tmp_path, monkeypatch) -> None
 
 
 def test_event_loop_thread_close_rejects_live_thread_after_timeout() -> None:
-    from deerflow.community.boxlite.provider import (
+    from nkyel.community.boxlite.provider import (
         _BoxliteLoopShutdownTimeout,
         _EventLoopThread,
     )
@@ -1815,7 +1815,7 @@ def test_event_loop_thread_close_rejects_live_thread_after_timeout() -> None:
 def test_event_loop_thread_timeout_cancels_submitted_coroutine() -> None:
     from concurrent.futures import TimeoutError as FutureTimeoutError
 
-    from deerflow.community.boxlite.provider import _EventLoopThread
+    from nkyel.community.boxlite.provider import _EventLoopThread
 
     loop_thread = _EventLoopThread()
     started = threading.Event()

@@ -4,7 +4,7 @@
 missing, except ``get_store`` which returns ``None``.
 
 ``AppConfig`` is intentionally *not* cached on ``app.state``. Routers and the
-run path resolve it through :func:`deerflow.config.app_config.get_app_config`,
+run path resolve it through :func:`nkyel.config.app_config.get_app_config`,
 which performs mtime-based hot reload, so edits to ``config.yaml`` take
 effect on the next request without a process restart. The engines created in
 :func:`langgraph_runtime` (stream bridge, persistence, checkpointer, store,
@@ -29,16 +29,16 @@ from fastapi import FastAPI, HTTPException, Request
 from langgraph.types import Checkpointer
 
 from app.gateway.auth.errors import AuthErrorCode
-from deerflow.community.browser_automation.session import browser_multi_worker_error
-from deerflow.config.app_config import AppConfig, get_app_config
-from deerflow.config.channel_leader_lease_config import CHANNEL_LEADER_LEASE_FIELD, ChannelLeaderLeaseConfig, ChannelLeaderLeaseConfigError, channel_leader_lease_from_app_config
-from deerflow.config.credentials_key import CREDENTIALS_KEY_ENV_VAR, CREDENTIALS_KEY_FILENAME, GENERATE_KEY_COMMAND, CredentialsKeyError, parse_credentials_keys
-from deerflow.config.deployment_config import multi_instance_declaration
-from deerflow.persistence.feedback import FeedbackRepository
-from deerflow.runtime import ORPHAN_RECOVERY_STOP_REASON, STARTUP_ORPHAN_RECOVERY_ERROR, RunContext, RunManager, StreamBridge
-from deerflow.runtime.events.store.base import RunEventStore
-from deerflow.runtime.runs.store.base import RunStore
-from deerflow.utils.file_io import await_drained
+from nkyel.community.browser_automation.session import browser_multi_worker_error
+from nkyel.config.app_config import AppConfig, get_app_config
+from nkyel.config.channel_leader_lease_config import CHANNEL_LEADER_LEASE_FIELD, ChannelLeaderLeaseConfig, ChannelLeaderLeaseConfigError, channel_leader_lease_from_app_config
+from nkyel.config.credentials_key import CREDENTIALS_KEY_ENV_VAR, CREDENTIALS_KEY_FILENAME, GENERATE_KEY_COMMAND, CredentialsKeyError, parse_credentials_keys
+from nkyel.config.deployment_config import multi_instance_declaration
+from nkyel.persistence.feedback import FeedbackRepository
+from nkyel.runtime import ORPHAN_RECOVERY_STOP_REASON, STARTUP_ORPHAN_RECOVERY_ERROR, RunContext, RunManager, StreamBridge
+from nkyel.runtime.events.store.base import RunEventStore
+from nkyel.runtime.runs.store.base import RunStore
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ def _multi_process_signal(config: AppConfig) -> tuple[str, str] | None:
     """Return ``(reason, rollback)`` when this process must assume peer Gateway processes.
 
     ``reason`` names the knob that established the topology (``GATEWAY_WORKERS=2``,
-    ``DEER_FLOW_MULTI_INSTANCE=1`` or ``deployment.multi_instance=true``) and
+    ``NKYEL_MULTI_INSTANCE=1`` or ``deployment.multi_instance=true``) and
     ``rollback`` is the single-instance remediation a refusal message offers.
     When the worker count and a declaration are both active, ``rollback``
     withdraws both: resetting only the worker count would bounce the operator
@@ -123,13 +123,13 @@ def _stream_bridge_is_cross_process(config: AppConfig) -> bool:
 
     Mirrors ``runtime/stream_bridge/async_provider.py::_resolve_config``: the
     config.yaml section wins, and an omitted section falls back to the
-    ``DEER_FLOW_STREAM_BRIDGE_REDIS_URL`` variable the Docker and Helm
+    ``NKYEL_STREAM_BRIDGE_REDIS_URL`` variable the Docker and Helm
     deployments inject.
     """
     bridge = getattr(config, "stream_bridge", None)
     if bridge is not None:
         return getattr(bridge, "type", None) == "redis"
-    return bool((os.environ.get("DEER_FLOW_STREAM_BRIDGE_REDIS_URL") or "").strip())
+    return bool((os.environ.get("NKYEL_STREAM_BRIDGE_REDIS_URL") or "").strip())
 
 
 def _enforce_postgres_for_multi_worker(config: AppConfig) -> None:
@@ -137,7 +137,7 @@ def _enforce_postgres_for_multi_worker(config: AppConfig) -> None:
 
     A deployment counts as multi-process when ``GATEWAY_WORKERS`` /
     ``WEB_CONCURRENCY`` is above 1, or when the operator declares peers with
-    ``deployment.multi_instance: true`` / ``DEER_FLOW_MULTI_INSTANCE=1`` (the
+    ``deployment.multi_instance: true`` / ``NKYEL_MULTI_INSTANCE=1`` (the
     worker count cannot see other Pods, and a Pod that starts next to a peer
     without these prerequisites writes the peer's live runs off as orphans).
     Multi-instance scheduler recovery also needs the durable run ownership
@@ -239,7 +239,7 @@ def _enforce_postgres_for_multi_worker(config: AppConfig) -> None:
 
     if not _stream_bridge_is_cross_process(config):
         raise SystemExit(
-            f"{reason} requires stream_bridge.type='redis' (or DEER_FLOW_STREAM_BRIDGE_REDIS_URL), "
+            f"{reason} requires stream_bridge.type='redis' (or NKYEL_STREAM_BRIDGE_REDIS_URL), "
             "but the stream bridge is the process-local memory bridge: SSE streams, reconnects and /wait "
             f"only work on the instance that owns the run. {rollback} or configure the redis stream bridge."
         )
@@ -293,7 +293,7 @@ def _enabled_channel_transport_providers(config: AppConfig) -> list[str]:
 
 
 def credentials_key_consumers(config: AppConfig) -> list[str]:
-    """Return the enabled features that store data under ``DEER_FLOW_CREDENTIALS_KEY``.
+    """Return the enabled features that store data under ``NKYEL_CREDENTIALS_KEY``.
 
     Each entry is the setting that enabled the feature, as refusal text spells
     it. The Gateway loads the key at startup only when this list is non-empty,
@@ -310,7 +310,7 @@ def credentials_key_consumers(config: AppConfig) -> list[str]:
         consumers.append("channel_connections.enabled=true")
     extensions = getattr(config, "extensions", None)
     if extensions is not None:
-        # deerflow.mcp.oauth_store keeps rotating refresh tokens in the database.
+        # nkyel.mcp.oauth_store keeps rotating refresh tokens in the database.
         for name, server in extensions.get_enabled_mcp_servers().items():
             oauth = server.oauth
             if oauth is not None and oauth.enabled and oauth.grant_type == "refresh_token":
@@ -321,7 +321,7 @@ def credentials_key_consumers(config: AppConfig) -> list[str]:
 def _enforce_credentials_key(config: AppConfig) -> None:
     """Refuse a malformed credentials key, or a missing one where instances cannot share the generated file.
 
-    A set ``DEER_FLOW_CREDENTIALS_KEY`` must parse (any topology): starting with
+    A set ``NKYEL_CREDENTIALS_KEY`` must parse (any topology): starting with
     a key that cannot decrypt anything would silently hide stored credentials.
     Without it each instance generates ``{base_dir}/.credentials_key``. Workers
     of one process tree share that file and converge on one key through its
@@ -402,7 +402,7 @@ def _validate_login_throttle_storage(config: AppConfig) -> None:
     local = getattr(getattr(config, "auth", None), "local", None)
     if local is None:
         return
-    from deerflow.config.auth_config import LocalAuthConfig, resolve_login_throttle_storage
+    from nkyel.config.auth_config import LocalAuthConfig, resolve_login_throttle_storage
 
     selector = getattr(local, "throttle_storage", LocalAuthConfig.model_fields["throttle_storage"].default)
     db_backend = getattr(getattr(config, "database", None), "backend", None)
@@ -441,8 +441,8 @@ def _validate_memory_retrieval_index(config: AppConfig) -> None:
     backend_config = dict(getattr(memory, "backend_config", None) or {})
     if backend_config.get("retrieval_adapter", "fts5") != "fts5":
         return  # disabled, or a custom RetrievalPort factory that owns its own storage
-    from deerflow.agents.memory.backends.deermem.deermem.core.paths import retrieval_index_directory
-    from deerflow.agents.memory.manager import resolve_deermem_storage_path
+    from nkyel.agents.memory.backends.deermem.deermem.core.paths import retrieval_index_directory
+    from nkyel.agents.memory.manager import resolve_deermem_storage_path
 
     storage_path = resolve_deermem_storage_path(backend_config)
     index_dir = retrieval_index_directory(storage_path, backend_config.get("retrieval_index_path"))
@@ -452,7 +452,7 @@ def _validate_memory_retrieval_index(config: AppConfig) -> None:
         "%s but the DeerMem retrieval index at %s is inside memory storage_path %s: every Gateway instance opens the same "
         "SQLite WAL index over the shared memory volume, rebuilds it under its peers at startup and deletes it from under them "
         "on corruption recovery. Set memory.backend_config.retrieval_index_path to an instance-local directory (the Helm chart "
-        "mounts an emptyDir at /var/lib/deerflow/memory-index).",
+        "mounts an emptyDir at /var/lib/nkyel/memory-index).",
         declaration.knob,
         index_dir,
         storage_path,
@@ -602,7 +602,7 @@ def _log_recovered_stream_cleanup_result(task: asyncio.Task[None], run_id: str) 
 
 async def _cleanup_recovered_scheduled_goals(recovered_runs: list[RunRecord], *, run_manager: RunManager, checkpointer: Checkpointer) -> None:
     """Clear only confirmed occurrence-owned goals after durable orphan recovery."""
-    from deerflow.runtime.runs.worker import clear_recovered_scheduled_goal
+    from nkyel.runtime.runs.worker import clear_recovered_scheduled_goal
 
     for record in recovered_runs:
         metadata = getattr(record, "metadata", None) or {}
@@ -656,8 +656,8 @@ async def _flush_recovered_stream_cleanups(
 if TYPE_CHECKING:
     from app.gateway.auth.local_provider import LocalAuthProvider
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-    from deerflow.persistence.thread_meta.base import ThreadMetaStore
-    from deerflow.runtime import RunRecord
+    from nkyel.persistence.thread_meta.base import ThreadMetaStore
+    from nkyel.runtime import RunRecord
 
 
 T = TypeVar("T")
@@ -713,21 +713,21 @@ async def _terminalize_recovered_runs(
 def get_config() -> AppConfig:
     """Return the freshest ``AppConfig`` for the current request.
 
-    Routes through :func:`deerflow.config.app_config.get_app_config`, which
+    Routes through :func:`nkyel.config.app_config.get_app_config`, which
     honours runtime ``ContextVar`` overrides and reloads ``config.yaml`` from
     disk when its mtime changes. ``AppConfig`` is not cached on ``app.state``
     at all — the only startup-time snapshot lives as a local
     ``startup_config`` variable inside ``lifespan()`` and is passed
     explicitly into :func:`langgraph_runtime` for the engines that are
     restart-required by design. Routing every request through
-    :func:`get_app_config` closes the bytedance/deer-flow issue #3107 BUG-001
+    :func:`get_app_config` closes the bytedance/nkyel issue #3107 BUG-001
     split-brain where the worker / lead-agent thread saw a stale startup
     snapshot.
 
     Hot-reload boundary: fields backed by startup-time singletons
     (engines, sandbox provider, IM channels, logging handler) require a
     process restart to change at runtime. The authoritative list lives in
-    :mod:`deerflow.config.reload_boundary` and is mirrored by the
+    :mod:`nkyel.config.reload_boundary` and is mirrored by the
     standardised ``"startup-only:"`` prefix on the matching
     ``Field(description=...)`` in :class:`AppConfig` — IDE hover on those
     fields will surface the boundary inline. See
@@ -771,18 +771,18 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
         async with langgraph_runtime(app, startup_config):
             yield
     """
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-    from deerflow.runtime import make_store, make_stream_bridge
-    from deerflow.runtime.checkpoint_mode import freeze_checkpoint_channel_mode, freeze_checkpoint_snapshot_frequency
-    from deerflow.runtime.checkpointer.async_provider import make_checkpointer
-    from deerflow.runtime.events.store import make_run_event_store
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+    from nkyel.runtime import make_store, make_stream_bridge
+    from nkyel.runtime.checkpoint_mode import freeze_checkpoint_channel_mode, freeze_checkpoint_snapshot_frequency
+    from nkyel.runtime.checkpointer.async_provider import make_checkpointer
+    from nkyel.runtime.events.store import make_run_event_store
 
     # ------------------------------------------------------------------
     # Multi-worker safety gate: reject SQLite when GATEWAY_WORKERS > 1.
     # SQLite write-locks cannot support concurrent multi-process access.
     # ------------------------------------------------------------------
     _enforce_postgres_for_multi_worker(startup_config)
-    # Reject a malformed DEER_FLOW_CREDENTIALS_KEY, or a missing one where
+    # Reject a malformed NKYEL_CREDENTIALS_KEY, or a missing one where
     # declared instances store credentials but cannot share the generated file.
     _enforce_credentials_key(startup_config)
     # Reject agent_storage.backend='db' on a non-durable database, and warn on
@@ -805,7 +805,7 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
         # stack. Registering the callback synchronously here also covers every
         # startup-failure and cancellation path below.
         try:
-            from deerflow.extensions.notify import (
+            from nkyel.extensions.notify import (
                 drain_extension_notify_dispatches,
                 reset_extension_notify_loop,
                 set_extension_notify_loop,
@@ -875,9 +875,9 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
         stack.callback(reset_login_throttle_store)
 
         if sf is not None:
-            from deerflow.persistence.feedback import FeedbackRepository
-            from deerflow.persistence.personal_access_tokens import PersonalAccessTokenRepository
-            from deerflow.persistence.run import RunRepository
+            from nkyel.persistence.feedback import FeedbackRepository
+            from nkyel.persistence.personal_access_tokens import PersonalAccessTokenRepository
+            from nkyel.persistence.run import RunRepository
 
             app.state.run_store = RunRepository(sf)
             app.state.feedback_repo = FeedbackRepository(sf)
@@ -885,7 +885,7 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
 
             app.state.pat_repo = PersonalAccessTokenRepository(sf, last_used_write_interval_seconds=PAT_LAST_USED_WRITE_INTERVAL_SECONDS)
         else:
-            from deerflow.runtime.runs.store.memory import MemoryRunStore
+            from nkyel.runtime.runs.store.memory import MemoryRunStore
 
             app.state.run_store = MemoryRunStore()
             app.state.feedback_repo = None
@@ -898,11 +898,11 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
         run_events_config = getattr(config, "run_events", None)
         app.state.run_events_config = run_events_config
         app.state.run_event_store = make_run_event_store(run_events_config)
-        from deerflow.runtime.events.terminal import RecoveryTerminalPublisher
+        from nkyel.runtime.events.terminal import RecoveryTerminalPublisher
 
         app.state.recovery_terminal_publisher = RecoveryTerminalPublisher(app.state.run_event_store, app.state.run_store)
 
-        from deerflow.extensions.run_evidence import StoreRunEvidenceReader, StoreRunEvidenceReaderFactory
+        from nkyel.extensions.run_evidence import StoreRunEvidenceReader, StoreRunEvidenceReaderFactory
 
         # Gateway-lifetime services are trusted operator extensions without a
         # request principal. None deliberately binds this app-scoped reader to
@@ -920,11 +920,11 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
         # Services are app-scoped. Capture this app's immutable extension set
         # once and close over the same object for teardown; the process-wide
         # singleton may be replaced by another app/test before shutdown.
-        from deerflow.extensions import EMPTY_EXTENSIONS, record_runtime_diagnostics
-        from deerflow.extensions.gateway import start_services, stop_services
+        from nkyel.extensions import EMPTY_EXTENSIONS, record_runtime_diagnostics
+        from nkyel.extensions.gateway import start_services, stop_services
 
         extensions = getattr(app.state, "extensions", EMPTY_EXTENSIONS)
-        from deerflow.extensions.host_capabilities import HostCapabilities
+        from nkyel.extensions.host_capabilities import HostCapabilities
 
         host_capabilities = HostCapabilities(config, app.state.run_store, app.state.run_event_store)
         app.state.skill_mutation_host = host_capabilities
@@ -958,19 +958,19 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
             )
         )
 
-        from deerflow.persistence.thread_meta import make_thread_store
+        from nkyel.persistence.thread_meta import make_thread_store
 
         app.state.thread_store = make_thread_store(sf, app.state.store)
         if sf is not None:
-            from deerflow.persistence.mcp_tasks import McpTaskRepository
-            from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
-            from deerflow.persistence.scheduled_task_events import ScheduledTaskEventRepository
-            from deerflow.persistence.scheduled_task_runs import (
+            from nkyel.persistence.mcp_tasks import McpTaskRepository
+            from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
+            from nkyel.persistence.scheduled_task_events import ScheduledTaskEventRepository
+            from nkyel.persistence.scheduled_task_runs import (
                 ScheduledTaskRunRepository,
             )
-            from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-            from deerflow.persistence.subagent_batches import SubagentBatchRepository
-            from deerflow.persistence.thread_reads import ThreadReadRepository
+            from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+            from nkyel.persistence.subagent_batches import SubagentBatchRepository
+            from nkyel.persistence.thread_reads import ThreadReadRepository
 
             app.state.project_repo = ProjectRepository(sf)
             app.state.project_document_repo = ProjectDocumentRepository(sf)
@@ -1033,7 +1033,7 @@ async def langgraph_runtime(app: FastAPI, startup_config: AppConfig) -> AsyncGen
         # all inflight rows are reclaimed (unchanged behaviour). In multi-worker
         # mode (Postgres), only runs with an expired lease are reclaimed; runs
         # owned by another live worker are skipped.
-        from deerflow.utils.time import now_iso
+        from nkyel.utils.time import now_iso
 
         recovered_runs = await app.state.run_manager.reconcile_orphaned_inflight_runs(
             error=STARTUP_ORPHAN_RECOVERY_ERROR,
@@ -1311,7 +1311,7 @@ def get_local_provider() -> LocalAuthProvider:
     global _cached_local_provider, _cached_repo
     if _cached_repo is None:
         from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-        from deerflow.persistence.engine import get_session_factory
+        from nkyel.persistence.engine import get_session_factory
 
         sf = get_session_factory()
         if sf is None:

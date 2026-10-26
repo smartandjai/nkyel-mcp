@@ -1,10 +1,10 @@
 """Real checkpointers and run-shaped checkpoint writers for thread-listing tests.
 
 Each saver kind takes a different path through
-``deerflow.runtime.checkpointer.thread_spans``: ``memory`` walks ``list(None)``
+``nkyel.runtime.checkpointer.thread_spans``: ``memory`` walks ``list(None)``
 (one thread at a time), ``sqlite`` and ``postgres`` query the primary-key
 index, and ``cached-sqlite`` must unwrap the delta-history cache first.
-``postgres`` runs only with ``DEERFLOW_TEST_POSTGRES_URL`` (or
+``postgres`` runs only with ``NKYEL_TEST_POSTGRES_URL`` (or
 ``TEST_POSTGRES_URI``) and the ``postgres`` extra installed, in a throwaway
 schema.
 """
@@ -38,17 +38,17 @@ def make_saver(kind: str) -> Iterator[Any]:
         try:
             saver = SqliteSaver(conn)
             if kind == "cached-sqlite":
-                from deerflow.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
-                from deerflow.runtime.checkpointer.cached_saver import CachedHistorySaver
+                from nkyel.runtime.checkpoint_cache.memory import MemoryCheckpointHistoryCache
+                from nkyel.runtime.checkpointer.cached_saver import CachedHistorySaver
 
                 saver = CachedHistorySaver(saver, MemoryCheckpointHistoryCache(128), key_prefix="thread-list-test")
             yield saver
         finally:
             conn.close()
     elif kind == "postgres":
-        url = os.getenv("DEERFLOW_TEST_POSTGRES_URL") or os.getenv("TEST_POSTGRES_URI")
+        url = os.getenv("NKYEL_TEST_POSTGRES_URL") or os.getenv("TEST_POSTGRES_URI")
         if not url:
-            pytest.skip("set TEST_POSTGRES_URI or DEERFLOW_TEST_POSTGRES_URL to run live PostgreSQL tests")
+            pytest.skip("set TEST_POSTGRES_URI or NKYEL_TEST_POSTGRES_URL to run live PostgreSQL tests")
         postgres = pytest.importorskip("langgraph.checkpoint.postgres")
         import psycopg
 

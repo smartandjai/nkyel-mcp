@@ -2,7 +2,7 @@
 
 import pytest
 
-from deerflow.models.mindie_provider import (
+from nkyel.models.mindie_provider import (
     _decode_escaped_newlines_outside_fences,
     _EscapedNewlineStreamDecoder,
 )

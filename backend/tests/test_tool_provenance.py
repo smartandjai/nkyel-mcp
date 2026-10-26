@@ -13,10 +13,10 @@ import logging
 import pytest
 from langchain_core.tools import Tool
 
-from deerflow.agents.assembly_descriptor import describe_tool
-from deerflow.extensions.plugin_tools import plugin_tool_name
-from deerflow.tools.mcp_metadata import MCP_TOOL_METADATA_KEY, MCP_TOOL_SOURCE_METADATA_KEY
-from deerflow.tools.tool_provenance import (
+from nkyel.agents.assembly_descriptor import describe_tool
+from nkyel.extensions.plugin_tools import plugin_tool_name
+from nkyel.tools.mcp_metadata import MCP_TOOL_METADATA_KEY, MCP_TOOL_SOURCE_METADATA_KEY
+from nkyel.tools.tool_provenance import (
     PLUGIN_TOOL_METADATA_KEY,
     PLUGIN_TOOL_SOURCE_METADATA_KEY,
     get_plugin_source,
@@ -155,7 +155,7 @@ def test_an_mcp_flag_without_source_details_stays_labelled():
 def test_declared_tool_source_is_honoured_for_an_untagged_tool():
     """Out-of-repo tool builders keep their declaration-controlled display label."""
     tool = _tool()
-    tool.metadata = {"deerflow_tool_source": "custom-vendor"}
+    tool.metadata = {"nkyel_tool_source": "custom-vendor"}
 
     provenance = resolve_tool_provenance(tool)
     assert provenance is not None and provenance.source == "custom-vendor"
@@ -163,7 +163,7 @@ def test_declared_tool_source_is_honoured_for_an_untagged_tool():
 
 def test_plugin_tag_is_checked_before_a_declared_source():
     tool = _plugin_tool()
-    tool.metadata = {**(tool.metadata or {}), "deerflow_tool_source": "custom-vendor"}
+    tool.metadata = {**(tool.metadata or {}), "nkyel_tool_source": "custom-vendor"}
 
     provenance = resolve_tool_provenance(tool)
     assert provenance is not None and provenance.source == f"plugin:{NAMESPACE}"
@@ -175,9 +175,9 @@ def test_plugin_tag_is_checked_before_a_declared_source():
 @pytest.mark.parametrize(
     "module,expected",
     [
-        ("deerflow.tools.builtins.web_search", "builtin"),
-        ("deerflow.agents.memory.manager", "builtin"),
-        ("deerflow.skills.loader", "skill"),
+        ("nkyel.tools.builtins.web_search", "builtin"),
+        ("nkyel.agents.memory.manager", "builtin"),
+        ("nkyel.skills.loader", "skill"),
         ("some.vendor.tools", "community"),
         ("", "builtin"),  # no usable __module__ on the callable
     ],
@@ -200,5 +200,5 @@ def test_missing_tool_resolves_to_nothing():
 
 
 def test_context_form_omits_absent_optional_fields():
-    context = tool_provenance_context(_tool(module="deerflow.tools.builtins.web_search"))
+    context = tool_provenance_context(_tool(module="nkyel.tools.builtins.web_search"))
     assert context == {"source": "builtin"}

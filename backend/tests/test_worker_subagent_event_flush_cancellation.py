@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from deerflow.runtime.runs.worker import _SubagentEventBuffer
+from nkyel.runtime.runs.worker import _SubagentEventBuffer
 
 
 class _BlockingStore:

@@ -5,14 +5,14 @@ from pathlib import Path
 
 import httpx
 import pytest
-from deerflow_extension_api.auth import ExtensionPrincipal
+from nkyel_extension_api.auth import ExtensionPrincipal
 
 
 @pytest.fixture
 def management(monkeypatch):
     root = Path(__file__).resolve().parents[2]
-    monkeypatch.syspath_prepend(str(root / "examples/deerflow-extension-knowledge-management"))
-    from deerflow_extension_knowledge_management.weknora import WeKnoraManagement
+    monkeypatch.syspath_prepend(str(root / "examples/nkyel-extension-knowledge-management"))
+    from nkyel_extension_knowledge_management.weknora import WeKnoraManagement
 
     monkeypatch.setenv("MANAGEMENT_TEST_KEY", "synthetic-secret")
     calls = []
@@ -45,7 +45,7 @@ def management(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_manual_ingestion_status_and_retrieval_identity(management):
-    from deerflow_extension_knowledge_management.contracts import IngestRequest, ManagementContext
+    from nkyel_extension_knowledge_management.contracts import IngestRequest, ManagementContext
 
     provider, calls, state = management
     context = ManagementContext(principal=ExtensionPrincipal("alice", is_admin=True))
@@ -63,7 +63,7 @@ async def test_manual_ingestion_status_and_retrieval_identity(management):
     "principal,base", [(ExtensionPrincipal("alice"), "kb-1"), (ExtensionPrincipal("bob", is_admin=True), "kb-1"), (ExtensionPrincipal("alice", is_admin=True), "other"), (ExtensionPrincipal("alice", is_admin=True, is_internal=True), "kb-1")]
 )
 async def test_denials_make_no_upstream_requests(management, principal, base):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext
+    from nkyel_extension_knowledge_management.contracts import ManagementContext
 
     provider, calls, _ = management
     with pytest.raises(PermissionError):
@@ -73,7 +73,7 @@ async def test_denials_make_no_upstream_requests(management, principal, base):
 
 @pytest.mark.asyncio
 async def test_cross_base_document_cannot_be_reprocessed(management):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext, ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ManagementContext, ProcessingOptions
 
     provider, calls, state = management
     state["base"] = "other"
@@ -84,7 +84,7 @@ async def test_cross_base_document_cannot_be_reprocessed(management):
 
 @pytest.mark.asyncio
 async def test_upstream_auth_failure_never_retries_or_leaks(management):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext
+    from nkyel_extension_knowledge_management.contracts import ManagementContext
 
     provider, calls, state = management
     state["code"] = 403
@@ -96,7 +96,7 @@ async def test_upstream_auth_failure_never_retries_or_leaks(management):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("kind", ["file", "url"])
 async def test_ingestion_accepts_created_and_preserves_options(management, kind):
-    from deerflow_extension_knowledge_management.contracts import IngestRequest, ManagementContext, ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import IngestRequest, ManagementContext, ProcessingOptions
 
     provider, calls, _ = management
     context = ManagementContext(ExtensionPrincipal("alice", is_admin=True))
@@ -114,7 +114,7 @@ async def test_ingestion_accepts_created_and_preserves_options(management, kind)
 
 @pytest.mark.asyncio
 async def test_reprocess_and_cancel_keep_original_processing_policy(management):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext, ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ManagementContext, ProcessingOptions
 
     provider, calls, _ = management
     context = ManagementContext(ExtensionPrincipal("alice", is_admin=True))
@@ -126,7 +126,7 @@ async def test_reprocess_and_cancel_keep_original_processing_policy(management):
 
 @pytest.mark.asyncio
 async def test_capabilities_are_provider_and_grant_specific(management):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext
+    from nkyel_extension_knowledge_management.contracts import ManagementContext
 
     provider, _, _ = management
     result = await provider.capabilities(ManagementContext(ExtensionPrincipal("alice", is_admin=True)), "local", "kb-1")
@@ -138,7 +138,7 @@ async def test_capabilities_are_provider_and_grant_specific(management):
 
 @pytest.mark.asyncio
 async def test_unknown_state_is_not_completed(management):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext
+    from nkyel_extension_knowledge_management.contracts import ManagementContext
 
     provider, _, state = management
     state["status"] = "new_upstream_state"
@@ -148,7 +148,7 @@ async def test_unknown_state_is_not_completed(management):
 
 @pytest.mark.parametrize("payload", [{"chunk_size": 200}, {"chunk_overlap": 50}, {"chunk_size": 100, "chunk_overlap": 100}, {"graph_enabled": "true"}, {"parser_api_key": "secret"}, {"wiki_enabled": True}])
 def test_processing_rejects_unsupported_or_invalid_options(management, payload):
-    from deerflow_extension_knowledge_management.contracts import ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ProcessingOptions
 
     with pytest.raises(ValueError):
         ProcessingOptions.model_validate(payload)
@@ -156,7 +156,7 @@ def test_processing_rejects_unsupported_or_invalid_options(management, payload):
 
 @pytest.mark.asyncio
 async def test_unsupported_graph_rejected_before_mutation(management):
-    from deerflow_extension_knowledge_management.contracts import ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ProcessingOptions
 
     provider, calls, _ = management
     with pytest.raises(NotImplementedError):
@@ -167,7 +167,7 @@ async def test_unsupported_graph_rejected_before_mutation(management):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("filename,content", [("../guide.txt", b"text"), ("guide\n.txt", b"text"), ("guide.txt", b""), pytest.param("guide.txt", b"x" * (16 * 1024 * 1024 + 1), id="oversized")])
 async def test_invalid_upload_never_reaches_provider(management, filename, content):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext, ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ManagementContext, ProcessingOptions
 
     provider, calls, _ = management
     with pytest.raises(ValueError):
@@ -177,8 +177,8 @@ async def test_invalid_upload_never_reaches_provider(management, filename, conte
 
 @pytest.fixture
 def api(management):
-    from deerflow_extension_api.auth import EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY, EXTENSION_PRINCIPAL_RESOLVER_KEY
-    from deerflow_extension_knowledge_management.router import build_router
+    from nkyel_extension_api.auth import EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY, EXTENSION_PRINCIPAL_RESOLVER_KEY
+    from nkyel_extension_knowledge_management.router import build_router
     from fastapi import FastAPI
 
     provider, calls, state = management
@@ -215,7 +215,7 @@ async def test_router_enforces_host_policy_and_ignores_no_client_identity(api):
 
 @pytest.mark.asyncio
 async def test_router_upload_is_bounded_and_errors_are_sanitized(api, monkeypatch):
-    import deerflow_extension_knowledge_management.router as router
+    import nkyel_extension_knowledge_management.router as router
 
     app, _, calls, state = api
     monkeypatch.setattr(router, "MAX_UPLOAD_BYTES", 8)
@@ -254,7 +254,7 @@ async def test_router_upload_accepts_normalized_media_type(api, content_type):
 
 @pytest.mark.asyncio
 async def test_router_fails_closed_without_host_resolver(api):
-    from deerflow_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY
+    from nkyel_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY
 
     app, _, calls, _ = api
     delattr(app.state, EXTENSION_PRINCIPAL_RESOLVER_KEY)
@@ -264,7 +264,7 @@ async def test_router_fails_closed_without_host_resolver(api):
 
 
 def test_install_is_opt_in_and_registers_generic_extension_points(management):
-    from deerflow_extension_knowledge_management import install
+    from nkyel_extension_knowledge_management import install
 
     class Registry:
         plugins = []
@@ -288,12 +288,12 @@ def test_install_is_opt_in_and_registers_generic_extension_points(management):
 
 @pytest.mark.asyncio
 async def test_ingested_document_flows_through_existing_scope_and_citations(management, monkeypatch):
-    from deerflow_extension_knowledge_management.contracts import IngestRequest, ManagementContext
+    from nkyel_extension_knowledge_management.contracts import IngestRequest, ManagementContext
 
-    from deerflow.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
+    from nkyel.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
 
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-weknora"))
-    from deerflow_extension_weknora import WeKnoraProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-weknora"))
+    from nkyel_extension_weknora import WeKnoraProvider
 
     provider, _, state = management
     result = await provider.ingest(ManagementContext(ExtensionPrincipal("alice", is_admin=True)), "local", "kb-1", IngestRequest(kind="manual", title="Guide", content="Cedar evidence"))
@@ -324,9 +324,9 @@ async def test_ingested_document_flows_through_existing_scope_and_citations(mana
 
 @pytest.mark.asyncio
 async def test_generic_router_supports_non_weknora_provider(api):
-    from deerflow_extension_api.auth import EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY, EXTENSION_PRINCIPAL_RESOLVER_KEY
-    from deerflow_extension_knowledge_management.contracts import Capabilities
-    from deerflow_extension_knowledge_management.router import build_router
+    from nkyel_extension_api.auth import EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY, EXTENSION_PRINCIPAL_RESOLVER_KEY
+    from nkyel_extension_knowledge_management.contracts import Capabilities
+    from nkyel_extension_knowledge_management.router import build_router
     from fastapi import FastAPI
 
     class SearchOnly:
@@ -373,7 +373,7 @@ async def test_json_size_limit_precedes_provider_calls(api):
     [{"kind": "url", "url": "https://user:password@example.com"}, {"kind": "manual", "title": "Guide", "content": " "}, {"kind": "url", "url": "file:///etc/passwd"}, {"kind": "url", "url": "https://example.com", "content": "unexpected"}],
 )
 def test_ingest_contract_rejects_unsafe_or_ambiguous_payloads(management, payload):
-    from deerflow_extension_knowledge_management.contracts import IngestRequest
+    from nkyel_extension_knowledge_management.contracts import IngestRequest
 
     with pytest.raises(ValueError):
         IngestRequest.model_validate(payload)
@@ -381,7 +381,7 @@ def test_ingest_contract_rejects_unsafe_or_ambiguous_payloads(management, payloa
 
 @pytest.mark.asyncio
 async def test_poll_rechecks_grants_and_never_caches_authorization(management):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext
+    from nkyel_extension_knowledge_management.contracts import ManagementContext
 
     provider, calls, _ = management
     await provider.status(ManagementContext(ExtensionPrincipal("alice", is_admin=True)), "local", "kb-1", "doc-1")
@@ -393,7 +393,7 @@ async def test_poll_rechecks_grants_and_never_caches_authorization(management):
 
 @pytest.mark.asyncio
 async def test_missing_credential_never_uses_another_connection(management, monkeypatch):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext
+    from nkyel_extension_knowledge_management.contracts import ManagementContext
 
     provider, calls, _ = management
     monkeypatch.delenv("MANAGEMENT_TEST_KEY")
@@ -404,7 +404,7 @@ async def test_missing_credential_never_uses_another_connection(management, monk
 
 @pytest.mark.asyncio
 async def test_declared_optional_operations_fail_closed(management):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext, ManagementProvider, ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ManagementContext, ManagementProvider, ProcessingOptions
 
     class CatalogOnly(ManagementProvider):
         pass
@@ -416,7 +416,7 @@ async def test_declared_optional_operations_fail_closed(management):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("operation", ["manual", "url", "upload", "reprocess"])
 async def test_parent_child_chunk_overrides_rejected_before_mutation(management, operation):
-    from deerflow_extension_knowledge_management.contracts import IngestRequest, ManagementContext, ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import IngestRequest, ManagementContext, ProcessingOptions
 
     provider, calls, state = management
     state["chunking_config"] = {"chunk_size": 1024, "chunk_overlap": 128, "enable_parent_child": True, "parent_chunk_size": 4096, "child_chunk_size": 384}
@@ -436,7 +436,7 @@ async def test_parent_child_chunk_overrides_rejected_before_mutation(management,
 
 
 def test_parent_child_without_chunk_overrides_preserves_policy(management):
-    from deerflow_extension_knowledge_management.contracts import ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ProcessingOptions
 
     provider, _, _ = management
     base = {"chunking_config": {"enable_parent_child": True, "parent_chunk_size": 4096, "child_chunk_size": 384}}
@@ -445,7 +445,7 @@ def test_parent_child_without_chunk_overrides_preserves_policy(management):
 
 
 def test_weknora_zero_overlap_override_is_not_silently_ignored(management):
-    from deerflow_extension_knowledge_management.contracts import ProcessingOptions
+    from nkyel_extension_knowledge_management.contracts import ProcessingOptions
 
     provider, _, _ = management
     with pytest.raises(NotImplementedError):
@@ -455,8 +455,8 @@ def test_weknora_zero_overlap_override_is_not_silently_ignored(management):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failure", ["timeout", "connect", "json", "envelope", "status"])
 async def test_provider_failure_diagnostics_are_sanitized(management, caplog, failure):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext
-    from deerflow_extension_knowledge_management.router import _invoke
+    from nkyel_extension_knowledge_management.contracts import ManagementContext
+    from nkyel_extension_knowledge_management.router import _invoke
     from fastapi import HTTPException
 
     provider, _, _ = management
@@ -487,7 +487,7 @@ async def test_provider_failure_diagnostics_are_sanitized(management, caplog, fa
 
 @pytest.mark.asyncio
 async def test_custom_provider_exception_text_is_not_logged(management, caplog):
-    from deerflow_extension_knowledge_management.router import _invoke
+    from nkyel_extension_knowledge_management.router import _invoke
     from fastapi import HTTPException
 
     async def fail():
@@ -503,7 +503,7 @@ async def test_custom_provider_exception_text_is_not_logged(management, caplog):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("chunking,graph,expected", [({"enable_parent_child": True}, False, {"summary_enabled"}), (None, True, {"summary_enabled", "graph_enabled"}), ({}, False, {"summary_enabled", "chunk_size", "chunk_overlap"})])
 async def test_capability_options_reflect_base_support(management, chunking, graph, expected):
-    from deerflow_extension_knowledge_management.contracts import ManagementContext
+    from nkyel_extension_knowledge_management.contracts import ManagementContext
 
     provider, _, _ = management
     provider.transport = httpx.MockTransport(lambda request: httpx.Response(200, json={"success": True, "data": {"id": "kb-1", "chunking_config": chunking, "capabilities": {"graph": graph}}}))

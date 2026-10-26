@@ -78,7 +78,7 @@ test("reports a failed tool result instead of treating it as a successful save",
   expect(getToolResultStatus(messages, "setup_agent")).toBe("error");
 });
 
-test("honors structured DeerFlow error metadata", () => {
+test("honors structured nkyel error metadata", () => {
   const messages = [
     {
       type: "ai",
@@ -91,7 +91,7 @@ test("honors structured DeerFlow error metadata", () => {
       name: "setup_agent",
       tool_call_id: "call-1",
       additional_kwargs: {
-        deerflow_tool_meta: { status: "error" },
+        nkyel_tool_meta: { status: "error" },
       },
     },
   ] as Message[];

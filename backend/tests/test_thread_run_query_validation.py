@@ -7,7 +7,7 @@ from _router_auth_helpers import make_authed_test_app
 from fastapi.testclient import TestClient
 
 from app.gateway.routers import thread_runs
-from deerflow.runtime.runs.manager import EditReplayVisibility
+from nkyel.runtime.runs.manager import EditReplayVisibility
 
 
 def _make_app():

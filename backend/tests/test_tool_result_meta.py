@@ -9,7 +9,7 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 
-from deerflow.agents.middlewares.tool_result_meta import (
+from nkyel.agents.middlewares.tool_result_meta import (
     TOOL_META_KEY,
     TOOL_RESULT_ERROR_TYPES,
     ToolResultMeta,
@@ -60,11 +60,11 @@ def test_bash_nonzero_exit_marker_is_a_recoverable_error(name, content):
 
 def test_bash_nonzero_exit_repairs_legacy_analysis_success_without_changing_producer_meta():
     legacy = {"status": "success", "source": "content_analysis"}
-    msg = ToolMessage(content="\nExit Code: 1", tool_call_id="bash-1", name="bash", additional_kwargs={TOOL_META_KEY: legacy, "deerflow_tool_receipt": {"status": "success"}})
+    msg = ToolMessage(content="\nExit Code: 1", tool_call_id="bash-1", name="bash", additional_kwargs={TOOL_META_KEY: legacy, "nkyel_tool_receipt": {"status": "success"}})
     normalize_tool_message(msg)
     assert _meta(msg)["status"] == "error"
     assert legacy == {"status": "success", "source": "content_analysis"}
-    assert msg.additional_kwargs["deerflow_tool_receipt"]["status"] == "success"
+    assert msg.additional_kwargs["nkyel_tool_receipt"]["status"] == "success"
 
 
 @pytest.mark.parametrize("source", ["tool_return", "exception", "progress_middleware", "custom"])
@@ -108,9 +108,9 @@ def test_bash_exit_status_does_not_classify_arbitrary_stdout_as_an_auth_error():
 def test_native_bash_exit_is_stamped_before_receipt(monkeypatch, command, output, status):
     from types import SimpleNamespace
 
-    from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-    from deerflow.agents.middlewares.tool_receipt_middleware import ToolReceiptMiddleware
-    from deerflow.sandbox.local import local_sandbox
+    from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+    from nkyel.agents.middlewares.tool_receipt_middleware import ToolReceiptMiddleware
+    from nkyel.sandbox.local import local_sandbox
 
     monkeypatch.setattr(local_sandbox, "build_sandbox_env", lambda _injected: {"PATH": os.defpath})
     actual = local_sandbox.LocalSandbox("exit-status-probe").execute_command(command, timeout=5)
@@ -120,7 +120,7 @@ def test_native_bash_exit_is_stamped_before_receipt(monkeypatch, command, output
     result = ToolReceiptMiddleware().wrap_tool_call(request, lambda req: errors.wrap_tool_call(req, lambda _: ToolMessage(content=actual, tool_call_id="bash-1", name="bash")))
     assert _meta(result)["status"] == status
     assert _meta(result)["recoverable_by_model"] is True
-    assert result.additional_kwargs["deerflow_tool_receipt"]["status"] == status
+    assert result.additional_kwargs["nkyel_tool_receipt"]["status"] == status
 
 
 # ---------------------------------------------------------------------------

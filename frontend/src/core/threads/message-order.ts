@@ -5,7 +5,7 @@
  *
  * - latest visible content: live copies refresh history copies, but a hidden
  *   checkpoint control message never overwrites a visible user turn;
- * - trusted position: a valid `deerflow_seq` stamped by the current thread's
+ * - trusted position: a valid `nkyel_seq` stamped by the current thread's
  *   REST feed or by server-stamped state/live frames. Only positive safe
  *   integers qualify; a missing or invalid value never overwrites a known
  *   one, and several trusted values for one identity converge to the
@@ -18,7 +18,7 @@
  * before its next anchor. Live-only positioned entries within the loaded
  * window also anchor trailing segments; rescued prefixes before that window
  * leave new steps at the tail. Conflicting speculative constraints lose to
- * the skeleton. `deerflow_seq` is server-owned display metadata — it is
+ * the skeleton. `nkyel_seq` is server-owned display metadata — it is
  * never written back into a checkpoint by the client.
  *
  * This module is pure: no React, no caches, no per-thread state. Callers
@@ -33,8 +33,8 @@ import { SKILL_USAGES_KEY } from "../skills/usage";
 
 // Thread-global feed position, attached by the backend to history rows and to
 // `values` frame messages it has already persisted. Mirrors MESSAGE_SEQ_KEY in
-// `deerflow/runtime/events/message_identity.py`.
-export const MESSAGE_SEQ_KEY = "deerflow_seq";
+// `nkyel/runtime/events/message_identity.py`.
+export const MESSAGE_SEQ_KEY = "nkyel_seq";
 
 const INJECTED_USER_MESSAGE_ID_SUFFIX = "__user";
 

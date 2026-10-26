@@ -17,10 +17,10 @@ from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.base import Base
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.user.model import UserPreferenceRow, UserRow
+from nkyel.persistence import bootstrap
+from nkyel.persistence.base import Base
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.user.model import UserPreferenceRow, UserRow
 
 REVISION = "0041_im_notice_preferences"
 PREVIOUS = "0040_scheduled_group_notice"
@@ -55,7 +55,7 @@ def _engine(tmp_path, backend):
 
 def _schema_diff(connection):
     # Import only through the production registration module, not the new model.
-    import deerflow.persistence.models  # noqa: F401
+    import nkyel.persistence.models  # noqa: F401
 
     context = MigrationContext.configure(
         connection,
@@ -136,7 +136,7 @@ def test_fresh_bootstrap_registers_preferences_without_an_auth_user(tmp_path):
         import asyncio, json, sys
         import sqlalchemy as sa
         from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-        from deerflow.persistence import bootstrap
+        from nkyel.persistence import bootstrap
 
         async def main():
             engine = create_async_engine(f"sqlite+aiosqlite:///{sys.argv[1]}")
@@ -152,7 +152,7 @@ def test_fresh_bootstrap_registers_preferences_without_an_auth_user(tmp_path):
                     assert (await connection.execute(sa.text("PRAGMA foreign_keys"))).scalar_one() == 1
                     assert await connection.run_sync(lambda conn: sa.inspect(conn).has_table("im_notification_preferences"))
                     assert (await connection.execute(sa.text("SELECT COUNT(*) FROM users"))).scalar_one() == 0
-                from deerflow.persistence.user.im_notifications import ImNotificationPreferencesRepository
+                from nkyel.persistence.user.im_notifications import ImNotificationPreferencesRepository
                 repo = ImNotificationPreferencesRepository(async_sessionmaker(engine, expire_on_commit=False))
                 assert (await repo.patch("default", {"qq": False}))["qq"] is False
                 assert (await repo.get("default"))["qq"] is False

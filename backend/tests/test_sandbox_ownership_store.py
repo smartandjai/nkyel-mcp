@@ -5,7 +5,7 @@ implementation through the same fixture, so the memory and redis backends cannot
 drift apart on the semantics the provider depends on.
 
 Redis coverage is opt-in and self-skipping, mirroring the stream-bridge
-integration tier: point at a server with ``DEER_FLOW_TEST_REDIS_URL`` (defaults
+integration tier: point at a server with ``NKYEL_TEST_REDIS_URL`` (defaults
 to redis://localhost:6379/15 — DB 15 to avoid clobbering real data). There is no
 fake-redis tier on purpose — the redis backend's exclusion lives in Lua scripts
 that a hand-rolled fake would not execute, so a fake would pin the mock rather
@@ -23,7 +23,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from deerflow.community.aio_sandbox.ownership import (
+from nkyel.community.aio_sandbox.ownership import (
     MemoryOwnershipStore,
     OwnershipBackendError,
     RenewOutcome,
@@ -32,10 +32,10 @@ from deerflow.community.aio_sandbox.ownership import (
     make_sandbox_ownership_store,
     resolve_ownership_config,
 )
-from deerflow.config.sandbox_config import SandboxOwnershipConfig
-from deerflow.config.stream_bridge_config import StreamBridgeConfig
+from nkyel.config.sandbox_config import SandboxOwnershipConfig
+from nkyel.config.stream_bridge_config import StreamBridgeConfig
 
-REDIS_TEST_URL = os.environ.get("DEER_FLOW_TEST_REDIS_URL", "redis://localhost:6379/15")
+REDIS_TEST_URL = os.environ.get("NKYEL_TEST_REDIS_URL", "redis://localhost:6379/15")
 
 
 def _redis_available() -> bool:
@@ -64,7 +64,7 @@ class _StoreFactory:
         self.kind = kind
         self.ttl = ttl_seconds
         self._shared_leases: dict = {}
-        self._key_prefix = f"deerflow:test:{uuid.uuid4().hex}"
+        self._key_prefix = f"nkyel:test:{uuid.uuid4().hex}"
         self._made: list = []
 
     def make(self, owner_id: str, *, ttl_seconds: float | None = None):
@@ -75,7 +75,7 @@ class _StoreFactory:
             # talking to one backend, as redis clients naturally do.
             store._leases = self._shared_leases
         else:
-            from deerflow.community.aio_sandbox.ownership.redis import RedisOwnershipStore
+            from nkyel.community.aio_sandbox.ownership.redis import RedisOwnershipStore
 
             store = RedisOwnershipStore(
                 owner_id=owner_id,
@@ -431,7 +431,7 @@ def test_redis_lease_timing_allows_operational_ttl():
     ],
 )
 def test_redis_store_rounds_validated_ttl_up_near_range_boundaries(renewal_interval_seconds, expected_ttl_milliseconds):
-    from deerflow.community.aio_sandbox.ownership.redis import RedisOwnershipStore
+    from nkyel.community.aio_sandbox.ownership.redis import RedisOwnershipStore
 
     config = SandboxOwnershipConfig(
         type="redis",
@@ -462,7 +462,7 @@ def test_stream_bridge_redis_env_implies_redis_ownership(monkeypatch):
     Defaulting it to memory ownership would leave #4206 open on exactly the
     deployments that hit it.
     """
-    monkeypatch.setenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", "redis://somewhere:6379/0")
+    monkeypatch.setenv("NKYEL_STREAM_BRIDGE_REDIS_URL", "redis://somewhere:6379/0")
     resolved = resolve_ownership_config(None)
     assert resolved.type == "redis"
     assert resolved.redis_url == "redis://somewhere:6379/0"
@@ -476,8 +476,8 @@ def test_stream_bridge_redis_in_config_yaml_implies_redis_ownership(monkeypatch)
     configures the bridge in config.yaml — i.e. exactly the multi-instance
     deployments this inference exists for.
     """
-    monkeypatch.delenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", raising=False)
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_OWNERSHIP_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_STREAM_BRIDGE_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_OWNERSHIP_REDIS_URL", raising=False)
 
     resolved = resolve_ownership_config(None, stream_bridge=StreamBridgeConfig(type="redis", redis_url="redis://in-yaml:6379/0"))
 
@@ -487,8 +487,8 @@ def test_stream_bridge_redis_in_config_yaml_implies_redis_ownership(monkeypatch)
 
 def test_memory_stream_bridge_does_not_imply_redis_ownership(monkeypatch):
     """The other direction: a single-process bridge must not force redis."""
-    monkeypatch.delenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", raising=False)
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_OWNERSHIP_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_STREAM_BRIDGE_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_OWNERSHIP_REDIS_URL", raising=False)
 
     resolved = resolve_ownership_config(None, stream_bridge=StreamBridgeConfig(type="memory"))
 
@@ -496,14 +496,14 @@ def test_memory_stream_bridge_does_not_imply_redis_ownership(monkeypatch):
 
 
 def test_explicit_config_wins_over_env(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", "redis://somewhere:6379/0")
+    monkeypatch.setenv("NKYEL_STREAM_BRIDGE_REDIS_URL", "redis://somewhere:6379/0")
     resolved = resolve_ownership_config(SandboxOwnershipConfig(type="memory"))
     assert resolved.type == "memory"
 
 
 def test_no_env_defaults_to_memory(monkeypatch):
-    monkeypatch.delenv("DEER_FLOW_STREAM_BRIDGE_REDIS_URL", raising=False)
-    monkeypatch.delenv("DEER_FLOW_SANDBOX_OWNERSHIP_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_STREAM_BRIDGE_REDIS_URL", raising=False)
+    monkeypatch.delenv("NKYEL_SANDBOX_OWNERSHIP_REDIS_URL", raising=False)
     assert resolve_ownership_config(None).type == "memory"
 
 
@@ -518,13 +518,13 @@ def test_redis_backend_error_is_wrapped_not_leaked():
     in the dev group. Gating it on a live Redis would mean the fail-closed
     contract was never exercised in CI, which is the one place it matters.
     """
-    from deerflow.community.aio_sandbox.ownership.redis import RedisOwnershipStore
+    from nkyel.community.aio_sandbox.ownership.redis import RedisOwnershipStore
 
     store = RedisOwnershipStore(
         owner_id="A",
         redis_url="redis://127.0.0.1:1/0",  # nothing listening
         ttl_seconds=60,
-        key_prefix=f"deerflow:test:{uuid.uuid4().hex}",
+        key_prefix=f"nkyel:test:{uuid.uuid4().hex}",
     )
     with pytest.raises(OwnershipBackendError):
         store.claim("s1")
@@ -598,9 +598,9 @@ def test_concurrent_claims_serialize_to_one_winner(stores):
 @pytest.mark.integration
 @requires_redis
 def test_redis_store_declares_cross_process_support():
-    from deerflow.community.aio_sandbox.ownership.redis import RedisOwnershipStore
+    from nkyel.community.aio_sandbox.ownership.redis import RedisOwnershipStore
 
-    store = RedisOwnershipStore(owner_id="A", redis_url=REDIS_TEST_URL, ttl_seconds=60, key_prefix=f"deerflow:test:{uuid.uuid4().hex}")
+    store = RedisOwnershipStore(owner_id="A", redis_url=REDIS_TEST_URL, ttl_seconds=60, key_prefix=f"nkyel:test:{uuid.uuid4().hex}")
     try:
         assert store.supports_cross_process is True
     finally:

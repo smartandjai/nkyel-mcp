@@ -13,8 +13,8 @@ the app-config, loop-detection, and tool-output boolean guards already in the re
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.acp_config import ACPAgentConfig
-from deerflow.config.subagents_config import CustomSubagentConfig, SubagentOverrideConfig, SubagentsAppConfig
+from nkyel.config.acp_config import ACPAgentConfig
+from nkyel.config.subagents_config import CustomSubagentConfig, SubagentOverrideConfig, SubagentsAppConfig
 
 BACKSTOP_FIELDS = ("timeout_seconds", "max_turns")
 GLOBAL_INT_FIELDS = ("timeout_seconds", "max_turns", "max_total_per_run")

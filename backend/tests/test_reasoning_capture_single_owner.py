@@ -31,10 +31,10 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import AIMessage, AIMessageChunk
 
-import deerflow.models.patched_mimo as patched_mimo
-import deerflow.models.patched_minimax as patched_minimax
-import deerflow.models.patched_stepfun as patched_stepfun
-import deerflow.models.reasoning_capture as owner
+import nkyel.models.patched_mimo as patched_mimo
+import nkyel.models.patched_minimax as patched_minimax
+import nkyel.models.patched_stepfun as patched_stepfun
+import nkyel.models.reasoning_capture as owner
 
 MODELS_ROOT = Path(owner.__file__).resolve().parent
 
@@ -152,5 +152,5 @@ def test_the_census_compares_shapes_not_names() -> None:
 
 
 def test_exactly_the_migrated_providers_import_the_owner() -> None:
-    importers = {path.name for path in sorted(MODELS_ROOT.glob("*.py")) if path.name != "reasoning_capture.py" and "from deerflow.models.reasoning_capture import" in path.read_text(encoding="utf-8")}
+    importers = {path.name for path in sorted(MODELS_ROOT.glob("*.py")) if path.name != "reasoning_capture.py" and "from nkyel.models.reasoning_capture import" in path.read_text(encoding="utf-8")}
     assert importers == {"patched_mimo.py", "patched_stepfun.py"}

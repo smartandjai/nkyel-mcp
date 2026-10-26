@@ -100,7 +100,7 @@ import { Callout } from "nextra/components";
 
 **原因**：摘要压缩把已完成的 `task` 结果压出了上下文，Lead Agent 失去"已经做过"的证据。[#3877](https://github.com/bytedance/deer-flow/pull/3877) 引入系统维护的委派账本并每次调用前重新注入，[#3887](https://github.com/bytedance/deer-flow/pull/3887) 把它放进线程状态使其在压缩后存活。
 
-**处理**：直接用 `create_deerflow_agent` 搭图时，确认使用的版本已包含 [#5488](https://github.com/bytedance/deer-flow/pull/5488)，否则工厂链缺少 `DurableContextMiddleware`，账本不会被写入。
+**处理**：直接用 `create_nkyel_agent` 搭图时，确认使用的版本已包含 [#5488](https://github.com/bytedance/deer-flow/pull/5488)，否则工厂链缺少 `DurableContextMiddleware`，账本不会被写入。
 
 ### 停止后，Lead Agent 一直被提示"该任务已委派，请勿重复"
 
@@ -126,7 +126,7 @@ import { Callout } from "nextra/components";
 
 ### 子 Agent 不知道今天的日期，或日期差了一天
 
-子 Agent 通过 `SubagentDateContextMiddleware` 收到一条 `current_date` 提醒（[#4797](https://github.com/bytedance/deer-flow/pull/4797)）。日期按服务器时区格式化，容器默认 UTC；设置环境变量 `DEER_FLOW_DATE_TIMEZONE` 为 IANA 时区名（如 `Asia/Shanghai`）即可（[#5154](https://github.com/bytedance/deer-flow/pull/5154)）。
+子 Agent 通过 `SubagentDateContextMiddleware` 收到一条 `current_date` 提醒（[#4797](https://github.com/bytedance/deer-flow/pull/4797)）。日期按服务器时区格式化，容器默认 UTC；设置环境变量 `NKYEL_DATE_TIMEZONE` 为 IANA 时区名（如 `Asia/Shanghai`）即可（[#5154](https://github.com/bytedance/deer-flow/pull/5154)）。
 
 ### 子 Agent 找不到我早前上传的文件
 

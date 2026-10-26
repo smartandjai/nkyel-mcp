@@ -705,7 +705,7 @@ test.describe("Side chat", () => {
           {
             type: "ai",
             id: `msg-ai-sidecar-${sidecarThreadMessages.length}`,
-            content: "Hello from DeerFlow!",
+            content: "Hello from nkyel!",
           },
         ];
       }
@@ -866,7 +866,7 @@ test.describe("Side chat", () => {
     await expect
       .poll(() => createdThreadBody?.metadata, { timeout: 10_000 })
       .toMatchObject({
-        deerflow_sidecar: true,
+        nkyel_sidecar: true,
         parent_thread_id: MOCK_THREAD_ID,
         sidecar_context_type: "referenced_message",
         sidecar_context_label: "Selected assistant text #2",
@@ -969,17 +969,17 @@ test.describe("Side chat", () => {
     await expect(
       page
         .getByTestId("sidecar-message-list")
-        .getByText("Hello from DeerFlow!")
+        .getByText("Hello from nkyel!")
         .first(),
     ).toBeVisible();
 
     // Selecting text inside the side chat itself only offers "Add to
     // conversation" (no "Ask in side chat"), and the snippet attaches to the
     // side chat's own composer rather than the main composer's quotes.
-    await expectSidecarSelectionToolbarActions(page, "Hello from DeerFlow!");
+    await expectSidecarSelectionToolbarActions(page, "Hello from nkyel!");
     await selectTextAndClickToolbarButton(
       page,
-      "Hello from DeerFlow!",
+      "Hello from nkyel!",
       "Add to conversation",
       "sidecar-message-list",
     );
@@ -1002,7 +1002,7 @@ test.describe("Side chat", () => {
       '<referenced_message index="1"',
     );
     expect(textFromContent(sidecarSelectionMessages[0]?.content)).toContain(
-      "Hello from DeerFlow!",
+      "Hello from nkyel!",
     );
     expect(sidecarSelectionMessages[1]?.additional_kwargs).toMatchObject({
       sidecar_visible_message: true,
@@ -1013,7 +1013,7 @@ test.describe("Side chat", () => {
         {
           message_id: "msg-ai-sidecar-0",
           role: "assistant",
-          content: "Hello from DeerFlow!",
+          content: "Hello from nkyel!",
         },
       ],
     });
@@ -1062,7 +1062,7 @@ test.describe("Side chat", () => {
     await expect(
       page
         .getByTestId("sidecar-message-list")
-        .getByText("Hello from DeerFlow!")
+        .getByText("Hello from nkyel!")
         .first(),
     ).toBeVisible();
 
@@ -1176,7 +1176,7 @@ test.describe("Side chat", () => {
           title: "Restored side chat",
           updated_at: "2025-01-01T00:00:01Z",
           metadata: {
-            deerflow_sidecar: true,
+            nkyel_sidecar: true,
             parent_thread_id: MOCK_THREAD_ID,
             sidecar_context_type: "referenced_message",
             sidecar_context_label: "Selected assistant text #2",
@@ -1233,7 +1233,7 @@ test.describe("Side chat", () => {
           title: "Restored side chat",
           updated_at: "2025-01-01T00:00:01Z",
           metadata: {
-            deerflow_sidecar: true,
+            nkyel_sidecar: true,
             parent_thread_id: MOCK_THREAD_ID,
             sidecar_context_type: "referenced_message",
             sidecar_context_label: "Selected assistant text #2",
@@ -1310,7 +1310,7 @@ test.describe("Side chat", () => {
           title: "Restored side chat",
           updated_at: "2025-01-01T00:00:01Z",
           metadata: {
-            deerflow_sidecar: true,
+            nkyel_sidecar: true,
             parent_thread_id: MOCK_THREAD_ID,
             sidecar_context_type: "referenced_message",
             sidecar_context_label: "Selected assistant text #2",
@@ -1391,7 +1391,7 @@ test.describe("Side chat", () => {
           title: "Restored side chat",
           updated_at: "2025-01-01T00:00:01Z",
           metadata: {
-            deerflow_sidecar: true,
+            nkyel_sidecar: true,
             parent_thread_id: MOCK_THREAD_ID,
             sidecar_context_type: "referenced_message",
             sidecar_context_label: "Selected assistant text #2",

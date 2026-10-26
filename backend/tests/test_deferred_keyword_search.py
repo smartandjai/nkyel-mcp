@@ -3,7 +3,7 @@
 import pytest
 from langchain_core.tools import StructuredTool
 
-from deerflow.tools.builtins.tool_search import DeferredToolCatalog, build_tool_search_tool
+from nkyel.tools.builtins.tool_search import DeferredToolCatalog, build_tool_search_tool
 
 
 def make_tool(name, description="A deferred tool."):

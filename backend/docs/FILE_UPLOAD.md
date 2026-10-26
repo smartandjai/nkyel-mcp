@@ -2,7 +2,7 @@
 
 ## 概述
 
-DeerFlow 后端提供了完整的文件上传功能，支持多文件上传，并可选地将 Office 文档和 PDF 转换为 Markdown 格式。
+nkyel 后端提供了完整的文件上传功能，支持多文件上传，并可选地将 Office 文档和 PDF 转换为 Markdown 格式。
 
 ## 功能特性
 
@@ -33,7 +33,7 @@ POST /api/threads/{thread_id}/uploads
 
 检查也会拒绝 Windows 去掉末尾点号或空格、忽略大小写后会变成保留名称的别名，例如 `.upload-notes.part.`、`.upload-notes.part `、`.UPLOAD-NOTES.PART` 和 `.Upload-NoTeS.Part .`。这项检查在所有主机上生效，HTTP 上传会在整批文件写入前返回 `400`，提示改名。
 
-嵌入式 `DeerFlowClient.upload_files` 同样在复制前检查整批文件名，保留名称会抛出 `ValueError`。项目资料库上传和从聊天加入资料库时的重命名也遵循这项限制，包括沿用来源文件名和手动指定新名称两种情况；旧资料库中使用保留名称的文件仍可下载，但直接附加到聊天会返回 `400`。请先下载、改名，再上传到聊天。本修复不会迁移或恢复旧聊天目录中已经匹配该临时文件规则的文件。
+嵌入式 `NkyelClient.upload_files` 同样在复制前检查整批文件名，保留名称会抛出 `ValueError`。项目资料库上传和从聊天加入资料库时的重命名也遵循这项限制，包括沿用来源文件名和手动指定新名称两种情况；旧资料库中使用保留名称的文件仍可下载，但直接附加到聊天会返回 `400`。请先下载、改名，再上传到聊天。本修复不会迁移或恢复旧聊天目录中已经匹配该临时文件规则的文件。
 
 **响应：**
 ```json
@@ -43,11 +43,11 @@ POST /api/threads/{thread_id}/uploads
     {
       "filename": "document.pdf",
       "size": 1234567,
-      "path": ".deer-flow/threads/{thread_id}/user-data/uploads/document.pdf",
+      "path": ".nkyel/threads/{thread_id}/user-data/uploads/document.pdf",
       "virtual_path": "/mnt/user-data/uploads/document.pdf",
       "artifact_url": "/api/threads/{thread_id}/artifacts/mnt/user-data/uploads/document.pdf",
       "markdown_file": "document.md",
-      "markdown_path": ".deer-flow/threads/{thread_id}/user-data/uploads/document.md",
+      "markdown_path": ".nkyel/threads/{thread_id}/user-data/uploads/document.md",
       "markdown_virtual_path": "/mnt/user-data/uploads/document.md",
       "markdown_artifact_url": "/api/threads/{thread_id}/artifacts/mnt/user-data/uploads/document.md"
     }
@@ -89,7 +89,7 @@ GET /api/threads/{thread_id}/uploads/list
     {
       "filename": "document.pdf",
       "size": 1234567,
-      "path": ".deer-flow/threads/{thread_id}/user-data/uploads/document.pdf",
+      "path": ".nkyel/threads/{thread_id}/user-data/uploads/document.pdf",
       "virtual_path": "/mnt/user-data/uploads/document.pdf",
       "artifact_url": "/api/threads/{thread_id}/artifacts/mnt/user-data/uploads/document.pdf",
       "extension": ".pdf",
@@ -189,11 +189,11 @@ read_file(path="/mnt/user-data/uploads/document.md")
 
 **路径映射关系：**
 - Agent 使用：`/mnt/user-data/uploads/document.pdf`（虚拟路径）
-- 实际存储：`backend/.deer-flow/threads/{thread_id}/user-data/uploads/document.pdf`
+- 实际存储：`backend/.nkyel/threads/{thread_id}/user-data/uploads/document.pdf`
 - 前端访问：`/api/threads/{thread_id}/artifacts/mnt/user-data/uploads/document.pdf`（HTTP URL）
 
 上传流程采用“线程目录优先”策略：
-- 先写入 `backend/.deer-flow/threads/{thread_id}/user-data/uploads/` 作为权威存储
+- 先写入 `backend/.nkyel/threads/{thread_id}/user-data/uploads/` 作为权威存储
 - 本地沙箱（`sandbox_id=local`）直接使用线程目录内容
 - 默认情况下，非本地沙箱通过 `acquire_async` 获取后，再额外同步到 `/mnt/user-data/uploads/*`，确保运行时可见
 - 如果 Gateway 与远端沙箱保证挂载同一份线程 user-data（例如正确对齐的共享 PVC、NFS 或 hostPath），可设置 `sandbox.thread_data_mounts: true`；上传路由会跳过 sandbox acquire 和逐文件同步
@@ -254,7 +254,7 @@ print(response.json())
 ## 文件存储结构
 
 ```
-{DEER_FLOW_HOME}/users/{user_id}/threads/{thread_id}/
+{NKYEL_HOME}/users/{user_id}/threads/{thread_id}/
 ├── upload-companions/              # 服务端归属记录，不挂载到沙箱
 │   └── <原文件名的 SHA-256>.json
 └── user-data/
@@ -272,7 +272,7 @@ print(response.json())
 - 文件名安全性：系统会自动验证文件路径，防止目录遍历攻击
 - 删除只作用于普通文件：上传目录中的符号链接不会被跟随，删除请求按文件不存在（404）处理
 - 删除文档不会一并删除其转换生成的 Markdown；转换文件仍可通过上传 API 单独删除。`list_uploaded_files` 只对有归属记录的转换文件做历史发现排除，不影响上传 API 的完整文件列表（见 issue #5672）
-- 上传（HTTP 与嵌入式 `DeerFlowClient`）不会写穿符号链接：目标名已是符号链接的文件会被跳过并列入 `skipped_files`，转换生成的 Markdown 也不会写入同名符号链接
+- 上传（HTTP 与嵌入式 `NkyelClient`）不会写穿符号链接：目标名已是符号链接的文件会被跳过并列入 `skipped_files`，转换生成的 Markdown 也不会写入同名符号链接
 - 转换读取的是本次上传写入的字节，而非落盘后的文件名：HTTP 上传在 uploads 之外的私有副本上转换，嵌入式客户端转换调用方提供的源文件，因此沙箱替换该文件名无法让宿主文件内容被转换进 uploads
 - 线程隔离：每个线程的上传文件相互隔离，无法跨线程访问
 - 自动文档转换默认关闭；如需启用，需在 `config.yaml` 中显式设置 `uploads.auto_convert_documents: true`
@@ -285,7 +285,7 @@ print(response.json())
    - 处理文件上传、列表、删除请求
    - 使用 markitdown 转换文档
 
-2. **Uploads Middleware** (`packages/harness/deerflow/agents/middlewares/uploads_middleware.py`)
+2. **Uploads Middleware** (`packages/harness/nkyel/agents/middlewares/uploads_middleware.py`)
    - 读取当前消息的 `additional_kwargs.files`
    - 在 Agent 请求前生成并注入 `<current_uploads>` 文件上下文
    - 历史上传由 `list_uploaded_files` 按需查询（可按文件名/扩展名过滤后再截断），不会每轮自动注入
@@ -318,7 +318,7 @@ print(response.json())
 
 1. 确认 UploadsMiddleware 已在 agent.py 中注册
 2. 检查 thread_id 是否正确
-3. 确认文件确实已上传到 `backend/.deer-flow/threads/{thread_id}/user-data/uploads/`
+3. 确认文件确实已上传到 `backend/.nkyel/threads/{thread_id}/user-data/uploads/`
 4. 非本地沙箱场景下，确认上传接口没有报错（需要成功完成 sandbox 同步）
 
 ## 开发建议

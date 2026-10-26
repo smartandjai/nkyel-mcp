@@ -14,19 +14,19 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.extensions_config import ExtensionsConfig
+from nkyel.config.app_config import AppConfig
+from nkyel.config.extensions_config import ExtensionsConfig
 
 _PROVIDERS = [
-    pytest.param("deerflow.community.aio_sandbox.aio_sandbox_provider", "AioSandboxProvider", id="aio"),
-    pytest.param("deerflow.community.e2b_sandbox.e2b_sandbox_provider", "E2BSandboxProvider", id="e2b"),
-    pytest.param("deerflow.community.opensandbox.provider", "OpenSandboxProvider", id="opensandbox"),
-    pytest.param("deerflow.community.boxlite.provider", "BoxliteProvider", id="boxlite"),
+    pytest.param("nkyel.community.aio_sandbox.aio_sandbox_provider", "AioSandboxProvider", id="aio"),
+    pytest.param("nkyel.community.e2b_sandbox.e2b_sandbox_provider", "E2BSandboxProvider", id="e2b"),
+    pytest.param("nkyel.community.opensandbox.provider", "OpenSandboxProvider", id="opensandbox"),
+    pytest.param("nkyel.community.boxlite.provider", "BoxliteProvider", id="boxlite"),
 ]
 
 _RESOLVED = {
     "PASSWORD_HASH": "$2b$12$abcdefghijklmnopqrstuv",
-    "API_SECRET": "$DEERFLOW_TEST_HOST_ONLY",
+    "API_SECRET": "$NKYEL_TEST_HOST_ONLY",
     "NODE_ENV": "production",
 }
 
@@ -35,9 +35,9 @@ _RESOLVED = {
 def secret_env(monkeypatch):
     # One value names no host variable (blanked by a second pass), one names a
     # real host variable (swapped for the host value by a second pass).
-    monkeypatch.setenv("DEERFLOW_TEST_HASH", _RESOLVED["PASSWORD_HASH"])
-    monkeypatch.setenv("DEERFLOW_TEST_SECRET", _RESOLVED["API_SECRET"])
-    monkeypatch.setenv("DEERFLOW_TEST_HOST_ONLY", "host-value")
+    monkeypatch.setenv("NKYEL_TEST_HASH", _RESOLVED["PASSWORD_HASH"])
+    monkeypatch.setenv("NKYEL_TEST_SECRET", _RESOLVED["API_SECRET"])
+    monkeypatch.setenv("NKYEL_TEST_HOST_ONLY", "host-value")
 
 
 def _load(monkeypatch, tmp_path: Path, yaml_text: str) -> AppConfig:
@@ -58,8 +58,8 @@ def test_provider_receives_sandbox_environment_resolved_once(monkeypatch, tmp_pa
 sandbox:
   use: {module_name}:{class_name}
   environment:
-    PASSWORD_HASH: $DEERFLOW_TEST_HASH
-    API_SECRET: $DEERFLOW_TEST_SECRET
+    PASSWORD_HASH: $NKYEL_TEST_HASH
+    API_SECRET: $NKYEL_TEST_SECRET
     NODE_ENV: production
 """,
     )
@@ -82,14 +82,14 @@ def test_acp_agent_env_is_resolved_once_at_load(monkeypatch, tmp_path):
         tmp_path,
         """
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
 acp_agents:
   codex:
     command: codex-acp
     description: Codex CLI
     env:
-      PASSWORD_HASH: $DEERFLOW_TEST_HASH
-      API_SECRET: $DEERFLOW_TEST_SECRET
+      PASSWORD_HASH: $NKYEL_TEST_HASH
+      API_SECRET: $NKYEL_TEST_SECRET
       NODE_ENV: production
 """,
     )

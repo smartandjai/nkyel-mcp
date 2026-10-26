@@ -10,7 +10,7 @@ import pytest
 
 @pytest.fixture
 def invoke_search(monkeypatch):
-    from deerflow.community.brave import tools
+    from nkyel.community.brave import tools
 
     config = SimpleNamespace(get_tool_config=lambda _: SimpleNamespace(model_extra={"api_key": "synthetic-test-key"}))
     monkeypatch.setattr(tools, "get_app_config", lambda: config)
@@ -41,7 +41,7 @@ def invoke_search(monkeypatch):
 
 
 def _assert_format_error_log(caplog, expected):
-    records = [record for record in caplog.records if record.name == "deerflow.community.brave.tools" and record.levelno == logging.ERROR]
+    records = [record for record in caplog.records if record.name == "nkyel.community.brave.tools" and record.levelno == logging.ERROR]
     assert [record.getMessage() for record in records] == [expected]
     assert "文档 search" not in caplog.text
     assert "synthetic-test-key" not in caplog.text
@@ -87,7 +87,7 @@ def test_mixed_entries_preserve_valid_results_in_order(invoke_search):
 @pytest.mark.parametrize("payload", [{}, {"web": None}, {"web": {}}, {"web": {"results": None}}, {"web": {"results": []}}])
 def test_missing_or_empty_results_keep_no_results_response(invoke_search, payload, caplog):
     assert invoke_search(payload) == {"error": "No results found", "query": "文档 search"}
-    assert not [record for record in caplog.records if record.name == "deerflow.community.brave.tools" and record.levelno == logging.ERROR]
+    assert not [record for record in caplog.records if record.name == "nkyel.community.brave.tools" and record.levelno == logging.ERROR]
 
 
 def test_valid_results_keep_existing_normalization(invoke_search):

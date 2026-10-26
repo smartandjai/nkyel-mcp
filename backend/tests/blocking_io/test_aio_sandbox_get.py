@@ -7,7 +7,7 @@ lookup. A prior change renewed the cross-process lease inside ``get()``
 — reported on PR #4221.
 
 Under the strict Blockbuster context (this directory's conftest), any blocking IO
-reached from ``deerflow.*`` while on the event loop raises ``BlockingError``.
+reached from ``nkyel.*`` while on the event loop raises ``BlockingError``.
 
 The ownership store is injected here as a **blocking probe**: every store method
 does real file IO. That keeps the anchor honest across backends — the configured
@@ -55,7 +55,7 @@ class _BlockingProbeStore:
         return True
 
     def renew(self, sandbox_id: str):
-        from deerflow.community.aio_sandbox.ownership import RenewOutcome
+        from nkyel.community.aio_sandbox.ownership import RenewOutcome
 
         self._blocking_touch()
         return RenewOutcome.RENEWED
@@ -72,9 +72,9 @@ class _BlockingProbeStore:
 
 def _make_provider(tmp_path: Path):
     """Build an ``AioSandboxProvider`` without ``__init__`` (no Docker, no threads)."""
-    from deerflow.community.aio_sandbox.aio_sandbox_provider import AioSandboxProvider
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
-    from deerflow.sandbox.acquire_serialization import AcquireSerializer
+    from nkyel.community.aio_sandbox.aio_sandbox_provider import AioSandboxProvider
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.sandbox.acquire_serialization import AcquireSerializer
 
     provider = AioSandboxProvider.__new__(AioSandboxProvider)
     provider._lock = threading.Lock()
@@ -134,22 +134,22 @@ async def test_async_acquire_offloads_ownership_publish(tmp_path, monkeypatch):
     these two were called directly, putting a Redis round trip on the event loop
     for every discover/create.
     """
-    from deerflow.community.aio_sandbox.sandbox_info import SandboxInfo
+    from nkyel.community.aio_sandbox.sandbox_info import SandboxInfo
 
     provider = _make_provider(tmp_path)
     info = SandboxInfo(
         sandbox_id="sb-async",
         sandbox_url="http://localhost:8080",
-        container_name="deer-flow-sandbox-sb-async",
+        container_name="nkyel-sandbox-sb-async",
         created_at=1.0,
     )
     provider._backend.discover = MagicMock(return_value=info)
 
     # The lock path is resolved in a worker thread, so the real `Paths` object can
-    # stay in place; DEER_FLOW_HOME keeps the thread directories and the lock file
+    # stay in place; NKYEL_HOME keeps the thread directories and the lock file
     # inside the test's own tmp_path.
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
 
     sandbox_id = await provider._discover_or_create_with_lock_async("t-async", "sb-async", user_id="u1")
 
@@ -163,11 +163,11 @@ async def test_async_lock_path_resolution_stays_off_the_loop(tmp_path, monkeypat
     pre-existing blocking call in this coroutine". The resolution now runs in a
     worker thread, so that stub is gone; this anchor keeps it from coming back.
     """
-    import deerflow.community.aio_sandbox.aio_sandbox_provider as aio_mod
+    import nkyel.community.aio_sandbox.aio_sandbox_provider as aio_mod
 
     provider = _make_provider(tmp_path)
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
 
     class _ReachedLockFile(Exception):
         pass
@@ -193,10 +193,10 @@ async def test_blocking_probe_thread_dir_actually_trips_the_gate(tmp_path, monke
     """
     from blockbuster import BlockingError
 
-    from deerflow.config.paths import get_paths
+    from nkyel.config.paths import get_paths
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
 
     with pytest.raises(BlockingError):
         get_paths().thread_dir("aio-sandbox-lock-wait")
@@ -213,12 +213,12 @@ async def test_async_acquire_derives_sandbox_id_off_the_loop(tmp_path, monkeypat
     """
     from concurrent.futures import ThreadPoolExecutor
 
-    from deerflow.config.paths import get_paths
+    from nkyel.config.paths import get_paths
 
     provider = _make_provider(tmp_path)
     provider._acquire_worker_executor = ThreadPoolExecutor(thread_name_prefix="aio-sandbox-owned-worker")
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     # Already offloaded with asyncio.to_thread; stubbed so the anchor does not
     # build a real skills projection.
     monkeypatch.setattr(provider, "_ensure_skills_projection", lambda user_id: None)
@@ -258,8 +258,8 @@ async def test_blocking_probe_sandbox_id_actually_trips_the_gate(tmp_path, monke
     from blockbuster import BlockingError
 
     provider = _make_provider(tmp_path)
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
 
     with pytest.raises(BlockingError):
         provider._sandbox_id_for_thread("t-id", "u1")

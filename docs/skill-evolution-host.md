@@ -1,12 +1,12 @@
 # Skill evolution host API (P0)
 
-DeerFlow supplies evidence, versioned candidate staging, checking, publication,
+nkyel supplies evidence, versioned candidate staging, checking, publication,
 and recovery. The learning strategy, candidate generation, quality evaluation,
 and product UI belong to the extension and are not included in this feature.
 
 ## Enable deliberately
 
-Use `deerflow-extension-api==0.2.7`. Existing extensions need no changes: both
+Use `nkyel-extension-api==0.2.7`. Existing extensions need no changes: both
 `ExtensionRuntimeDeps.completed_run_evidence` and `.skill_mutations` default to
 `None`. The older cross-user `run_evidence_reader` is unchanged.
 
@@ -55,7 +55,7 @@ may retain its prompts; apply your provider and tracing data-retention policies.
 ## Integrate a plugin
 
 Acquire the two optional dependencies in the extension service's `start(deps)`.
-All methods are asynchronous; DTOs come from `deerflow_extension_api`.
+All methods are asynchronous; DTOs come from `nkyel_extension_api`.
 
 1. Discover changed runs and obtain a completed-run snapshot. Terminal status
    alone does not mean complete evidence: inspect `seal_state`, coverage limits,
@@ -133,7 +133,7 @@ file. Recovery compares the exact package with those snapshots:
 - Neither: `NEEDS_REPAIR`; do not overwrite possible human work.
 
 Affected owner reads remain gated while publication is unresolved. Other owners
-remain usable. Recovery belongs to DeerFlow, so disabling or uninstalling the
+remain usable. Recovery belongs to nkyel, so disabling or uninstalling the
 originating plugin does not disable coordination or recovery.
 
 Administrators using session authentication can discover unresolved publication
@@ -182,7 +182,7 @@ This verifies the source-fence/deletion interleaving, not a multi-process
 PostgreSQL soak. Idempotency, recovery, scan-budget and lease behavior were
 covered by deterministic suites, not by concurrent PostgreSQL Gateway workers.
 `tests/test_skill_mutation_postgres.py` remains opt-in via
-`DEERFLOW_TEST_POSTGRES_URL` and creates/removes its own uniquely named schema.
+`NKYEL_TEST_POSTGRES_URL` and creates/removes its own uniquely named schema.
 Validate the intended same-host worker deployment before enabling it; SQLite
 results alone do not establish PostgreSQL lock behavior.
 

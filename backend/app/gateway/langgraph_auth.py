@@ -1,6 +1,6 @@
 """LangGraph compatibility auth handler — shares JWT logic with Gateway.
 
-The default DeerFlow runtime is embedded in the FastAPI Gateway; scripts and
+The default nkyel runtime is embedded in the FastAPI Gateway; scripts and
 Docker deployments do not load this module.  It is retained for LangGraph
 tooling, Studio, or direct LangGraph Server compatibility through
 ``langgraph.json``'s ``auth.path``.
@@ -25,7 +25,7 @@ from app.gateway.auth.jwt import decode_token
 from app.gateway.auth_disabled import AUTH_DISABLED_USER_ID, is_auth_disabled
 from app.gateway.deps import get_local_provider
 from app.gateway.utils import constant_time_equals
-from deerflow.mcp_scope import (
+from nkyel.mcp_scope import (
     THREAD_INCARNATION_CONTEXT_KEY,
     THREAD_INCARNATION_METADATA_GUARD_KEY,
     is_valid_thread_incarnation,
@@ -33,7 +33,7 @@ from deerflow.mcp_scope import (
 
 auth = Auth()
 
-# StudioUser was added after DeerFlow's historical langgraph-sdk floor. Resolve
+# StudioUser was added after nkyel's historical langgraph-sdk floor. Resolve
 # it once so older compatible SDK installs keep ordinary owner scoping instead
 # of failing every request with an AttributeError.
 _STUDIO_USER_TYPE = getattr(Auth.types, "StudioUser", None)
@@ -41,7 +41,7 @@ _STUDIO_USER_TYPE = getattr(Auth.types, "StudioUser", None)
 # Methods that require CSRF validation (state-changing per RFC 7231).
 _CSRF_METHODS = frozenset({"POST", "PUT", "DELETE", "PATCH"})
 _allow_thread_incarnation_write: ContextVar[bool] = ContextVar(
-    "deerflow_allow_standalone_thread_incarnation_write",
+    "nkyel_allow_standalone_thread_incarnation_write",
     default=False,
 )
 _MISSING = object()

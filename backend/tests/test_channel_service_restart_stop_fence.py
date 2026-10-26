@@ -6,7 +6,7 @@ import pytest
 
 from app.channels import service as channel_service
 from app.channels.service import ChannelService
-from deerflow import reflection
+from nkyel import reflection
 
 
 class _FakeChannel:

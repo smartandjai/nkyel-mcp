@@ -16,19 +16,19 @@ import httpx
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.prompt import format_conversation_for_update
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import MemoryStorage
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater
-from deerflow.agents.memory.prescreen.contract import (
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.prompt import format_conversation_for_update
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import MemoryStorage
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater
+from nkyel.agents.memory.prescreen.contract import (
     MODE_ENFORCE,
     MODE_OFF,
     MODE_SHADOW,
     MemoryPrescreenRequest,
     resolve_memory_prescreen,
 )
-from deerflow.agents.memory.prescreen.typesafe import TypeSafeMemoryPrescreen
-from deerflow.agents.memory.signals.contract import (
+from nkyel.agents.memory.prescreen.typesafe import TypeSafeMemoryPrescreen
+from nkyel.agents.memory.signals.contract import (
     COMBINE_ALWAYS,
     COMBINE_NEVER,
     LABEL_CORRECTION,
@@ -37,9 +37,9 @@ from deerflow.agents.memory.signals.contract import (
     MemorySignalRequest,
     resolve_memory_signal_classifier,
 )
-from deerflow.agents.memory.signals.coordinator import MemoryBatchContext, MemorySignalCoordinator
-from deerflow.agents.memory.signals.typesafe import QUESTION_AFFIRMATION, QUESTION_NEGATION, TypeSafeSignalClassifier
-from deerflow.typesafe.errors import TypeSafeError
+from nkyel.agents.memory.signals.coordinator import MemoryBatchContext, MemorySignalCoordinator
+from nkyel.agents.memory.signals.typesafe import QUESTION_AFFIRMATION, QUESTION_NEGATION, TypeSafeSignalClassifier
+from nkyel.typesafe.errors import TypeSafeError
 
 _API_KEY = "memory-judge-test-key"
 _PRESCREEN_Q = "memory_worth_keeping"
@@ -50,8 +50,8 @@ _JUDGE_HOOK = "judge"
 _KEEPING_TEXT = "We reviewed the release candidate on Tuesday afternoon and the notes are in /tmp/notes.md"
 _CHATTER_TEXT = "ok, thanks"
 
-_PRESCREEN = "deerflow.agents.memory.prescreen.typesafe:TypeSafeMemoryPrescreen"
-_CLASSIFIER = "deerflow.agents.memory.signals.typesafe:TypeSafeSignalClassifier"
+_PRESCREEN = "nkyel.agents.memory.prescreen.typesafe:TypeSafeMemoryPrescreen"
+_CLASSIFIER = "nkyel.agents.memory.signals.typesafe:TypeSafeSignalClassifier"
 
 
 class _Server:
@@ -1215,19 +1215,19 @@ class TestHostWiring:
     """
 
     def _hooks_with(self, memory: dict) -> dict:
-        from deerflow.config.memory_config import get_memory_config, load_memory_config_from_dict, set_memory_config
+        from nkyel.config.memory_config import get_memory_config, load_memory_config_from_dict, set_memory_config
 
         previous = get_memory_config()
         load_memory_config_from_dict(memory)
         try:
-            from deerflow.agents.memory.manager import _collect_host_hooks
+            from nkyel.agents.memory.manager import _collect_host_hooks
 
             return _collect_host_hooks()
         finally:
             set_memory_config(previous)
 
     def test_both_sides_off_injects_no_judge(self, tmp_path):
-        from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
+        from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
 
         hooks = self._hooks_with({"enabled": True})
 
@@ -1236,7 +1236,7 @@ class TestHostWiring:
         assert dm._config.judge is None
 
     def test_a_configured_pre_screen_reaches_the_backend_slot(self, tmp_path):
-        from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
+        from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
 
         hooks = self._hooks_with(
             {
@@ -1258,7 +1258,7 @@ class TestHostWiring:
         assert "SECRET-MEMORY-KEY" not in declared and "api_key_env" not in declared
 
     def test_an_enabled_mode_without_use_fails_at_config_load(self):
-        from deerflow.config.memory_config import MemoryConfig
+        from nkyel.config.memory_config import MemoryConfig
 
         with pytest.raises(ValueError, match="memory.prescreen.use is required"):
             MemoryConfig(prescreen={"mode": MODE_SHADOW})
@@ -1276,10 +1276,10 @@ class TestJudgeHotReload:
 
     @pytest.fixture(autouse=True)
     def _isolate(self, monkeypatch, tmp_path):
-        import deerflow.config.runtime_paths as runtime_paths
-        from deerflow.agents.memory.manager import reset_memory_manager
-        from deerflow.config.memory_config import get_memory_config, set_memory_config
-        from deerflow.config.typesafe_config import reset_typesafe_config
+        import nkyel.config.runtime_paths as runtime_paths
+        from nkyel.agents.memory.manager import reset_memory_manager
+        from nkyel.config.memory_config import get_memory_config, set_memory_config
+        from nkyel.config.typesafe_config import reset_typesafe_config
 
         monkeypatch.setattr(runtime_paths, "runtime_home", lambda: tmp_path)
         previous = get_memory_config()
@@ -1291,8 +1291,8 @@ class TestJudgeHotReload:
         reset_typesafe_config()
 
     def test_a_mode_toggle_rebuilds_the_injected_judge(self):
-        from deerflow.agents.memory.manager import get_memory_manager
-        from deerflow.config.memory_config import MemoryConfig, set_memory_config
+        from nkyel.agents.memory.manager import get_memory_manager
+        from nkyel.config.memory_config import MemoryConfig, set_memory_config
 
         set_memory_config(MemoryConfig(manager_class="deermem"))
         manager = get_memory_manager()
@@ -1309,8 +1309,8 @@ class TestJudgeHotReload:
         assert get_memory_manager()._config.judge is None, "shadow -> off stops judging (and any external call)"
 
     def test_an_unchanged_judging_config_keeps_the_same_judge(self):
-        from deerflow.agents.memory.manager import get_memory_manager
-        from deerflow.config.memory_config import MemoryConfig, set_memory_config
+        from nkyel.agents.memory.manager import get_memory_manager
+        from nkyel.config.memory_config import MemoryConfig, set_memory_config
 
         set_memory_config(MemoryConfig(manager_class="deermem", prescreen={"mode": MODE_ENFORCE, "use": _PRESCREEN, "config": {"api_key": _API_KEY}}))
         first = get_memory_manager()._config.judge
@@ -1320,9 +1320,9 @@ class TestJudgeHotReload:
         """A judge inheriting its connection from the top-level ``typesafe`` block
         must pick up an endpoint/model/credential/deadline edit there, and a
         credential rotation, not just a memory-slot edit."""
-        from deerflow.agents.memory.manager import get_memory_manager
-        from deerflow.config.memory_config import MemoryConfig, set_memory_config
-        from deerflow.config.typesafe_config import load_typesafe_config_from_dict
+        from nkyel.agents.memory.manager import get_memory_manager
+        from nkyel.config.memory_config import MemoryConfig, set_memory_config
+        from nkyel.config.typesafe_config import load_typesafe_config_from_dict
 
         monkeypatch.setenv("TYPESAFE_API_KEY", "first-key")
         set_memory_config(MemoryConfig(manager_class="deermem", prescreen={"mode": MODE_SHADOW, "use": _PRESCREEN}))
@@ -1356,9 +1356,9 @@ class TestJudgeHotReload:
         """
         import threading
 
-        from deerflow.agents.memory import manager as manager_module
-        from deerflow.agents.memory.manager import get_memory_manager
-        from deerflow.config.memory_config import MemoryConfig, set_memory_config
+        from nkyel.agents.memory import manager as manager_module
+        from nkyel.agents.memory.manager import get_memory_manager
+        from nkyel.config.memory_config import MemoryConfig, set_memory_config
 
         set_memory_config(MemoryConfig(manager_class="deermem"))
         manager = get_memory_manager()
@@ -1440,7 +1440,7 @@ class TestThroughTheQueue:
     """End to end through the real backend: add -> debounce queue -> updater -> judge."""
 
     def test_a_queued_chatter_batch_is_skipped_without_an_extraction_call(self, tmp_path):
-        from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
+        from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
 
         server = _Server(lambda request: httpx.Response(200, json=_answer(0.01)))
         recorded: list = []
@@ -1463,7 +1463,7 @@ class TestThroughTheQueue:
         assert [key for key in deer_mem._updater._watermarks if key[:2] == ("t1", "u1")], "the skipped batch is consumed, not re-judged every turn"
 
     def test_a_queued_batch_with_a_signal_still_extracts(self, tmp_path):
-        from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
+        from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
 
         server = _Server(lambda request: httpx.Response(200, json=_answer(0.01)))
         recorded: list = []

@@ -1,7 +1,7 @@
 """Tests for request-scoped client context delivery (issue #3105).
 
 The sanitized ``runtime.context["client"]`` is rendered by
-``deerflow/runtime/client_context.py`` and delivered through
+``nkyel/runtime/client_context.py`` and delivered through
 ``DynamicContextMiddleware.wrap_model_call`` as one hidden, request-only
 HumanMessage after the leading SystemMessages — never system text, never a
 state update.
@@ -12,7 +12,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 import pytest
-from deerflow_extension_api import ContentKind, read_provenance
+from nkyel_extension_api import ContentKind, read_provenance
 from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
@@ -20,12 +20,12 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import Field
 
-from deerflow.agents.lead_agent import prompt as prompt_module
-from deerflow.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY, DynamicContextMiddleware
-from deerflow.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware, frame_untrusted_text, neutralize_untrusted_tags
-from deerflow.agents.middlewares.system_message_coalescing_middleware import SystemMessageCoalescingMiddleware
-from deerflow.runtime.client_context import render_client_context_for_prompt
-from deerflow.runtime.context_keys import PROJECT_CONTEXT_KEY
+from nkyel.agents.lead_agent import prompt as prompt_module
+from nkyel.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY, DynamicContextMiddleware
+from nkyel.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware, frame_untrusted_text, neutralize_untrusted_tags
+from nkyel.agents.middlewares.system_message_coalescing_middleware import SystemMessageCoalescingMiddleware
+from nkyel.runtime.client_context import render_client_context_for_prompt
+from nkyel.runtime.context_keys import PROJECT_CONTEXT_KEY
 
 _CLIENT = {
     "name": "custom-analytics-frontend",
@@ -170,8 +170,8 @@ def test_static_prompt_names_the_block_without_values():
 def test_before_agent_update_is_identical_with_and_without_client():
     state = {"messages": [HumanMessage(content="Hi", id="msg-1")]}
     with (
-        mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value="<memory>\nPrefs.\n</memory>"),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value="<memory>\nPrefs.\n</memory>"),
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         with_client = DynamicContextMiddleware().before_agent(state, _runtime())
@@ -239,14 +239,14 @@ async def test_compiled_graph_delivers_client_context_request_only_and_latest_on
 
 
 def _pii_app_config(*, enabled: bool):
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.model_config import ModelConfig
-    from deerflow.config.pii_redaction_config import PiiRedactionConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.model_config import ModelConfig
+    from nkyel.config.pii_redaction_config import PiiRedactionConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     return AppConfig(
         models=[ModelConfig(name="m", display_name="m", description=None, use="langchain_openai:ChatOpenAI", model="m", supports_thinking=False, supports_vision=False)],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         pii_redaction=PiiRedactionConfig(enabled=True, token_secret="unit-test-deployment-secret-0123456789") if enabled else PiiRedactionConfig(),
     )
 
@@ -254,7 +254,7 @@ def _pii_app_config(*, enabled: bool):
 @pytest.mark.parametrize("use_async", [False, True], ids=["sync", "async"])
 @pytest.mark.parametrize("pii_enabled", [True, False], ids=["pii-on", "pii-off"])
 def test_composed_chain_applies_the_pii_policy_to_the_client_block(pii_enabled, use_async):
-    from deerflow.agents.middlewares.pii_redaction_middleware import PiiRedactionMiddleware
+    from nkyel.agents.middlewares.pii_redaction_middleware import PiiRedactionMiddleware
 
     email = "alice@example.com"
     app_config = _pii_app_config(enabled=pii_enabled)

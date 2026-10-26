@@ -72,7 +72,7 @@ def test_restart_sweeps_crash_orphans_without_touching_other_state(tmp_path, mon
     staged = list(tmp_path.glob("*.tmp"))
     assert len(staged) == 2
     orphan, fresh = staged
-    assert all(path.name.startswith(f".{target.name}.deerflow-") for path in staged)
+    assert all(path.name.startswith(f".{target.name}.nkyel-") for path in staged)
     if os.name != "nt":
         assert all(path.stat().st_mode & 0o777 == 0o600 for path in staged)
     _age(orphan)
@@ -80,11 +80,11 @@ def test_restart_sweeps_crash_orphans_without_touching_other_state(tmp_path, mon
     os.utime(fresh, (recent, recent))
 
     # Even old generic tempfile names cannot be attributed to this store.
-    retained = [tmp_path / name for name in ("backup.tmp", "tmpabcdefgh.tmp", ".other.json.deerflow-old.tmp")]
+    retained = [tmp_path / name for name in ("backup.tmp", "tmpabcdefgh.tmp", ".other.json.nkyel-old.tmp")]
     for path in retained:
         path.write_text("unrelated", encoding="utf-8")
         _age(path)
-    directory = tmp_path / f".{target.name}.deerflow-directory.tmp"
+    directory = tmp_path / f".{target.name}.nkyel-directory.tmp"
     directory.mkdir()
     _age(directory)
     downloads = tmp_path / "downloads"
@@ -93,7 +93,7 @@ def test_restart_sweeps_crash_orphans_without_touching_other_state(tmp_path, mon
     nested.write_text("attachment", encoding="utf-8")
     _age(nested)
     if os.name != "nt":
-        link = tmp_path / f".{target.name}.deerflow-symlink.tmp"
+        link = tmp_path / f".{target.name}.nkyel-symlink.tmp"
         link.symlink_to(retained[0])
         _age(link)
         retained.append(link)
@@ -122,8 +122,8 @@ def test_orphan_cleanup_failure_does_not_skip_other_files_or_loading(tmp_path, m
     target = tmp_path / ("runtime-config.json" if kind == "runtime" else "wechat-auth.json")
     config = {"bot_token": "current-token"}
     target.write_text(json.dumps({"slack": config} if kind == "runtime" else config), encoding="utf-8")
-    failed = tmp_path / f".{target.name}.deerflow-failed.tmp"
-    other = tmp_path / f".{target.name}.deerflow-other.tmp"
+    failed = tmp_path / f".{target.name}.nkyel-failed.tmp"
+    other = tmp_path / f".{target.name}.nkyel-other.tmp"
     for path in (failed, other):
         path.write_text("stale-credential", encoding="utf-8")
         _age(path)
@@ -175,7 +175,7 @@ def test_unreadable_staging_directory_does_not_prevent_loading_current_credentia
 
 def test_database_startup_sweeps_staging_even_after_the_legacy_file_was_removed(tmp_path):
     target = tmp_path / "runtime-config.json"
-    orphan = tmp_path / f".{target.name}.deerflow-orphan.tmp"
+    orphan = tmp_path / f".{target.name}.nkyel-orphan.tmp"
     orphan.write_text("plaintext-credential", encoding="utf-8")
     _age(orphan)
     repo = Mock()

@@ -14,7 +14,7 @@ pytestmark = [pytest.mark.live, pytest.mark.asyncio]
 
 
 def _required(*names):
-    if os.getenv("DEER_FLOW_RUN_LIVE_TESTS") != "1":
+    if os.getenv("NKYEL_RUN_LIVE_TESTS") != "1":
         pytest.skip("live knowledge checks are opt-in")
     if any(not os.getenv(name) for name in names):
         pytest.fail("Set all documented live provider environment variables")
@@ -22,8 +22,8 @@ def _required(*names):
 
 
 def _evidence(result):
-    from deerflow.knowledge import format_result, sources_from_messages
-    from deerflow.knowledge.sources import forward_sources, prune_sources
+    from nkyel.knowledge import format_result, sources_from_messages
+    from nkyel.knowledge.sources import forward_sources, prune_sources
 
     content, artifact = format_result(result)
     message = json.loads(json.dumps({"type": "tool", "content": content, "artifact": artifact}))
@@ -40,10 +40,10 @@ def _evidence(result):
 
 async def test_weknora_live_published_entries(monkeypatch):
     env = _required("WEKNORA_BASE_URL", "WEKNORA_TENANT_ID", "WEKNORA_WIKI_BASE_ID", "WEKNORA_API_KEY", "WEKNORA_WIKI_QUERY")
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-weknora"))
-    from deerflow_extension_weknora import WeKnoraProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-weknora"))
+    from nkyel_extension_weknora import WeKnoraProvider
 
-    from deerflow.knowledge import KnowledgeRequestContext
+    from nkyel.knowledge import KnowledgeRequestContext
 
     provider = WeKnoraProvider({"spaces": [{"base_url": env["WEKNORA_BASE_URL"], "tenant_id": env["WEKNORA_TENANT_ID"], "api_key_env": "WEKNORA_API_KEY", "user_ids": ["live-probe"], "knowledge_base_ids": [env["WEKNORA_WIKI_BASE_ID"]]}]})
     page = await provider.catalog(context=KnowledgeRequestContext("live-probe", "researcher"), page=1, page_size=100, search="")
@@ -59,10 +59,10 @@ async def test_weknora_live_published_entries(monkeypatch):
 
 async def test_lightrag_live_relation_evidence(monkeypatch):
     env = _required("LIGHTRAG_BASE_URL", "LIGHTRAG_API_KEY", "LIGHTRAG_RELATION_QUERY")
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-lightrag"))
-    from deerflow_extension_lightrag import LightRAGProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-lightrag"))
+    from nkyel_extension_lightrag import LightRAGProvider
 
-    from deerflow.knowledge import KnowledgeRequestContext
+    from nkyel.knowledge import KnowledgeRequestContext
 
     provider = LightRAGProvider({"base_url": env["LIGHTRAG_BASE_URL"], "api_key_env": "LIGHTRAG_API_KEY", "user_ids": ["live-probe"], "timeout": 120})
     result = await provider.relations_search(env["LIGHTRAG_RELATION_QUERY"], context=KnowledgeRequestContext("live-probe", "researcher"))
@@ -98,18 +98,18 @@ async def test_live_glm_three_tools_and_citations(monkeypatch):
     from langchain_openai import ChatOpenAI
 
     for package in ("weknora", "lightrag"):
-        monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / f"examples/deerflow-extension-{package}"))
-    from deerflow_extension_lightrag import LightRAGProvider
-    from deerflow_extension_weknora import WeKnoraProvider
+        monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / f"examples/nkyel-extension-{package}"))
+    from nkyel_extension_lightrag import LightRAGProvider
+    from nkyel_extension_weknora import WeKnoraProvider
 
-    from deerflow.agents.middlewares.knowledge_scope_middleware import KnowledgeScopeMiddleware
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.config.tool_config import ToolConfig
-    from deerflow.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, ExtensionRegistry
-    from deerflow.knowledge import sources_from_messages, tools
-    from deerflow.knowledge.sources import forward_sources, prune_sources
-    from deerflow.runtime.serialization import serialize_channel_values_for_api
+    from nkyel.agents.middlewares.knowledge_scope_middleware import KnowledgeScopeMiddleware
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.config.tool_config import ToolConfig
+    from nkyel.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, ExtensionRegistry
+    from nkyel.knowledge import sources_from_messages, tools
+    from nkyel.knowledge.sources import forward_sources, prune_sources
+    from nkyel.runtime.serialization import serialize_channel_values_for_api
 
     wiki = WeKnoraProvider(
         {
@@ -130,7 +130,7 @@ async def test_live_glm_three_tools_and_citations(monkeypatch):
         registry.knowledge_provider("weknora", wiki)
         registry.knowledge_provider("lightrag-relations", graph)
     mapping = {"knowledge_search": "weknora", "knowledge_entries_search": "weknora", "entity_relations_search": "lightrag-relations"}
-    config = AppConfig(sandbox=SandboxConfig(use="example.remote:Sandbox"), tools=[ToolConfig(name=name, group="knowledge", use=f"deerflow.knowledge.tools:{name}_tool", provider=provider) for name, provider in mapping.items()])
+    config = AppConfig(sandbox=SandboxConfig(use="example.remote:Sandbox"), tools=[ToolConfig(name=name, group="knowledge", use=f"nkyel.knowledge.tools:{name}_tool", provider=provider) for name, provider in mapping.items()])
     model = ChatOpenAI(model=env["E2E_LLM_MODEL"], base_url=env["E2E_LLM_BASE_URL"], api_key=env["E2E_LLM_API_KEY"], timeout=240, max_retries=0, extra_body=json.loads(os.getenv("E2E_LLM_EXTRA_BODY", "{}")))
     agent = create_agent(
         model,

@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.community.image_search import tools
-from deerflow.community.url_safety import safe_public_result_url
+from nkyel.community.image_search import tools
+from nkyel.community.url_safety import safe_public_result_url
 
 
 @pytest.mark.asyncio

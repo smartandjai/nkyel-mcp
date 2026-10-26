@@ -2,10 +2,10 @@ import copy
 import logging
 from unittest.mock import MagicMock
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import MemoryStorage
-from deerflow.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater, _extract_text, _normalize_memory_update_data
-from deerflow.agents.memory.manager import _host_default_extraction_callback
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import MemoryStorage
+from nkyel.agents.memory.backends.deermem.deermem.core.updater import MemoryUpdater, _extract_text, _normalize_memory_update_data
+from nkyel.agents.memory.manager import _host_default_extraction_callback
 
 
 def _memory(facts: list[dict[str, object]] | None = None) -> dict[str, object]:

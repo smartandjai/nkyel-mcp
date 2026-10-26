@@ -6,28 +6,28 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
-from deerflow_extension_api import AgentScope, MiddlewarePlacement, Placement, extension
+from nkyel_extension_api import AgentScope, MiddlewarePlacement, Placement, extension
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 
-from deerflow.config.app_config import AppConfig
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
-from deerflow.subagents.config import SubagentConfig
-from deerflow.subagents.status_contract import format_subagent_result_message, make_subagent_additional_kwargs
+from nkyel.config.app_config import AppConfig
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.subagents.config import SubagentConfig
+from nkyel.subagents.status_contract import format_subagent_result_message, make_subagent_additional_kwargs
 
 
 @pytest.fixture
 def executor_module(monkeypatch, tmp_path):
     # conftest installs an executor stub. Load the production module separately
     # without replacing its real graph, middleware, tool or state dependencies.
-    path = Path(__file__).parents[1] / "packages/harness/deerflow/subagents/executor.py"
+    path = Path(__file__).parents[1] / "packages/harness/nkyel/subagents/executor.py"
     spec = importlib.util.spec_from_file_location("_direct_result_executor", path)
     module = importlib.util.module_from_spec(spec)
     monkeypatch.setitem(sys.modules, spec.name, module)
     spec.loader.exec_module(module)
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     yield module
     module._shutdown_isolated_subagent_loop()
 
@@ -100,7 +100,7 @@ async def test_subagent_returns_terminal_output(executor_module, monkeypatch, so
     app_config = AppConfig.model_validate(
         {
             "models": [{"name": "offline", "use": "langchain_openai:ChatOpenAI", "model": "offline"}],
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "summarization": {"enabled": False},
         }
     )

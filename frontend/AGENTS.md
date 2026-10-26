@@ -1,10 +1,10 @@
 # AGENTS.md
 
-DeerFlow frontend guidance source of truth; `CLAUDE.md` imports `@AGENTS.md`.
+nkyel frontend guidance source of truth; `CLAUDE.md` imports `@AGENTS.md`.
 
 ## Project Overview
 
-DeerFlow's Next.js 16 frontend provides thread-based AI conversations with streaming responses, artifacts, skills, and tools through a LangGraph backend.
+nkyel's Next.js 16 frontend provides thread-based AI conversations with streaming responses, artifacts, skills, and tools through a LangGraph backend.
 
 **Stack**: Next.js 16, React 19, TypeScript 5.8, Tailwind CSS 4, pnpm 10.26.2. Requires Node.js 22+ and pnpm 10.26.2+.
 
@@ -29,7 +29,7 @@ Run from `frontend/`; host pnpm calls use `../scripts/pnpm.py`.
 
 Unit tests under `tests/unit/` mirror `src/`; import source via `@/`.
 
-Webpack is the default development bundler. Use `DEER_FLOW_DEV_BUNDLER=turbo` with `pnpm dev` to opt in to Turbopack when diagnosing a local Next.js bundler issue.
+Webpack is the default development bundler. Use `NKYEL_DEV_BUNDLER=turbo` with `pnpm dev` to opt in to Turbopack when diagnosing a local Next.js bundler issue.
 
 On Windows `pnpm dev` binds `127.0.0.1` by default because Hyper-V/winnat excluded port ranges can reject Next's default `0.0.0.0` bind with `EACCES` (#2870). Pass `pnpm dev -- --hostname 0.0.0.0` to listen on a LAN interface instead.
 
@@ -69,8 +69,8 @@ groups, clears with `null`, and leaves schedules untouched; Duplicate copies the
 `BindFeishuGroup` uses the connect API for a persistent, copyable `/connect` command
 and explicitly refreshes the shared query. The general connection poll stops early
 when a private binding already exists, so cannot wait for a new group.
-In chat, a `schedule_task` result becomes an `assistant:scheduled-task` group (`core/scheduled-tasks/tool-result.ts`, last card per task per turn; not a turn boundary) rendered by `ScheduledTaskCard`, which polls the task only while on screen. A human message with `additional_kwargs.deerflow_scheduled_origin` stays a `human` group with `scheduledOrigin`: `ScheduledRunPrompt` renders the origin's user-language parts, never the launched text, and it is not editable.
-Server-created threads: `core/threads/origin.ts` reads `metadata.deerflow_origin` (`contracts/thread_origin_contract.json`), then `channel_source`, then a legacy `scheduled_task_id`; provider names come from `threads.origin.providers`. `core/threads/activity.ts` polls `/api/thread-activity` (mount `useThreadActivity` once; unmounting resets its cursor; first poll only seeds; invalidate lists only on server-origin threads, truncation or a higher `read_version`) and `useMarkThreadRead` posts reads. `core/scheduled-tasks/events.ts` loads a chat's lifecycle events, not gated on its task list; `placeTaskEvents` puts each at the end of its `after_run_id` turn. The UI language is saved as the `locale` preference once per session and on each switch, only when the Gateway's preferences include `locale`.
+In chat, a `schedule_task` result becomes an `assistant:scheduled-task` group (`core/scheduled-tasks/tool-result.ts`, last card per task per turn; not a turn boundary) rendered by `ScheduledTaskCard`, which polls the task only while on screen. A human message with `additional_kwargs.nkyel_scheduled_origin` stays a `human` group with `scheduledOrigin`: `ScheduledRunPrompt` renders the origin's user-language parts, never the launched text, and it is not editable.
+Server-created threads: `core/threads/origin.ts` reads `metadata.nkyel_origin` (`contracts/thread_origin_contract.json`), then `channel_source`, then a legacy `scheduled_task_id`; provider names come from `threads.origin.providers`. `core/threads/activity.ts` polls `/api/thread-activity` (mount `useThreadActivity` once; unmounting resets its cursor; first poll only seeds; invalidate lists only on server-origin threads, truncation or a higher `read_version`) and `useMarkThreadRead` posts reads. `core/scheduled-tasks/events.ts` loads a chat's lifecycle events, not gated on its task list; `placeTaskEvents` puts each at the end of its `after_run_id` turn. The UI language is saved as the `locale` preference once per session and on each switch, only when the Gateway's preferences include `locale`.
 Thread rows (sidebar, `/workspace/chats`) show `ThreadOriginIcon` and, if `unread === true` and not the open thread, `ThreadUnreadDot` with `threads.unreadLabel` as row label. `WorkspaceSidebar` mounts `useThreadActivity`. Chat pages call `useMarkOpenThreadRead` once metadata loads (marks read on load, on an unread flip, on tab visible, and via its callback from `onFinish`).
 Chat pages pass `useThreadScheduledTaskEvents` data to `MessageList` (`scheduledTaskEvents`; the custom-agent page also passes its agent for the run link), which renders `ScheduledTaskEventLine` through `VirtualMessageList.renderAfterGroup` at the `placeTaskEvents` position, inside the group's measured row. Lines are history: never gated on the task list. Channel provider cards (Settings and the sidebar list) render `ChannelScheduledUpdates` from `proactive_notifications`, and nothing when the field is absent.
 Keep IM notification preferences viewer-fenced and separate from browser alerts; only confirmed server writes change switches.
@@ -149,7 +149,7 @@ knowledge selection on both draft and persisted tool access: catalog reads
 authorize against the saved agent, so new access must be saved first. Restored
 tool selections remain unchanged and must not clear a knowledge default.
 
-Custom Agent portability uses the versioned `deerflow.custom-agent` JSON
+Custom Agent portability uses the versioned `nkyel.custom-agent` JSON
 document through `core/agents/api.ts`. Keep file parsing client-side only for
 previewing the proposed local name; the Gateway is authoritative for schema,
 name, model, and conflict validation. Export downloads must never synthesize
@@ -214,7 +214,7 @@ The homepage counter uses `/github-stars`, outside Gateway. It reads server-only
 when unavailable. From `frontend/`, run `node --env-file=.env
 .next/standalone/server.js` to load credentials.
 
-For non-localhost dev access, set `DEER_FLOW_DEV_ALLOWED_ORIGINS` to comma-separated
+For non-localhost dev access, set `NKYEL_DEV_ALLOWED_ORIGINS` to comma-separated
 hosts (URLs reduce to hosts). Next's `allowedDevOrigins` gates `/_next/*`, fonts
 and HMR; otherwise 403s prevent hydration and interactions, including login.
 Production ignores this setting.
@@ -258,7 +258,7 @@ ports, measures unique JavaScript/CSS for representative routes, writes
 Fix route ownership or split points when over budget; document and review
 measured regressions before raising ceilings.
 
-Chat archive is a thread metadata flag (`deerflow_archived === true`), independent
+Chat archive is a thread metadata flag (`nkyel_archived === true`), independent
 of run status. Sidebar and Chats explicitly request the Gateway's optional
 `archived` filter through `searchThreadsByArchive`; the SDK drops this extension,
 so use the authenticated REST fetcher. Static demos retain SDK fixture queries.
@@ -312,7 +312,7 @@ mutation permissions, and cache ownership remain in the existing hooks. Skill di
 metadata; runtime names and full descriptions remain unchanged. Public, custom,
 integration, and legacy sources must stay distinct. Community currently offers
 archive import, not a remote marketplace. Screenshot E2E fixtures are demo data.
-`backend/packages/harness/deerflow/capabilities/builtin.json` owns localized
+`backend/packages/harness/nkyel/capabilities/builtin.json` owns localized
 catalog manifests. Refresh the generated demo snapshot with `pnpm catalog:sync`
 after changing the catalog; unit tests enforce equality with the source. Demo
 business projections derive provider IDs from the catalog adapter metadata. The

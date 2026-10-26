@@ -11,11 +11,11 @@ import asyncio
 
 import pytest
 
-from deerflow.runtime.runs.manager import RunRecord, RunStartOutcome
-from deerflow.runtime.runs.schemas import DisconnectMode, RunStatus
-from deerflow.runtime.runs.worker import RunContext, run_agent
-from deerflow.trace_context import (
-    DEERFLOW_TRACE_METADATA_KEY,
+from nkyel.runtime.runs.manager import RunRecord, RunStartOutcome
+from nkyel.runtime.runs.schemas import DisconnectMode, RunStatus
+from nkyel.runtime.runs.worker import RunContext, run_agent
+from nkyel.trace_context import (
+    NKYEL_TRACE_METADATA_KEY,
     request_trace_context,
 )
 
@@ -89,7 +89,7 @@ class _FakeBridge:
 
 @pytest.fixture(autouse=True)
 def _clear_tracing_env(monkeypatch):
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     for name in ("LANGFUSE_TRACING", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL"):
         monkeypatch.delenv(name, raising=False)
@@ -103,7 +103,7 @@ async def test_run_agent_injects_langfuse_metadata(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
 
@@ -142,8 +142,8 @@ async def test_run_agent_injects_langfuse_metadata(monkeypatch):
     user_id = metadata.get("langfuse_user_id")
     assert user_id == "test-user-autouse", f"expected test-user-autouse, got {user_id}"
     assert metadata.get("langfuse_trace_name") == "lead-agent"
-    assert metadata.get(DEERFLOW_TRACE_METADATA_KEY) == "gateway-trace-1"
-    assert fake_agent.captured_config.get("context", {}).get(DEERFLOW_TRACE_METADATA_KEY) == "gateway-trace-1"
+    assert metadata.get(NKYEL_TRACE_METADATA_KEY) == "gateway-trace-1"
+    assert fake_agent.captured_config.get("context", {}).get(NKYEL_TRACE_METADATA_KEY) == "gateway-trace-1"
     tags = metadata.get("langfuse_tags") or []
     assert "model:gpt-4o" in tags
 
@@ -153,21 +153,21 @@ async def test_run_agent_injects_langfuse_metadata(monkeypatch):
 async def test_run_agent_tags_the_effective_model(monkeypatch, requested_model):
     from langchain_core.callbacks import BaseCallbackHandler
 
-    from deerflow.agents.lead_agent import agent as lead_agent_module
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.model_config import ModelConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.agents.lead_agent import agent as lead_agent_module
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.model_config import ModelConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
     fake_agent = _FakeAgent()
     app_config = AppConfig(
         models=[ModelConfig(name="actual-model", model="actual-model", use="langchain_openai:ChatOpenAI")],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
     )
     selected_models = []
     callback = BaseCallbackHandler()
@@ -229,15 +229,15 @@ class _ModelNameRecordingRunManager(_FakeRunManager):
 )
 async def test_run_agent_persists_the_effective_model(monkeypatch, requested_model, expected_updates):
     """The run record stores the model that ran, including when none was requested (#3109)."""
-    from deerflow.agents.lead_agent import agent as lead_agent_module
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.model_config import ModelConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.agents.lead_agent import agent as lead_agent_module
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.model_config import ModelConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     fake_agent = _FakeAgent()
     app_config = AppConfig(
         models=[ModelConfig(name="actual-model", model="actual-model", use="langchain_openai:ChatOpenAI")],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
     )
     monkeypatch.setattr(lead_agent_module, "create_chat_model", lambda **kwargs: object())
     monkeypatch.setattr(lead_agent_module, "create_agent", lambda **kwargs: fake_agent)
@@ -283,7 +283,7 @@ async def test_run_agent_uses_context_user_id_over_contextvar(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
 
@@ -338,9 +338,9 @@ async def test_run_agent_falls_back_to_default_user_when_unset(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
-    from deerflow.runtime import user_context as user_context_module
-    from deerflow.runtime.user_context import DEFAULT_USER_ID
+    from nkyel.config.tracing_config import reset_tracing_config
+    from nkyel.runtime import user_context as user_context_module
+    from nkyel.runtime.user_context import DEFAULT_USER_ID
 
     reset_tracing_config()
     monkeypatch.setattr(user_context_module, "get_effective_user_id", lambda: DEFAULT_USER_ID)
@@ -380,7 +380,7 @@ async def test_run_agent_preserves_caller_metadata_overrides(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
 
@@ -409,7 +409,7 @@ async def test_run_agent_preserves_caller_metadata_overrides(monkeypatch):
         config={
             "configurable": {"thread_id": "thread-default"},
             "metadata": {
-                DEERFLOW_TRACE_METADATA_KEY: "explicit-deerflow-trace",
+                NKYEL_TRACE_METADATA_KEY: "explicit-nkyel-trace",
                 "langfuse_session_id": "custom-session-id",
                 "langfuse_user_id": "explicit-user",
             },
@@ -420,24 +420,24 @@ async def test_run_agent_preserves_caller_metadata_overrides(monkeypatch):
     # Caller-supplied keys win.
     assert metadata["langfuse_session_id"] == "custom-session-id"
     assert metadata["langfuse_user_id"] == "explicit-user"
-    # ...except deerflow_trace_id, which the server issues. Honouring the
+    # ...except nkyel_trace_id, which the server issues. Honouring the
     # caller here would let the persisted run point at an id that matches
     # neither the response header nor the log lines for the same request.
-    assert metadata[DEERFLOW_TRACE_METADATA_KEY] != "explicit-deerflow-trace"
-    assert metadata[DEERFLOW_TRACE_METADATA_KEY] == fake_agent.captured_config["context"][DEERFLOW_TRACE_METADATA_KEY]
+    assert metadata[NKYEL_TRACE_METADATA_KEY] != "explicit-nkyel-trace"
+    assert metadata[NKYEL_TRACE_METADATA_KEY] == fake_agent.captured_config["context"][NKYEL_TRACE_METADATA_KEY]
     # Worker still fills in keys that the caller didn't set.
     assert metadata["langfuse_trace_name"] == "lead-agent"
 
 
 @pytest.mark.asyncio
 async def test_run_agent_overwrites_caller_supplied_trace_id(monkeypatch):
-    """The bound request trace is the only source. A ``deerflow_trace_id`` in
+    """The bound request trace is the only source. A ``nkyel_trace_id`` in
     the caller's metadata is replaced, not honoured, so the persisted run
     cannot disagree with the header and the logs from the same request."""
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
 
@@ -467,14 +467,14 @@ async def test_run_agent_overwrites_caller_supplied_trace_id(monkeypatch):
             config={
                 "configurable": {"thread_id": "thread-header"},
                 "metadata": {
-                    DEERFLOW_TRACE_METADATA_KEY: "metadata-trace-ignored",
+                    NKYEL_TRACE_METADATA_KEY: "metadata-trace-ignored",
                 },
             },
         )
 
     metadata = fake_agent.captured_config.get("metadata") or {}
-    assert metadata[DEERFLOW_TRACE_METADATA_KEY] == "header-trace-1"
-    assert fake_agent.captured_config.get("context", {}).get(DEERFLOW_TRACE_METADATA_KEY) == "header-trace-1"
+    assert metadata[NKYEL_TRACE_METADATA_KEY] == "header-trace-1"
+    assert fake_agent.captured_config.get("context", {}).get(NKYEL_TRACE_METADATA_KEY) == "header-trace-1"
 
 
 @pytest.mark.asyncio

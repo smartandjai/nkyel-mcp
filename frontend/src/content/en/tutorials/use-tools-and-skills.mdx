@@ -1,13 +1,13 @@
 ---
 title: Use Tools and Skills
-description: This tutorial shows you how to configure and use tools and skills in DeerFlow to give the agent access to web search, file operations, and domain-specific capabilities.
+description: This tutorial shows you how to configure and use tools and skills in nkyel to give the agent access to web search, file operations, and domain-specific capabilities.
 ---
 
 import { Callout } from "nextra/components";
 
 # Use Tools and Skills
 
-This tutorial shows you how to configure and use tools and skills in DeerFlow to give the agent access to web search, file operations, and domain-specific capabilities.
+This tutorial shows you how to configure and use tools and skills in nkyel to give the agent access to web search, file operations, and domain-specific capabilities.
 
 ## Configuring tools
 
@@ -16,16 +16,16 @@ Add tools to `config.yaml`:
 ```yaml
 tools:
   # Web search
-  - use: deerflow.community.ddg_search.tools:web_search_tool
+  - use: nkyel.community.ddg_search.tools:web_search_tool
 
   # Web content fetching
-  - use: deerflow.community.jina_ai.tools:web_fetch_tool
+  - use: nkyel.community.jina_ai.tools:web_fetch_tool
 
   # Sandbox file operations
-  - use: deerflow.sandbox.tools:ls_tool
-  - use: deerflow.sandbox.tools:read_file_tool
-  - use: deerflow.sandbox.tools:write_file_tool
-  - use: deerflow.sandbox.tools:bash_tool
+  - use: nkyel.sandbox.tools:ls_tool
+  - use: nkyel.sandbox.tools:read_file_tool
+  - use: nkyel.sandbox.tools:write_file_tool
+  - use: nkyel.sandbox.tools:bash_tool
 ```
 
 ## Enabling skills
@@ -34,7 +34,7 @@ Enable skills through Capability Center → Skills, or edit `extensions_config.j
 
 **Via the app UI:**
 
-1. Open the DeerFlow app
+1. Open the nkyel app
 2. Open Capability Center in the sidebar, then select Skills
 3. Find `deep-research` and toggle it on
 

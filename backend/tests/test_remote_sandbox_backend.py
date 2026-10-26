@@ -6,11 +6,11 @@ from unittest.mock import Mock
 import pytest
 import requests
 
-import deerflow.skills.storage as storage_mod
-from deerflow.community.aio_sandbox import remote_backend as remote_backend_mod
-from deerflow.community.aio_sandbox.remote_backend import RemoteSandboxBackend
-from deerflow.community.aio_sandbox.sandbox_info import SandboxInfo
-from deerflow.skills.types import SkillCategory
+import nkyel.skills.storage as storage_mod
+from nkyel.community.aio_sandbox import remote_backend as remote_backend_mod
+from nkyel.community.aio_sandbox.remote_backend import RemoteSandboxBackend
+from nkyel.community.aio_sandbox.sandbox_info import SandboxInfo
+from nkyel.skills.types import SkillCategory
 
 
 class _StubResponse:
@@ -384,7 +384,7 @@ def test_broker_create_requires_attested_mode(monkeypatch, reported):
 @pytest.mark.parametrize("status", [409, 503])
 def test_create_config_conflict_marker_drops_cached_lark_broker_mode(monkeypatch, status):
     """A marked 409/503 means the provisioner's lark config changed: re-probe next acquire."""
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     backend = RemoteSandboxBackend("http://provisioner:8002", api_key="test-key")
     monkeypatch.setattr(remote_backend_mod, "user_should_see_legacy_skills", lambda _user_id: False)
@@ -402,7 +402,7 @@ def test_create_config_conflict_marker_drops_cached_lark_broker_mode(monkeypatch
 
 def test_create_coordination_conflict_keeps_cached_lark_broker_mode(monkeypatch):
     """A marker-less 409 (capacity / incompatible Pod / terminating) is not a config change."""
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     backend = RemoteSandboxBackend("http://provisioner:8002", api_key="test-key")
     monkeypatch.setattr(remote_backend_mod, "user_should_see_legacy_skills", lambda _user_id: False)
@@ -418,7 +418,7 @@ def test_create_coordination_conflict_keeps_cached_lark_broker_mode(monkeypatch)
 
 
 def test_create_request_error_without_response_keeps_cached_lark_broker_mode(monkeypatch):
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     backend = RemoteSandboxBackend("http://provisioner:8002", api_key="test-key")
     monkeypatch.setattr(remote_backend_mod, "user_should_see_legacy_skills", lambda _user_id: False)

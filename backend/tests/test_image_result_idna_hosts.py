@@ -7,12 +7,12 @@ from unittest.mock import patch
 import httpx
 import pytest
 
-from deerflow.community.image_search import tools
+from nkyel.community.image_search import tools
 
 
 @pytest.fixture(params=["url_safety", "brave.tools", "serper.tools"])
 def screen(request):
-    module = importlib.import_module(f"deerflow.community.{request.param}")
+    module = importlib.import_module(f"nkyel.community.{request.param}")
     return module.safe_public_result_url if request.param == "url_safety" else module._safe_public_url
 
 

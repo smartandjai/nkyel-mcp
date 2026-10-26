@@ -11,19 +11,19 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt.tool_node import ToolCallRequest
 
-from deerflow.agents.middlewares.artifact_capture_middleware import ArtifactCaptureMiddleware
-from deerflow.agents.middlewares.artifact_resolution_middleware import ArtifactResolutionMiddleware
-from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
-from deerflow.agents.middlewares.sandbox_audit_middleware import SandboxAuditMiddleware
-from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware, build_lead_runtime_middlewares
-from deerflow.agents.middlewares.tool_receipt_middleware import ToolReceiptMiddleware
-from deerflow.agents.thread_state import ThreadState, merge_artifacts, merge_tool_artifacts
-from deerflow.config.app_config import AppConfig
-from deerflow.config.guardrails_config import GuardrailProviderConfig, GuardrailsConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.guardrails.middleware import GuardrailMiddleware
-from deerflow.guardrails.provider import GuardrailDecision
-from deerflow.tools.artifact_registry import extract_artifacts_from_result, render_artifact_registry
+from nkyel.agents.middlewares.artifact_capture_middleware import ArtifactCaptureMiddleware
+from nkyel.agents.middlewares.artifact_resolution_middleware import ArtifactResolutionMiddleware
+from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+from nkyel.agents.middlewares.sandbox_audit_middleware import SandboxAuditMiddleware
+from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware, build_lead_runtime_middlewares
+from nkyel.agents.middlewares.tool_receipt_middleware import ToolReceiptMiddleware
+from nkyel.agents.thread_state import ThreadState, merge_artifacts, merge_tool_artifacts
+from nkyel.config.app_config import AppConfig
+from nkyel.config.guardrails_config import GuardrailProviderConfig, GuardrailsConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.guardrails.middleware import GuardrailMiddleware
+from nkyel.guardrails.provider import GuardrailDecision
+from nkyel.tools.artifact_registry import extract_artifacts_from_result, render_artifact_registry
 
 
 def entry(ref="/mnt/user-data/outputs/report.md", handle="art_1234abcd"):
@@ -64,7 +64,7 @@ def test_real_agent_applies_write_gate_to_resolved_path(prior_read):
     gate._content_reader = read_current
     messages = [HumanMessage(content="write")]
     if prior_read:
-        messages.append(ToolMessage(content=prior_read, tool_call_id="prior-read", additional_kwargs={"deerflow_read_mark": {"path": path, "hash": hashlib.sha256(prior_read.encode()).hexdigest()}}))
+        messages.append(ToolMessage(content=prior_read, tool_call_id="prior-read", additional_kwargs={"nkyel_read_mark": {"path": path, "hash": hashlib.sha256(prior_read.encode()).hexdigest()}}))
     model = FakeToolCallingModel(responses=[AIMessage(content="", tool_calls=[{"name": "write_file", "args": {"path": artifact["handle"], "content": "new"}, "id": "write", "type": "tool_call"}]), AIMessage(content="done")])
     graph = create_agent(model=model, tools=[write_file], middleware=middlewares, state_schema=ThreadState)
     state = graph.invoke({"messages": messages, "tool_artifacts": [artifact]}, context={"thread_id": "t"})
@@ -73,8 +73,8 @@ def test_real_agent_applies_write_gate_to_resolved_path(prior_read):
         assert writes == [path] and files[path] == "new"
     else:
         assert writes == [] and files[path] == "current"
-        assert reply.status == "error" and reply.additional_kwargs["deerflow_write_block"]["path"] == path
-    assert reply.additional_kwargs.get("deerflow_tool_receipt"), "blocked writes must retain receipts"
+        assert reply.status == "error" and reply.additional_kwargs["nkyel_write_block"]["path"] == path
+    assert reply.additional_kwargs.get("nkyel_tool_receipt"), "blocked writes must retain receipts"
 
 
 class RecordingPolicy:
@@ -128,7 +128,7 @@ def test_unknown_handles_fail_before_tool_execution(entries, args):
     reply = middleware.wrap_tool_call(request(args, entries), never)
     assert reply.status == "error" and "art_00000000" in reply.content
     assert "unknown" in reply.content.lower() or "expired" in reply.content.lower()
-    assert reply.additional_kwargs.get("deerflow_tool_meta")
+    assert reply.additional_kwargs.get("nkyel_tool_meta")
 
 
 def test_permanently_unresolved_consumption_stops_scanning_after_two_rounds(monkeypatch):
@@ -168,7 +168,7 @@ def test_reference_shape_accepts_only_absolute_or_http_refs(ref):
 
 @pytest.mark.parametrize("structured", [{}, [], {"custom": "x" * 1000000}, {"custom": "😀" * 2000}, {"custom": [None] * 100000}])
 def test_empty_or_oversized_structured_payload_is_not_checkpointed(structured, monkeypatch):
-    import deerflow.tools.artifact_registry as registry
+    import nkyel.tools.artifact_registry as registry
 
     def never_serialize(*args, **kwargs):
         raise AssertionError("oversized or empty payload must be rejected before serialization")

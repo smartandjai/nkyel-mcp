@@ -8,7 +8,7 @@ the limit) so pagination stays correct.
 
 import pytest
 
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
 
 async def _seed_two_tasks(store):
@@ -102,8 +102,8 @@ async def test_memory_no_task_id_returns_all():
 
 @pytest.mark.anyio
 async def test_db_task_id_filter(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.runtime.events.store.db import DbRunEventStore
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.runtime.events.store.db import DbRunEventStore
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -115,8 +115,8 @@ async def test_db_task_id_filter(tmp_path):
 
 @pytest.mark.anyio
 async def test_db_task_id_after_seq_paginate(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.runtime.events.store.db import DbRunEventStore
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.runtime.events.store.db import DbRunEventStore
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -128,8 +128,8 @@ async def test_db_task_id_after_seq_paginate(tmp_path):
 
 @pytest.mark.anyio
 async def test_db_no_task_id_returns_all(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.runtime.events.store.db import DbRunEventStore
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.runtime.events.store.db import DbRunEventStore
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -144,13 +144,13 @@ async def test_db_no_task_id_returns_all(tmp_path):
 
 @pytest.mark.anyio
 async def test_jsonl_task_id_filter(tmp_path):
-    from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
+    from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
 
     await _check_task_id_filter(JsonlRunEventStore(base_dir=str(tmp_path)))
 
 
 @pytest.mark.anyio
 async def test_jsonl_task_id_after_seq_paginate(tmp_path):
-    from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
+    from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
 
     await _check_task_id_after_seq_paginate(JsonlRunEventStore(base_dir=str(tmp_path)))

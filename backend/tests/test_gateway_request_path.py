@@ -21,7 +21,7 @@ from starlette.testclient import TestClient
 from app.gateway.auth_middleware import AuthMiddleware
 from app.gateway.csrf_middleware import CSRFMiddleware, is_auth_endpoint, should_check_csrf
 from app.gateway.request_path import get_request_route_path
-from deerflow.config.authorization_config import AuthorizationConfig
+from nkyel.config.authorization_config import AuthorizationConfig
 
 
 @pytest.fixture(autouse=True)
@@ -36,7 +36,7 @@ def _default_route_authorization_config(monkeypatch):
 @pytest.fixture(autouse=True)
 def _auth_enabled(monkeypatch):
     """Every case here is about the enabled-auth path."""
-    monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+    monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
 
 def _request(path: str, root_path: str = "", method: str = "GET") -> Request:

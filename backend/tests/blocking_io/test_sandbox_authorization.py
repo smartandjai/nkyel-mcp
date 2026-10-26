@@ -9,12 +9,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from deerflow.authz import sandbox_authz
-from deerflow.config.app_config import AppConfig
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.sandbox import tools as sandbox_tools
+from nkyel.authz import sandbox_authz
+from nkyel.config.app_config import AppConfig
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.sandbox import tools as sandbox_tools
 
 pytestmark = pytest.mark.asyncio
 
@@ -26,13 +26,13 @@ async def test_reused_async_sandbox_offloads_config_and_provider_resolution(tmp_
 
     app_config = AppConfig(
         models=[ModelConfig(name="gpt-4", model="gpt-4", use="langchain_openai:ChatOpenAI")],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         authorization=AuthorizationConfig(
             enabled=True,
             fail_closed=True,
             default_role="user",
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"sandbox": {"allow": "*"}}}},
             ),
         ),

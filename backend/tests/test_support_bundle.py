@@ -16,7 +16,7 @@ from support.shell import require_script_bash
 
 @pytest.fixture(autouse=True)
 def _isolate_runtime_paths(monkeypatch):
-    for name in ("DEER_FLOW_HOME", "DEER_FLOW_PROJECT_ROOT", "DEER_FLOW_ENV_FILE"):
+    for name in ("NKYEL_HOME", "NKYEL_PROJECT_ROOT", "NKYEL_ENV_FILE"):
         monkeypatch.delenv(name, raising=False)
 
 
@@ -30,13 +30,13 @@ def _zip_text(zip_path, name: str) -> str:
 def test_unreadable_dotenv_keeps_thread_diagnostics(tmp_path, monkeypatch, failure, configured_home):
     project = tmp_path / "checkout"
     project.mkdir()
-    home = tmp_path / "data" if configured_home else project / ".deer-flow"
+    home = tmp_path / "data" if configured_home else project / ".nkyel"
     (home / "threads" / "broken-env" / "user-data").mkdir(parents=True)
     env_file = project / ".env"
     # A valid prefix must not partially change runtime paths when decoding fails.
-    env_file.write_bytes(b"DEER_FLOW_HOME=wrong-home\n" + b"#" * 10000 + b"\xff")
+    env_file.write_bytes(b"NKYEL_HOME=wrong-home\n" + b"#" * 10000 + b"\xff")
     if configured_home:
-        monkeypatch.setenv("DEER_FLOW_HOME", str(home))
+        monkeypatch.setenv("NKYEL_HOME", str(home))
     if failure == "permission":
         original_open = Path.open
 
@@ -59,7 +59,7 @@ def test_thread_summary_uses_configured_runtime_home(tmp_path, monkeypatch, layo
     outputs = home / layout / "user-data" / "outputs"
     outputs.mkdir(parents=True)
     (outputs / "report.txt").write_text("private document contents", encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_HOME", str(home))
+    monkeypatch.setenv("NKYEL_HOME", str(home))
 
     summary = support_bundle.collect_thread_summary(project, "thread-home")
 
@@ -67,32 +67,32 @@ def test_thread_summary_uses_configured_runtime_home(tmp_path, monkeypatch, layo
     assert summary["outputs"][0]["path"] == "report.txt"
     assert "private document contents" not in json.dumps(summary)
     assert str(home) not in json.dumps(summary)
-    assert summary["layout"].startswith("{DEER_FLOW_HOME}/")
+    assert summary["layout"].startswith("{NKYEL_HOME}/")
 
 
 def test_configured_home_does_not_fall_back_to_stale_checkout_thread(tmp_path, monkeypatch):
     project = tmp_path / "checkout"
-    (project / ".deer-flow" / "threads" / "thread-home" / "user-data").mkdir(parents=True)
+    (project / ".nkyel" / "threads" / "thread-home" / "user-data").mkdir(parents=True)
     home = tmp_path / "runtime-data"
-    monkeypatch.setenv("DEER_FLOW_HOME", str(home))
+    monkeypatch.setenv("NKYEL_HOME", str(home))
 
     summary = support_bundle.collect_thread_summary(project, "thread-home")
 
     assert summary["found"] is False
-    assert summary["checked_layouts"] == ["{DEER_FLOW_HOME}/threads/thread-home/user-data"]
+    assert summary["checked_layouts"] == ["{NKYEL_HOME}/threads/thread-home/user-data"]
 
 
 def test_relative_runtime_home_is_resolved_from_current_directory(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("DEER_FLOW_HOME", "runtime-data")
+    monkeypatch.setenv("NKYEL_HOME", "runtime-data")
     data = tmp_path / "runtime-data" / "users" / "alice" / "threads" / "thread-home" / "user-data"
     data.mkdir(parents=True)
     assert support_bundle.collect_thread_summary(tmp_path, "thread-home")["found"] is True
 
 
 def test_empty_runtime_home_keeps_legacy_lookup(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", "")
-    data = tmp_path / "backend" / ".deer-flow" / "threads" / "thread-home" / "user-data"
+    monkeypatch.setenv("NKYEL_HOME", "")
+    data = tmp_path / "backend" / ".nkyel" / "threads" / "thread-home" / "user-data"
     data.mkdir(parents=True)
     assert support_bundle.collect_thread_summary(tmp_path, "thread-home")["found"] is True
 
@@ -296,9 +296,9 @@ def test_redact_text_masks_env_assignments_and_bearer_tokens():
 def test_redact_text_masks_home_directory_paths():
     text = "\n".join(
         [
-            "/Users/alice/deer-flow/config.yaml",
-            "/home/bob/deer-flow/config.yaml",
-            r"C:\Users\carol\deer-flow\config.yaml",
+            "/Users/alice/nkyel/config.yaml",
+            "/home/bob/nkyel/config.yaml",
+            r"C:\Users\carol\nkyel\config.yaml",
         ]
     )
 
@@ -307,9 +307,9 @@ def test_redact_text_masks_home_directory_paths():
     assert "alice" not in redacted
     assert "bob" not in redacted
     assert "carol" not in redacted
-    assert "/Users/<user>/deer-flow/config.yaml" in redacted
-    assert "/home/<user>/deer-flow/config.yaml" in redacted
-    assert r"C:\Users\<user>\deer-flow\config.yaml" in redacted
+    assert "/Users/<user>/nkyel/config.yaml" in redacted
+    assert "/home/<user>/nkyel/config.yaml" in redacted
+    assert r"C:\Users\<user>\nkyel\config.yaml" in redacted
 
 
 def test_redact_data_masks_non_keyword_env_secrets_but_keeps_var_references():
@@ -413,14 +413,14 @@ def test_redact_data_does_not_over_redact_lookalike_non_secret_keys():
     guardrails "passport" path/ID are real, non-secret fields."""
     data = {
         "routing": {"mode": "prefer", "priority": 50, "keywords": ["database", "SQL", "table"]},
-        "guardrails": {"passport": "/etc/deer-flow/passport.json"},
+        "guardrails": {"passport": "/etc/nkyel/passport.json"},
     }
 
     redacted = support_bundle.redact_data(data)
 
     assert redacted["routing"]["keywords"] == ["database", "SQL", "table"]
     assert redacted["routing"]["priority"] == 50
-    assert redacted["guardrails"]["passport"] == "/etc/deer-flow/passport.json"
+    assert redacted["guardrails"]["passport"] == "/etc/nkyel/passport.json"
 
 
 def test_redact_data_masks_passphrase_and_passcode_without_over_redacting_passport():
@@ -440,7 +440,7 @@ def test_redact_data_masks_passphrase_and_passcode_without_over_redacting_passpo
                 "config": {
                     "passphrase": "hunter2-literal",
                     "passcode": "0000-literal",
-                    "passport": "/etc/deer-flow/passport.json",
+                    "passport": "/etc/nkyel/passport.json",
                     "compass_bearing": 42,
                     "bypass_reason": "maintenance window",
                 }
@@ -453,7 +453,7 @@ def test_redact_data_masks_passphrase_and_passcode_without_over_redacting_passpo
 
     assert config["passphrase"] == "<redacted>"
     assert config["passcode"] == "<redacted>"
-    assert config["passport"] == "/etc/deer-flow/passport.json"
+    assert config["passport"] == "/etc/nkyel/passport.json"
     assert config["compass_bearing"] == 42
     assert config["bypass_reason"] == "maintenance window"
 
@@ -558,7 +558,7 @@ models:
     api_key: sk-live-secret
 tools:
   - name: web_search
-    use: deerflow.community.brave.tools:web_search_tool
+    use: nkyel.community.brave.tools:web_search_tool
     api_key: brave-secret
 channels:
   slack:
@@ -669,7 +669,7 @@ def test_create_support_bundle_writes_ai_triage_entrypoints(tmp_path, monkeypatc
             "returncode": 1,
             "stdout": "\n".join(
                 [
-                    "DeerFlow Health Check",
+                    "nkyel Health Check",
                     "  ✗ Node.js  (v20.19.5)",
                     "      → Node.js 22+ required. Install from https://nodejs.org/",
                     "  ✗ config.yaml found",
@@ -739,8 +739,8 @@ def test_create_support_bundle_writes_ai_triage_entrypoints(tmp_path, monkeypatc
     assert "### Expected behavior" in issue_draft
     assert "### Steps to reproduce" in issue_draft
     assert "### Relevant logs" in issue_draft
-    assert "DeerFlow Health Check" in issue_draft
-    assert "### How are you running DeerFlow?" in issue_draft
+    assert "nkyel Health Check" in issue_draft
+    assert "### How are you running nkyel?" in issue_draft
     assert "<REQUIRED: choose Local, Docker, CI, or Other>" in issue_draft
     assert "### Operating system" in issue_draft
     assert "macOS" in issue_draft
@@ -810,8 +810,8 @@ def test_triage_flags_extensions_parse_errors(tmp_path):
 
 def test_thread_summary_lists_files_without_file_contents(tmp_path):
     project_root = tmp_path / "project"
-    outputs = project_root / ".deer-flow" / "threads" / "thread-123" / "user-data" / "outputs"
-    uploads = project_root / ".deer-flow" / "threads" / "thread-123" / "user-data" / "uploads"
+    outputs = project_root / ".nkyel" / "threads" / "thread-123" / "user-data" / "outputs"
+    uploads = project_root / ".nkyel" / "threads" / "thread-123" / "user-data" / "uploads"
     outputs.mkdir(parents=True)
     uploads.mkdir(parents=True)
     (outputs / "report.md").write_text("raw report content with secret-content", encoding="utf-8")
@@ -942,8 +942,8 @@ def test_main_prints_reporter_next_steps_and_optional_upload(tmp_path, capsys):
 def test_relative_home_matches_launcher_from_both_directories(tmp_path, monkeypatch, invocation_dir):
     project = tmp_path / "checkout"
     (project / "backend").mkdir(parents=True)
-    (project / ".deer-flow" / "users" / "alice" / "threads" / "relative" / "user-data").mkdir(parents=True)
-    monkeypatch.setenv("DEER_FLOW_HOME", ".deer-flow")
+    (project / ".nkyel" / "users" / "alice" / "threads" / "relative" / "user-data").mkdir(parents=True)
+    monkeypatch.setenv("NKYEL_HOME", ".nkyel")
     monkeypatch.chdir(project / invocation_dir)
     assert support_bundle.collect_thread_summary(project, "relative")["found"] is True
 
@@ -953,8 +953,8 @@ def test_thread_home_from_dotenv_does_not_mutate_environment(tmp_path, monkeypat
     project.mkdir()
     home = tmp_path / "data"
     (home / "users" / "alice" / "threads" / "dotenv" / "user-data").mkdir(parents=True)
-    (project / ".env").write_text(f'DEER_FLOW_HOME="{home.as_posix()}"\nPRIVATE_KEY=private-value\n', encoding="utf-8")
-    monkeypatch.delenv("DEER_FLOW_HOME", raising=False)
+    (project / ".env").write_text(f'NKYEL_HOME="{home.as_posix()}"\nPRIVATE_KEY=private-value\n', encoding="utf-8")
+    monkeypatch.delenv("NKYEL_HOME", raising=False)
     original = dict(os.environ)
     summary = support_bundle.collect_thread_summary(project, "dotenv")
     assert summary["found"] is True
@@ -964,11 +964,11 @@ def test_thread_home_from_dotenv_does_not_mutate_environment(tmp_path, monkeypat
 
 
 def test_dotenv_home_wins_over_shell_without_exporting_secrets(tmp_path, monkeypatch):
-    (tmp_path / ".env").write_text("DEER_FLOW_HOME=dotenv-data\nPRIVATE_KEY=private-value\n", encoding="utf-8")
+    (tmp_path / ".env").write_text("NKYEL_HOME=dotenv-data\nPRIVATE_KEY=private-value\n", encoding="utf-8")
     home = tmp_path / "shell-data"
     (home / "threads" / "conflict" / "user-data").mkdir(parents=True)
     (tmp_path / "dotenv-data" / "threads" / "conflict" / "user-data").mkdir(parents=True)
-    monkeypatch.setenv("DEER_FLOW_HOME", str(home))
+    monkeypatch.setenv("NKYEL_HOME", str(home))
     original = dict(os.environ)
     summary = support_bundle.collect_thread_summary(tmp_path, "conflict")
     assert summary["layout"] == "dotenv-data/threads/conflict/user-data"
@@ -981,13 +981,13 @@ def test_thread_summary_honors_project_root_override(tmp_path, monkeypatch, sour
     project = tmp_path / "checkout"
     project.mkdir()
     runtime_project = tmp_path / "other-project"
-    (runtime_project / ".deer-flow" / "threads" / "custom-root" / "user-data").mkdir(parents=True)
-    monkeypatch.delenv("DEER_FLOW_HOME", raising=False)
-    monkeypatch.delenv("DEER_FLOW_PROJECT_ROOT", raising=False)
+    (runtime_project / ".nkyel" / "threads" / "custom-root" / "user-data").mkdir(parents=True)
+    monkeypatch.delenv("NKYEL_HOME", raising=False)
+    monkeypatch.delenv("NKYEL_PROJECT_ROOT", raising=False)
     if source == "shell":
-        monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(runtime_project))
+        monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(runtime_project))
     else:
-        (project / ".env").write_text(f'DEER_FLOW_PROJECT_ROOT="{runtime_project.as_posix()}"\n', encoding="utf-8")
+        (project / ".env").write_text(f'NKYEL_PROJECT_ROOT="{runtime_project.as_posix()}"\n', encoding="utf-8")
     summary = support_bundle.collect_thread_summary(project, "custom-root")
     assert summary["found"] is True
     assert str(runtime_project) not in json.dumps(summary)
@@ -1006,7 +1006,7 @@ def _local_launcher_home(project):
             # Git Bash answers with POSIX paths, and its mount table (for example Windows TEMP
             # at /tmp) is not reproducible from Python, so convert inside the shell. Passing the
             # value through argv instead would let MSYS rewrite shell syntax inside it.
-            'set -e\ncd "$REPO_ROOT"\n' + dotenv_block + defaults + '\nif command -v cygpath >/dev/null 2>&1; then cygpath -w "$DEER_FLOW_HOME"; else printf "%s" "$DEER_FLOW_HOME"; fi',
+            'set -e\ncd "$REPO_ROOT"\n' + dotenv_block + defaults + '\nif command -v cygpath >/dev/null 2>&1; then cygpath -w "$NKYEL_HOME"; else printf "%s" "$NKYEL_HOME"; fi',
         ],
         cwd=project,
         env={**os.environ, "REPO_ROOT": str(project)},
@@ -1025,25 +1025,25 @@ def test_project_root_only_finds_launchers_default_home(tmp_path, monkeypatch, i
     (project / "backend").mkdir(parents=True)
     runtime_project = tmp_path / "custom-project"
     # A stale standalone-harness thread must not shadow the local launcher.
-    (runtime_project / ".deer-flow" / "threads" / "launcher" / "user-data").mkdir(parents=True)
+    (runtime_project / ".nkyel" / "threads" / "launcher" / "user-data").mkdir(parents=True)
     if source == "shell":
-        monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(runtime_project))
+        monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(runtime_project))
     else:
-        (project / ".env").write_text(f'DEER_FLOW_PROJECT_ROOT="{runtime_project.as_posix()}"\n', encoding="utf-8")
+        (project / ".env").write_text(f'NKYEL_PROJECT_ROOT="{runtime_project.as_posix()}"\n', encoding="utf-8")
     home = _local_launcher_home(project)
     (home / "users" / "alice" / "threads" / "launcher" / "user-data").mkdir(parents=True)
     monkeypatch.chdir(project / invocation_dir)
 
     summary = support_bundle.collect_thread_summary(project, "launcher")
 
-    assert home == project / "backend" / ".deer-flow"
+    assert home == project / "backend" / ".nkyel"
     assert summary["found"] is True
-    assert summary["layout"] == "backend/.deer-flow/users/alice/threads/launcher/user-data"
+    assert summary["layout"] == "backend/.nkyel/users/alice/threads/launcher/user-data"
     assert str(runtime_project) not in json.dumps(summary)
 
 
 @pytest.mark.parametrize("value", ["~/runtime-data", "'~/runtime-data'", '"~/runtime-data"'])
-@pytest.mark.parametrize("variable", ["DEER_FLOW_HOME", "DEER_FLOW_PROJECT_ROOT"])
+@pytest.mark.parametrize("variable", ["NKYEL_HOME", "NKYEL_PROJECT_ROOT"])
 def test_dotenv_tilde_matches_launcher_quote_semantics(tmp_path, monkeypatch, value, variable):
     project = tmp_path / "checkout"
     project.mkdir()
@@ -1055,10 +1055,10 @@ def test_dotenv_tilde_matches_launcher_quote_semantics(tmp_path, monkeypatch, va
         # on Windows; pin both so the two resolution paths stay comparable.
         monkeypatch.setenv("USERPROFILE", str(user_home))
     (project / ".env").write_text(f"{variable}={value}\n", encoding="utf-8")
-    if variable == "DEER_FLOW_HOME":
+    if variable == "NKYEL_HOME":
         home = _local_launcher_home(project)
     else:
-        home = (project / "~/runtime-data" if value.startswith(("'", '"')) else user_home / "runtime-data") / ".deer-flow"
+        home = (project / "~/runtime-data" if value.startswith(("'", '"')) else user_home / "runtime-data") / ".nkyel"
     (home / "threads" / "tilde" / "user-data").mkdir(parents=True)
     original = dict(os.environ)
 
@@ -1073,8 +1073,8 @@ def test_dotenv_tilde_matches_launcher_quote_semantics(tmp_path, monkeypatch, va
 def test_dotenv_empty_home_also_overrides_shell(tmp_path, monkeypatch, dotenv_home):
     project = tmp_path / "checkout"
     project.mkdir()
-    (project / ".env").write_text(f"DEER_FLOW_HOME={dotenv_home}\n", encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "shell-data"))
+    (project / ".env").write_text(f"NKYEL_HOME={dotenv_home}\n", encoding="utf-8")
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "shell-data"))
     home = _local_launcher_home(project)
     (home / "threads" / "empty-home" / "user-data").mkdir(parents=True)
 
@@ -1086,7 +1086,7 @@ def test_dotenv_empty_home_also_overrides_shell(tmp_path, monkeypatch, dotenv_ho
 
 @pytest.mark.parametrize("source", ["shell", "legacy"])
 def test_missing_dotenv_keeps_support_bundle_available(tmp_path, monkeypatch, source):
-    (tmp_path / ".env").write_text("DEER_FLOW_HOME=unavailable-data\nPRIVATE_KEY=private-value\n", encoding="utf-8")
+    (tmp_path / ".env").write_text("NKYEL_HOME=unavailable-data\nPRIVATE_KEY=private-value\n", encoding="utf-8")
     import builtins
 
     real_import = builtins.__import__
@@ -1098,9 +1098,9 @@ def test_missing_dotenv_keeps_support_bundle_available(tmp_path, monkeypatch, so
 
     if source == "shell":
         home = tmp_path / "shell-data"
-        monkeypatch.setenv("DEER_FLOW_HOME", str(home))
+        monkeypatch.setenv("NKYEL_HOME", str(home))
     else:
-        home = tmp_path / "backend" / ".deer-flow"
+        home = tmp_path / "backend" / ".nkyel"
     (home / "threads" / "no-dotenv" / "user-data").mkdir(parents=True)
     original = dict(os.environ)
     with monkeypatch.context() as context:
@@ -1116,12 +1116,12 @@ def test_missing_dotenv_keeps_support_bundle_available(tmp_path, monkeypatch, so
 @pytest.mark.parametrize(
     ("setup", "value"),
     [
-        ("", "$PWD/backend/.deer-flow"),
-        ("", '"$PWD/backend/.deer-flow"'),
-        ("", '"${PWD}/backend/.deer-flow"'),
-        ("", "'$PWD/backend/.deer-flow'"),
-        ("", "'${PWD}/backend/.deer-flow'"),
-        ("", r'"\$PWD/backend/.deer-flow"'),
+        ("", "$PWD/backend/.nkyel"),
+        ("", '"$PWD/backend/.nkyel"'),
+        ("", '"${PWD}/backend/.nkyel"'),
+        ("", "'$PWD/backend/.nkyel'"),
+        ("", "'${PWD}/backend/.nkyel'"),
+        ("", r'"\$PWD/backend/.nkyel"'),
         ('RUNTIME_DATA="$PWD/runtime-data"\n', '"$RUNTIME_DATA"'),
         ('RUNTIME_DATA="$PWD/old"\nRUNTIME_DATA="$PWD/new"\n', '"${RUNTIME_DATA}"'),
         ('RUNTIME_DATA="$PWD/first"\nRUNTIME_DATA="$RUNTIME_DATA/second"\n', '"$RUNTIME_DATA"'),
@@ -1133,7 +1133,7 @@ def test_dotenv_variable_paths_match_launcher(tmp_path, monkeypatch, invocation_
     (project / "backend").mkdir(parents=True)
     monkeypatch.setenv("PWD", str(tmp_path / "other-cwd"))
     monkeypatch.setenv("RUNTIME_DATA", "")
-    (project / ".env").write_text(setup + f"DEER_FLOW_HOME={value}\nPRIVATE_KEY=private-value\n", encoding="utf-8")
+    (project / ".env").write_text(setup + f"NKYEL_HOME={value}\nPRIVATE_KEY=private-value\n", encoding="utf-8")
     home = _local_launcher_home(project)
     outputs = home / "users" / "alice" / "threads" / "variables" / "user-data" / "outputs"
     outputs.mkdir(parents=True)
@@ -1153,8 +1153,8 @@ def test_dotenv_variable_paths_match_launcher(tmp_path, monkeypatch, invocation_
 def test_dotenv_shell_variable_project_root_is_resolved(tmp_path, monkeypatch):
     project = tmp_path / "checkout"
     project.mkdir()
-    (project / ".env").write_text('DEER_FLOW_PROJECT_ROOT="$PWD/standalone"\n', encoding="utf-8")
-    home = project / "standalone" / ".deer-flow"
+    (project / ".env").write_text('NKYEL_PROJECT_ROOT="$PWD/standalone"\n', encoding="utf-8")
+    home = project / "standalone" / ".nkyel"
     (home / "threads" / "variables" / "user-data").mkdir(parents=True)
     monkeypatch.setenv("PWD", str(tmp_path / "other-cwd"))
 
@@ -1163,7 +1163,7 @@ def test_dotenv_shell_variable_project_root_is_resolved(tmp_path, monkeypatch):
 
 def test_dotenv_path_lookup_does_not_execute_shell_commands(tmp_path):
     marker = tmp_path / "shell-executed"
-    (tmp_path / ".env").write_text(f'DEER_FLOW_HOME="$(touch {marker.as_posix()})"\n', encoding="utf-8")
+    (tmp_path / ".env").write_text(f'NKYEL_HOME="$(touch {marker.as_posix()})"\n', encoding="utf-8")
 
     summary = support_bundle.collect_thread_summary(tmp_path, "variables")
 

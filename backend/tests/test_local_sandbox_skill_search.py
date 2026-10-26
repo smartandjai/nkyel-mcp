@@ -7,12 +7,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config import paths as paths_module
-from deerflow.config.app_config import AppConfig
-from deerflow.config.extensions_config import ExtensionsConfig, SkillStateConfig
-from deerflow.sandbox import tools
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
-from deerflow.sandbox.local.local_sandbox_provider import LocalSandboxProvider
+from nkyel.config import paths as paths_module
+from nkyel.config.app_config import AppConfig
+from nkyel.config.extensions_config import ExtensionsConfig, SkillStateConfig
+from nkyel.sandbox import tools
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.sandbox.local.local_sandbox_provider import LocalSandboxProvider
 
 
 def _write_skill(root, name):
@@ -23,16 +23,16 @@ def _write_skill(root, name):
 
 @pytest.fixture
 def skill_search(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "home"))
     monkeypatch.setattr(paths_module, "_paths", None)
     source = tmp_path / "skills"
     for name in ("alpha", "beta", "disabled"):
         _write_skill(source / "public", name)
-    config = AppConfig.model_validate({"skills": {"path": str(source)}, "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}})
+    config = AppConfig.model_validate({"skills": {"path": str(source)}, "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}})
     extensions = ExtensionsConfig(skills={"disabled": SkillStateConfig(enabled=False)})
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.config.extensions_config.get_extensions_config", lambda: extensions)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.config.extensions_config.get_extensions_config", lambda: extensions)
     monkeypatch.setattr(ExtensionsConfig, "from_file", lambda *args, **kwargs: extensions)
     paths = paths_module.get_paths()
     for user in ("alice", "bob"):
@@ -181,7 +181,7 @@ def test_search_errors_keep_virtual_paths(skill_search, monkeypatch, method):
         raise PermissionError(errno.EACCES, "Permission denied", str(root / "blocked"))
 
     name = "find_glob_matches" if method == "glob" else "find_grep_matches"
-    monkeypatch.setattr(f"deerflow.sandbox.local.local_sandbox.{name}", denied)
+    monkeypatch.setattr(f"nkyel.sandbox.local.local_sandbox.{name}", denied)
     with pytest.raises(PermissionError) as caught:
         getattr(skill_search.sandboxes["alice"], method)("/mnt/skills", "*")
     assert caught.value.filename.startswith("/mnt/skills/")
@@ -254,11 +254,11 @@ def test_broken_mount_warns_with_its_virtual_category(skill_search, caplog, meth
         root.write_text("not a directory", encoding="utf-8")
     tool = tools.glob_tool if method == "glob" else tools.grep_tool
     pattern = "**/SKILL.md" if method == "glob" else "NEEDLE"
-    with caplog.at_level(logging.WARNING, logger="deerflow.sandbox.local.local_sandbox"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.sandbox.local.local_sandbox"):
         result = tool.func(runtime=skill_search.runtime(), path="/mnt/skills", pattern=pattern)
     expected_error = "Directory not found" if mount_state == "missing" else "Path is not a directory"
     assert result == f"Error: {expected_error}: /mnt/skills"
-    warnings = [record for record in caplog.records if record.name == "deerflow.sandbox.local.local_sandbox" and record.levelno == logging.WARNING]
+    warnings = [record for record in caplog.records if record.name == "nkyel.sandbox.local.local_sandbox" and record.levelno == logging.WARNING]
     assert len(warnings) == 1
     assert mapping.container_path in warnings[0].getMessage()
     assert str(root) not in result

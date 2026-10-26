@@ -7,7 +7,7 @@ import pytest
 from mcp.shared.exceptions import McpError
 from mcp.types import CONNECTION_CLOSED, CallToolResult, ErrorData, TextContent
 
-from deerflow.mcp.session_pool import MCPSessionPool, call_pooled_session_tool
+from nkyel.mcp.session_pool import MCPSessionPool, call_pooled_session_tool
 
 
 class ControlledSession:

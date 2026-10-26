@@ -30,7 +30,7 @@ export type ProjectPatchInput = {
 /**
  * A thread row as returned by ``GET /api/projects/{id}/threads``: the thread
  * metadata store's search shape (``metadata`` carries
- * ``deerflow_project_id``; ``display_name`` is the wire title).
+ * ``nkyel_project_id``; ``display_name`` is the wire title).
  */
 export type ProjectThread = {
   thread_id: string;

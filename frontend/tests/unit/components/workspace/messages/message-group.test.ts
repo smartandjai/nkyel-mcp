@@ -182,7 +182,7 @@ describe("MessageGroup", () => {
           {
             id: "call-1",
             name: "web_search",
-            args: { query: "DeerFlow issue 4027" },
+            args: { query: "nkyel issue 4027" },
           },
         ],
       } as Message,
@@ -191,7 +191,7 @@ describe("MessageGroup", () => {
     expect(html).toContain(
       "The browser action failed, so I will try another approach.",
     );
-    expect(html).toContain("DeerFlow issue 4027");
+    expect(html).toContain("nkyel issue 4027");
   });
 
   it("keeps assistant text visible while older tool steps stay collapsed", () => {
@@ -600,7 +600,7 @@ describe("MessageGroup", () => {
           {
             id: "call-search",
             name: "web_search",
-            args: { query: "DeerFlow" },
+            args: { query: "nkyel" },
           },
         ],
       } as Message,
@@ -756,7 +756,7 @@ describe("MessageGroup tool links", () => {
   it.each(unsafeUrls)("marks a web_search result at %s as omitted", (url) => {
     const html = renderToolCall(
       "web_search",
-      { query: "DeerFlow" },
+      { query: "nkyel" },
       JSON.stringify([
         { title: "Safe source", url: "https://safe.example" },
         { title: "Injected source", url },
@@ -774,7 +774,7 @@ describe("MessageGroup tool links", () => {
     (url) => {
       const html = renderToolCall(
         "image_search",
-        { query: "DeerFlow" },
+        { query: "nkyel" },
         JSON.stringify({
           results: [
             {
@@ -799,7 +799,7 @@ describe("MessageGroup tool links", () => {
     });
     const imageHtml = renderToolCall(
       "image_search",
-      { query: "DeerFlow" },
+      { query: "nkyel" },
       JSON.stringify({
         results: [
           {

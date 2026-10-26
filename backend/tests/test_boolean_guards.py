@@ -5,7 +5,7 @@ from typing import cast
 import pytest
 from pydantic import ValidationInfo
 
-from deerflow.config._boolean_guards import reject_boolean
+from nkyel.config._boolean_guards import reject_boolean
 
 
 class _Probe:

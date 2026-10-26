@@ -80,7 +80,7 @@ async function mountForm(
 ) {
   mode = nextMode;
   if (mode === "login") {
-    localStorage.setItem("deerflow.auth.remembered_email", email);
+    localStorage.setItem("nkyel.auth.remembered_email", email);
   }
   render(
     mode === "login" || mode === "register" ? <LoginPage /> : <SetupPage />,
@@ -138,7 +138,7 @@ test.each(modes)(
       const body = request!.body as URLSearchParams;
       expect(body.get("username")).toBe("用户@example.com");
       expect(body.get("password")).toBe(password);
-      expect(localStorage.getItem("deerflow.auth.remembered_email")).toBe(
+      expect(localStorage.getItem("nkyel.auth.remembered_email")).toBe(
         "用户@example.com",
       );
     } else {

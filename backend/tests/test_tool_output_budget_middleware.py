@@ -27,7 +27,7 @@ from langchain.agents.middleware.types import ModelRequest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.types import Command
 
-from deerflow.agents.middlewares.tool_output_budget_middleware import (
+from nkyel.agents.middlewares.tool_output_budget_middleware import (
     _BASH_EXIT_MARKER_TAIL_RE,
     TOOL_OUTPUT_BLOB_KEY,
     ToolOutputBudgetMiddleware,
@@ -44,11 +44,11 @@ from deerflow.agents.middlewares.tool_output_budget_middleware import (
     _snap_to_line_boundary,
     _tool_message_over_budget,
 )
-from deerflow.agents.middlewares.tool_output_synopsis import build_tool_output_synopsis
-from deerflow.config.app_config import AppConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.tool_output_config import ToolOutputConfig
-from deerflow.storage import BlobReadError, BlobRef, BlobWriteError
+from nkyel.agents.middlewares.tool_output_synopsis import build_tool_output_synopsis
+from nkyel.config.app_config import AppConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.tool_output_config import ToolOutputConfig
+from nkyel.storage import BlobReadError, BlobRef, BlobWriteError
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -116,7 +116,7 @@ def _bash_tm(content: str, name: str = "bash") -> ToolMessage:
         tool_call_id="tc-1",
         id="tool-msg-1",
         artifact={"k": "v"},
-        additional_kwargs={"deerflow_tool_meta": {"status": "success", "source": "normalized"}},
+        additional_kwargs={"nkyel_tool_meta": {"status": "success", "source": "normalized"}},
     )
 
 
@@ -169,7 +169,7 @@ class TestMessageText:
 
 class TestStructuredJsonMindIEBudget:
     def test_mixed_json_media_externalizes_without_losing_media(self, tmp_path):
-        from deerflow.models.mindie_provider import _fix_messages
+        from nkyel.models.mindie_provider import _fix_messages
 
         payload = {"rows": ["x" * 10_000], "answer": "TAIL_SENTINEL"}
         media = {"type": "image", "base64": "BINARY_SENTINEL", "mime_type": "image/png"}
@@ -198,7 +198,7 @@ class TestStructuredJsonMindIEBudget:
 
     @pytest.mark.anyio
     async def test_mixed_json_media_history_is_budgeted_before_mindie(self):
-        from deerflow.models.mindie_provider import _fix_messages
+        from nkyel.models.mindie_provider import _fix_messages
 
         payload = {"rows": "x" * 2000, "answer": "TAIL_SENTINEL"}
         media = {"type": "image", "base64": "BINARY_SENTINEL", "mime_type": "image/png"}
@@ -233,7 +233,7 @@ class TestStructuredJsonMindIEBudget:
         ids=["disabled", "increased-limits", "exempt-read"],
     )
     def test_configured_passthrough_survives_provider_normalization(self, config, tool_name, structured):
-        from deerflow.models.mindie_provider import _fix_messages
+        from nkyel.models.mindie_provider import _fix_messages
 
         payload = "x" * 35_000 + "TAIL_SENTINEL"
         content = [{"type": "json", "json": {"rows": payload}}] if structured else payload
@@ -859,7 +859,7 @@ class TestBashExitMarkerPreservation:
         assert str(result.content).rstrip().endswith("Exit Code: 1")
         assert "Access:" in result.content
         assert "read_file" in result.content
-        assert result.additional_kwargs["deerflow_tool_meta"] == {"status": "success", "source": "normalized"}
+        assert result.additional_kwargs["nkyel_tool_meta"] == {"status": "success", "source": "normalized"}
         assert result.artifact == {"k": "v"}
         assert result.id == "tool-msg-1"
 
@@ -944,7 +944,7 @@ class TestBashExitMarkerPreservation:
                 assert not result.rstrip().endswith("Exit Code: 1")
 
     def test_exit_marker_regex_matches_sandbox_truncation_tail_shapes(self):
-        from deerflow.sandbox.tools import _BASH_EXIT_MARKER_TAIL_RE as sandbox_re
+        from nkyel.sandbox.tools import _BASH_EXIT_MARKER_TAIL_RE as sandbox_re
 
         for content in ("out\nExit Code: 1", "out\nExit Code: -9 \n", "out\nCommand exited with code 3", "Command exited with code 3"):
             ours = _BASH_EXIT_MARKER_TAIL_RE.search(content)
@@ -955,17 +955,17 @@ class TestBashExitMarkerPreservation:
     def test_budgeted_failed_pytest_is_harvested_as_error_not_pass(self):
         """End-to-end: wrap_tool_call rewrite → harvest status=error → leaf holds=False.
 
-        ``tests/conftest.py`` mocks ``deerflow.subagents.executor``, so the
+        ``tests/conftest.py`` mocks ``nkyel.subagents.executor``, so the
         production harvest helpers are loaded under a unique module name.
         """
-        path = pathlib.Path(__file__).parents[1] / "packages/harness/deerflow/subagents/executor.py"
+        path = pathlib.Path(__file__).parents[1] / "packages/harness/nkyel/subagents/executor.py"
         spec = importlib.util.spec_from_file_location("_budget_exit_marker_executor", path)
         assert spec is not None and spec.loader is not None
         module = importlib.util.module_from_spec(spec)
         try:
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)
-            from deerflow.subagents import acceptance_checks
+            from nkyel.subagents import acceptance_checks
 
             content = _pytest_like_output("Exit Code: 1")
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -1045,7 +1045,7 @@ class TestWrapToolCallExternalize:
 
 class TestToolOutputBlobPersistence:
     def test_host_externalization_stamps_durable_blob_ref(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         content = "跨节点工具输出" * 80
         calls: list[dict] = []
@@ -1091,7 +1091,7 @@ class TestToolOutputBlobPersistence:
         # Windows text mode wrote "\n" as "\r\n", so the file no longer matched
         # the ref stamped from content.encode() and the next model call on this
         # Gateway deleted it as a mismatch when no blob store was configured.
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         content = "first line\nsecond line\n" * 20
         builtin_open = open
@@ -1119,7 +1119,7 @@ class TestToolOutputBlobPersistence:
         assert saved.read_bytes() == content.encode()
 
     def test_configured_blob_write_failure_falls_back_inline(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         class FailingStore:
             def put_bytes(self, data: bytes, **kwargs) -> BlobRef:
@@ -1144,7 +1144,7 @@ class TestToolOutputBlobPersistence:
         assert published[0].read_text(encoding="utf-8") == "x" * 500
 
     def test_blob_write_failure_stays_bounded_when_regular_fallback_is_disabled(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         class FailingStore:
             def put_bytes(self, data: bytes, **kwargs) -> BlobRef:
@@ -1165,11 +1165,11 @@ class TestToolOutputBlobPersistence:
         )
 
         assert len(result.content) == 80
-        assert result.additional_kwargs["deerflow_tool_transforms"][-1]["kind"] == "truncated"
+        assert result.additional_kwargs["nkyel_tool_transforms"][-1]["kind"] == "truncated"
         assert TOOL_OUTPUT_BLOB_KEY not in result.additional_kwargs
 
     def test_blob_producer_cap_falls_back_without_writing(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         class StoreMustNotBeWritten:
             def put_bytes(self, data: bytes, **kwargs) -> BlobRef:
@@ -1189,12 +1189,12 @@ class TestToolOutputBlobPersistence:
         )
 
         assert len(result.content) == 80
-        assert result.additional_kwargs["deerflow_tool_transforms"][-1]["kind"] == "truncated"
+        assert result.additional_kwargs["nkyel_tool_transforms"][-1]["kind"] == "truncated"
         assert TOOL_OUTPUT_BLOB_KEY not in result.additional_kwargs
         assert not (tmp_path / ".tool-results").exists()
 
     def test_blob_producer_cap_stays_bounded_when_regular_fallback_is_disabled(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         class StoreMustNotBeWritten:
             def put_bytes(self, data: bytes, **kwargs) -> BlobRef:
@@ -1216,7 +1216,7 @@ class TestToolOutputBlobPersistence:
         )
 
         assert len(result.content) == 80
-        assert result.additional_kwargs["deerflow_tool_transforms"][-1]["kind"] == "truncated"
+        assert result.additional_kwargs["nkyel_tool_transforms"][-1]["kind"] == "truncated"
         assert TOOL_OUTPUT_BLOB_KEY not in result.additional_kwargs
         assert not (tmp_path / ".tool-results").exists()
 
@@ -1711,7 +1711,7 @@ class TestToolOutputBlobRestore:
         return request, ref
 
     def test_model_call_restores_exact_bytes_on_another_gateway(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         data = "跨节点完整输出\nsecond line".encode()
         request, ref = self._request(tmp_path, data)
@@ -1735,7 +1735,7 @@ class TestToolOutputBlobRestore:
         assert reads == [ref]
 
     def test_digest_matching_local_file_avoids_blob_store(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         data = b"already materialized"
         request, _ = self._request(tmp_path, data)
@@ -1753,7 +1753,7 @@ class TestToolOutputBlobRestore:
         assert destination.read_bytes() == data
 
     def test_wrong_size_local_file_skips_read_before_restore(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         data = b"restored shared output"
         request, _ = self._request(tmp_path, data)
@@ -1779,7 +1779,7 @@ class TestToolOutputBlobRestore:
         assert destination.read_bytes() == data
 
     def test_invalid_virtual_path_is_ignored_without_blob_read(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         request, _ = self._request(
             tmp_path,
@@ -1798,7 +1798,7 @@ class TestToolOutputBlobRestore:
         assert not (tmp_path / "escape.txt").exists()
 
     def test_blob_read_failure_does_not_block_model_call(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         request, _ = self._request(tmp_path, b"missing")
 
@@ -1819,7 +1819,7 @@ class TestToolOutputBlobRestore:
 
     @pytest.mark.anyio
     async def test_async_model_call_restores_before_handler(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         data = b"async shared output"
         request, _ = self._request(tmp_path, data)
@@ -1937,7 +1937,7 @@ class TestPreScanHelpers:
 
 class TestMiddlewareChainIntegration:
     def test_budget_middleware_is_first_in_chain(self):
-        from deerflow.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
+        from nkyel.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
 
         app_config = AppConfig(sandbox=SandboxConfig(use="test"))
         middlewares = build_subagent_runtime_middlewares(app_config=app_config, lazy_init=False)
@@ -1945,21 +1945,21 @@ class TestMiddlewareChainIntegration:
         # InputSanitizationMiddleware is the outermost wrap_model_call wrapper;
         # KnowledgeScopeMiddleware cleans model input immediately inside it;
         # ToolOutputBudgetMiddleware remains immediately inside the scope guard.
-        from deerflow.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
-        from deerflow.agents.middlewares.knowledge_scope_middleware import KnowledgeScopeMiddleware
+        from nkyel.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
+        from nkyel.agents.middlewares.knowledge_scope_middleware import KnowledgeScopeMiddleware
 
         assert isinstance(middlewares[0], InputSanitizationMiddleware)
         assert isinstance(middlewares[1], KnowledgeScopeMiddleware)
         assert isinstance(middlewares[2], ToolOutputBudgetMiddleware)
 
     def test_budget_middleware_in_lead_chain(self):
-        from deerflow.agents.middlewares.tool_error_handling_middleware import build_lead_runtime_middlewares
+        from nkyel.agents.middlewares.tool_error_handling_middleware import build_lead_runtime_middlewares
 
         app_config = AppConfig(sandbox=SandboxConfig(use="test"))
         middlewares = build_lead_runtime_middlewares(app_config=app_config, lazy_init=False)
 
-        from deerflow.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
-        from deerflow.agents.middlewares.knowledge_scope_middleware import KnowledgeScopeMiddleware
+        from nkyel.agents.middlewares.input_sanitization_middleware import InputSanitizationMiddleware
+        from nkyel.agents.middlewares.knowledge_scope_middleware import KnowledgeScopeMiddleware
 
         assert isinstance(middlewares[0], InputSanitizationMiddleware)
         assert isinstance(middlewares[1], KnowledgeScopeMiddleware)
@@ -2055,7 +2055,7 @@ class _FakeProvider:
 
 class TestExternalizeToSandbox:
     def test_writes_and_returns_virtual_path(self):
-        from deerflow.agents.middlewares.tool_output_budget_middleware import (
+        from nkyel.agents.middlewares.tool_output_budget_middleware import (
             _externalize_to_sandbox,
         )
 
@@ -2077,7 +2077,7 @@ class TestExternalizeToSandbox:
         assert sb.writes[0][1] == "x" * 100
 
     def test_returns_none_when_write_raises(self):
-        from deerflow.agents.middlewares.tool_output_budget_middleware import (
+        from nkyel.agents.middlewares.tool_output_budget_middleware import (
             _externalize_to_sandbox,
         )
 
@@ -2091,7 +2091,7 @@ class TestExternalizeToSandbox:
         assert result is None
 
     def test_returns_none_when_validation_fails(self):
-        from deerflow.agents.middlewares.tool_output_budget_middleware import (
+        from nkyel.agents.middlewares.tool_output_budget_middleware import (
             _externalize_to_sandbox,
         )
 
@@ -2106,7 +2106,7 @@ class TestExternalizeToSandbox:
 
     def test_returns_none_when_byte_size_is_mismatched(self):
         """A truncated write (fewer bytes than expected) fails validation and returns None."""
-        from deerflow.agents.middlewares.tool_output_budget_middleware import (
+        from nkyel.agents.middlewares.tool_output_budget_middleware import (
             _externalize_to_sandbox,
         )
 
@@ -2130,7 +2130,7 @@ class TestExternalizeToSandbox:
         assert any(len(content) == 50 for content in sb.files.values())
 
     def test_rejects_unsafe_storage_subdir(self):
-        from deerflow.agents.middlewares.tool_output_budget_middleware import (
+        from nkyel.agents.middlewares.tool_output_budget_middleware import (
             _externalize_to_sandbox,
         )
 
@@ -2160,7 +2160,7 @@ class TestExternalizeToSandbox:
         assert sb.writes == []
 
     def test_default_extension_for_unknown_tool(self):
-        from deerflow.agents.middlewares.tool_output_budget_middleware import (
+        from nkyel.agents.middlewares.tool_output_budget_middleware import (
             _externalize_to_sandbox,
         )
 
@@ -2178,7 +2178,7 @@ class TestBudgetContentSandboxDispatch:
     """_budget_content must branch on uses_thread_data_mounts (issue #3416)."""
 
     def test_mounted_sandbox_uses_host_disk(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         sb = _FakeSandbox()
         monkeypatch.setattr(
@@ -2207,7 +2207,7 @@ class TestBudgetContentSandboxDispatch:
         assert len(list(storage_dir.iterdir())) == 1
 
     def test_non_mounted_sandbox_writes_to_sandbox(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         sb = _FakeSandbox()
         blob_calls = {"count": 0}
@@ -2241,7 +2241,7 @@ class TestBudgetContentSandboxDispatch:
         assert blob_calls["count"] == 0
 
     def test_non_mounted_without_sandbox_falls_back(self, monkeypatch):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         monkeypatch.setattr(
             mod,
@@ -2269,25 +2269,25 @@ class TestBudgetContentSandboxDispatch:
 
 class TestResolveSandbox:
     def test_returns_none_when_no_state(self):
-        from deerflow.agents.middlewares.tool_output_budget_middleware import _resolve_sandbox
+        from nkyel.agents.middlewares.tool_output_budget_middleware import _resolve_sandbox
 
         req = SimpleNamespace(runtime=None)
         assert _resolve_sandbox(req) is None
 
     def test_returns_none_when_state_has_no_sandbox(self):
-        from deerflow.agents.middlewares.tool_output_budget_middleware import _resolve_sandbox
+        from nkyel.agents.middlewares.tool_output_budget_middleware import _resolve_sandbox
 
         req = SimpleNamespace(runtime=SimpleNamespace(state={}))
         assert _resolve_sandbox(req) is None
 
     def test_returns_none_when_sandbox_id_missing(self):
-        from deerflow.agents.middlewares.tool_output_budget_middleware import _resolve_sandbox
+        from nkyel.agents.middlewares.tool_output_budget_middleware import _resolve_sandbox
 
         req = SimpleNamespace(runtime=SimpleNamespace(state={"sandbox": {}}))
         assert _resolve_sandbox(req) is None
 
     def test_returns_sandbox_from_provider(self, monkeypatch):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         sb = _FakeSandbox()
         monkeypatch.setattr(
@@ -2301,7 +2301,7 @@ class TestResolveSandbox:
     def test_returns_sandbox_from_provider_when_overwrite_wrapped(self, monkeypatch):
         from langgraph.types import Overwrite
 
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         sb = _FakeSandbox()
         monkeypatch.setattr(
@@ -2314,7 +2314,7 @@ class TestResolveSandbox:
         assert mod._resolve_sandbox(req) is sb
 
     def test_returns_none_on_provider_exception(self, monkeypatch):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         class _Boom:
             def get(self, sandbox_id):
@@ -2329,7 +2329,7 @@ class TestWrapToolCallSandboxIntegration:
     """End-to-end via wrap_tool_call for the non-mounted path (issue #3416)."""
 
     def test_oversized_output_lands_in_sandbox_not_host(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         sb = _FakeSandbox()
         monkeypatch.setattr(
@@ -2372,7 +2372,7 @@ class TestBudgetContentNoSandboxNoProviderCall:
     """
 
     def test_no_provider_call_when_sandbox_absent(self, monkeypatch, tmp_path):
-        from deerflow.agents.middlewares import tool_output_budget_middleware as mod
+        from nkyel.agents.middlewares import tool_output_budget_middleware as mod
 
         called = {"n": 0}
 
@@ -2406,7 +2406,7 @@ def _meta_result(name: str, tool_call_id: str, content: str = "OK", *, status: s
     """A ToolMessage stamped the way ToolErrorHandlingMiddleware stamps it; ``status=None`` leaves it unstamped."""
     msg = ToolMessage(content=content, name=name, tool_call_id=tool_call_id, status="error" if status == "error" else "success")
     if status is not None:
-        msg.additional_kwargs["deerflow_tool_meta"] = {
+        msg.additional_kwargs["nkyel_tool_meta"] = {
             "status": status,
             "error_type": None,
             "recoverable_by_model": True,
@@ -2560,7 +2560,7 @@ class TestSupersededWriteElision:
         assert forwarded is request
 
     def test_gate_blocked_later_write_does_not_supersede(self):
-        from deerflow.agents.middlewares.read_before_write_middleware import WRITE_BLOCK_KEY
+        from nkyel.agents.middlewares.read_before_write_middleware import WRITE_BLOCK_KEY
 
         mw = self._middleware()
         w1, r1 = _write("call-1", self.PATH, "x" * 5000)

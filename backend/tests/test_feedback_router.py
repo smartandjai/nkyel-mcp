@@ -18,7 +18,7 @@ from _router_auth_helpers import make_authed_test_app
 from app.gateway.auth.models import User
 from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
 from app.gateway.routers import feedback
-from deerflow.persistence.feedback import FeedbackRepository
+from nkyel.persistence.feedback import FeedbackRepository
 
 THREAD_ID = "11111111-2222-3333-4444-555555555555"
 RUN_ID = "run-1"
@@ -66,7 +66,7 @@ class _SelectBarrierSession:
 
 @pytest.fixture
 async def feedback_repo(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'feedback.db'}", sqlite_dir=str(tmp_path))
     try:

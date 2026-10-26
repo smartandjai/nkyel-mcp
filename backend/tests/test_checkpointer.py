@@ -11,19 +11,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import deerflow.config.app_config as app_config_module
-from deerflow.config.checkpointer_config import (
+import nkyel.config.app_config as app_config_module
+from nkyel.config.checkpointer_config import (
     CheckpointerConfig,
     ensure_config_loaded,
     get_checkpointer_config,
     load_checkpointer_config_from_dict,
     set_checkpointer_config,
 )
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.runtime.checkpointer import get_checkpointer, reset_checkpointer
-from deerflow.runtime.checkpointer.provider import POSTGRES_INSTALL
-from deerflow.runtime.store import get_store, reset_store
-from deerflow.runtime.store.provider import POSTGRES_STORE_INSTALL
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.runtime.checkpointer import get_checkpointer, reset_checkpointer
+from nkyel.runtime.checkpointer.provider import POSTGRES_INSTALL
+from nkyel.runtime.store import get_store, reset_store
+from nkyel.runtime.store.provider import POSTGRES_STORE_INSTALL
 
 
 @pytest.fixture(autouse=True)
@@ -147,8 +147,8 @@ class TestCheckpointerConfig:
         assert config.postgres_schema == ""
 
     def test_postgres_schema_accepts_valid_identifier(self):
-        config = CheckpointerConfig(type="postgres", connection_string="postgresql://localhost/db", postgres_schema="deerflow")
-        assert config.postgres_schema == "deerflow"
+        config = CheckpointerConfig(type="postgres", connection_string="postgresql://localhost/db", postgres_schema="nkyel")
+        assert config.postgres_schema == "nkyel"
 
     @pytest.mark.parametrize("schema", ["1abc", "a b", "a;b", "a-b", "a" * 64, 'a"b', "MySchema", "Orders", "Public"])
     def test_postgres_schema_rejects_invalid_identifier(self, schema):
@@ -170,7 +170,7 @@ class TestCheckpointerConfig:
         def fake_get_app_config():
             load_checkpointer_config_from_dict({"type": "memory"})
 
-        with patch("deerflow.config.app_config.get_app_config", side_effect=fake_get_app_config) as mock_get_app_config:
+        with patch("nkyel.config.app_config.get_app_config", side_effect=fake_get_app_config) as mock_get_app_config:
             ensure_config_loaded()
 
         mock_get_app_config.assert_called_once()
@@ -181,7 +181,7 @@ class TestCheckpointerConfig:
     def test_ensure_config_loaded_skips_explicit_config(self):
         load_checkpointer_config_from_dict({"type": "memory"})
 
-        with patch("deerflow.config.app_config.get_app_config") as mock_get_app_config:
+        with patch("nkyel.config.app_config.get_app_config") as mock_get_app_config:
             ensure_config_loaded()
 
         mock_get_app_config.assert_not_called()
@@ -218,11 +218,11 @@ class TestHarnessPackaging:
         data = tomllib.loads(pyproject_path.read_text())
 
         optional_dependencies = data["project"]["optional-dependencies"]
-        assert optional_dependencies["postgres"] == ["deerflow-harness[postgres]"]
+        assert optional_dependencies["postgres"] == ["nkyel-harness[postgres]"]
 
     def test_postgres_missing_dependency_messages_recommend_package_extra(self):
-        assert "deerflow-harness[postgres]" in POSTGRES_INSTALL
-        assert "deerflow-harness[postgres]" in POSTGRES_STORE_INSTALL
+        assert "nkyel-harness[postgres]" in POSTGRES_INSTALL
+        assert "nkyel-harness[postgres]" in POSTGRES_STORE_INSTALL
         assert "uv sync --all-packages --extra postgres" in POSTGRES_INSTALL
         assert "uv sync --all-packages --extra postgres" in POSTGRES_STORE_INSTALL
 
@@ -237,7 +237,7 @@ class TestGetCheckpointer:
         """get_checkpointer should return InMemorySaver when not configured."""
         from langgraph.checkpoint.memory import InMemorySaver
 
-        with patch("deerflow.runtime.checkpointer.provider.get_app_config", side_effect=FileNotFoundError):
+        with patch("nkyel.runtime.checkpointer.provider.get_app_config", side_effect=FileNotFoundError):
             cp = get_checkpointer()
         assert cp is not None
         assert isinstance(cp, InMemorySaver)
@@ -316,7 +316,7 @@ class TestGetCheckpointer:
         'sqlite3.OperationalError: unable to open database file' when the
         parent directory for the database file does not yet exist (e.g. when
         using the harness package from an external virtualenv where the
-        .deer-flow directory has not been created).
+        .nkyel directory has not been created).
         """
         load_checkpointer_config_from_dict({"type": "sqlite", "connection_string": "relative/test.db"})
 
@@ -333,9 +333,9 @@ class TestGetCheckpointer:
 
         with (
             patch.dict(sys.modules, {"langgraph.checkpoint.sqlite": mock_module}),
-            patch("deerflow.runtime.checkpointer.provider.ensure_sqlite_parent_dir") as mock_ensure,
+            patch("nkyel.runtime.checkpointer.provider.ensure_sqlite_parent_dir") as mock_ensure,
             patch(
-                "deerflow.runtime.checkpointer.provider.resolve_sqlite_conn_str",
+                "nkyel.runtime.checkpointer.provider.resolve_sqlite_conn_str",
                 return_value="/tmp/resolved/relative/test.db",
             ),
         ):
@@ -369,11 +369,11 @@ class TestGetCheckpointer:
         with (
             patch.dict(sys.modules, {"langgraph.checkpoint.sqlite": mock_module}),
             patch(
-                "deerflow.runtime.checkpointer.provider.ensure_sqlite_parent_dir",
+                "nkyel.runtime.checkpointer.provider.ensure_sqlite_parent_dir",
                 side_effect=record_ensure,
             ),
             patch(
-                "deerflow.runtime.checkpointer.provider.resolve_sqlite_conn_str",
+                "nkyel.runtime.checkpointer.provider.resolve_sqlite_conn_str",
                 return_value="/tmp/resolved/relative/test.db",
             ),
         ):
@@ -407,7 +407,7 @@ class TestGetCheckpointer:
 
     def test_postgres_schema_creates_schema_and_sets_search_path(self):
         """Sync Postgres checkpointer should create schema before setup."""
-        load_checkpointer_config_from_dict({"type": "postgres", "connection_string": "postgresql://localhost/db", "postgres_schema": "deerflow"})
+        load_checkpointer_config_from_dict({"type": "postgres", "connection_string": "postgresql://localhost/db", "postgres_schema": "nkyel"})
 
         mock_saver_instance = MagicMock()
         mock_cm = MagicMock()
@@ -433,16 +433,16 @@ class TestGetCheckpointer:
 
         assert cp is mock_saver_instance
         mock_psycopg.connect.assert_called_once_with("postgresql://localhost/db", autocommit=True)
-        mock_conn.execute.assert_called_once_with('CREATE SCHEMA IF NOT EXISTS "deerflow"')
+        mock_conn.execute.assert_called_once_with('CREATE SCHEMA IF NOT EXISTS "nkyel"')
         # psycopg 3 __exit__ does not close(); the sync path must close explicitly.
         mock_conn.close.assert_called_once_with()
         called_dsn = mock_saver_cls.from_conn_string.call_args.args[0]
-        assert "options=-c%20search_path%3Ddeerflow" in called_dsn
+        assert "options=-c%20search_path%3Dnkyel" in called_dsn
         mock_saver_instance.setup.assert_called_once()
 
     def test_store_postgres_schema_creates_schema_and_sets_search_path(self):
         """Sync Postgres store should use the legacy checkpointer schema."""
-        load_checkpointer_config_from_dict({"type": "postgres", "connection_string": "postgresql://localhost/db", "postgres_schema": "deerflow"})
+        load_checkpointer_config_from_dict({"type": "postgres", "connection_string": "postgresql://localhost/db", "postgres_schema": "nkyel"})
 
         mock_store_instance = MagicMock()
         mock_cm = MagicMock()
@@ -468,11 +468,11 @@ class TestGetCheckpointer:
 
         assert store is mock_store_instance
         mock_psycopg.connect.assert_called_once_with("postgresql://localhost/db", autocommit=True)
-        mock_conn.execute.assert_called_once_with('CREATE SCHEMA IF NOT EXISTS "deerflow"')
+        mock_conn.execute.assert_called_once_with('CREATE SCHEMA IF NOT EXISTS "nkyel"')
         # psycopg 3 __exit__ does not close(); the sync path must close explicitly.
         mock_conn.close.assert_called_once_with()
         called_dsn = mock_store_cls.from_conn_string.call_args.args[0]
-        assert "options=-c%20search_path%3Ddeerflow" in called_dsn
+        assert "options=-c%20search_path%3Dnkyel" in called_dsn
         mock_store_instance.setup.assert_called_once()
 
 
@@ -488,7 +488,7 @@ class TestSyncSingletonThreadSafety:
         load_checkpointer_config_from_dict({"type": "memory"})
         factory = _BlockingSingletonFactory()
 
-        with patch("deerflow.runtime.checkpointer.provider._sync_checkpointer_cm", side_effect=factory.context_manager):
+        with patch("nkyel.runtime.checkpointer.provider._sync_checkpointer_cm", side_effect=factory.context_manager):
             futures_started = ThreadPoolExecutor(max_workers=1)
             try:
                 result_future = futures_started.submit(_call_getter_concurrently, get_checkpointer)
@@ -506,7 +506,7 @@ class TestSyncSingletonThreadSafety:
         load_checkpointer_config_from_dict({"type": "memory"})
         factory = _BlockingSingletonFactory()
 
-        with patch("deerflow.runtime.store.provider._sync_store_cm", side_effect=factory.context_manager):
+        with patch("nkyel.runtime.store.provider._sync_store_cm", side_effect=factory.context_manager):
             futures_started = ThreadPoolExecutor(max_workers=1)
             try:
                 result_future = futures_started.submit(_call_getter_concurrently, get_store)
@@ -528,8 +528,8 @@ class TestSyncSingletonThreadSafety:
             load_checkpointer_config_from_dict({"type": "memory"})
 
         with (
-            patch("deerflow.runtime.checkpointer.provider._checkpointer_lock", tracking_lock),
-            patch("deerflow.runtime.checkpointer.provider.ensure_config_loaded", side_effect=fake_ensure_config_loaded),
+            patch("nkyel.runtime.checkpointer.provider._checkpointer_lock", tracking_lock),
+            patch("nkyel.runtime.checkpointer.provider.ensure_config_loaded", side_effect=fake_ensure_config_loaded),
         ):
             checkpointer = get_checkpointer()
 
@@ -544,8 +544,8 @@ class TestSyncSingletonThreadSafety:
             load_checkpointer_config_from_dict({"type": "memory"})
 
         with (
-            patch("deerflow.runtime.store.provider._store_lock", tracking_lock),
-            patch("deerflow.runtime.store.provider.ensure_config_loaded", side_effect=fake_ensure_config_loaded),
+            patch("nkyel.runtime.store.provider._store_lock", tracking_lock),
+            patch("nkyel.runtime.store.provider.ensure_config_loaded", side_effect=fake_ensure_config_loaded),
         ):
             store = get_store()
 
@@ -557,7 +557,7 @@ class TestSyncSingletonThreadSafety:
         factory = _BlockingSingletonFactory()
 
         with (
-            patch("deerflow.runtime.checkpointer.provider._sync_checkpointer_cm", side_effect=factory.context_manager),
+            patch("nkyel.runtime.checkpointer.provider._sync_checkpointer_cm", side_effect=factory.context_manager),
             ThreadPoolExecutor(max_workers=2) as executor,
         ):
             get_future = executor.submit(get_checkpointer)
@@ -587,7 +587,7 @@ class TestSyncSingletonThreadSafety:
         factory = _BlockingSingletonFactory()
 
         with (
-            patch("deerflow.runtime.store.provider._sync_store_cm", side_effect=factory.context_manager),
+            patch("nkyel.runtime.store.provider._sync_store_cm", side_effect=factory.context_manager),
             ThreadPoolExecutor(max_workers=2) as executor,
         ):
             get_future = executor.submit(get_store)
@@ -617,7 +617,7 @@ class TestAsyncCheckpointer:
     @pytest.mark.anyio
     async def test_sqlite_creates_parent_dir_via_to_thread(self):
         """Async SQLite setup should move mkdir off the event loop."""
-        from deerflow.runtime.checkpointer.async_provider import _prepare_sqlite_checkpointer_path, make_checkpointer
+        from nkyel.runtime.checkpointer.async_provider import _prepare_sqlite_checkpointer_path, make_checkpointer
 
         mock_config = MagicMock()
         mock_config.checkpointer = CheckpointerConfig(type="sqlite", connection_string="relative/test.db")
@@ -634,10 +634,10 @@ class TestAsyncCheckpointer:
         mock_module.AsyncSqliteSaver = mock_saver_cls
 
         with (
-            patch("deerflow.runtime.checkpointer.async_provider.get_app_config", return_value=mock_config),
+            patch("nkyel.runtime.checkpointer.async_provider.get_app_config", return_value=mock_config),
             patch.dict(sys.modules, {"langgraph.checkpoint.sqlite.aio": mock_module}),
             patch(
-                "deerflow.runtime.checkpointer.async_provider.asyncio.to_thread",
+                "nkyel.runtime.checkpointer.async_provider.asyncio.to_thread",
                 new_callable=AsyncMock,
                 return_value="/tmp/resolved/test.db",
             ) as mock_to_thread,
@@ -655,10 +655,10 @@ class TestAsyncCheckpointer:
     @pytest.mark.anyio
     async def test_postgres_uses_connection_pool(self):
         """Async postgres checkpointer should use AsyncConnectionPool, not a single connection."""
-        from deerflow.runtime.checkpointer.async_provider import make_checkpointer
+        from nkyel.runtime.checkpointer.async_provider import make_checkpointer
 
         mock_config = MagicMock()
-        mock_config.checkpointer = CheckpointerConfig(type="postgres", connection_string="postgresql://localhost/db", postgres_schema="deerflow")
+        mock_config.checkpointer = CheckpointerConfig(type="postgres", connection_string="postgresql://localhost/db", postgres_schema="nkyel")
 
         mock_saver = AsyncMock()
 
@@ -684,7 +684,7 @@ class TestAsyncCheckpointer:
         mock_psycopg_rows.dict_row = mock_dict_row
 
         with (
-            patch("deerflow.runtime.checkpointer.async_provider.get_app_config", return_value=mock_config),
+            patch("nkyel.runtime.checkpointer.async_provider.get_app_config", return_value=mock_config),
             patch.dict(sys.modules, {"langgraph.checkpoint.postgres.aio": mock_pg_module}),
             patch.dict(sys.modules, {"psycopg.rows": mock_psycopg_rows}),
             patch.dict(sys.modules, {"psycopg_pool": MagicMock(AsyncConnectionPool=mock_pool_cls)}),
@@ -699,10 +699,10 @@ class TestAsyncCheckpointer:
         call_kwargs = mock_pool_cls.call_args
         # search_path is injected into the DSN (merged with any existing libpq
         # options), not via kwargs["options"] which would clobber DSN options.
-        assert "options=-c%20search_path%3Ddeerflow" in call_kwargs[0][0]
+        assert "options=-c%20search_path%3Dnkyel" in call_kwargs[0][0]
         assert call_kwargs[1]["check"] is mock_pool_cls.check_connection
         assert "options" not in call_kwargs[1]["kwargs"]
-        mock_conn.execute.assert_awaited_once_with('CREATE SCHEMA IF NOT EXISTS "deerflow"')
+        mock_conn.execute.assert_awaited_once_with('CREATE SCHEMA IF NOT EXISTS "nkyel"')
 
         # Verify saver was constructed with the pool (not via from_conn_string)
         mock_saver_cls.assert_called_once_with(conn=mock_pool_instance)
@@ -711,10 +711,10 @@ class TestAsyncCheckpointer:
     @pytest.mark.anyio
     async def test_database_postgres_uses_connection_pool(self):
         """Unified database postgres path should use AsyncConnectionPool with keepalive."""
-        from deerflow.config.database_config import DatabaseConfig
-        from deerflow.runtime.checkpointer.async_provider import make_checkpointer
+        from nkyel.config.database_config import DatabaseConfig
+        from nkyel.runtime.checkpointer.async_provider import make_checkpointer
 
-        db_config = DatabaseConfig(backend="postgres", postgres_url="postgresql://localhost/db", postgres_schema="deerflow")
+        db_config = DatabaseConfig(backend="postgres", postgres_url="postgresql://localhost/db", postgres_schema="nkyel")
         mock_config = MagicMock()
         mock_config.checkpointer = None
         mock_config.database = db_config
@@ -743,7 +743,7 @@ class TestAsyncCheckpointer:
         mock_psycopg_rows.dict_row = mock_dict_row
 
         with (
-            patch("deerflow.runtime.checkpointer.async_provider.get_app_config", return_value=mock_config),
+            patch("nkyel.runtime.checkpointer.async_provider.get_app_config", return_value=mock_config),
             patch.dict(sys.modules, {"langgraph.checkpoint.postgres.aio": mock_pg_module}),
             patch.dict(sys.modules, {"psycopg.rows": mock_psycopg_rows}),
             patch.dict(sys.modules, {"psycopg_pool": MagicMock(AsyncConnectionPool=mock_pool_cls)}),
@@ -753,10 +753,10 @@ class TestAsyncCheckpointer:
 
         mock_pool_cls.assert_called_once()
         call_kwargs = mock_pool_cls.call_args
-        assert "options=-c%20search_path%3Ddeerflow" in call_kwargs[0][0]
+        assert "options=-c%20search_path%3Dnkyel" in call_kwargs[0][0]
         assert call_kwargs[1]["check"] is mock_pool_cls.check_connection
         assert "options" not in call_kwargs[1]["kwargs"]
-        mock_conn.execute.assert_awaited_once_with('CREATE SCHEMA IF NOT EXISTS "deerflow"')
+        mock_conn.execute.assert_awaited_once_with('CREATE SCHEMA IF NOT EXISTS "nkyel"')
 
         mock_saver_cls.assert_called_once_with(conn=mock_pool_instance)
         mock_saver.setup.assert_awaited_once()
@@ -764,8 +764,8 @@ class TestAsyncCheckpointer:
     @pytest.mark.anyio
     async def test_database_sqlite_creates_parent_dir_via_to_thread(self):
         """Unified database SQLite setup should also move path IO off the event loop."""
-        from deerflow.config.database_config import DatabaseConfig
-        from deerflow.runtime.checkpointer.async_provider import _prepare_database_sqlite_checkpointer_path, make_checkpointer
+        from nkyel.config.database_config import DatabaseConfig
+        from nkyel.runtime.checkpointer.async_provider import _prepare_database_sqlite_checkpointer_path, make_checkpointer
 
         db_config = DatabaseConfig(backend="sqlite", sqlite_dir="relative-data")
         mock_config = MagicMock()
@@ -784,12 +784,12 @@ class TestAsyncCheckpointer:
         mock_module.AsyncSqliteSaver = mock_saver_cls
 
         with (
-            patch("deerflow.runtime.checkpointer.async_provider.get_app_config", return_value=mock_config),
+            patch("nkyel.runtime.checkpointer.async_provider.get_app_config", return_value=mock_config),
             patch.dict(sys.modules, {"langgraph.checkpoint.sqlite.aio": mock_module}),
             patch(
-                "deerflow.runtime.checkpointer.async_provider.asyncio.to_thread",
+                "nkyel.runtime.checkpointer.async_provider.asyncio.to_thread",
                 new_callable=AsyncMock,
-                return_value="/tmp/data/deerflow.db",
+                return_value="/tmp/data/nkyel.db",
             ) as mock_to_thread,
         ):
             async with make_checkpointer() as saver:
@@ -799,7 +799,7 @@ class TestAsyncCheckpointer:
         called_fn, called_db_config = mock_to_thread.await_args.args
         assert called_fn is _prepare_database_sqlite_checkpointer_path
         assert called_db_config is db_config
-        mock_saver_cls.from_conn_string.assert_called_once_with("/tmp/data/deerflow.db")
+        mock_saver_cls.from_conn_string.assert_called_once_with("/tmp/data/nkyel.db")
         mock_saver.setup.assert_awaited_once()
 
 
@@ -807,10 +807,10 @@ class TestAsyncStore:
     @pytest.mark.anyio
     async def test_postgres_schema_creates_schema_and_sets_search_path(self):
         """Async Postgres store should use the legacy checkpointer schema."""
-        from deerflow.runtime.store.async_provider import make_store
+        from nkyel.runtime.store.async_provider import make_store
 
         mock_config = MagicMock()
-        mock_config.checkpointer = CheckpointerConfig(type="postgres", connection_string="postgresql://localhost/db", postgres_schema="deerflow")
+        mock_config.checkpointer = CheckpointerConfig(type="postgres", connection_string="postgresql://localhost/db", postgres_schema="nkyel")
 
         mock_store = AsyncMock()
         mock_cm = AsyncMock()
@@ -837,21 +837,21 @@ class TestAsyncStore:
                 assert store is mock_store
 
         mock_async_connection.connect.assert_awaited_once_with("postgresql://localhost/db", autocommit=True)
-        mock_conn.execute.assert_awaited_once_with('CREATE SCHEMA IF NOT EXISTS "deerflow"')
+        mock_conn.execute.assert_awaited_once_with('CREATE SCHEMA IF NOT EXISTS "nkyel"')
         mock_conn.close.assert_awaited_once()
         called_dsn = mock_store_cls.from_conn_string.call_args.args[0]
-        assert "options=-c%20search_path%3Ddeerflow" in called_dsn
+        assert "options=-c%20search_path%3Dnkyel" in called_dsn
         mock_store.setup.assert_awaited_once()
 
     @pytest.mark.anyio
     async def test_database_postgres_schema_creates_schema_and_sets_search_path(self):
         """Unified database postgres store should use database.postgres_schema."""
-        from deerflow.config.database_config import DatabaseConfig
-        from deerflow.runtime.store.async_provider import make_store
+        from nkyel.config.database_config import DatabaseConfig
+        from nkyel.runtime.store.async_provider import make_store
 
         mock_config = MagicMock()
         mock_config.checkpointer = None
-        mock_config.database = DatabaseConfig(backend="postgres", postgres_url="postgresql://localhost/db", postgres_schema="deerflow")
+        mock_config.database = DatabaseConfig(backend="postgres", postgres_url="postgresql://localhost/db", postgres_schema="nkyel")
 
         mock_store = AsyncMock()
         mock_cm = AsyncMock()
@@ -878,10 +878,10 @@ class TestAsyncStore:
                 assert store is mock_store
 
         mock_async_connection.connect.assert_awaited_once_with("postgresql://localhost/db", autocommit=True)
-        mock_conn.execute.assert_awaited_once_with('CREATE SCHEMA IF NOT EXISTS "deerflow"')
+        mock_conn.execute.assert_awaited_once_with('CREATE SCHEMA IF NOT EXISTS "nkyel"')
         mock_conn.close.assert_awaited_once()
         called_dsn = mock_store_cls.from_conn_string.call_args.args[0]
-        assert "options=-c%20search_path%3Ddeerflow" in called_dsn
+        assert "options=-c%20search_path%3Dnkyel" in called_dsn
         mock_store.setup.assert_awaited_once()
 
 
@@ -892,14 +892,14 @@ class TestCheckpointerDatabaseConfig:
 
     Regression: ``get_checkpointer`` / ``checkpointer_context`` previously read
     only the legacy ``checkpointer`` section and fell back to ``InMemorySaver``,
-    silently ignoring ``database``. Embedded callers (``DeerFlowClient``) and the
+    silently ignoring ``database``. Embedded callers (``NkyelClient``) and the
     TUI then persisted Store rows to sqlite/postgres while checkpoints went to an
     in-memory saver and were lost on exit.
     """
 
     def test_sync_checkpointer_context_uses_database_config(self):
         """The one-shot sync checkpointer factory must follow unified database config."""
-        from deerflow.runtime.checkpointer.provider import checkpointer_context
+        from nkyel.runtime.checkpointer.provider import checkpointer_context
 
         app_config = SimpleNamespace(
             checkpointer=None,
@@ -909,8 +909,8 @@ class TestCheckpointerDatabaseConfig:
         factory = MagicMock(return_value=nullcontext(expected))
 
         with (
-            patch("deerflow.runtime.checkpointer.provider.get_app_config", return_value=app_config),
-            patch("deerflow.runtime.checkpointer.provider._sync_checkpointer_cm", factory),
+            patch("nkyel.runtime.checkpointer.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.checkpointer.provider._sync_checkpointer_cm", factory),
             checkpointer_context() as cp,
         ):
             assert cp is expected
@@ -921,7 +921,7 @@ class TestCheckpointerDatabaseConfig:
 
     def test_sync_checkpointer_context_uses_sqlite_database_config(self, tmp_path):
         """The one-shot sync checkpointer factory must resolve the sqlite branch too, not just postgres."""
-        from deerflow.runtime.checkpointer.provider import checkpointer_context
+        from nkyel.runtime.checkpointer.provider import checkpointer_context
 
         db_config = DatabaseConfig(backend="sqlite", sqlite_dir=str(tmp_path))
         app_config = SimpleNamespace(checkpointer=None, database=db_config)
@@ -929,8 +929,8 @@ class TestCheckpointerDatabaseConfig:
         factory = MagicMock(return_value=nullcontext(expected))
 
         with (
-            patch("deerflow.runtime.checkpointer.provider.get_app_config", return_value=app_config),
-            patch("deerflow.runtime.checkpointer.provider._sync_checkpointer_cm", factory),
+            patch("nkyel.runtime.checkpointer.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.checkpointer.provider._sync_checkpointer_cm", factory),
             checkpointer_context() as cp,
         ):
             assert cp is expected
@@ -941,7 +941,7 @@ class TestCheckpointerDatabaseConfig:
 
     def test_sync_checkpointer_strips_driver_suffix_without_schema(self):
         """A SQLAlchemy ``+asyncpg`` URL must reach libpq as a bare DSN when no schema is set."""
-        from deerflow.runtime.checkpointer.provider import checkpointer_context
+        from nkyel.runtime.checkpointer.provider import checkpointer_context
 
         app_config = SimpleNamespace(
             checkpointer=None,
@@ -951,7 +951,7 @@ class TestCheckpointerDatabaseConfig:
         mock_saver_cls.from_conn_string.return_value = nullcontext(MagicMock())
 
         with (
-            patch("deerflow.runtime.checkpointer.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.checkpointer.provider.get_app_config", return_value=app_config),
             patch.dict(sys.modules, {"langgraph.checkpoint.postgres": MagicMock(PostgresSaver=mock_saver_cls)}),
             checkpointer_context(),
         ):
@@ -969,9 +969,9 @@ class TestCheckpointerDatabaseConfig:
         factory = MagicMock(return_value=nullcontext(expected))
 
         with (
-            patch("deerflow.runtime.checkpointer.provider.ensure_config_loaded"),
-            patch("deerflow.runtime.checkpointer.provider.get_app_config", return_value=app_config),
-            patch("deerflow.runtime.checkpointer.provider._sync_checkpointer_cm", factory),
+            patch("nkyel.runtime.checkpointer.provider.ensure_config_loaded"),
+            patch("nkyel.runtime.checkpointer.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.checkpointer.provider._sync_checkpointer_cm", factory),
         ):
             assert get_checkpointer() is expected
 
@@ -984,15 +984,15 @@ class TestCheckpointerDatabaseConfig:
         from langgraph.checkpoint.memory import InMemorySaver
 
         with (
-            patch("deerflow.runtime.checkpointer.provider.ensure_config_loaded"),
-            patch("deerflow.runtime.checkpointer.provider.get_checkpointer_config", return_value=None),
-            patch("deerflow.runtime.checkpointer.provider.get_app_config", side_effect=FileNotFoundError),
+            patch("nkyel.runtime.checkpointer.provider.ensure_config_loaded"),
+            patch("nkyel.runtime.checkpointer.provider.get_checkpointer_config", return_value=None),
+            patch("nkyel.runtime.checkpointer.provider.get_app_config", side_effect=FileNotFoundError),
         ):
             assert isinstance(get_checkpointer(), InMemorySaver)
 
     def test_legacy_checkpointer_config_takes_precedence(self):
         """Backward-compatible checkpointer config must override database."""
-        from deerflow.runtime.checkpointer.provider import checkpointer_context
+        from nkyel.runtime.checkpointer.provider import checkpointer_context
 
         app_config = SimpleNamespace(
             checkpointer=CheckpointerConfig(type="memory"),
@@ -1002,8 +1002,8 @@ class TestCheckpointerDatabaseConfig:
         factory = MagicMock(return_value=nullcontext(expected))
 
         with (
-            patch("deerflow.runtime.checkpointer.provider.get_app_config", return_value=app_config),
-            patch("deerflow.runtime.checkpointer.provider._sync_checkpointer_cm", factory),
+            patch("nkyel.runtime.checkpointer.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.checkpointer.provider._sync_checkpointer_cm", factory),
             checkpointer_context() as cp,
         ):
             assert cp is expected
@@ -1016,12 +1016,12 @@ class TestCheckpointerDatabaseConfig:
         """Explicit memory mode remains an intentional non-persistent checkpointer."""
         from langgraph.checkpoint.memory import InMemorySaver
 
-        from deerflow.runtime.checkpointer.provider import checkpointer_context
+        from nkyel.runtime.checkpointer.provider import checkpointer_context
 
         app_config = SimpleNamespace(checkpointer=None, database=DatabaseConfig(backend="memory"))
 
         with (
-            patch("deerflow.runtime.checkpointer.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.checkpointer.provider.get_app_config", return_value=app_config),
             checkpointer_context() as cp,
         ):
             assert isinstance(cp, InMemorySaver)
@@ -1033,18 +1033,18 @@ class TestStoreDatabaseConfig:
         from langgraph.store.memory import InMemoryStore
 
         with (
-            patch("deerflow.runtime.store.provider.ensure_config_loaded"),
-            patch("deerflow.runtime.store.provider.get_checkpointer_config", return_value=None),
-            patch("deerflow.runtime.store.provider.get_app_config", side_effect=FileNotFoundError),
+            patch("nkyel.runtime.store.provider.ensure_config_loaded"),
+            patch("nkyel.runtime.store.provider.get_checkpointer_config", return_value=None),
+            patch("nkyel.runtime.store.provider.get_app_config", side_effect=FileNotFoundError),
         ):
             assert isinstance(get_store(), InMemoryStore)
 
     @pytest.mark.anyio
     async def test_async_postgres_store_uses_database_config(self, caplog):
         """Unified database postgres config must not fall back to InMemoryStore."""
-        from deerflow.runtime.store.async_provider import make_store
+        from nkyel.runtime.store.async_provider import make_store
 
-        caplog.set_level("WARNING", logger="deerflow.runtime.store.async_provider")
+        caplog.set_level("WARNING", logger="nkyel.runtime.store.async_provider")
         app_config = SimpleNamespace(
             checkpointer=None,
             database=DatabaseConfig(backend="postgres", postgres_url="postgresql://localhost/db"),
@@ -1068,7 +1068,7 @@ class TestStoreDatabaseConfig:
     @pytest.mark.anyio
     async def test_async_store_strips_driver_suffix_without_schema(self):
         """A SQLAlchemy ``+asyncpg`` URL must reach libpq as a bare DSN when no schema is set."""
-        from deerflow.runtime.store.async_provider import make_store
+        from nkyel.runtime.store.async_provider import make_store
 
         app_config = SimpleNamespace(
             checkpointer=None,
@@ -1088,9 +1088,9 @@ class TestStoreDatabaseConfig:
 
     @pytest.mark.anyio
     async def test_async_sqlite_store_uses_unified_database_path(self, tmp_path):
-        """Unified database SQLite config must use the shared deerflow.db path."""
-        from deerflow.runtime.store.async_provider import make_store
-        from deerflow.runtime.store.provider import ensure_sqlite_parent_dir
+        """Unified database SQLite config must use the shared nkyel.db path."""
+        from nkyel.runtime.store.async_provider import make_store
+        from nkyel.runtime.store.provider import ensure_sqlite_parent_dir
 
         db_config = DatabaseConfig(backend="sqlite", sqlite_dir=str(tmp_path))
         app_config = SimpleNamespace(checkpointer=None, database=db_config)
@@ -1105,7 +1105,7 @@ class TestStoreDatabaseConfig:
         with (
             patch.dict(sys.modules, {"langgraph.store.sqlite.aio": mock_module}),
             patch(
-                "deerflow.runtime.store.async_provider.asyncio.to_thread",
+                "nkyel.runtime.store.async_provider.asyncio.to_thread",
                 new_callable=AsyncMock,
             ) as mock_to_thread,
         ):
@@ -1121,7 +1121,7 @@ class TestStoreDatabaseConfig:
 
     def test_sync_store_context_uses_database_config(self):
         """The one-shot sync Store factory must follow unified database config."""
-        from deerflow.runtime.store.provider import store_context
+        from nkyel.runtime.store.provider import store_context
 
         app_config = SimpleNamespace(
             checkpointer=None,
@@ -1131,8 +1131,8 @@ class TestStoreDatabaseConfig:
         factory = MagicMock(return_value=nullcontext(expected_store))
 
         with (
-            patch("deerflow.runtime.store.provider.get_app_config", return_value=app_config),
-            patch("deerflow.runtime.store.provider._sync_store_cm", factory),
+            patch("nkyel.runtime.store.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.store.provider._sync_store_cm", factory),
             store_context() as store,
         ):
             assert store is expected_store
@@ -1143,7 +1143,7 @@ class TestStoreDatabaseConfig:
 
     def test_sync_store_strips_driver_suffix_without_schema(self):
         """A SQLAlchemy ``+asyncpg`` URL must reach libpq as a bare DSN when no schema is set."""
-        from deerflow.runtime.store.provider import store_context
+        from nkyel.runtime.store.provider import store_context
 
         app_config = SimpleNamespace(
             checkpointer=None,
@@ -1153,7 +1153,7 @@ class TestStoreDatabaseConfig:
         mock_store_cls.from_conn_string.return_value = nullcontext(MagicMock())
 
         with (
-            patch("deerflow.runtime.store.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.store.provider.get_app_config", return_value=app_config),
             patch.dict(sys.modules, {"langgraph.store.postgres": MagicMock(PostgresStore=mock_store_cls)}),
             store_context(),
         ):
@@ -1171,9 +1171,9 @@ class TestStoreDatabaseConfig:
         factory = MagicMock(return_value=nullcontext(expected_store))
 
         with (
-            patch("deerflow.runtime.store.provider.ensure_config_loaded"),
-            patch("deerflow.runtime.store.provider.get_app_config", return_value=app_config),
-            patch("deerflow.runtime.store.provider._sync_store_cm", factory),
+            patch("nkyel.runtime.store.provider.ensure_config_loaded"),
+            patch("nkyel.runtime.store.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.store.provider._sync_store_cm", factory),
         ):
             assert get_store() is expected_store
 
@@ -1183,7 +1183,7 @@ class TestStoreDatabaseConfig:
 
     def test_legacy_checkpointer_config_takes_precedence_for_store(self):
         """Backward-compatible checkpointer config must override database for Store."""
-        from deerflow.runtime.store.provider import store_context
+        from nkyel.runtime.store.provider import store_context
 
         app_config = SimpleNamespace(
             checkpointer=CheckpointerConfig(type="memory"),
@@ -1193,8 +1193,8 @@ class TestStoreDatabaseConfig:
         factory = MagicMock(return_value=nullcontext(expected_store))
 
         with (
-            patch("deerflow.runtime.store.provider.get_app_config", return_value=app_config),
-            patch("deerflow.runtime.store.provider._sync_store_cm", factory),
+            patch("nkyel.runtime.store.provider.get_app_config", return_value=app_config),
+            patch("nkyel.runtime.store.provider._sync_store_cm", factory),
             store_context() as store,
         ):
             assert store is expected_store
@@ -1207,13 +1207,13 @@ class TestStoreDatabaseConfig:
         """Explicit memory mode remains an intentional non-persistent Store."""
         from langgraph.store.memory import InMemoryStore
 
-        from deerflow.runtime.store.provider import store_context
+        from nkyel.runtime.store.provider import store_context
 
         app_config = SimpleNamespace(
             checkpointer=None,
             database=DatabaseConfig(backend="memory"),
         )
-        with patch("deerflow.runtime.store.provider.get_app_config", return_value=app_config):
+        with patch("nkyel.runtime.store.provider.get_app_config", return_value=app_config):
             with store_context() as store:
                 assert isinstance(store, InMemoryStore)
 
@@ -1236,13 +1236,13 @@ class TestSqliteUriRejection:
 
     @pytest.mark.parametrize("conn_string", SQLITE_URIS)
     def test_resolve_rejects_uri(self, conn_string):
-        from deerflow.runtime.store._sqlite_utils import resolve_sqlite_conn_str
+        from nkyel.runtime.store._sqlite_utils import resolve_sqlite_conn_str
 
         with pytest.raises(ValueError, match="SQLite URI"):
             resolve_sqlite_conn_str(conn_string)
 
     def test_resolve_keeps_memory_and_resolves_paths(self, tmp_path):
-        from deerflow.runtime.store._sqlite_utils import resolve_sqlite_conn_str
+        from nkyel.runtime.store._sqlite_utils import resolve_sqlite_conn_str
 
         assert resolve_sqlite_conn_str(":memory:") == ":memory:"
         assert resolve_sqlite_conn_str(str(tmp_path / "cp.db")) == str(tmp_path / "cp.db")
@@ -1250,8 +1250,8 @@ class TestSqliteUriRejection:
     @pytest.mark.parametrize("conn_string", ["FILE:x.db", "File:x.db"])
     def test_resolve_treats_non_lowercase_file_prefix_as_path(self, conn_string):
         """SQLite only recognizes a lowercase ``file:`` prefix as a URI, even with ``uri=True``."""
-        from deerflow.config.paths import resolve_path
-        from deerflow.runtime.store._sqlite_utils import resolve_sqlite_conn_str
+        from nkyel.config.paths import resolve_path
+        from nkyel.runtime.store._sqlite_utils import resolve_sqlite_conn_str
 
         assert resolve_sqlite_conn_str(conn_string) == str(resolve_path(conn_string))
 
@@ -1278,7 +1278,7 @@ class TestSqliteUriRejection:
     @pytest.mark.anyio
     @pytest.mark.parametrize("conn_string", SQLITE_URIS)
     async def test_async_checkpointer_rejects_uri(self, conn_string, tmp_path, monkeypatch):
-        from deerflow.runtime.checkpointer.async_provider import make_checkpointer
+        from nkyel.runtime.checkpointer.async_provider import make_checkpointer
 
         monkeypatch.chdir(tmp_path)
         app_config = SimpleNamespace(checkpointer=CheckpointerConfig(type="sqlite", connection_string=conn_string), database=None)
@@ -1292,7 +1292,7 @@ class TestSqliteUriRejection:
     @pytest.mark.anyio
     @pytest.mark.parametrize("conn_string", SQLITE_URIS)
     async def test_async_store_rejects_uri(self, conn_string, tmp_path, monkeypatch):
-        from deerflow.runtime.store.async_provider import make_store
+        from nkyel.runtime.store.async_provider import make_store
 
         monkeypatch.chdir(tmp_path)
         app_config = SimpleNamespace(checkpointer=CheckpointerConfig(type="sqlite", connection_string=conn_string), database=None)
@@ -1320,16 +1320,16 @@ class TestAppConfigLoadsCheckpointer:
 
 
 # ---------------------------------------------------------------------------
-# DeerFlowClient falls back to config checkpointer
+# NkyelClient falls back to config checkpointer
 # ---------------------------------------------------------------------------
 
 
 class TestClientCheckpointerFallback:
     def test_client_uses_config_checkpointer_when_none_provided(self):
-        """DeerFlowClient._ensure_agent falls back to get_checkpointer() when checkpointer=None."""
+        """NkyelClient._ensure_agent falls back to get_checkpointer() when checkpointer=None."""
         from langgraph.checkpoint.memory import InMemorySaver
 
-        from deerflow.client import DeerFlowClient
+        from nkyel.client import NkyelClient
 
         load_checkpointer_config_from_dict({"type": "memory"})
 
@@ -1351,15 +1351,15 @@ class TestClientCheckpointerFallback:
         config_mock.tool_search.enabled = False
 
         with (
-            patch("deerflow.client.get_app_config", return_value=config_mock),
-            patch("deerflow.client.create_agent", side_effect=fake_create_agent),
-            patch("deerflow.client.create_chat_model", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value=""),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
-            patch("deerflow.client.DeerFlowClient._get_tools", return_value=[]),
+            patch("nkyel.client.get_app_config", return_value=config_mock),
+            patch("nkyel.client.create_agent", side_effect=fake_create_agent),
+            patch("nkyel.client.create_chat_model", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value=""),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.NkyelClient._get_tools", return_value=[]),
         ):
-            client = DeerFlowClient(checkpointer=None)
+            client = NkyelClient(checkpointer=None)
             config = client._get_runnable_config("test-thread")
             client._ensure_agent(config)
 
@@ -1368,7 +1368,7 @@ class TestClientCheckpointerFallback:
 
     def test_client_explicit_checkpointer_takes_precedence(self):
         """An explicitly provided checkpointer is used even when config checkpointer is set."""
-        from deerflow.client import DeerFlowClient
+        from nkyel.client import NkyelClient
 
         load_checkpointer_config_from_dict({"type": "memory"})
 
@@ -1391,15 +1391,15 @@ class TestClientCheckpointerFallback:
         config_mock.tool_search.enabled = False
 
         with (
-            patch("deerflow.client.get_app_config", return_value=config_mock),
-            patch("deerflow.client.create_agent", side_effect=fake_create_agent),
-            patch("deerflow.client.create_chat_model", return_value=MagicMock()),
-            patch("deerflow.client.build_middlewares", return_value=[]),
-            patch("deerflow.client.apply_prompt_template", return_value=""),
-            patch("deerflow.client.get_enabled_skills_for_config", return_value=[]),
-            patch("deerflow.client.DeerFlowClient._get_tools", return_value=[]),
+            patch("nkyel.client.get_app_config", return_value=config_mock),
+            patch("nkyel.client.create_agent", side_effect=fake_create_agent),
+            patch("nkyel.client.create_chat_model", return_value=MagicMock()),
+            patch("nkyel.client.build_middlewares", return_value=[]),
+            patch("nkyel.client.apply_prompt_template", return_value=""),
+            patch("nkyel.client.get_enabled_skills_for_config", return_value=[]),
+            patch("nkyel.client.NkyelClient._get_tools", return_value=[]),
         ):
-            client = DeerFlowClient(checkpointer=explicit_cp)
+            client = NkyelClient(checkpointer=explicit_cp)
             config = client._get_runnable_config("test-thread")
             client._ensure_agent(config)
 

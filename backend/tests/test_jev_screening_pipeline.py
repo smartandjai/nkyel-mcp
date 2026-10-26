@@ -16,7 +16,7 @@ from pathlib import Path
 
 import httpx
 import pytest
-from deerflow_extension_api import EXTENSION_TASK_STORE_KEY, ExtensionData
+from nkyel_extension_api import EXTENSION_TASK_STORE_KEY, ExtensionData
 from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
@@ -25,18 +25,18 @@ from langchain_core.tools import StructuredTool
 from langgraph.types import Command
 from pydantic import Field
 
-from deerflow.agents.lead_agent.agent import build_middlewares
-from deerflow.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
-from deerflow.agents.middlewares.tool_receipt import TOOL_RECEIPT_KEY
-from deerflow.agents.middlewares.tool_result_meta import TOOL_META_KEY
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.app_config import AppConfig
-from deerflow.config.paths import Paths
-from deerflow.config.pii_redaction_config import PiiRedactionConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.agents.lead_agent.agent import build_middlewares
+from nkyel.agents.middlewares.tool_error_handling_middleware import build_subagent_runtime_middlewares
+from nkyel.agents.middlewares.tool_receipt import TOOL_RECEIPT_KEY
+from nkyel.agents.middlewares.tool_result_meta import TOOL_META_KEY
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.app_config import AppConfig
+from nkyel.config.paths import Paths
+from nkyel.config.pii_redaction_config import PiiRedactionConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
 
-EXAMPLE = Path(__file__).resolve().parents[2] / "examples/deerflow-extension-jev-screening"
+EXAMPLE = Path(__file__).resolve().parents[2] / "examples/nkyel-extension-jev-screening"
 REAL_CLIENT = httpx.AsyncClient
 WARNING = "[Potential instruction addressed to the assistant"
 
@@ -64,8 +64,8 @@ class _RecordingModel(BaseChatModel):
 def offline(monkeypatch, tmp_path):
     monkeypatch.syspath_prepend(str(EXAMPLE))
     monkeypatch.setenv("TYPESAFE_API_KEY", "offline-screening-key")
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", Paths(str(tmp_path)))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", Paths(str(tmp_path)))
 
     def wire(responder):
         requests = []
@@ -86,14 +86,14 @@ def _score(value=0.9):
 
 
 def _graph(scope, content, *, as_command=False, pii=False, enabled=True, message_id="original-result", **screening_options):
-    app_config = AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+    app_config = AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
     app_config.title.enabled = False
     app_config.memory.enabled = False
     app_config.summarization.enabled = False
     app_config.pii_redaction = PiiRedactionConfig(enabled=pii, token_secret="offline-screening-token-secret" if pii else None)
     # Deterministic no-disk fallback exercises the actual 30,000-char boundary.
     app_config.tool_output.externalize_min_chars = 0
-    extensions, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_jev_screening:install", config={"enabled": enabled, **screening_options})])
+    extensions, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_jev_screening:install", config={"enabled": enabled, **screening_options})])
     assert [d for d in diagnostics if d.level == "error"] == []
     if scope == "lead":
         stack = build_middlewares(config={"configurable": {}}, model_name="offline", app_config=app_config, extensions=extensions, memory_enabled=False, owns_agent_skill_projection=False)

@@ -9,15 +9,15 @@ from unittest.mock import MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.queue import MemoryUpdateQueue
-from deerflow.agents.memory.summarization_hook import memory_flush_hook
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.config.memory_config import MemoryConfig
+from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.queue import MemoryUpdateQueue
+from nkyel.agents.memory.summarization_hook import memory_flush_hook
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.config.memory_config import MemoryConfig
 
-QUEUE_MODULE = "deerflow.agents.memory.backends.deermem.deermem.core.queue"
-HOOK_MODULE = "deerflow.agents.memory.summarization_hook"
+QUEUE_MODULE = "nkyel.agents.memory.backends.deermem.deermem.core.queue"
+HOOK_MODULE = "nkyel.agents.memory.summarization_hook"
 PREFERENCES = (
     "My favorite beverage is oolong tea.",
     "My preferred programming language is Rust.",
@@ -56,7 +56,7 @@ def test_disjoint_compaction_snapshots_persist_while_extraction_is_busy(tmp_path
     summary_model.with_config.return_value = summary_model
     summary_model.invoke.return_value = SimpleNamespace(text="A short summary omitting specific preferences.")
     snapshots = []
-    middleware = DeerFlowSummarizationMiddleware(
+    middleware = NkyelSummarizationMiddleware(
         model=summary_model,
         trigger=("messages", 4),
         keep=("messages", 2),

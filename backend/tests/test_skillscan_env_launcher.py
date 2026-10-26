@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pytest
 
-import deerflow
-from deerflow.skills.skillscan import scan_skill_dir
+import nkyel
+from nkyel.skills.skillscan import scan_skill_dir
 
 CURL_PIPE_SHELL = "shell-curl-pipe-shell"
 ENV_DUMP = "shell-env-dump"
@@ -208,7 +208,7 @@ _CHILD_TIMEOUT_SECONDS = 60.0
 @pytest.fixture(scope="module")
 def chain_scans() -> dict[str, dict[str, object]]:
     """Scan every chain in one child process so the skills import is paid once."""
-    harness = Path(deerflow.__file__).resolve().parents[1]
+    harness = Path(nkyel.__file__).resolve().parents[1]
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(filter(None, (str(harness), env.get("PYTHONPATH", ""))))
     script = textwrap.dedent(
@@ -217,7 +217,7 @@ def chain_scans() -> dict[str, dict[str, object]]:
         import sys
         import time
 
-        from deerflow.skills.skillscan.orchestrator import _scan_shell
+        from nkyel.skills.skillscan.orchestrator import _scan_shell
 
         results = {{}}
         for name, chain in json.load(sys.stdin).items():

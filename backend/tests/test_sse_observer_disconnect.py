@@ -18,7 +18,7 @@ import anyio
 import pytest
 
 from app.gateway.services import sse_consumer
-from deerflow.runtime import END_SENTINEL, HEARTBEAT_SENTINEL, DisconnectMode, RunRecord, RunStatus
+from nkyel.runtime import END_SENTINEL, HEARTBEAT_SENTINEL, DisconnectMode, RunRecord, RunStatus
 
 
 def _running_record() -> RunRecord:

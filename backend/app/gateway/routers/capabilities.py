@@ -8,9 +8,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.gateway.capabilities import AdapterContext, InstallationList, list_installations, registry
 from app.gateway.deps import get_config, get_current_user_from_request, require_admin_user
-from deerflow.capabilities.catalog import PluginManifest, load_catalog
-from deerflow.config.app_config import AppConfig
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.capabilities.catalog import PluginManifest, load_catalog
+from nkyel.config.app_config import AppConfig
+from nkyel.runtime.user_context import get_effective_user_id
 
 router = APIRouter(prefix="/api/capabilities", tags=["capabilities"])
 

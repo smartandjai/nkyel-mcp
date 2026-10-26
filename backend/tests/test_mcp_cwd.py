@@ -7,9 +7,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config.paths import Paths
-from deerflow.mcp import tools as mcp_tools
-from deerflow.mcp.session_pool import MCPSessionPool
+from nkyel.config.paths import Paths
+from nkyel.mcp import tools as mcp_tools
+from nkyel.mcp.session_pool import MCPSessionPool
 
 
 @pytest.mark.asyncio
@@ -50,9 +50,9 @@ mcp.run(transport="stdio")
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
     monkeypatch.setenv("TEST_MCP_CWD", str(server_dir))
-    monkeypatch.setattr(mcp_tools, "get_paths", lambda: Paths(tmp_path / "deerflow"))
+    monkeypatch.setattr(mcp_tools, "get_paths", lambda: Paths(tmp_path / "nkyel"))
     pool = MCPSessionPool()
     monkeypatch.setattr(mcp_tools, "get_session_pool", lambda: pool)
     runtime = SimpleNamespace(context={"thread_id": "thread", "user_id": "user", "thread_incarnation": thread_incarnation}, config={})
@@ -99,8 +99,8 @@ mcp.run(transport="stdio")
         json.dumps({"mcpServers": {"local": {"command": sys.executable, "args": [str(server_path)], **cwd_config}}}),
         encoding="utf-8",
     )
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
-    paths = Paths(tmp_path / "deerflow")
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
+    paths = Paths(tmp_path / "nkyel")
     monkeypatch.setattr(mcp_tools, "get_paths", lambda: paths)
     pool = MCPSessionPool()
     monkeypatch.setattr(mcp_tools, "get_session_pool", lambda: pool)

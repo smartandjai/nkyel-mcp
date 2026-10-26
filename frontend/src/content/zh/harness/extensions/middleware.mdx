@@ -16,7 +16,7 @@ import { Callout } from "nextra/components";
 ```python
 from collections.abc import Sequence
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     AgentBuildContext,
     AgentScope,
     ExtensionData,
@@ -105,7 +105,7 @@ Extension <use>: placement TOOL_RAW fell back to a secondary anchor (primary anc
 
 `AgentScope` 是一个标志位：`LEAD`、`SUBAGENT` 或 `BOTH`（默认）。宿主分别构建每条链，只有作用域与正在构建的链有交集时才纳入该贡献。要按链区分，可以返回两个作用域不同的放置，或者根据 `ctx.scope` 分支。
 
-通过 `create_deerflow_agent(extra_middleware=...)` 或 `DeerFlowClient(middlewares=...)` 配置的中间件不会进入子 Agent；作用域包含 `SUBAGENT` 的扩展中间件会。
+通过 `create_nkyel_agent(extra_middleware=...)` 或 `NkyelClient(middlewares=...)` 配置的中间件不会进入子 Agent；作用域包含 `SUBAGENT` 的扩展中间件会。
 
 ## 排序
 
@@ -144,7 +144,7 @@ LangGraph 中断（`GraphBubbleUp`）总是会传播。诊断以 `Extension <use
 中间件实例可能被并发的运行共享，所以不要把单次运行的状态存在 `self` 上。把它放进任务作用域的 `ExtensionData` 存储：宿主为每次 Lead 运行和每次子 Agent 执行创建一个，结束时丢弃。在钩子里从 runtime 取回它：
 
 ```python
-from deerflow_extension_api import task_store_from_runtime
+from nkyel_extension_api import task_store_from_runtime
 
 
 class CountingMiddleware(AgentMiddleware):
@@ -159,7 +159,7 @@ class CountingMiddleware(AgentMiddleware):
 
 ## 追踪中的标识
 
-LangChain 要求中间件名称唯一，并把它用作追踪标识和图节点 ID。宿主把每个包装器命名为 `extension_<入口点>_<类名>_<n>`，不安全字符替换为下划线。例如快速上手里的中间件显示为 `extension_deerflow_extension_hello_install_ToolTimer_0`。
+LangChain 要求中间件名称唯一，并把它用作追踪标识和图节点 ID。宿主把每个包装器命名为 `extension_<入口点>_<类名>_<n>`，不安全字符替换为下划线。例如快速上手里的中间件显示为 `extension_nkyel_extension_hello_install_ToolTimer_0`。
 
 ## 常见误区
 

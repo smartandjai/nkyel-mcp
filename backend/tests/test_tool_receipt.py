@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from langchain_core.messages import AIMessage, ToolMessage
 
-from deerflow.agents.middlewares.tool_receipt import (
+from nkyel.agents.middlewares.tool_receipt import (
     TOOL_RECEIPT_KEY,
     TOOL_RECEIPT_LEDGER_KEY,
     extract_citing_turn_receipts,
@@ -15,7 +15,7 @@ from deerflow.agents.middlewares.tool_receipt import (
     receipt_id,
     render_tool_receipts,
 )
-from deerflow.agents.middlewares.tool_result_meta import TOOL_META_KEY
+from nkyel.agents.middlewares.tool_result_meta import TOOL_META_KEY
 
 
 def _msg(content: str, *, tool_call_id: str, name: str = "write_file", meta_status: str = "success") -> ToolMessage:

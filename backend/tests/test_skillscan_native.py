@@ -10,10 +10,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.skills.package_files import EXEC_SNIFF_BYTES, is_executable_binary_prefix
-from deerflow.skills.security_scanner import scan_skill_content
-from deerflow.skills.skillscan import StaticScanBlockedError, enforce_static_scan, scan_archive_preflight, scan_skill_dir
-from deerflow.skills.skillscan.orchestrator import _PYTHON_CLIENT_SPECS, MAX_FILE_BYTES
+from nkyel.skills.package_files import EXEC_SNIFF_BYTES, is_executable_binary_prefix
+from nkyel.skills.security_scanner import scan_skill_content
+from nkyel.skills.skillscan import StaticScanBlockedError, enforce_static_scan, scan_archive_preflight, scan_skill_dir
+from nkyel.skills.skillscan.orchestrator import _PYTHON_CLIENT_SPECS, MAX_FILE_BYTES
 
 _FINDING_FIELDS = {"rule_id", "severity", "file", "line", "message", "remediation", "evidence"}
 _CLIENT_SINK_METHODS = frozenset().union(*(spec.methods for spec in _PYTHON_CLIENT_SPECS.values()))
@@ -207,7 +207,7 @@ def test_client_analysis_recursion_recovery_keeps_findings_collected(tmp_path: P
         raise RecursionError("simulated adversarially deep AST")
 
     monkeypatch.setattr(
-        "deerflow.skills.skillscan.orchestrator._find_client_handle_sink",
+        "nkyel.skills.skillscan.orchestrator._find_client_handle_sink",
         _raise_recursion_error,
     )
 
@@ -231,7 +231,7 @@ def test_python_client_analysis_stops_after_the_first_sink(tmp_path: Path, monke
     """
     import ast as ast_module
 
-    from deerflow.skills.skillscan import orchestrator as scan_orchestrator
+    from nkyel.skills.skillscan import orchestrator as scan_orchestrator
 
     skill_dir = tmp_path / "demo-skill"
     _write_skill(skill_dir)
@@ -260,7 +260,7 @@ def test_python_client_analysis_stops_after_the_first_sink(tmp_path: Path, monke
 
 def test_python_client_analysis_budget_preserves_prior_findings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
     """Exhausting the deterministic client budget under-reports only that best-effort signal."""
-    monkeypatch.setattr("deerflow.skills.skillscan.orchestrator._PYTHON_CLIENT_ANALYSIS_BUDGET", 20)
+    monkeypatch.setattr("nkyel.skills.skillscan.orchestrator._PYTHON_CLIENT_ANALYSIS_BUDGET", 20)
     skill_dir = tmp_path / "demo-skill"
     _write_skill(skill_dir)
     scripts_dir = skill_dir / "scripts"
@@ -841,7 +841,7 @@ def test_python_reverse_shell_real_call_sites_block(tmp_path: Path) -> None:
 
 
 def test_archive_member_count_cap_blocks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    from deerflow.skills.skillscan import orchestrator
+    from nkyel.skills.skillscan import orchestrator
 
     monkeypatch.setattr(orchestrator, "_MAX_ARCHIVE_MEMBERS", 4)
     archive = tmp_path / "demo-skill.skill"
@@ -890,7 +890,7 @@ async def test_llm_scanner_receives_static_findings_context(monkeypatch: pytest.
             return SimpleNamespace(content='{"decision":"allow","reason":"ok"}')
 
     config = SimpleNamespace(skill_evolution=SimpleNamespace(moderation_model_name=None))
-    monkeypatch.setattr("deerflow.skills.security_scanner.create_chat_model", lambda **kwargs: FakeModel())
+    monkeypatch.setattr("nkyel.skills.security_scanner.create_chat_model", lambda **kwargs: FakeModel())
 
     result = await scan_skill_content(
         "# Demo\n",
@@ -1844,7 +1844,7 @@ def test_secret_assignment_ignores_python_unpacking_of_environment_lookups(tmp_p
     ``api_key, url = os.getenv("K"), endpoint`` binds both values at runtime, so neither
     is a literal this rule can assert on.
     """
-    source = 'api_key, url = os.getenv("DEERFLOW_TOKEN"), "https://api.example"\n'
+    source = 'api_key, url = os.getenv("NKYEL_TOKEN"), "https://api.example"\n'
 
     assert _secret_assignments(_scan_python_sample(tmp_path, source)) == []
 
@@ -1878,7 +1878,7 @@ def test_secret_assignment_still_flags_python_container_literal(tmp_path: Path, 
 def test_secret_assignment_ignores_python_container_without_literal(tmp_path: Path) -> None:
     """Only values Python resolves from source are asserted on: a container of runtime
     data (a call, a variable) binds nothing this rule can name."""
-    source = 'api_key = [os.getenv("DEERFLOW_TOKEN"), token_from_config]\n'
+    source = 'api_key = [os.getenv("NKYEL_TOKEN"), token_from_config]\n'
 
     assert _secret_assignments(_scan_python_sample(tmp_path, source)) == []
 
@@ -2011,7 +2011,7 @@ def test_secret_assignment_unpacking_with_mismatched_lengths_stays_unreported(tm
 def test_secret_assignment_ignores_python_keyword_environment_lookup(tmp_path: Path) -> None:
     """The precision gain must survive the new binding forms: a keyword whose
     value is read from the environment is the documented remediation."""
-    source = 'import os\n\n\ndef load():\n    return connect("https://api.example", token=os.getenv("DEERFLOW_TOKEN"))\n'
+    source = 'import os\n\n\ndef load():\n    return connect("https://api.example", token=os.getenv("NKYEL_TOKEN"))\n'
 
     assert _secret_assignments(_scan_python_sample(tmp_path, source)) == []
 
@@ -2031,7 +2031,7 @@ def test_secret_assignment_flags_python_literal_chain_that_parses_but_recurses(t
     An analyzer exception is caught per file and discards that file's findings, so a
     chain deep enough to blow the stack silences every rule for the whole file.
     """
-    source = 'token = os.getenv("DEERFLOW_TOKEN")\nAPI_KEY = ' + " + ".join(['"a1b2c3d4e5f6"'] * 1000) + "\n"
+    source = 'token = os.getenv("NKYEL_TOKEN")\nAPI_KEY = ' + " + ".join(['"a1b2c3d4e5f6"'] * 1000) + "\n"
     finding = _finding_by_rule(_scan_python_sample(tmp_path, source), "secret-env-assignment")
 
     assert finding["line"] == 2
@@ -2046,7 +2046,7 @@ def test_secret_assignment_still_flags_python_placeholder_free_fstring(tmp_path:
 
 def test_secret_assignment_ignores_python_runtime_composed_value(tmp_path: Path) -> None:
     """Only fully constant values fold; half of this one comes from the host."""
-    source = 'import os\n\napi_key = os.environ["DEERFLOW_KEY"] + "a1b2c3d4e5f6"\n'
+    source = 'import os\n\napi_key = os.environ["NKYEL_KEY"] + "a1b2c3d4e5f6"\n'
 
     assert _secret_assignments(_scan_python_sample(tmp_path, source)) == []
 
@@ -2189,7 +2189,7 @@ def test_shell_curl_without_pipe_finishes_on_repeated_backslash_text(tmp_path: P
         [
             sys.executable,
             "-c",
-            "import sys; from pathlib import Path; from deerflow.skills.skillscan import scan_skill_dir; findings = scan_skill_dir(Path(sys.argv[1]))['findings']; assert not any(f['rule_id'] == 'shell-curl-pipe-shell' for f in findings)",
+            "import sys; from pathlib import Path; from nkyel.skills.skillscan import scan_skill_dir; findings = scan_skill_dir(Path(sys.argv[1]))['findings']; assert not any(f['rule_id'] == 'shell-curl-pipe-shell' for f in findings)",
             str(skill_dir),
         ],
         capture_output=True,
@@ -2220,7 +2220,7 @@ def test_shell_curl_without_pipe_finishes_on_repeated_backslash_text(tmp_path: P
     ],
 )
 def test_http_host_normalizes_case_and_ipv6(url: str, host: str | None) -> None:
-    from deerflow.skills.skillscan.orchestrator import _http_host
+    from nkyel.skills.skillscan.orchestrator import _http_host
 
     assert _http_host(url) == host
 

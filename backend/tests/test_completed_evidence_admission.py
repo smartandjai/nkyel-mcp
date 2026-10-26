@@ -10,16 +10,16 @@ from langgraph.store.memory import InMemoryStore
 from app.gateway.auth_disabled import AUTH_SOURCE_INTERNAL
 from app.gateway.routers.thread_runs import RunCreateRequest
 from app.gateway.services import launch_scheduled_thread_run, start_run
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 @pytest.fixture(autouse=True)
 def app_config():
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     yield
     reset_app_config()
 
@@ -88,7 +88,7 @@ async def test_evidence_agent_is_effective_canonical_id_not_routing_or_display_n
             )
         ),
     )
-    from deerflow.config.agents_config import AgentConfig
+    from nkyel.config.agents_config import AgentConfig
 
     agent = AgentConfig(name="researcher", display_name="My research helper")
     body = RunCreateRequest(assistant_id="lead_agent", input={"messages": [{"role": "user", "content": "hello"}]}, context={"agent_name": "researcher"}, metadata={"evidence_agent_id": "forged"})
@@ -108,8 +108,8 @@ async def test_evidence_agent_is_effective_canonical_id_not_routing_or_display_n
 async def test_keyed_resume_peer_reuse_preserves_evidence_identity(tmp_path, backend):
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from deerflow.persistence.base import Base
-    from deerflow.persistence.run.sql import RunRepository
+    from nkyel.persistence.base import Base
+    from nkyel.persistence.run.sql import RunRepository
 
     engine = None
     if backend == "sqlite":

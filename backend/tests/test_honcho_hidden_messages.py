@@ -10,14 +10,14 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage, messages_to_dict
 from langgraph.runtime import Runtime
 
-from deerflow.agents.memory import manager as memory_manager
-from deerflow.agents.memory.backends.honcho import honcho_manager
-from deerflow.agents.memory.backends.honcho.client import HonchoClient
-from deerflow.agents.memory.manager import _host_default_should_keep_hidden_message
-from deerflow.agents.middlewares import memory_middleware
-from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-from deerflow.agents.middlewares.todo_middleware import TodoMiddleware
-from deerflow.config.memory_config import MemoryConfig
+from nkyel.agents.memory import manager as memory_manager
+from nkyel.agents.memory.backends.honcho import honcho_manager
+from nkyel.agents.memory.backends.honcho.client import HonchoClient
+from nkyel.agents.memory.manager import _host_default_should_keep_hidden_message
+from nkyel.agents.middlewares import memory_middleware
+from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+from nkyel.agents.middlewares.todo_middleware import TodoMiddleware
+from nkyel.config.memory_config import MemoryConfig
 
 
 @pytest.fixture
@@ -81,7 +81,7 @@ def test_http_capture_excludes_reminder_and_preserves_human_answers(capture, met
                 {"peer_id": "user-peer", "content": "I prefer Python."},
                 {"peer_id": "user-peer", "content": "Use staging"},
                 {"peer_id": "user-peer", "content": "Use staging"},
-                {"peer_id": "deerflow", "content": "Understood."},
+                {"peer_id": "nkyel", "content": "Understood."},
             ]
         }
     ]
@@ -190,7 +190,7 @@ def test_hidden_hook_failure_preserves_other_messages(capture, caplog, method, m
                 {"peer_id": "user-peer", "content": "before"},
                 {"peer_id": "user-peer", "content": "after"},
                 {"peer_id": "user-peer", "content": "Use staging"},
-                {"peer_id": "deerflow", "content": "reply"},
+                {"peer_id": "nkyel", "content": "reply"},
             ]
         }
     ]

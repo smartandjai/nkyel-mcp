@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from deerflow.community.unbrowse import tools
+from nkyel.community.unbrowse import tools
 
 
 @pytest.mark.parametrize("structured", [False, True], ids=["text", "structured"])

@@ -30,7 +30,7 @@ from fastapi.testclient import TestClient
 from app.gateway.auth.models import User
 from app.gateway.deps import get_config
 from app.gateway.routers import skills as skills_router
-from deerflow.config.authorization_config import AuthorizationConfig
+from nkyel.config.authorization_config import AuthorizationConfig
 
 
 def _make_user(system_role: str) -> User:
@@ -39,7 +39,7 @@ def _make_user(system_role: str) -> User:
 
 def _make_app(*, system_role: str) -> FastAPI:
     config = SimpleNamespace(
-        skills=SimpleNamespace(get_skills_path=lambda: "/tmp/skills", container_path="/mnt/skills", use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage"),
+        skills=SimpleNamespace(get_skills_path=lambda: "/tmp/skills", container_path="/mnt/skills", use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage"),
         skill_evolution=SimpleNamespace(enabled=True, moderation_model_name=None),
     )
     app = make_authed_test_app(user_factory=lambda: _make_user(system_role))
@@ -114,7 +114,7 @@ def test_basic_skill_listing_stays_open_to_normal_users(monkeypatch):
     def _load_skills(*, enabled_only: bool):
         from pathlib import Path
 
-        from deerflow.skills.types import Skill
+        from nkyel.skills.types import Skill
 
         return [
             Skill(
@@ -147,7 +147,7 @@ def test_enable_toggle_allowed_for_admin(monkeypatch, tmp_path):
     """
     from pathlib import Path
 
-    from deerflow.skills.types import Skill
+    from nkyel.skills.types import Skill
 
     config_path = tmp_path / "extensions_config.json"
     config_path.write_text(

@@ -19,9 +19,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deerflow.sandbox import tools as tools_module
-from deerflow.sandbox.tools import write_file_tool
-from deerflow.tools.types import Runtime
+from nkyel.sandbox import tools as tools_module
+from nkyel.sandbox.tools import write_file_tool
+from nkyel.tools.types import Runtime
 
 # Spelled out rather than imported so the rejection tests fail on base for the
 # right reason (no guard) instead of erroring on a missing import. The last test
@@ -197,8 +197,8 @@ def test_literal_matches_the_constant_the_middleware_renders():
     the right reason; this pins it to the shared constant the middleware uses to
     render the placeholder, so the two cannot drift.
     """
-    from deerflow.agents.middlewares.tool_output_budget_middleware import _ELIDED_WRITE_CONTENT_TEMPLATE
-    from deerflow.constants import WRITE_ELISION_PLACEHOLDER_TEMPLATE
+    from nkyel.agents.middlewares.tool_output_budget_middleware import _ELIDED_WRITE_CONTENT_TEMPLATE
+    from nkyel.constants import WRITE_ELISION_PLACEHOLDER_TEMPLATE
 
     assert PLACEHOLDER == WRITE_ELISION_PLACEHOLDER_TEMPLATE
     assert _ELIDED_WRITE_CONTENT_TEMPLATE == WRITE_ELISION_PLACEHOLDER_TEMPLATE

@@ -1,4 +1,4 @@
-"""Regression coverage for deploy.sh's DEER_FLOW_HOME permission preflight."""
+"""Regression coverage for deploy.sh's NKYEL_HOME permission preflight."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def deploy_fixture(tmp_path: Path):
     shutil.copytree(REPO_ROOT / "docker", worktree / "docker")
     (worktree / "backend").mkdir()
     config = worktree / "config.yaml"
-    config.write_text("sandbox:\n  use: deerflow.sandbox:LocalSandboxProvider\n", encoding="utf-8")
+    config.write_text("sandbox:\n  use: nkyel.sandbox:LocalSandboxProvider\n", encoding="utf-8")
     extensions = worktree / "extensions_config.json"
     extensions.write_text('{"mcpServers":{},"skills":{}}\n', encoding="utf-8")
 
@@ -35,7 +35,7 @@ def deploy_fixture(tmp_path: Path):
     bin_dir.mkdir()
     docker = bin_dir / "docker"
     docker.write_text(
-        '#!/usr/bin/env sh\nprintf "%s\\n" "$@" >> "$CAPTURE_DOCKER_ARGS"\ncase " $* " in\n  *" config "*) printf "      DEER_FLOW_PROBE_VALUE: %s\\n" "${PERMISSION_TEST_COMPOSE_SECRET:-\\"\\"}" ;;\nesac\n',
+        '#!/usr/bin/env sh\nprintf "%s\\n" "$@" >> "$CAPTURE_DOCKER_ARGS"\ncase " $* " in\n  *" config "*) printf "      NKYEL_PROBE_VALUE: %s\\n" "${PERMISSION_TEST_COMPOSE_SECRET:-\\"\\"}" ;;\nesac\n',
         encoding="utf-8",
     )
     docker.chmod(0o755)
@@ -44,14 +44,14 @@ def deploy_fixture(tmp_path: Path):
     env.pop("PERMISSION_TEST_COMPOSE_SECRET", None)
     env.update(
         PATH=f"{bin_dir}{os.pathsep}{env['PATH']}",
-        DEER_FLOW_HOME=str(home),
-        DEER_FLOW_CONFIG_PATH=str(config),
-        DEER_FLOW_EXTENSIONS_CONFIG_PATH=str(extensions),
+        NKYEL_HOME=str(home),
+        NKYEL_CONFIG_PATH=str(config),
+        NKYEL_EXTENSIONS_CONFIG_PATH=str(extensions),
         CAPTURE_DOCKER_ARGS=str(capture),
         # Keep the preflight independent of secret generation and optional extras.
         BETTER_AUTH_SECRET="test-better-auth-secret",
-        DEER_FLOW_INTERNAL_AUTH_TOKEN="test-internal-auth-token",
-        DEER_FLOW_CREDENTIALS_KEY="test-credentials-key",
+        NKYEL_INTERNAL_AUTH_TOKEN="test-internal-auth-token",
+        NKYEL_CREDENTIALS_KEY="test-credentials-key",
         UV_EXTRAS="redis",
     )
     return worktree, env, home, capture
@@ -79,8 +79,8 @@ def unwritable_home(deploy_fixture):
 @pytest.fixture(
     params=[
         ("BETTER_AUTH_SECRET", ".better-auth-secret"),
-        ("DEER_FLOW_INTERNAL_AUTH_TOKEN", ".internal-auth-token"),
-        ("DEER_FLOW_CREDENTIALS_KEY", ".credentials_key"),
+        ("NKYEL_INTERNAL_AUTH_TOKEN", ".internal-auth-token"),
+        ("NKYEL_CREDENTIALS_KEY", ".credentials_key"),
     ],
     ids=["better-auth", "internal-auth", "credentials-key"],
 )
@@ -154,8 +154,8 @@ def test_deploy_allows_writable_home(deploy_fixture, command, compose_command):
 def test_deploy_down_allows_unwritable_home(deploy_fixture, unwritable_home):
     _, env, _, capture = deploy_fixture
     env.pop("BETTER_AUTH_SECRET")
-    env.pop("DEER_FLOW_INTERNAL_AUTH_TOKEN")
-    env.pop("DEER_FLOW_CREDENTIALS_KEY")
+    env.pop("NKYEL_INTERNAL_AUTH_TOKEN")
+    env.pop("NKYEL_CREDENTIALS_KEY")
 
     result = _run_deploy(deploy_fixture, "down")
 
@@ -231,8 +231,8 @@ def test_deploy_allows_readonly_persisted_secret(deploy_fixture, persisted_secre
 def test_deploy_down_allows_unreadable_persisted_secret(deploy_fixture, unreadable_secret):
     _, env, home, capture = deploy_fixture
     env.pop("BETTER_AUTH_SECRET")
-    env.pop("DEER_FLOW_INTERNAL_AUTH_TOKEN")
-    env.pop("DEER_FLOW_CREDENTIALS_KEY")
+    env.pop("NKYEL_INTERNAL_AUTH_TOKEN")
+    env.pop("NKYEL_CREDENTIALS_KEY")
 
     result = _run_deploy(deploy_fixture, "down")
 

@@ -12,7 +12,7 @@ import pytest
     ],
 )
 def test_validate_thread_id_accepts_canonical_ids(thread_id: str) -> None:
-    from deerflow.utils.thread_id import validate_thread_id
+    from nkyel.utils.thread_id import validate_thread_id
 
     assert validate_thread_id(thread_id) == thread_id
 
@@ -30,7 +30,7 @@ def test_validate_thread_id_accepts_canonical_ids(thread_id: str) -> None:
     ],
 )
 def test_validate_thread_id_rejects_noncanonical_ids(thread_id: str) -> None:
-    from deerflow.utils.thread_id import validate_thread_id
+    from nkyel.utils.thread_id import validate_thread_id
 
     with pytest.raises(ValueError, match="Invalid thread_id"):
         validate_thread_id(thread_id)
@@ -38,7 +38,7 @@ def test_validate_thread_id_rejects_noncanonical_ids(thread_id: str) -> None:
 
 @pytest.mark.parametrize("thread_id", [1, {}, []])
 def test_validate_thread_id_rejects_non_strings(thread_id: object) -> None:
-    from deerflow.utils.thread_id import validate_thread_id
+    from nkyel.utils.thread_id import validate_thread_id
 
     with pytest.raises(ValueError, match="Invalid thread_id"):
         validate_thread_id(thread_id)  # type: ignore[arg-type]
@@ -51,9 +51,9 @@ def test_client_mutating_and_read_entry_points_validate_thread_id(method_name: s
     Validation is the first statement of each method, so a bare ``__new__``
     instance is enough — no config, sandbox, or event loop is touched.
     """
-    from deerflow.client import DeerFlowClient
+    from nkyel.client import NkyelClient
 
-    client = DeerFlowClient.__new__(DeerFlowClient)
+    client = NkyelClient.__new__(NkyelClient)
     method = getattr(client, method_name)
     args = {"upload_files": (["x"],), "list_uploads": (), "delete_upload": ("f.txt",), "get_artifact": ("mnt/user-data/outputs/f.txt",)}[method_name]
 
@@ -67,7 +67,7 @@ def test_support_bundle_thread_id_pattern_matches_canonical() -> None:
     import importlib.util
     from pathlib import Path
 
-    from deerflow.utils.thread_id import THREAD_ID_PATTERN
+    from nkyel.utils.thread_id import THREAD_ID_PATTERN
 
     script = Path(__file__).resolve().parents[2] / "scripts" / "support_bundle.py"
     spec = importlib.util.spec_from_file_location("support_bundle", script)
@@ -80,7 +80,7 @@ def test_support_bundle_thread_id_pattern_matches_canonical() -> None:
 def test_tui_resume_literal_ref_validated() -> None:
     """The TUI /resume fallback adopts a literal ref as thread id only when
     it satisfies the canonical contract."""
-    from deerflow.tui.session import Session
+    from nkyel.tui.session import Session
 
     session = Session.__new__(Session)
     session.client = type("StubClient", (), {"list_threads": lambda self, limit: {"thread_list": []}})()

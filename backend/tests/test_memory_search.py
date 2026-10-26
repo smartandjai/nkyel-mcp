@@ -8,7 +8,7 @@ filters BEFORE the ``top_k`` slice (it is on the ABC signature; the
 
 from types import SimpleNamespace
 
-from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
+from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
 
 
 def _make_fact(content: str, category: str = "context", confidence: float = 0.7) -> dict:

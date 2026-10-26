@@ -7,12 +7,12 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langgraph.types import Command
 
-from deerflow.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware, _patch_model_messages, _patch_result
-from deerflow.community.ragflow.formatting import format_retrieval_sources
-from deerflow.community.ragflow.sources import budget_source_artifact, cited_source_artifact
-from deerflow.config.tool_output_config import ToolOutputConfig
-from deerflow.knowledge.contract import KnowledgeSource
-from deerflow.knowledge.sources import forward_sources
+from nkyel.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware, _patch_model_messages, _patch_result
+from nkyel.community.ragflow.formatting import format_retrieval_sources
+from nkyel.community.ragflow.sources import budget_source_artifact, cited_source_artifact
+from nkyel.config.tool_output_config import ToolOutputConfig
+from nkyel.knowledge.contract import KnowledgeSource
+from nkyel.knowledge.sources import forward_sources
 
 
 def message(name="knowledge_search"):
@@ -56,7 +56,7 @@ def test_complete_citations_survive_budget_paths(tmp_path, name, mode):
         result = patched.update["messages"][0]
     assert_paired(original, result, limit)
     assert original == snapshot
-    transforms = result.additional_kwargs["deerflow_tool_transforms"]
+    transforms = result.additional_kwargs["nkyel_tool_transforms"]
     assert transforms[-1]["kind"] == "truncated"
     if mode in {"externalize", "override"}:
         assert transforms[-2]["kind"] == "externalized"

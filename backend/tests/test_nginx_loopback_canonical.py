@@ -105,8 +105,8 @@ def _canonical_origin(content: str, method: str, host: str, upgrade: str = "") -
         ("GET", "localhost:2026", ""),
         ("GET", "localhost", ""),
         # LAN names and ingress domains stay untouched.
-        ("GET", "deerflow.lan:2026", ""),
-        ("GET", "deerflow.example.com", ""),
+        ("GET", "nkyel.lan:2026", ""),
+        ("GET", "nkyel.example.com", ""),
         # Suffix spoofs of the numeric spelling must not match.
         ("GET", "127.0.0.1.evil.example", ""),
         ("GET", "evil-127.0.0.1.example:2026", ""),

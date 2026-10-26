@@ -1,6 +1,6 @@
 name: Publish Helm Chart
 
-# Publishes the DeerFlow Helm chart as an OCI artifact to GHCR alongside the
+# Publishes the nkyel Helm chart as an OCI artifact to GHCR alongside the
 # container images (see container.yaml). Triggers on the same `v*` tags.
 #
 # On pull requests touching the chart or config.example.yaml, `validate-chart`
@@ -9,7 +9,7 @@ name: Publish Helm Chart
 # config.example.yaml) so a broken or stale chart fails the PR, not the release.
 #
 # Users then install with:
-#   helm install deer-flow oci://ghcr.io/${{ owner }}/charts/deer-flow --version <ver>
+#   helm install nkyel oci://ghcr.io/${{ owner }}/charts/nkyel --version <ver>
 
 on:
   push:
@@ -17,7 +17,7 @@ on:
       - "v*"
   pull_request:
     paths:
-      - "deploy/helm/deer-flow/**"
+      - "deploy/helm/nkyel/**"
       - "config.example.yaml"
       - ".github/workflows/chart.yaml"
       - "scripts/check_config_version.sh"
@@ -41,9 +41,9 @@ jobs:
 
       # ubuntu-latest ships with helm 3 preinstalled - no setup-helm action needed.
       - name: Lint chart
-        run: helm lint deploy/helm/deer-flow
+        run: helm lint deploy/helm/nkyel
       - name: Validate templates render
-        run: helm template deer-flow deploy/helm/deer-flow --include-crds >/dev/null
+        run: helm template nkyel deploy/helm/nkyel --include-crds >/dev/null
 
       # Assert the sandbox Service-type gating: default emits
       # SANDBOX_SERVICE_TYPE=ClusterIP and no NODE_HOST; the NodePort opt-in
@@ -52,7 +52,7 @@ jobs:
         run: bash scripts/check_chart_sandbox_service.sh
 
       # Gateway-generated skill projections are sent to the provisioner as
-      # paths under DEER_FLOW_HOST_BASE_DIR. With the shared home PVC enabled,
+      # paths under NKYEL_HOST_BASE_DIR. With the shared home PVC enabled,
       # both components must use the same logical root so those paths can be
       # translated into PVC subPaths instead of being rejected as out-of-base.
       - name: Validate sandbox storage path contract
@@ -99,7 +99,7 @@ jobs:
             helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Package chart
-        run: helm package deploy/helm/deer-flow --destination ./packages
+        run: helm package deploy/helm/nkyel --destination ./packages
 
       - name: Push chart to GHCR
         run: |

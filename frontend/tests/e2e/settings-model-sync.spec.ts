@@ -19,7 +19,7 @@ for (const agent of [false, true]) {
       await page.addInitScript(
         ({ threadId }) => {
           localStorage.setItem(
-            `deerflow.thread-model.${threadId}`,
+            `nkyel.thread-model.${threadId}`,
             "thread-model",
           );
         },

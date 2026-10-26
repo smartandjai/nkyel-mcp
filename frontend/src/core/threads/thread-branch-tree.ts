@@ -1,7 +1,7 @@
 import type { AgentThread } from "./types";
 import { isThreadPinned } from "./utils";
 
-const THREAD_BRANCH_METADATA_KEY = "deerflow_branch";
+const THREAD_BRANCH_METADATA_KEY = "nkyel_branch";
 const THREAD_BRANCH_PARENT_METADATA_KEY = "branch_parent_thread_id";
 
 export type ThreadBranchEntry = {

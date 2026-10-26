@@ -14,9 +14,9 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from pydantic import Field
 
 from app.gateway.services import _normalize_input_messages
-from deerflow.agents.middlewares.uploads_middleware import UploadsMiddleware
-from deerflow.tools.builtins.list_uploaded_files_tool import _list_uploaded_files_impl
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY, message_content_to_text
+from nkyel.agents.middlewares.uploads_middleware import UploadsMiddleware
+from nkyel.tools.builtins.list_uploaded_files_tool import _list_uploaded_files_impl
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY, message_content_to_text
 
 
 @pytest.fixture
@@ -105,7 +105,7 @@ def test_file_probe_failure_does_not_drop_a_valid_sibling(upload_context, monkey
 
     monkeypatch.setattr(Path, "is_file", unavailable)
     message = _gateway_message([{"filename": "unavailable.md"}, {"filename": "current.md"}])
-    with caplog.at_level(logging.DEBUG, logger="deerflow.agents.middlewares.uploads_middleware"):
+    with caplog.at_level(logging.DEBUG, logger="nkyel.agents.middlewares.uploads_middleware"):
         result = middleware.before_agent({"messages": [message]}, SimpleNamespace(context=context))
     assert [file["filename"] for file in result["uploaded_files"]] == ["current.md"]
     assert "unavailable.md" not in result["messages"][-1].content

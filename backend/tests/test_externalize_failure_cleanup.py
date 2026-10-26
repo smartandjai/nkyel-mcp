@@ -11,7 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.agents.middlewares import tool_output_budget_middleware as mw
+from nkyel.agents.middlewares import tool_output_budget_middleware as mw
 
 
 class _FailsAfterHalfTheWrite:
@@ -139,7 +139,7 @@ import os
 import pathlib
 import stat
 import sys
-from deerflow.agents.middlewares import tool_output_budget_middleware as mw
+from nkyel.agents.middlewares import tool_output_budget_middleware as mw
 
 os.umask(int(sys.argv[2]))
 kwargs = dict(tool_name="bash", tool_call_id="mode", outputs_path=sys.argv[1], storage_subdir="sub")

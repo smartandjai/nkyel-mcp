@@ -16,8 +16,8 @@ boundary and rewrote the file while still returning ``"OK"``. An empty
 from pathlib import Path
 from types import SimpleNamespace
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
-from deerflow.sandbox.tools import str_replace_tool
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.tools import str_replace_tool
 
 
 def _local_runtime(tmp_path: Path) -> SimpleNamespace:
@@ -46,8 +46,8 @@ def _str_replace(
     runtime = _local_runtime(tmp_path)
     target = tmp_path / "outputs" / "empty.txt"
     target.write_text(content, encoding="utf-8")
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     result = str_replace_tool.func(
         runtime=runtime,
         description="replace in empty file",

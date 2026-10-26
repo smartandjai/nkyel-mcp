@@ -12,10 +12,10 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from app.gateway.scheduled_task_errors import scheduler_error
-from deerflow.persistence.scheduled_task_runs.finalization import is_host_pause_marker
-from deerflow.scheduler.schedules import MAX_INTERVAL_SECONDS, next_run_at, normalize_cron_expression, parse_interval_seconds, validate_timezone
-from deerflow.scheduler.stop_rule import MAX_STOP_CONDITION_CHARS, normalize_stop_condition
-from deerflow.utils.goal_objective import MAX_GOAL_OBJECTIVE_CHARS, normalize_goal_objective
+from nkyel.persistence.scheduled_task_runs.finalization import is_host_pause_marker
+from nkyel.scheduler.schedules import MAX_INTERVAL_SECONDS, next_run_at, normalize_cron_expression, parse_interval_seconds, validate_timezone
+from nkyel.scheduler.stop_rule import MAX_STOP_CONDITION_CHARS, normalize_stop_condition
+from nkyel.utils.goal_objective import MAX_GOAL_OBJECTIVE_CHARS, normalize_goal_objective
 
 FREQUENT_THRESHOLD_SECONDS = 3600
 TERMINAL_TASK_STATUSES = frozenset({"completed", "failed", "cancelled"})

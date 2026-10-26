@@ -587,10 +587,10 @@ class TestCardClickEndToEndRouting:
 
     def test_card_answer_resumes_existing_thread(self, tmp_path, monkeypatch):
         from app.channels.manager import ChannelManager
-        from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'channel-connections.db'}", sqlite_dir=str(tmp_path))
@@ -679,10 +679,10 @@ class TestCardClickEndToEndRouting:
         binding with workspace_id; Feishu binds connections with workspace_id=chat_id,
         so the synthetic inbound must carry it or every click is rejected as unbound."""
         from app.channels.manager import ChannelManager
-        from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-        from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+        from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+        from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
-        monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+        monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
 
         async def go():
             await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'cc.db'}", sqlite_dir=str(tmp_path))

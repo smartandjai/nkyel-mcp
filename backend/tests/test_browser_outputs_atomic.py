@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.community.browser_automation import tools as browser_automation_tools
-from deerflow.community.browserless import tools as browserless_tools
-from deerflow.utils.atomic_write import publish_bytes_atomically
+from nkyel.community.browser_automation import tools as browser_automation_tools
+from nkyel.community.browserless import tools as browserless_tools
+from nkyel.utils.atomic_write import publish_bytes_atomically
 
 
 @pytest.fixture(params=[browser_automation_tools, browserless_tools], ids=["browser", "browserless"])
@@ -143,7 +143,7 @@ def test_descriptor_cleanup_failure_still_attempts_unlink(tmp_path, monkeypatch,
     assert caught.value is publish_error
     assert len(closed) == 1
     assert list(tmp_path.iterdir()) == []
-    records = [record for record in caplog.records if record.name == "deerflow.utils.atomic_write"]
+    records = [record for record in caplog.records if record.name == "nkyel.utils.atomic_write"]
     assert len(records) == 1
     assert records[0].levelno == logging.WARNING
     assert "close" in records[0].getMessage()
@@ -215,7 +215,7 @@ def test_cleanup_failure_preserves_publication_error(tmp_path, monkeypatch, publ
     assert len(cleanup_attempts) == 1
     assert cleanup_attempts[0].parent == tmp_path
     assert cleanup_attempts[0].read_bytes() == b"new complete capture"
-    records = [record for record in caplog.records if record.name == "deerflow.utils.atomic_write"]
+    records = [record for record in caplog.records if record.name == "nkyel.utils.atomic_write"]
     assert len(records) == 1
     assert records[0].levelno == logging.WARNING
     assert str(cleanup_attempts[0]) in records[0].getMessage()
@@ -248,7 +248,7 @@ def test_both_cleanup_failures_are_logged_without_masking_interruption(tmp_path,
             publisher(tmp_path / "shot.png", b"new")
 
     assert caught.value is interruption
-    records = [record for record in caplog.records if record.name == "deerflow.utils.atomic_write"]
+    records = [record for record in caplog.records if record.name == "nkyel.utils.atomic_write"]
     assert [record.levelno for record in records] == [logging.WARNING, logging.WARNING]
     assert [record.exc_info[1].args for record in records] == [("close failed",), ("unlink failed",)]
     assert len(list(tmp_path.glob("*.tmp"))) == 1
@@ -289,7 +289,7 @@ def test_failing_log_handler_preserves_error_and_independent_cleanup(tmp_path, m
         warning_attempts.append(record)
         emit(record)
 
-    log = logging.getLogger("deerflow.utils.atomic_write")
+    log = logging.getLogger("nkyel.utils.atomic_write")
     log.addHandler(handler)
     try:
         with monkeypatch.context() as patches:

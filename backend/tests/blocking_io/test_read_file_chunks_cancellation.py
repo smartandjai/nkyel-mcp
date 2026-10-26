@@ -17,8 +17,8 @@ from typing import Any
 
 import pytest
 
-from deerflow.projects.documents import read_file_chunks
-from deerflow.utils.file_io import run_file_io as _real_run_file_io
+from nkyel.projects.documents import read_file_chunks
+from nkyel.utils.file_io import run_file_io as _real_run_file_io
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -90,7 +90,7 @@ async def test_cancel_racing_open_handoff_still_closes_handle(tmp_path, monkeypa
             state["closed"] = True
 
     calls, gated = _gated_offload({"_open": open_gate}, on_call, on_done)
-    monkeypatch.setattr("deerflow.projects.documents.run_file_io", gated)
+    monkeypatch.setattr("nkyel.projects.documents.run_file_io", gated)
 
     agen = read_file_chunks(path, chunk_size=4)
     task = asyncio.create_task(agen.__anext__())
@@ -122,7 +122,7 @@ async def test_cancel_during_read_does_not_race_close(tmp_path, monkeypatch) -> 
             state["read_settled"] = True
 
     calls, gated = _gated_offload({"read": read_gate}, on_call, on_done)
-    monkeypatch.setattr("deerflow.projects.documents.run_file_io", gated)
+    monkeypatch.setattr("nkyel.projects.documents.run_file_io", gated)
 
     agen = read_file_chunks(path, chunk_size=4)
     task = asyncio.create_task(agen.__anext__())
@@ -154,7 +154,7 @@ async def test_repeated_cancellation_cannot_escape_pending_close(tmp_path, monke
             state["close_completed"] = True
 
     calls, gated = _gated_offload({"close": close_gate}, on_call, on_done)
-    monkeypatch.setattr("deerflow.projects.documents.run_file_io", gated)
+    monkeypatch.setattr("nkyel.projects.documents.run_file_io", gated)
 
     async def consume() -> list[bytes]:
         return [chunk async for chunk in read_file_chunks(path, chunk_size=8)]
@@ -176,7 +176,7 @@ async def test_read_file_chunks_happy_path_unchanged(tmp_path, monkeypatch) -> N
     path = tmp_path / "doc.bin"
     path.write_bytes(b"abcdefgh")
     calls, gated = _gated_offload({}, lambda name: None, lambda name: None)
-    monkeypatch.setattr("deerflow.projects.documents.run_file_io", gated)
+    monkeypatch.setattr("nkyel.projects.documents.run_file_io", gated)
 
     chunks = [chunk async for chunk in read_file_chunks(path, chunk_size=4)]
 

@@ -12,16 +12,16 @@ from app.gateway.routers.agents import (
     _configured_tool_group_names,
     router,
 )
-from deerflow.config.agents_api_config import AgentsApiConfig
-from deerflow.config.app_config import AppConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.tool_config import ToolGroupConfig
+from nkyel.config.agents_api_config import AgentsApiConfig
+from nkyel.config.app_config import AppConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.tool_config import ToolGroupConfig
 
 
 @pytest.fixture
 def tool_group_config() -> AppConfig:
     return AppConfig(
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         tool_groups=[
             ToolGroupConfig(name="web"),
             ToolGroupConfig(name="file:read"),

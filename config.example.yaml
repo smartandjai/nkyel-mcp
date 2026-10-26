@@ -1,13 +1,13 @@
-# Configuration for the DeerFlow application
+# Configuration for the nkyel application
 #
 # Guidelines:
 # - Copy this file to `config.yaml` and customize it for your environment
 # - The default path of this configuration file is `config.yaml` in the project root.
-#   You can set `DEER_FLOW_PROJECT_ROOT` to define that root explicitly, or use
-#   `DEER_FLOW_CONFIG_PATH` to point at a specific config file.
-# - Runtime state defaults to `.deer-flow` under the project root. Override it
-#   with `DEER_FLOW_HOME` when you need a different writable data directory.
-# - Set `DEER_FLOW_DATE_TIMEZONE` to an IANA timezone name (e.g. `Asia/Shanghai`)
+#   You can set `NKYEL_PROJECT_ROOT` to define that root explicitly, or use
+#   `NKYEL_CONFIG_PATH` to point at a specific config file.
+# - Runtime state defaults to `.nkyel` under the project root. Override it
+#   with `NKYEL_HOME` when you need a different writable data directory.
+# - Set `NKYEL_DATE_TIMEZONE` to an IANA timezone name (e.g. `Asia/Shanghai`)
 #   when the conversation date injected into agents should follow a zone other
 #   than the server's local timezone. It is read at runtime by the date-context
 #   middlewares (not a config-schema field), so it can be set on a container
@@ -42,7 +42,7 @@ config_version: 62
 # ============================================================================
 # Logging
 # ============================================================================
-# Log level for deerflow modules (debug/info/warning/error)
+# Log level for nkyel modules (debug/info/warning/error)
 log_level: info
 
 # Trace ids are always issued and always returned in the `X-Trace-Id` response
@@ -73,10 +73,10 @@ logging:
 # (not deprecated) middleware list. Packaged plugins use the `plugins:` block below.
 # extensions:
 #   middlewares:
-#     - my_company.deerflow_middlewares:DomainGuardMiddleware
-#     - class: my_company.deerflow_middlewares:LatencyStampingMiddleware
+#     - my_company.nkyel_middlewares:DomainGuardMiddleware
+#     - class: my_company.nkyel_middlewares:LatencyStampingMiddleware
 #       kwargs:
-#         header: X-DeerFlow-Latency
+#         header: X-nkyel-Latency
 
 # ============================================================================
 # Tracing / Observability (Monocle)
@@ -90,7 +90,7 @@ logging:
 # Token Usage
 # ============================================================================
 # Enable token usage collection and display.
-# When enabled, DeerFlow records input/output/total tokens per model call
+# When enabled, nkyel records input/output/total tokens per model call
 # and shows usage metadata in the workspace UI when providers return it.
 token_usage:
   enabled: true
@@ -159,7 +159,7 @@ models:
   #   display_name: Doubao-Seed-1.8
   #   aliases: [doubao, seed 1.8]  # Optional names for selecting this model in chat
   #   # Model-name aliases differ from reasoning.effort.aliases (effort values).
-  #   use: deerflow.models.patched_deepseek:PatchedChatDeepSeek
+  #   use: nkyel.models.patched_deepseek:PatchedChatDeepSeek
   #   model: doubao-seed-1-8-251228
   #   api_base: https://ark.cn-beijing.volces.com/api/v3
   #   api_key: $VOLCENGINE_API_KEY
@@ -185,7 +185,7 @@ models:
   #
   # - name: glm-5.2-cp
   #   display_name: GLM-5.2 (Coding Plan)
-  #   use: deerflow.models.patched_deepseek:PatchedChatDeepSeek
+  #   use: nkyel.models.patched_deepseek:PatchedChatDeepSeek
   #   model: glm-5.2
   #   api_base: https://ark.cn-beijing.volces.com/api/coding/v3
   #   api_key: $VOLCENGINE_API_KEY
@@ -205,7 +205,7 @@ models:
   #
   # - name: deepseek-v4-pro-cp
   #   display_name: DeepSeek-V4-Pro (Coding Plan)
-  #   use: deerflow.models.patched_deepseek:PatchedChatDeepSeek
+  #   use: nkyel.models.patched_deepseek:PatchedChatDeepSeek
   #   model: deepseek-v4-pro
   #   api_base: https://ark.cn-beijing.volces.com/api/coding/v3
   #   api_key: $VOLCENGINE_API_KEY
@@ -231,7 +231,7 @@ models:
   # are still forwarded to ChatOllama.
   #
   # `supports_thinking` / `supports_reasoning_effort` only say whether a knob
-  # exists. Models whose provider contract differs from DeerFlow's generic
+  # exists. Models whose provider contract differs from nkyel's generic
   # assumptions can declare a `reasoning:` block instead; the two booleans are
   # then derived from it and every model-creation path (chat, summarization,
   # title generation, subagents) enforces the same normalized policy:
@@ -245,7 +245,7 @@ models:
   #     effort:
   #       values: [low, medium, high]  # provider vocabulary, in display order
   #       default: medium              # applied when the caller does not choose
-  #       aliases: {minimal: low}      # DeerFlow generic value -> provider value
+  #       aliases: {minimal: low}      # nkyel generic value -> provider value
   #       path: reasoning_effort       # dotted identifier path (default)
   #
   # `required` thinking never receives a disable payload, unknown effort values
@@ -266,14 +266,14 @@ models:
   #
   # GLM-5.3-Flash cannot disable thinking and only accepts low/high/max effort.
   # The contract keeps thinking on for every foreground and background call,
-  # maps DeerFlow's generic minimal/medium presets onto low/high, and
+  # maps nkyel's generic minimal/medium presets onto low/high, and
   # serializes clear_thinking=true so the model does not require exact
   # reasoning replay after summarization. `default: high` keeps background
   # calls off the provider's deepest budget; `max` stays selectable in the UI.
   #
   # - name: glm-5.3-flash
   #   display_name: GLM-5.3-Flash
-  #   use: deerflow.models.patched_deepseek:PatchedChatDeepSeek
+  #   use: nkyel.models.patched_deepseek:PatchedChatDeepSeek
   #   model: glm-5.3-flash
   #   api_base: https://api.z.ai/api/paas/v4
   #   api_key: $ZAI_API_KEY
@@ -338,7 +338,7 @@ models:
   # into <think> tags or dropped entirely (ollama/ollama#15293). The native Ollama API
   # (/api/chat) correctly separates thinking from response content.
   #
-  # Install: cd backend && uv pip install 'deerflow-harness[ollama]'
+  # Install: cd backend && uv pip install 'nkyel-harness[ollama]'
   #
   # - name: qwen3-local
   #   display_name: Qwen3 32B (Ollama)
@@ -392,12 +392,12 @@ models:
   #
   # If llama-server was started with --api-key, replace the placeholder with
   # that key (prefer an environment variable). In Docker, localhost is the
-  # DeerFlow container itself; use an address reachable from the container,
+  # nkyel container itself; use an address reachable from the container,
   # for example on Docker Desktop:
   #   base_url: http://host.docker.internal:8080/v1
 
   # Example: Anthropic Claude model (with extended thinking)
-  # supports_thinking: true is required — without it, DeerFlow silently falls
+  # supports_thinking: true is required — without it, nkyel silently falls
   # back to non-thinking mode even when the UI thinking toggle is on.
   # budget_tokens is required by the Anthropic API when thinking.type=enabled
   # (no server default; min 1024; must be less than max_tokens).
@@ -442,7 +442,7 @@ models:
   # https://ai.google.dev/gemini-api/docs/openai#thinking
   # - name: gemini-3.1-pro-preview
   #   display_name: Gemini 3.1 Pro (Thinking)
-  #   use: deerflow.models.patched_openai:PatchedChatOpenAI
+  #   use: nkyel.models.patched_openai:PatchedChatOpenAI
   #   model: gemini-3.1-pro-preview
   #   api_key: $GEMINI_API_KEY
   #   base_url: https://generativelanguage.googleapis.com/v1beta/openai/
@@ -471,7 +471,7 @@ models:
   # See: https://platform.xiaomimimo.com/docs/en-US/usage-guide/passing-back-reasoning_content
   # - name: mimo-v2.5-pro
   #   display_name: MiMo V2.5 Pro
-  #   use: deerflow.models.patched_mimo:PatchedChatMiMo
+  #   use: nkyel.models.patched_mimo:PatchedChatMiMo
   #   model: mimo-v2.5-pro
   #   api_key: $MIMO_API_KEY
   #   base_url: https://api.xiaomimimo.com/v1
@@ -492,7 +492,7 @@ models:
   # Example: DeepSeek V4 model (with thinking support)
   # - name: deepseek-v4
   #   display_name: DeepSeek V4 (Thinking)
-  #   use: deerflow.models.patched_deepseek:PatchedChatDeepSeek
+  #   use: nkyel.models.patched_deepseek:PatchedChatDeepSeek
   #   model: deepseek-v4-pro
   #   api_key: $DEEPSEEK_API_KEY
   #   timeout: 600.0
@@ -512,7 +512,7 @@ models:
   # Example: Kimi K2.5 model
   # - name: kimi-k2.5
   #   display_name: Kimi K2.5
-  #   use: deerflow.models.patched_deepseek:PatchedChatDeepSeek
+  #   use: nkyel.models.patched_deepseek:PatchedChatDeepSeek
   #   model: kimi-k2.5
   #   api_base: https://api.moonshot.cn/v1
   #   api_key: $MOONSHOT_API_KEY
@@ -563,7 +563,7 @@ models:
   # Docs: https://platform.stepfun.com/docs/api-reference/chat-completions
   # - name: step-3.7-flash
   #   display_name: Step 3.7 Flash
-  #   use: deerflow.models.patched_stepfun:PatchedChatStepFun
+  #   use: nkyel.models.patched_stepfun:PatchedChatStepFun
   #   model: step-3.7-flash
   #   api_key: $STEPFUN_API_KEY
   #   base_url: https://api.stepfun.com/v1
@@ -585,7 +585,7 @@ models:
   # Docs: https://platform.minimax.io/docs/api-reference/text-openai-api
   # - name: minimax-m3
   #   display_name: MiniMax M3
-  #   use: deerflow.models.patched_minimax:PatchedChatMiniMax
+  #   use: nkyel.models.patched_minimax:PatchedChatMiniMax
   #   model: MiniMax-M3
   #   api_key: $MINIMAX_API_KEY
   #   base_url: https://api.minimax.io/v1
@@ -597,9 +597,9 @@ models:
   #   supports_thinking: true
   #   # PatchedChatMiniMax is the MiniMax adapter: it enables reasoning_split and
   #   # maps MiniMax's structured reasoning_details and native reasoning_content
-  #   # into the reasoning_content field DeerFlow understands, and it strips the
+  #   # into the reasoning_content field nkyel understands, and it strips the
   #   # per-message `name` field that
-  #   # DeerFlow middlewares attach — MiniMax rejects requests whose user-message
+  #   # nkyel middlewares attach — MiniMax rejects requests whose user-message
   #   # names differ with "user name must be consistent (2013)". Declare the
   #   # thinking toggle so non-thinking paths (flash mode, follow-up suggestions,
   #   # title/memory generation) truly disable reasoning instead of spending
@@ -617,11 +617,11 @@ models:
   # effect (per MiniMax docs), so the toggle above is omitted for M2.7. The
   # follow-up-suggestions endpoint strips inline <think> defensively regardless.
   # Still use the PatchedChatMiniMax adapter: it strips the per-message `name`
-  # field DeerFlow middlewares attach, which MiniMax otherwise rejects with
+  # field nkyel middlewares attach, which MiniMax otherwise rejects with
   # "user name must be consistent (2013)".
   # - name: minimax-m2.7
   #   display_name: MiniMax M2.7
-  #   use: deerflow.models.patched_minimax:PatchedChatMiniMax
+  #   use: nkyel.models.patched_minimax:PatchedChatMiniMax
   #   model: MiniMax-M2.7
   #   api_key: $MINIMAX_API_KEY
   #   base_url: https://api.minimax.io/v1
@@ -634,7 +634,7 @@ models:
 
   # - name: minimax-m2.7-highspeed
   #   display_name: MiniMax M2.7 Highspeed
-  #   use: deerflow.models.patched_minimax:PatchedChatMiniMax
+  #   use: nkyel.models.patched_minimax:PatchedChatMiniMax
   #   model: MiniMax-M2.7-highspeed
   #   api_key: $MINIMAX_API_KEY
   #   base_url: https://api.minimax.io/v1
@@ -650,7 +650,7 @@ models:
   # Docs: https://platform.minimaxi.com/docs/api-reference/text-openai-api
   # - name: minimax-m3
   #   display_name: MiniMax M3
-  #   use: deerflow.models.patched_minimax:PatchedChatMiniMax
+  #   use: nkyel.models.patched_minimax:PatchedChatMiniMax
   #   model: MiniMax-M3
   #   api_key: $MINIMAX_API_KEY
   #   base_url: https://api.minimaxi.com/v1
@@ -662,9 +662,9 @@ models:
   #   supports_thinking: true
   #   # PatchedChatMiniMax is the MiniMax adapter: it enables reasoning_split and
   #   # maps MiniMax's structured reasoning_details and native reasoning_content
-  #   # into the reasoning_content field DeerFlow understands, and it strips the
+  #   # into the reasoning_content field nkyel understands, and it strips the
   #   # per-message `name` field that
-  #   # DeerFlow middlewares attach — MiniMax rejects requests whose user-message
+  #   # nkyel middlewares attach — MiniMax rejects requests whose user-message
   #   # names differ with "user name must be consistent (2013)". Declare the
   #   # thinking toggle so non-thinking paths (flash mode, follow-up suggestions,
   #   # title/memory generation) truly disable reasoning instead of spending
@@ -682,11 +682,11 @@ models:
   # effect (per MiniMax docs), so the toggle above is omitted for M2.7. The
   # follow-up-suggestions endpoint strips inline <think> defensively regardless.
   # Still use the PatchedChatMiniMax adapter: it strips the per-message `name`
-  # field DeerFlow middlewares attach, which MiniMax otherwise rejects with
+  # field nkyel middlewares attach, which MiniMax otherwise rejects with
   # "user name must be consistent (2013)".
   # - name: minimax-m2.7
   #   display_name: MiniMax M2.7
-  #   use: deerflow.models.patched_minimax:PatchedChatMiniMax
+  #   use: nkyel.models.patched_minimax:PatchedChatMiniMax
   #   model: MiniMax-M2.7
   #   api_key: $MINIMAX_API_KEY
   #   base_url: https://api.minimaxi.com/v1
@@ -699,7 +699,7 @@ models:
 
   # - name: minimax-m2.7-highspeed
   #   display_name: MiniMax M2.7 Highspeed
-  #   use: deerflow.models.patched_minimax:PatchedChatMiniMax
+  #   use: nkyel.models.patched_minimax:PatchedChatMiniMax
   #   model: MiniMax-M2.7-highspeed
   #   api_key: $MINIMAX_API_KEY
   #   base_url: https://api.minimaxi.com/v1
@@ -745,7 +745,7 @@ models:
   # multi-turn tool-call conversations:
   # - name: atlascloud-qwen3-thinking
   #   display_name: Qwen3 235B Thinking (Atlas Cloud)
-  #   use: deerflow.models.patched_openai:PatchedChatOpenAI
+  #   use: nkyel.models.patched_openai:PatchedChatOpenAI
   #   model: qwen/qwen3-235b-a22b-thinking-2507
   #   api_key: $ATLASCLOUD_API_KEY
   #   base_url: https://api.atlascloud.ai/v1
@@ -780,14 +780,14 @@ models:
   #   temperature: 0.7
 
   # Example: vLLM 0.19.0 (OpenAI-compatible, with reasoning toggle)
-  # DeerFlow's vLLM provider preserves vLLM reasoning across tool-call turns and
+  # nkyel's vLLM provider preserves vLLM reasoning across tool-call turns and
   # toggles Qwen-style reasoning by writing
   # extra_body.chat_template_kwargs.enable_thinking=true/false.
   # Some reasoning models also require the server to be started with
   # `vllm serve ... --reasoning-parser <parser>`.
   # - name: qwen3-32b-vllm
   #   display_name: Qwen3 32B (vLLM)
-  #   use: deerflow.models.vllm_provider:VllmChatModel
+  #   use: nkyel.models.vllm_provider:VllmChatModel
   #   model: Qwen/Qwen3-32B
   #   api_key: $VLLM_API_KEY
   #   base_url: http://localhost:8000/v1
@@ -807,7 +807,7 @@ models:
   # Example: Qwen3-Coder deployed on MindIE Engine
   # - name: Qwen3_Coder_480B_MindIE
   #   display_name: Qwen3-Coder-480B (MindIE)
-  #   use: deerflow.models.mindie_provider:MindIEChatModel
+  #   use: nkyel.models.mindie_provider:MindIEChatModel
   #   model: Qwen3-Coder-480B-A35B-Instruct-Client
   #   base_url: http://localhost:8989/v1
   #   api_key: $OPENAI_API_KEY
@@ -859,7 +859,7 @@ tools:
   # Each run must submit conversation_references; see backend/docs/API.md.
   # - name: read_conversation
   #   group: conversation
-  #   use: deerflow.tools.conversation:read_conversation
+  #   use: nkyel.tools.conversation:read_conversation
 
   # RAGFlow knowledge retrieval (read-only). Uncomment this single entry.
   # `datasets` is optional. Omit it to list every tenant-visible dataset at
@@ -872,7 +872,7 @@ tools:
   # reach the model.
   # - name: knowledge_search
   #   group: knowledge
-  #   use: deerflow.community.ragflow.tools:knowledge_search_tool
+  #   use: nkyel.community.ragflow.tools:knowledge_search_tool
   #   base_url: http://localhost:9380  # Docker: use a backend-reachable URL
   #   api_key: $RAGFLOW_API_KEY
   #   datasets:  # Optional operator-controlled allowlist
@@ -886,7 +886,7 @@ tools:
   #   max_total_chars: 8000
   # - name: list_knowledge_bases
   #   group: knowledge
-  #   use: deerflow.community.ragflow.tools:list_knowledge_bases_tool
+  #   use: nkyel.community.ragflow.tools:list_knowledge_bases_tool
 
   # Jsonify dataset rows (read-only). Jsonify pipelines run on a schedule,
   # repair themselves when a source changes, and publish the result as a
@@ -895,7 +895,7 @@ tools:
   # an env var, never in the prompt. Name each dataset; the model picks by name.
   # - name: jsonify_dataset_rows
   #   group: data
-  #   use: deerflow.community.jsonify.tools:dataset_rows_tool
+  #   use: nkyel.community.jsonify.tools:dataset_rows_tool
   #   datasets:
   #     llm_api_pricing: $JSONIFY_LLM_PRICING_URL  # https://factory.jsonify.com/api/serve/<id>
   #   max_rows: 100   # Cap per call; the model's limit is clamped to this
@@ -913,7 +913,7 @@ tools:
   # Internal chunk and reference identifiers never reach the model.
   # - name: knowledge_search
   #   group: knowledge
-  #   use: deerflow.community.lightrag.tools:knowledge_search_tool
+  #   use: nkyel.community.lightrag.tools:knowledge_search_tool
   #   base_url: http://localhost:9621  # Docker: use a backend-reachable URL
   #   api_key: $LIGHTRAG_API_KEY  # Omit only for unauthenticated trusted servers
   #   mode: mix
@@ -926,7 +926,7 @@ tools:
   # Web search tool (uses DuckDuckGo, no API key required)
   - name: web_search
     group: web
-    use: deerflow.community.ddg_search.tools:web_search_tool
+    use: nkyel.community.ddg_search.tools:web_search_tool
     max_results: 5
     # backend: auto          # DDGS backend(s): auto, duckduckgo, brave, wikipedia, etc.
     # region: wt-wt          # wt-wt is normalized for Wikipedia when backend includes auto/all/wikipedia.
@@ -938,7 +938,7 @@ tools:
   # For Docker deployments, use the Docker service name instead of localhost.
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.searxng.tools:web_search_tool
+  #   use: nkyel.community.searxng.tools:web_search_tool
   #   base_url: http://localhost:8088   # SearXNG instance URL (default: :8088; Docker: http://searxng:8080)
   #   max_results: 5                     # Maximum number of search results
 
@@ -948,7 +948,7 @@ tools:
   # Avoid putting literal API keys in config.yaml; use the $VAR form instead.
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.serper.tools:web_search_tool
+  #   use: nkyel.community.serper.tools:web_search_tool
   #   max_results: 5   # capped at 10 by the Serper provider
   #   max_retries: 0  # Opt in with 1-3 extra requests; may incur cost
   #   retry_budget_seconds: 30  # >0 to 300; scheduling budget, not an I/O deadline
@@ -962,7 +962,7 @@ tools:
   # with the same key. Sign up at https://serply.io (docs: https://serply.io/docs)
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.serply.tools:web_search_tool
+  #   use: nkyel.community.serply.tools:web_search_tool
   #   max_results: 5                 # Serply accepts 1-100 per request
   #   # vertical: search             # search (default), news, or scholar
   #   # gl: us                       # Optional country code for the results
@@ -973,7 +973,7 @@ tools:
   # Recent news coverage, not general web search. Replace the active web_search entry.
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.webz.tools:web_search_tool
+  #   use: nkyel.community.webz.tools:web_search_tool
   #   max_results: 5  # Clamped to 1-100
   #   # api_key: $WEBZ_API_KEY  # Otherwise read from WEBZ_API_KEY
 
@@ -983,14 +983,14 @@ tools:
   # `backend: brave` option above, this calls the official Brave API directly.
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.brave.tools:web_search_tool
+  #   use: nkyel.community.brave.tools:web_search_tool
   #   max_results: 5                  # Capped at 20 by the Brave Search API
   #   # api_key: $BRAVE_SEARCH_API_KEY  # Optional if the env var is set
 
   # Web search tool (requires Tavily API key)
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.tavily.tools:web_search_tool
+  #   use: nkyel.community.tavily.tools:web_search_tool
   #   max_results: 5
   #   # Optional search-source filters; omit or use [] for no restriction of that kind.
   #   # include_domains:
@@ -1002,7 +1002,7 @@ tools:
   # Web search tool (uses InfoQuest, requires InfoQuest API key)
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.infoquest.tools:web_search_tool
+  #   use: nkyel.community.infoquest.tools:web_search_tool
   #   # Used to limit the scope of search results, only returns content within the specified time range. Set to -1 to disable time filtering
   #   search_time_range: 10
 
@@ -1012,7 +1012,7 @@ tools:
   # SecretId/SecretKey for this provider.
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.tencent_wsa.tools:web_search_tool
+  #   use: nkyel.community.tencent_wsa.tools:web_search_tool
   #   max_results: 5                 # 1-50; values above 10 request Tencent's Cnt option
   #                                    # (requires a Tencent plan that supports Cnt)
   #   # mode: 0                      # Optional: 0=web, 1=VR, 2=mixed
@@ -1021,7 +1021,7 @@ tools:
   # Web search tool (uses Exa, requires EXA_API_KEY)
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.exa.tools:web_search_tool
+  #   use: nkyel.community.exa.tools:web_search_tool
   #   max_results: 5
   #   search_type: auto  # Options: auto, neural, keyword
   #   contents_max_characters: 1000
@@ -1031,7 +1031,7 @@ tools:
   # Web search tool (uses Firecrawl. Cloud requires FIRECRAWL_API_KEY; self-host may need no key.)
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.firecrawl.tools:web_search_tool
+  #   use: nkyel.community.firecrawl.tools:web_search_tool
   #   max_results: 5
   #   # api_key: $FIRECRAWL_API_KEY
   #   # base_url: http://<host>:3002  # optional: self-hosted Firecrawl; no cloud API key needed
@@ -1044,7 +1044,7 @@ tools:
   # https://groundroute.ai/keys
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.groundroute.tools:web_search_tool
+  #   use: nkyel.community.groundroute.tools:web_search_tool
   #   max_results: 5                  # Clamped to 1-50 by GroundRoute
   #   # api_key: $GROUNDROUTE_API_KEY  # Optional if the env var is set
 
@@ -1052,7 +1052,7 @@ tools:
   # self-host or cloud. Cloud requires CRW_API_KEY; self-host may need no key.)
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.fastcrw.tools:web_search_tool
+  #   use: nkyel.community.fastcrw.tools:web_search_tool
   #   max_results: 5
   #   # api_key: $CRW_API_KEY
   #   # base_url: https://fastcrw.com/api   # default cloud; set to e.g. http://localhost:3000 for self-host
@@ -1064,7 +1064,7 @@ tools:
   # Avoid putting literal API keys in config.yaml; use the $VAR form instead.
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.sofya.tools:web_search_tool
+  #   use: nkyel.community.sofya.tools:web_search_tool
   #   max_results: 5                # capped at 20 by the Sofya provider
   #   # search_depth: basic         # basic reads the result pages, snippets returns snippets only
   #   contents_max_characters: 2000 # per-result content cap; 0 disables it
@@ -1078,7 +1078,7 @@ tools:
   # Get a key at https://you.com/platform
   # - name: web_search
   #   group: web
-  #   use: deerflow.community.youcom.tools:web_search_tool
+  #   use: nkyel.community.youcom.tools:web_search_tool
   #   max_results: 5                  # Clamped to 1-100 by You.com
   #   # api_key: $YDC_API_KEY         # Omit to use the keyless free tier
 
@@ -1090,7 +1090,7 @@ tools:
   # Comment out the Jina AI web_fetch entry below before enabling this one.
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.browserless.tools:web_fetch_tool
+  #   use: nkyel.community.browserless.tools:web_fetch_tool
   #   base_url: http://localhost:3032    # Browserless instance URL (default: :3032; Docker: http://browserless:3000)
   #   # token: $BROWSERLESS_TOKEN        # API token (required for Browserless Cloud; optional for self-hosted)
   #   timeout_s: 30                       # Request timeout in seconds
@@ -1116,7 +1116,7 @@ tools:
   #     -e CRAWL4AI_API_TOKEN=$CRAWL4AI_TOKEN unclecode/crawl4ai:0.9.2
   # Crawl4AI >= 0.9 is secure-by-default: a bearer token is REQUIRED on every request
   # except GET /health, and a server started without CRAWL4AI_API_TOKEN binds 127.0.0.1
-  # only (so a container/remote DeerFlow cannot reach it at all). Set the same value in
+  # only (so a container/remote nkyel cannot reach it at all). Set the same value in
   # the server env and in `token:` below, or requests fail with HTTP 401.
   # Use >= 0.8.7: earlier images, including 0.8.6, carry known pre-auth RCEs.
   # For Docker deployments, use the Docker service name instead of localhost.
@@ -1124,7 +1124,7 @@ tools:
   # Comment out the Jina AI web_fetch entry below before enabling this one.
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.crawl4ai.tools:web_fetch_tool
+  #   use: nkyel.community.crawl4ai.tools:web_fetch_tool
   #   base_url: http://localhost:11235   # Crawl4AI server URL (Docker: http://crawl4ai:11235)
   #   token: $CRAWL4AI_TOKEN              # Bearer token; required by Crawl4AI >= 0.9
   #   timeout: 30                         # Request timeout in seconds
@@ -1143,7 +1143,7 @@ tools:
   # of localhost.
   # - name: web_capture
   #   group: web
-  #   use: deerflow.community.browserless.tools:web_capture_tool
+  #   use: nkyel.community.browserless.tools:web_capture_tool
   #   base_url: http://localhost:3032       # Browserless instance URL (Docker: http://browserless:3000)
   #   # token: $BROWSERLESS_TOKEN           # Required for Browserless Cloud; optional for self-hosted
   #   timeout_s: 30                         # Request timeout in seconds (`timeout` also accepted)
@@ -1178,7 +1178,7 @@ tools:
   # canonically from browser_navigate and shared by every browser tool + Live.
   # - name: browser_navigate
   #   group: browser
-  #   use: deerflow.community.browser_automation.tools:browser_navigate_tool
+  #   use: nkyel.community.browser_automation.tools:browser_navigate_tool
   #   headless: true                   # Set false only for local, trusted debugging
   #   timeout_ms: 30000                # Per-action navigation/interaction timeout
   #   viewport_width: 1280
@@ -1187,7 +1187,7 @@ tools:
   #   #                                # pinned egress proxy every launched browser connects through.
   #   # cdp_url: http://127.0.0.1:9222 # Attach to YOUR running Chrome (Codex-style)
   #   # allow_unguarded_cdp: false      # REQUIRED true with cdp_url: attaching to an
-  #   #                                # existing Chrome prevents DeerFlow from
+  #   #                                # existing Chrome prevents nkyel from
   #   #                                # enforcing its subresource/redirect SSRF guard.
   #   #                                # instead of launching a private headless one.
   #   #                                # Start Chrome with --remote-debugging-port=9222
@@ -1204,40 +1204,40 @@ tools:
   #   # uvicorn no --workers (backend/Dockerfile, scripts/serve.sh).
   # - name: browser_snapshot
   #   group: browser
-  #   use: deerflow.community.browser_automation.tools:browser_snapshot_tool
+  #   use: nkyel.community.browser_automation.tools:browser_snapshot_tool
   # - name: browser_click
   #   group: browser
-  #   use: deerflow.community.browser_automation.tools:browser_click_tool
+  #   use: nkyel.community.browser_automation.tools:browser_click_tool
   # - name: browser_type
   #   group: browser
-  #   use: deerflow.community.browser_automation.tools:browser_type_tool
+  #   use: nkyel.community.browser_automation.tools:browser_type_tool
   # - name: browser_get_text
   #   group: browser
-  #   use: deerflow.community.browser_automation.tools:browser_get_text_tool
+  #   use: nkyel.community.browser_automation.tools:browser_get_text_tool
   #   max_chars: 8000                  # Truncation cap for browser_get_text output
   # - name: browser_back
   #   group: browser
-  #   use: deerflow.community.browser_automation.tools:browser_back_tool
+  #   use: nkyel.community.browser_automation.tools:browser_back_tool
   # - name: browser_screenshot
   #   group: browser
-  #   use: deerflow.community.browser_automation.tools:browser_screenshot_tool
+  #   use: nkyel.community.browser_automation.tools:browser_screenshot_tool
   # - name: browser_close
   #   group: browser
-  #   use: deerflow.community.browser_automation.tools:browser_close_tool
+  #   use: nkyel.community.browser_automation.tools:browser_close_tool
 
   # Web fetch tool (uses Exa)
   # NOTE: Only one web_fetch provider can be active at a time.
   # Comment out the Jina AI web_fetch entry below before enabling this one.
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.exa.tools:web_fetch_tool
+  #   use: nkyel.community.exa.tools:web_fetch_tool
   #   # api_key: $EXA_API_KEY
   #   # base_url: https://api.exa.ai  # Exa-compatible endpoint; overrides EXA_BASE_URL
 
   # Web fetch tool (uses Jina AI reader)
   - name: web_fetch
     group: web
-    use: deerflow.community.jina_ai.tools:web_fetch_tool
+    use: nkyel.community.jina_ai.tools:web_fetch_tool
     timeout: 10
     # Opt-in retries may increase upstream requests and cost.
     # max_retries: 0
@@ -1250,7 +1250,7 @@ tools:
   # Web fetch tool (uses InfoQuest)
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.infoquest.tools:web_fetch_tool
+  #   use: nkyel.community.infoquest.tools:web_fetch_tool
   #   # Overall timeout for the entire crawling process (in seconds). Set to positive value to enable, -1 to disable
   #   timeout: 10
   #   # Waiting time after page loading (in seconds). Set to positive value to enable, -1 to disable
@@ -1261,7 +1261,7 @@ tools:
   # Web fetch tool (uses Firecrawl. Cloud requires FIRECRAWL_API_KEY; self-host may need no key.)
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.firecrawl.tools:web_fetch_tool
+  #   use: nkyel.community.firecrawl.tools:web_fetch_tool
   #   # api_key: $FIRECRAWL_API_KEY
   #   # base_url: http://<host>:3002  # optional: self-hosted Firecrawl; no cloud API key needed
   #   # allow_private_addresses: false      # SSRF guard: keep false in production. Set true ONLY for intentional internal targets.
@@ -1276,7 +1276,7 @@ tools:
   # Comment out the Jina AI web_fetch entry above before enabling this one.
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.groundroute.tools:web_fetch_tool
+  #   use: nkyel.community.groundroute.tools:web_fetch_tool
   #   # api_key: $GROUNDROUTE_API_KEY
 
   # Web fetch tool (uses fastCRW - Firecrawl-compatible web scraper, single binary,
@@ -1285,7 +1285,7 @@ tools:
   # Comment out the Jina AI web_fetch entry above before enabling this one.
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.fastcrw.tools:web_fetch_tool
+  #   use: nkyel.community.fastcrw.tools:web_fetch_tool
   #   # api_key: $CRW_API_KEY
   #   # base_url: https://fastcrw.com/api   # default cloud; set to e.g. http://localhost:3000 for self-host
   #   # allow_private_addresses: false      # SSRF guard: keep false in production. Set true ONLY for intentional internal targets.
@@ -1300,7 +1300,7 @@ tools:
   # Comment out the Jina AI web_fetch entry above before enabling this one.
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.sofya.tools:web_fetch_tool
+  #   use: nkyel.community.sofya.tools:web_fetch_tool
   #   # api_key: $SOFYA_API_KEY
 
   # Web fetch tool (uses Unbrowse, requires UNBROWSE_API_KEY)
@@ -1311,7 +1311,7 @@ tools:
   # Comment out the Jina AI web_fetch entry above before enabling this one.
   # - name: web_fetch
   #   group: web
-  #   use: deerflow.community.unbrowse.tools:web_fetch_tool
+  #   use: nkyel.community.unbrowse.tools:web_fetch_tool
   #   # render: auto                  # auto | never (plain HTTP only) | always (cloud browser)
   #   # api_key: $UNBROWSE_API_KEY
 
@@ -1319,13 +1319,13 @@ tools:
   # Use this to find reference images before image generation
   - name: image_search
     group: web
-    use: deerflow.community.image_search.tools:image_search_tool
+    use: nkyel.community.image_search.tools:image_search_tool
     max_results: 5
 
   # Image search tool (uses InfoQuest)
   # - name: image_search
   #   group: web
-  #   use: deerflow.community.infoquest.tools:image_search_tool
+  #   use: nkyel.community.infoquest.tools:image_search_tool
   #   # Used to limit the scope of image search results, only returns content within the specified time range. Set to -1 to disable time filtering
   #   image_search_time_range: 10
   #   # Image size filter. Options: "l" (large), "m" (medium), "i" (icon).
@@ -1337,7 +1337,7 @@ tools:
   # Avoid putting literal API keys in config.yaml; use the $VAR form instead.
   # - name: image_search
   #   group: web
-  #   use: deerflow.community.serper.tools:image_search_tool
+  #   use: nkyel.community.serper.tools:image_search_tool
   #   max_results: 5   # capped at 10 by the Serper provider
   #   max_retries: 0  # Opt in with 1-3 extra requests; may incur cost
   #   retry_budget_seconds: 30  # >0 to 300; scheduling budget, not an I/O deadline
@@ -1350,7 +1350,7 @@ tools:
   # Avoid putting literal API keys in config.yaml; use the $VAR form instead.
   # - name: image_search
   #   group: web
-  #   use: deerflow.community.brave.tools:image_search_tool
+  #   use: nkyel.community.brave.tools:image_search_tool
   #   max_results: 5   # capped at 200 by Brave Image Search
   #   # country: US
   #   # search_lang: en
@@ -1361,36 +1361,36 @@ tools:
   # File operations tools
   - name: ls
     group: file:read
-    use: deerflow.sandbox.tools:ls_tool
+    use: nkyel.sandbox.tools:ls_tool
 
   - name: read_file
     group: file:read
-    use: deerflow.sandbox.tools:read_file_tool
+    use: nkyel.sandbox.tools:read_file_tool
 
   - name: glob
     group: file:read
-    use: deerflow.sandbox.tools:glob_tool
+    use: nkyel.sandbox.tools:glob_tool
     max_results: 200
 
   - name: grep
     group: file:read
-    use: deerflow.sandbox.tools:grep_tool
+    use: nkyel.sandbox.tools:grep_tool
     max_results: 100
 
   - name: write_file
     group: file:write
-    use: deerflow.sandbox.tools:write_file_tool
+    use: nkyel.sandbox.tools:write_file_tool
 
   - name: str_replace
     group: file:write
-    use: deerflow.sandbox.tools:str_replace_tool
+    use: nkyel.sandbox.tools:str_replace_tool
 
   # Bash execution tool
   # Active only when using an isolated shell sandbox or when
   # sandbox.allow_host_bash: true explicitly opts into host bash.
   - name: bash
     group: bash
-    use: deerflow.sandbox.tools:bash_tool
+    use: nkyel.sandbox.tools:bash_tool
 
 # ============================================================================
 # Tool Search Configuration (Deferred Tool Loading)
@@ -1562,7 +1562,7 @@ pii_redaction:
 # ============================================================================
 # Detects tool stagnation and repetition at the (thread, tool) level.
 # Tracks consecutive "no-new-info" calls (error, partial_success, near-duplicate success).
-# Three transition paths (determined by deerflow_tool_meta.recoverable_by_model):
+# Three transition paths (determined by nkyel_tool_meta.recoverable_by_model):
 #   recoverable=true  (no_results, not_found, permission): ACTIVE → WARNED (terminal; hint re-injected each call)
 #   recoverable=false (rate_limited, transient):           ACTIVE → WARNED → BLOCKED after warn_escalation_count more
 #   recoverable=false + action=stop (auth, config):        ACTIVE → BLOCKED immediately
@@ -1677,15 +1677,15 @@ safety_finish_reason:
   # Example — extend the OpenAI-compatible detector for a Chinese provider
   # whose gateway uses a non-standard finish_reason token:
   # detectors:
-  #   - use: deerflow.agents.middlewares.safety_termination_detectors:OpenAICompatibleContentFilterDetector
+  #   - use: nkyel.agents.middlewares.safety_termination_detectors:OpenAICompatibleContentFilterDetector
   #     config:
   #       finish_reasons: ["content_filter", "sensitive", "risk_control"]
-  #   - use: deerflow.agents.middlewares.safety_termination_detectors:AnthropicRefusalDetector
-  #   - use: deerflow.agents.middlewares.safety_termination_detectors:GeminiSafetyDetector
+  #   - use: nkyel.agents.middlewares.safety_termination_detectors:AnthropicRefusalDetector
+  #   - use: nkyel.agents.middlewares.safety_termination_detectors:GeminiSafetyDetector
   #
   # Example — add a custom detector for an in-house provider:
   # detectors:
-  #   - use: my_company.deerflow_ext:WenxinSafetyDetector
+  #   - use: my_company.nkyel_ext:WenxinSafetyDetector
   #     config:
   #       error_codes: [336003, 17, 18]
 
@@ -1721,7 +1721,7 @@ uploads:
 # Option 1: Local Sandbox (Default)
 # Executes commands directly on the host machine
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
   # Host bash execution is disabled by default because LocalSandboxProvider is
   # not a secure isolation boundary for shell access. Enable only for fully
   # trusted, single-user local workflows.
@@ -1738,7 +1738,7 @@ sandbox:
   # Native Windows source example: 'D:/data'; WSL source example: /mnt/d/data.
   # Keep container_path POSIX-style on every OS (for example, /mnt/my-project).
   # Note: with LocalSandboxProvider under `make up` (docker-compose), host_path is
-  # checked from inside the deer-flow-gateway container — you must also bind-mount
+  # checked from inside the nkyel-gateway container — you must also bind-mount
   # the same directory into services.gateway.volumes in docker/docker-compose.yaml
   # for this mount to take effect. AIO Docker mounts instead use Docker-host paths.
   # Platform examples: backend/docs/CONFIGURATION.md#skills-and-sandbox-paths
@@ -1777,7 +1777,7 @@ sandbox:
 # On other platforms: Uses Docker
 # Uncomment to use:
 # sandbox:
-#   use: deerflow.community.aio_sandbox:AioSandboxProvider
+#   use: nkyel.community.aio_sandbox:AioSandboxProvider
 #
 #   # Optional: Container image to use (works with both Docker and Apple Container)
 #   # Default: enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest
@@ -1797,8 +1797,8 @@ sandbox:
 #   # make room for new ones. Use a positive integer here; omit this field to use the default.
 #   # replicas: 3
 #
-#   # Optional: Prefix for container names (default: deer-flow-sandbox)
-#   # container_prefix: deer-flow-sandbox
+#   # Optional: Prefix for container names (default: nkyel-sandbox)
+#   # container_prefix: nkyel-sandbox
 #
 #   # Optional: outbound network policy for locally managed Docker sandboxes.
 #   # open keeps the current behavior. isolated denies all outbound traffic.
@@ -1815,7 +1815,7 @@ sandbox:
 #       - github.com
 #     approval: prompt                  # deny | prompt
 #     temporary_grant_ttl: 300          # 30-3600 seconds
-#     proxy_image: ghcr.io/bytedance/deer-flow-sandbox-network-proxy:latest
+#     proxy_image: ghcr.io/bytedance/nkyel-sandbox-network-proxy:latest
 #
 #   # Optional: Override whether the sandbox already sees the gateway's
 #   # thread workspace/uploads/outputs through shared mounts.
@@ -1834,12 +1834,12 @@ sandbox:
 #   #     container_path: /home/user/shared
 #   #     read_only: false
 #   #
-#   #   # DeerFlow will surface configured container_path values to the agent,
+#   #   # nkyel will surface configured container_path values to the agent,
 #   #   # so it can directly read/write mounted directories such as /home/user/shared
 #
 #   # Optional: Environment variables to inject into the sandbox container
 #   # Values starting with $ will be resolved from host environment variables
-#   # AIO semver images default MAX_SHELL_SESSIONS to 10. DeerFlow leaves that
+#   # AIO semver images default MAX_SHELL_SESSIONS to 10. nkyel leaves that
 #   # image default unchanged while subagent_runtime.max_running + 1 fits, and
 #   # otherwise injects the required value for local and provisioner sandboxes.
 #   # An explicit value is allowed but must be at least max_running + 1.
@@ -1868,7 +1868,7 @@ sandbox:
 #   #
 #   # MULTIPLE gateway instances / workers sharing one container backend
 #   # (load-balanced deployments, Docker Compose) MUST set type: redis. Docker
-#   # Compose already sets DEER_FLOW_STREAM_BRIDGE_REDIS_URL, which is taken as
+#   # Compose already sets NKYEL_STREAM_BRIDGE_REDIS_URL, which is taken as
 #   # proof the deployment is multi-instance, so redis ownership is inferred even
 #   # if this section is omitted.
 #   #
@@ -1889,7 +1889,7 @@ sandbox:
 #   #                                # owner). Liveness is deliberately independent
 #   #                                # of idle_timeout: renewal keeps running even
 #   #                                # at idle_timeout: 0.
-#   #   key_prefix: deerflow:sandbox:owner
+#   #   key_prefix: nkyel:sandbox:owner
 #   #
 #   # NOTE: the redis ownership store is fail-closed, matching the stream bridge's
 #   # fail-hard policy. Redis.from_url is lazy so a down Redis does not block
@@ -1910,7 +1910,7 @@ sandbox:
 # Requires the boxlite runtime and host virtualization support (KVM on Linux,
 # Hypervisor.framework on macOS).
 # sandbox:
-#   use: deerflow.community.boxlite:BoxliteProvider
+#   use: nkyel.community.boxlite:BoxliteProvider
 #   image: python:3.12-slim
 #
 #   # Optional: Per-box memory and CPU limits.
@@ -1937,7 +1937,7 @@ sandbox:
 # Each sandbox_id gets a dedicated Pod in k3s, managed by the provisioner.
 # Recommended for production or advanced users who want better isolation and scalability.:
 # sandbox:
-#   use: deerflow.community.aio_sandbox:AioSandboxProvider
+#   use: nkyel.community.aio_sandbox:AioSandboxProvider
 #   provisioner_url: http://provisioner:8002
 #   # API key for provisioner authentication. Must match PROVISIONER_API_KEY
 #   # set on the provisioner container. Both sides must have the same value set;
@@ -1950,9 +1950,9 @@ sandbox:
 # Option 5: Tenki cloud microVM Sandbox
 # Runs each sandbox as an isolated Tenki cloud microVM. Released sandboxes stay
 # in an in-process warm pool and are reclaimed by the same user/thread without a
-# cold start. Requires the optional SDK: pip install "deerflow-harness[tenki]".
+# cold start. Requires the optional SDK: pip install "nkyel-harness[tenki]".
 # sandbox:
-#   use: deerflow.community.tenki:TenkiSandboxProvider
+#   use: nkyel.community.tenki:TenkiSandboxProvider
 #   # api_key: $TENKI_API_KEY        # falls back to TENKI_API_KEY / TENKI_AUTH_TOKEN env var
 #   # base_url: https://tenki.cloud  # optional; SDK default when omitted
 #   # image: my-base-image           # optional; Tenki account default base image when omitted
@@ -1973,9 +1973,9 @@ sandbox:
 # Option 6: OpenSandbox remote Sandbox
 # Runs each sandbox through an OpenSandbox server. Released sandboxes stay in an
 # in-process warm pool and are reclaimed only by the same user/thread. Requires
-# the optional SDK: pip install "deerflow-harness[opensandbox]".
+# the optional SDK: pip install "nkyel-harness[opensandbox]".
 # sandbox:
-#   use: deerflow.community.opensandbox:OpenSandboxProvider
+#   use: nkyel.community.opensandbox:OpenSandboxProvider
 #   image: python:3.11
 #   # api_key: $OPEN_SANDBOX_API_KEY  # optional when the SDK env var is set
 #   # domain: localhost:8080          # optional; OPEN_SANDBOX_DOMAIN fallback
@@ -2128,7 +2128,7 @@ verification:
 #     # timeout_seconds: 1800            # Abort + kill the subprocess if it doesn't respond in time (default: 1800 = 30 min)
 #
 #   claude_code:
-#     # DeerFlow expects an ACP adapter here. The standard `claude` CLI does not
+#     # nkyel expects an ACP adapter here. The standard `claude` CLI does not
 #     # speak ACP directly. Install `claude-agent-acp` separately or use:
 #     command: npx
 #     args: ["-y", "@zed-industries/claude-agent-acp"]
@@ -2140,7 +2140,7 @@ verification:
 #     #   ANTHROPIC_API_KEY: $ANTHROPIC_API_KEY  # $VAR resolves from host environment
 #
 #   codex:
-#     # DeerFlow expects an ACP adapter here. The standard `codex` CLI does not
+#     # nkyel expects an ACP adapter here. The standard `codex` CLI does not
 #     # speak ACP directly. Install `codex-acp` separately or use:
 #     command: npx
 #     args: ["-y", "@zed-industries/codex-acp"]
@@ -2157,11 +2157,11 @@ verification:
 
 skills:
   # Skills source root read by the Gateway (contains public/ and legacy custom/).
-  # Absolute, or relative to DEER_FLOW_PROJECT_ROOT (process cwd when unset).
+  # Absolute, or relative to NKYEL_PROJECT_ROOT (process cwd when unset).
   # Default: skills under that root, with a source-checkout fallback to repo skills/.
-  # Override with DEER_FLOW_SKILLS_PATH when this field is omitted.
+  # Override with NKYEL_SKILLS_PATH when this field is omitted.
   # In Docker, use a Gateway-visible path, such as the bundled /app/skills mount.
-  # Native Windows: 'D:/deer-flow/skills'; WSL: /mnt/d/deer-flow/skills.
+  # Native Windows: 'D:/nkyel/skills'; WSL: /mnt/d/nkyel/skills.
   # See backend/docs/CONFIGURATION.md#skills-and-sandbox-paths for mappings.
   # Uncomment to customize:
   # path: /absolute/path/to/custom/skills
@@ -2304,7 +2304,7 @@ summarization:
 #   backend_config      - Backend-private config dict (passthrough; each backend self-interprets)
 #
 # DeerMem-private fields live under ``backend_config`` (NOT at the memory: top level):
-#   storage_path        - Data root. Empty = deer-flow base_dir (factory injects absolute
+#   storage_path        - Data root. Empty = nkyel base_dir (factory injects absolute
 #                         runtime_home). Absolute path = that root. Relative = CWD-relative.
 #   retrieval_index_path - Directory of the derived SQLite FTS5 retrieval index. Empty =
 #                         {storage_path}/.retrieval. Relative = below storage_path. Absolute =
@@ -2342,7 +2342,7 @@ memory:
   # shutdown. Each pending item does one LLM call, so large IM batches may need
   # more. Must fit inside the pod's K8s terminationGracePeriodSeconds (channel
   # stop + this drain + buffer) or K8s SIGKILLs the drain -- set that on the
-  # gateway Helm deployment (see deploy/helm/deer-flow). Default 30s.
+  # gateway Helm deployment (see deploy/helm/nkyel). Default 30s.
   shutdown_flush_timeout_seconds: 30.0
   # Memory backend selector. Either a registered backend name (matching a
   # backends/<name>/ folder that exposes MANAGER_CLASS, e.g. deermem / mem0 / noop)
@@ -2386,7 +2386,7 @@ memory:
   # sees no batches until staleness_review_enabled is turned off.
   # prescreen:
   #   mode: "off"
-  #   use: deerflow.agents.memory.prescreen.typesafe:TypeSafeMemoryPrescreen
+  #   use: nkyel.agents.memory.prescreen.typesafe:TypeSafeMemoryPrescreen
   #   config:
   #     skip_threshold: 0.2          # p below this skips; provisional, unmeasured
   #     max_state_chars: 6000        # characters of the judged batch; over it extracts
@@ -2407,7 +2407,7 @@ memory:
   # satisfies the reinforcement evidence gate (that gate stays deterministic).
   # signal_classification:
   #   mode: "off"
-  #   use: deerflow.agents.memory.signals.typesafe:TypeSafeSignalClassifier
+  #   use: nkyel.agents.memory.signals.typesafe:TypeSafeSignalClassifier
   #   combine: auto                  # auto | always | never: request sharing with the pre-screen
   #   config:
   #     hint_threshold: 0.5          # provisional, unmeasured
@@ -2419,15 +2419,15 @@ memory:
   #
   # OpenViking example (replace this DeerMem backend_config block when
   # manager_class is openviking). This first official-adapter integration uses
-  # one credential-bound OpenViking USER key for one DeerFlow user and supports
-  # middleware mode only. Use owner_user_id: default when DeerFlow auth is off.
+  # one credential-bound OpenViking USER key for one nkyel user and supports
+  # middleware mode only. Use owner_user_id: default when nkyel auth is off.
   #
   # backend_config:
   #   base_url: http://openviking:1933
   #   owner_user_id: default
   #   api_key_env: OPENVIKING_API_KEY
   #   timeout_seconds: 30
-  #   default_peer_id: deerflow
+  #   default_peer_id: nkyel
   #   max_seen_message_ids: 512 # bounded hash-only capture cursor
   #   startup_policy: fail_fast
   #   failure_policy:
@@ -2442,7 +2442,7 @@ memory:
   #       user profile preferences important entities events ongoing goals
   #       constraints and prior decisions
   #
-  # For a host-installed OpenViking used by Docker DeerFlow, set base_url to
+  # For a host-installed OpenViking used by Docker nkyel, set base_url to
   # http://host.docker.internal:1933 and allow_insecure_http: true. The bundled
   # optional Compose overlay uses the internal http://openviking:1933 address.
   #
@@ -2453,12 +2453,12 @@ memory:
   # backend_config:
   #   base_url: http://localhost:8000
   #   # api_key: $HONCHO_API_KEY   # hosted Honcho; plain-http + api_key needs allow_insecure_http: true
-  #   workspace_prefix: deerflow-u-   # one isolated workspace per user id
+  #   workspace_prefix: nkyel-u-   # one isolated workspace per user id
   #   # workspace_overrides: {}    # map specific user ids to custom workspaces
   #   # user_peer_overrides: {}    # map specific user ids to custom peer names
-  #   assistant_peer: deerflow
+  #   assistant_peer: nkyel
   backend_config:
-    storage_path: ""            # empty = deer-flow base_dir (factory injects absolute runtime_home); a non-empty path is the root DIRECTORY (per-user memory under {storage_path}/users/{uid}/memory.json)
+    storage_path: ""            # empty = nkyel base_dir (factory injects absolute runtime_home); a non-empty path is the root DIRECTORY (per-user memory under {storage_path}/users/{uid}/memory.json)
     storage_class: file         # file (default) or a dotted MemoryStorage class path; invalid persistent backends fail fast
     strict_user_scope: false    # set true in authenticated deployments after all callers propagate user_id
     manifest_filename: memory.json # user-global JSON: version/revision/time + user/history only; no facts or fact index
@@ -2577,7 +2577,7 @@ blob_storage:
   # ReadWriteMany PVC) for multi-instance deployments:
   #
   # backend_config:
-  #   root: /mnt/shared/deerflow-blobs
+  #   root: /mnt/shared/nkyel-blobs
   backend_config: {}
 
 # ============================================================================
@@ -2602,7 +2602,7 @@ skill_evolution:
 # ============================================================================
 # Legacy standalone checkpointer config. Kept for backward compatibility.
 # Prefer the unified `database` section below, which drives the LangGraph
-# checkpointer, LangGraph Store, and DeerFlow application data (runs,
+# checkpointer, LangGraph Store, and nkyel application data (runs,
 # feedback, events) from a single backend setting.
 #
 # If both `checkpointer` and `database` are present, `checkpointer`
@@ -2615,26 +2615,26 @@ skill_evolution:
 #
 # checkpointer:
 #   type: postgres
-#   connection_string: postgresql://user:password@localhost:5432/deerflow
+#   connection_string: postgresql://user:password@localhost:5432/nkyel
 #   # Optional: place LangGraph checkpointer/store tables in this schema.
 #   # Leave empty to use the server default search_path, usually public.
-#   postgres_schema: deerflow
+#   postgres_schema: nkyel
 
 # ============================================================================
 # Database
 # ============================================================================
 # Unified storage backend for the LangGraph checkpointer, LangGraph Store,
-# and DeerFlow application data (runs, threads metadata, feedback, etc.).
+# and nkyel application data (runs, threads metadata, feedback, etc.).
 #
 # backend: memory  -- No persistence, data lost on restart
 # backend: sqlite  -- Single-node deployment, files in sqlite_dir
 # backend: postgres -- Production multi-node deployment
 #
-# If this section is omitted or empty in config.yaml, DeerFlow uses:
+# If this section is omitted or empty in config.yaml, nkyel uses:
 #   backend: sqlite
-#   sqlite_dir: .deer-flow/data
+#   sqlite_dir: .nkyel/data
 #
-# SQLite mode uses a single deerflow.db file with WAL journal mode
+# SQLite mode uses a single nkyel.db file with WAL journal mode
 # for the checkpointer, Store, and application data.
 #
 # Postgres mode: put your connection URL in .env as DATABASE_URL,
@@ -2661,63 +2661,63 @@ skill_evolution:
 #
 # NOTE: When both `checkpointer` and `database` are configured,
 # `checkpointer` takes precedence for the LangGraph checkpointer and Store;
-# `database` still controls DeerFlow application data.
+# `database` still controls nkyel application data.
 # If you use `database`, you can remove the `checkpointer` section.
 # database:
 #   backend: sqlite
-#   sqlite_dir: .deer-flow/data
+#   sqlite_dir: .nkyel/data
 #
 # database:
 #   backend: postgres
 #   postgres_url: $DATABASE_URL
-#   # Optional: place DeerFlow ORM tables and LangGraph checkpointer/store
+#   # Optional: place nkyel ORM tables and LangGraph checkpointer/store
 #   # tables in this schema. Leave empty to use the server default
 #   # search_path, usually public.
-#   postgres_schema: deerflow
+#   postgres_schema: nkyel
 #
-# postgres_schema only takes effect for new tables. On startup DeerFlow runs
+# postgres_schema only takes effect for new tables. On startup nkyel runs
 # CREATE SCHEMA IF NOT EXISTS and pins the connection search_path; it never
 # moves existing tables, so third-party tables in `public` are left untouched.
 #
 # Migrating an EXISTING deployment from `public` to a dedicated schema:
-#   1. Stop the DeerFlow services.
-#   2. Move EVERY DeerFlow-owned table AND the Alembic state into the new schema
+#   1. Stop the nkyel services.
+#   2. Move EVERY nkyel-owned table AND the Alembic state into the new schema
 #      (run as the DB owner). Missing any table strands its rows: after restart
-#      DeerFlow recreates an empty counterpart in the target schema and the old
+#      nkyel recreates an empty counterpart in the target schema and the old
 #      rows stay invisible in `public`. Moving the ORM tables but leaving
 #      `alembic_version` behind is especially dangerous -- bootstrap then treats
 #      the target schema as unversioned, re-baselines it, and replays migrations.
-#        CREATE SCHEMA IF NOT EXISTS deerflow;
+#        CREATE SCHEMA IF NOT EXISTS nkyel;
 #        -- Application ORM tables:
-#        ALTER TABLE public.runs                  SET SCHEMA deerflow;
-#        ALTER TABLE public.run_events            SET SCHEMA deerflow;
-#        ALTER TABLE public.threads_meta          SET SCHEMA deerflow;
-#        ALTER TABLE public.feedback              SET SCHEMA deerflow;
-#        ALTER TABLE public.users                 SET SCHEMA deerflow;
-#        ALTER TABLE public.agents                SET SCHEMA deerflow;
+#        ALTER TABLE public.runs                  SET SCHEMA nkyel;
+#        ALTER TABLE public.run_events            SET SCHEMA nkyel;
+#        ALTER TABLE public.threads_meta          SET SCHEMA nkyel;
+#        ALTER TABLE public.feedback              SET SCHEMA nkyel;
+#        ALTER TABLE public.users                 SET SCHEMA nkyel;
+#        ALTER TABLE public.agents                SET SCHEMA nkyel;
 #        -- IM channel tables:
-#        ALTER TABLE public.channel_connections   SET SCHEMA deerflow;
-#        ALTER TABLE public.channel_credentials   SET SCHEMA deerflow;
-#        ALTER TABLE public.channel_oauth_states  SET SCHEMA deerflow;
-#        ALTER TABLE public.channel_conversations SET SCHEMA deerflow;
+#        ALTER TABLE public.channel_connections   SET SCHEMA nkyel;
+#        ALTER TABLE public.channel_credentials   SET SCHEMA nkyel;
+#        ALTER TABLE public.channel_oauth_states  SET SCHEMA nkyel;
+#        ALTER TABLE public.channel_conversations SET SCHEMA nkyel;
 #        -- Scheduled-task tables:
-#        ALTER TABLE public.scheduled_tasks       SET SCHEMA deerflow;
-#        ALTER TABLE public.scheduled_task_runs   SET SCHEMA deerflow;
+#        ALTER TABLE public.scheduled_tasks       SET SCHEMA nkyel;
+#        ALTER TABLE public.scheduled_task_runs   SET SCHEMA nkyel;
 #        -- Alembic migration state (REQUIRED -- see note above):
-#        ALTER TABLE public.alembic_version       SET SCHEMA deerflow;
-#      The DeerFlow-owned set grows over time; discover any tables the list
-#      above misses (as the DeerFlow DB owner/role) with:
+#        ALTER TABLE public.alembic_version       SET SCHEMA nkyel;
+#      The nkyel-owned set grows over time; discover any tables the list
+#      above misses (as the nkyel DB owner/role) with:
 #        SELECT table_name FROM information_schema.tables WHERE table_schema='public';
 #      LangGraph checkpointer/store table names also vary by version -- list them
-#      the same way, then ALTER ... SET SCHEMA deerflow for each (e.g. checkpoints,
+#      the same way, then ALTER ... SET SCHEMA nkyel for each (e.g. checkpoints,
 #      checkpoint_blobs, checkpoint_writes, checkpoint_migrations, store,
 #      store_migrations).
-#   3. Set postgres_schema: deerflow here and restart.
+#   3. Set postgres_schema: nkyel here and restart.
 #   4. Verify with `SHOW search_path;` and a smoke test (create a run, read
-#      its history). The `public` schema should gain no new DeerFlow tables.
+#      its history). The `public` schema should gain no new nkyel tables.
 database:
   backend: sqlite
-  sqlite_dir: .deer-flow/data
+  sqlite_dir: .nkyel/data
 
 # ============================================================================
 # Inbound webhook dedupe storage (cross-pod redelivery dedup — issue #4120)
@@ -2768,7 +2768,7 @@ database:
   # checkpoint_cache:
   #   type: memory            # memory | redis (redis is Gateway/async only)
   #   max_entries: 128        # 0 disables the cache
-  #   redis_url: null         # or DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL / REDIS_URL
+  #   redis_url: null         # or NKYEL_CHECKPOINT_CACHE_REDIS_URL / REDIS_URL
   #   ttl_seconds: 86400      # redis leak safety net; bounds residual copies if a
   #                           # thread-delete purge fails (purge itself is immediate).
   #                           # 0 explicitly disables expiry (redis maxmemory only)
@@ -2920,7 +2920,7 @@ mcp_tasks:
 # other Pods' lease-less runs off as crashed on every rolling update.
 #
 # With multi_instance: true (or the environment variable
-# DEER_FLOW_MULTI_INSTANCE=1, which deploy tooling such as a Helm chart can
+# NKYEL_MULTI_INSTANCE=1, which deploy tooling such as a Helm chart can
 # set from its replica count) startup requires database.backend: postgres, run_events.backend: db,
 # run_ownership.heartbeat_enabled: true and a Redis stream bridge, and refuses
 # an explicit sandbox.ownership.type: memory, process-local browser tools,
@@ -2964,7 +2964,7 @@ run_ownership:
 # Stream Bridge Configuration
 # ============================================================================
 # The stream bridge carries live agent events from gateway workers to SSE
-# clients. Docker Compose sets DEER_FLOW_STREAM_BRIDGE_REDIS_URL automatically,
+# clients. Docker Compose sets NKYEL_STREAM_BRIDGE_REDIS_URL automatically,
 # so Docker deployments use Redis Streams even if this section is omitted.
 #
 # The redis bridge requires the optional `redis` extra. It is auto-detected from
@@ -3012,7 +3012,7 @@ run_ownership:
 # ============================================================================
 # User-Owned IM Channel Connections
 # ============================================================================
-# Lets logged-in users connect their own IM accounts from the DeerFlow frontend
+# Lets logged-in users connect their own IM accounts from the nkyel frontend
 # while reusing the existing `channels` runtime configuration below.
 #
 # Security notes:
@@ -3031,7 +3031,7 @@ run_ownership:
 # channel_connections:
 #   enabled: false
 #   # Security: keep this enabled unless you intentionally want legacy open-bot behavior.
-#   # Disabling it lets unbound external IM users create DeerFlow threads/runs.
+#   # Disabling it lets unbound external IM users create nkyel threads/runs.
 #   require_bound_identity: true
 #   # Language of scheduled-task IM notices (en-US or zh-CN) for owners without
 #   # a web UI language preference (e.g. auth disabled). Restart-required.
@@ -3068,7 +3068,7 @@ run_ownership:
 # ============================================================================
 # IM Channels Configuration
 # ============================================================================
-# Connect DeerFlow to external messaging platforms.
+# Connect nkyel to external messaging platforms.
 # All channels use outbound connections (WebSocket or polling) — no public IP required.
 
 # channels:
@@ -3101,7 +3101,7 @@ run_ownership:
 #   leader_lease:
 #     # auto (default): on whenever the Gateway sees a multi-process signal
 #     # (GATEWAY_WORKERS / WEB_CONCURRENCY > 1, deployment.multi_instance: true
-#     # or DEER_FLOW_MULTI_INSTANCE=1), off on a single instance. true: always
+#     # or NKYEL_MULTI_INSTANCE=1), off on a single instance. true: always
 #     # on (needs database.backend sqlite or postgres). false: never -- a
 #     # multi-process deployment with an IM channel other than GitHub enabled
 #     # then refuses to start.
@@ -3114,7 +3114,7 @@ run_ownership:
 #   # of localhost, for example:
 #   # langgraph_url: http://gateway:8001/api
 #   # gateway_url: http://gateway:8001
-#   # You can also set DEER_FLOW_CHANNELS_LANGGRAPH_URL / DEER_FLOW_CHANNELS_GATEWAY_URL.
+#   # You can also set NKYEL_CHANNELS_LANGGRAPH_URL / NKYEL_CHANNELS_GATEWAY_URL.
 #
 #   # Optional: default mobile/session settings for all IM channels
 #   session:
@@ -3180,7 +3180,7 @@ run_ownership:
 #     # QR bootstrap timeout
 #     qrcode_poll_timeout: 180
 #     # Optional: persist getupdates cursor under the gateway container volume
-#     state_dir: ./.deer-flow/wechat/state
+#     state_dir: ./.nkyel/wechat/state
 #     # Optional: max inbound image size in bytes before skipping download
 #     max_inbound_image_bytes: 20971520
 #     # Optional: max outbound image size in bytes before skipping upload
@@ -3241,8 +3241,8 @@ run_ownership:
 #     thread_mode: false               # If true, group a channel conversation into a thread
 #
 #   # Buzz (https://github.com/block/buzz) — Nostr-relay team workspace.
-#   # DeerFlow joins as a member identity; generate a keypair and register it as
-#   # a relay member, then @mention or DM DeerFlow in Buzz. Requires the `buzz`
+#   # nkyel joins as a member identity; generate a keypair and register it as
+#   # a relay member, then @mention or DM nkyel in Buzz. Requires the `buzz`
 #   # dependency extra (uv sync --extra buzz).
 #   buzz:
 #     enabled: false
@@ -3251,7 +3251,7 @@ run_ownership:
 #     allowed_users: []                     # pubkeys (hex or npub) allowed to trigger runs:
 #                                           # one pubkey (hex or npub) or a YAML list.
 #                                           # DENY-BY-DEFAULT (unlike other channels): empty
-#                                           # means nobody, and DeerFlow logs a startup warning.
+#                                           # means nobody, and nkyel logs a startup warning.
 #     require_mention: true                 # @mention needed in channels
 #     mention_free_channels: []             # Channel UUIDs that respond to every message:
 #                                           # one UUID (quoted or unquoted) or a YAML list.
@@ -3271,14 +3271,14 @@ run_ownership:
 # guardrails:
 #   enabled: true
 #   provider:
-#     use: deerflow.guardrails.builtin:AllowlistProvider
+#     use: nkyel.guardrails.builtin:AllowlistProvider
 #     config:
 #       denied_tools: ["bash", "write_file"]
 
 # --- Option 2: OAP passport provider (open standard, any implementation) ---
 #   The Open Agent Passport (OAP) spec defines passport format and decision codes.
 #   Any OAP-compliant provider works. Example using APort (reference implementation):
-#     pip install aport-agent-guardrails && aport setup --framework deerflow
+#     pip install aport-agent-guardrails && aport setup --framework nkyel
 # guardrails:
 #   enabled: true
 #   provider:
@@ -3309,7 +3309,7 @@ run_ownership:
 #   enabled: true
 #   fail_closed: true
 #   provider:
-#     use: deerflow.guardrails.typesafe:TypeSafeGuardrailProvider
+#     use: nkyel.guardrails.typesafe:TypeSafeGuardrailProvider
 #     config:
 #       model: jev-latest           # pin an exact version (e.g. jev-1.13.0) when
 #                                   # decisions must stay traceable across releases
@@ -3334,7 +3334,7 @@ run_ownership:
 #   enabled: true
 #   fail_closed: true
 #   provider:
-#     use: deerflow.guardrails.openai_decisions:OpenAIDecisionsGuardrailProvider
+#     use: nkyel.guardrails.openai_decisions:OpenAIDecisionsGuardrailProvider
 #     config:
 #       model: <name the decision model this deployment uses>   # required: this
 #           # backend ships no default model, so batches cannot go to a model nobody chose
@@ -3390,7 +3390,7 @@ run_ownership:
 #   fail_closed: true            # block on provider error / unresolved identity
 #   default_role: user           # applied when user_role is None; built-in RBAC requires this role below
 #   provider:
-#     use: deerflow.authz.rbac:RbacAuthorizationProvider
+#     use: nkyel.authz.rbac:RbacAuthorizationProvider
 #     config:
 #       # A known role with no policy for a resource is unrestricted for it.
 #       # Define both `tools` and `routes` wherever access should be constrained.
@@ -3511,7 +3511,7 @@ authorization:
 # When enabled, the login page will show SSO buttons alongside the standard email/password form.
 #
 # Provider configuration:
-#   - issuer:      The OIDC issuer URL (e.g. https://keycloak.example.com/realms/deerflow)
+#   - issuer:      The OIDC issuer URL (e.g. https://keycloak.example.com/realms/nkyel)
 #   - client_id:   OAuth2 client ID from the provider
 #   - client_secret: OAuth2 client secret ($ENV_VAR references supported)
 #   - redirect_uri: Callback URL. In production, this must match what you configure in
@@ -3573,16 +3573,16 @@ authorization:
 #     enabled: true
 #     # Base URL of the frontend, used for redirects after SSO callback.
 #     # In production behind a reverse proxy, set this to the public frontend URL
-#     # (e.g. https://deerflow.example.com). In development, leave unset.
+#     # (e.g. https://nkyel.example.com). In development, leave unset.
 #     # frontend_base_url: http://localhost:3000
 #     providers:
 #       keycloak:
 #         display_name: Keycloak
-#         issuer: https://keycloak.example.com/realms/deerflow
-#         client_id: deerflow
+#         issuer: https://keycloak.example.com/realms/nkyel
+#         client_id: nkyel
 #         client_secret: $KEYCLOAK_CLIENT_SECRET
 #         # Optional: explicitly set the callback URL.
-#         # redirect_uri: https://deerflow.example.com/api/v1/auth/callback/keycloak
+#         # redirect_uri: https://nkyel.example.com/api/v1/auth/callback/keycloak
 #         scopes:
 #           - openid
 #           - email
@@ -3590,7 +3590,7 @@ authorization:
 #         token_endpoint_auth_method: client_secret_post
 #
 #         # User provisioning settings (safe defaults shown below):
-#         auto_create_users: true          # Auto-create DeerFlow account on first SSO login
+#         auto_create_users: true          # Auto-create nkyel account on first SSO login
 #         require_verified_email: true     # Reject SSO logins without verified email
 #         # allowed_email_domains:          # Restrict to specific email domains
 #         #   - example.com
@@ -3606,8 +3606,8 @@ authorization:
 # block is handed to that package verbatim and validated by the package itself.
 #
 # Prefer the extension manager over editing this list by hand:
-#   make extension-install SOURCE="deerflow-extension-acme==1.2.3"
-#   make extension-install SOURCE="git+https://github.com/acme/deerflow-extension-acme.git@<commit>"
+#   make extension-install SOURCE="nkyel-extension-acme==1.2.3"
+#   make extension-install SOURCE="git+https://github.com/acme/nkyel-extension-acme.git@<commit>"
 #   make extension-install SOURCE="/absolute/path/to/local-extension"
 #   make extension-list
 #   make extension-enable NAME=acme
@@ -3635,12 +3635,12 @@ authorization:
 #
 # Plugins can contribute semantically placed middleware, task-lifecycle hooks,
 # system-model observers, Gateway-lifetime services, and eager FastAPI HTTP routers.
-# See examples/deerflow-extension-example for a package that exercises all five.
+# See examples/nkyel-extension-example for a package that exercises all five.
 #
 # plugins:
 #   - name: example                       # PEP 621 entry-point name
-#     package: deerflow-extension-example # Python distribution managed by uv
-#     use: deerflow_extension_example:install
+#     package: nkyel-extension-example # Python distribution managed by uv
+#     use: nkyel_extension_example:install
 #     enabled: true                       # false skips import and registration
 #     # Optional, restart-required host grants. Omit for legacy behavior.
 #     # Requires durable database + run_events.backend: db for automatic updates.

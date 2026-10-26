@@ -13,8 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.config import extensions_config as extensions_config_module
-from deerflow.config.extensions_config import atomic_write_extensions_config, extensions_config_file_lock
+from nkyel.config import extensions_config as extensions_config_module
+from nkyel.config.extensions_config import atomic_write_extensions_config, extensions_config_file_lock
 
 
 def _temporary_files_for(path: Path) -> list[Path]:

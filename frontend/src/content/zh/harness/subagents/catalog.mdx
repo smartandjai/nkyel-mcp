@@ -85,7 +85,7 @@ subagents:
 
 内置项和 `config.yaml` 项也会显示在同一个目录里，但只读。
 
-存储后端跟随 Custom Agent 的设置：`agent_storage.backend: file` 在 `DEER_FLOW_HOME/managed-subagents/` 下为每条定义写一个原子 JSON 文件；`agent_storage.backend: db` 写入共享应用数据库，供多实例部署共同读取。这些定义是部署级全局数据，不按用户隔离。对应的 API 在 `/api/subagents`：所有用户都可以读取目录（系统提示仅对管理员可见），创建、更新与删除仅管理员可用；运行时对定义有约 1 秒的缓存。
+存储后端跟随 Custom Agent 的设置：`agent_storage.backend: file` 在 `NKYEL_HOME/managed-subagents/` 下为每条定义写一个原子 JSON 文件；`agent_storage.backend: db` 写入共享应用数据库，供多实例部署共同读取。这些定义是部署级全局数据，不按用户隔离。对应的 API 在 `/api/subagents`：所有用户都可以读取目录（系统提示仅对管理员可见），创建、更新与删除仅管理员可用；运行时对定义有约 1 秒的缓存。
 
 ## Custom Agent 的委派范围
 
@@ -101,7 +101,7 @@ subagents:
 
 ## 外部 ACP Agent
 
-除内置和自定义子 Agent 外，DeerFlow 还能通过 **Agent Client Protocol (ACP)** 委派给作为独立进程运行的外部 Agent，包括用 ACP 适配器封装的第三方 CLI。
+除内置和自定义子 Agent 外，nkyel 还能通过 **Agent Client Protocol (ACP)** 委派给作为独立进程运行的外部 Agent，包括用 ACP 适配器封装的第三方 CLI。
 
 ```yaml
 acp_agents:

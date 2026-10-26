@@ -18,9 +18,9 @@ from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import tool as as_tool
 
-from deerflow.agents.middlewares.deferred_tool_filter_middleware import DeferredToolFilterMiddleware
-from deerflow.tools.builtins.tool_search import DeferredToolSetup, assemble_deferred_tools, build_deferred_tool_setup
-from deerflow.tools.mcp_metadata import tag_mcp_tool
+from nkyel.agents.middlewares.deferred_tool_filter_middleware import DeferredToolFilterMiddleware
+from nkyel.tools.builtins.tool_search import DeferredToolSetup, assemble_deferred_tools, build_deferred_tool_setup
+from nkyel.tools.mcp_metadata import tag_mcp_tool
 
 
 @as_tool
@@ -95,7 +95,7 @@ def test_fail_closed_when_mcp_survives_without_setup(monkeypatch):
     module global, so patch it in ``tool_search`` (its home module).
     """
     monkeypatch.setattr(
-        "deerflow.tools.builtins.tool_search.build_deferred_tool_setup",
+        "nkyel.tools.builtins.tool_search.build_deferred_tool_setup",
         lambda tools, *, enabled: DeferredToolSetup(None, frozenset(), None),
     )
     with pytest.raises(RuntimeError, match="fail-closed"):

@@ -16,7 +16,7 @@ Register a contributor in `install()`. The host calls it back each time it assem
 ```python
 from collections.abc import Sequence
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     AgentBuildContext,
     AgentScope,
     ExtensionData,
@@ -106,7 +106,7 @@ Extension <use>: placement TOOL_RAW fell back to a secondary anchor (primary anc
 
 `AgentScope` is a flag: `LEAD`, `SUBAGENT`, or `BOTH` (the default). The host builds each chain separately and includes a contribution only when its scope overlaps the chain being built. To differ by chain, either return two placements with different scopes or branch on `ctx.scope`.
 
-Middleware configured through `create_deerflow_agent(extra_middleware=...)` or `DeerFlowClient(middlewares=...)` does not reach subagents. Extension middleware with `SUBAGENT` scope does.
+Middleware configured through `create_nkyel_agent(extra_middleware=...)` or `NkyelClient(middlewares=...)` does not reach subagents. Extension middleware with `SUBAGENT` scope does.
 
 ## Ordering
 
@@ -145,7 +145,7 @@ LangGraph interrupts (`GraphBubbleUp`) always propagate. Diagnostics are written
 Middleware instances may be shared by concurrent runs, so do not keep per-run state on `self`. Keep it in the task-scoped `ExtensionData` store, which the host creates for each lead run and each subagent execution and discards when it ends. Inside a hook, recover it from the runtime:
 
 ```python
-from deerflow_extension_api import task_store_from_runtime
+from nkyel_extension_api import task_store_from_runtime
 
 
 class CountingMiddleware(AgentMiddleware):
@@ -160,7 +160,7 @@ class CountingMiddleware(AgentMiddleware):
 
 ## Identity in traces
 
-LangChain requires unique middleware names and uses them as trace identities and graph node IDs. The host names each wrapper `extension_<entry point>_<class name>_<n>`, with unsafe characters replaced by underscores. For example, the Quick Start middleware appears as `extension_deerflow_extension_hello_install_ToolTimer_0`.
+LangChain requires unique middleware names and uses them as trace identities and graph node IDs. The host names each wrapper `extension_<entry point>_<class name>_<n>`, with unsafe characters replaced by underscores. For example, the Quick Start middleware appears as `extension_nkyel_extension_hello_install_ToolTimer_0`.
 
 ## Common pitfalls
 

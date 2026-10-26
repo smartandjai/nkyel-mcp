@@ -18,16 +18,16 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 from starlette.testclient import TestClient
 
-import deerflow.persistence.models  # noqa: F401  (register every table)
+import nkyel.persistence.models  # noqa: F401  (register every table)
 from app.gateway.auth_disabled import AUTH_SOURCE_PAT, AUTH_SOURCE_SESSION
 from app.gateway.auth_middleware import AuthMiddleware
 from app.gateway.authz import require_cancel_permission_if
 from app.gateway.csrf_middleware import CSRFMiddleware
 from app.gateway.routers.auth import router as auth_router
 from app.gateway.run_models import RunCreateRequest
-from deerflow.config.authorization_config import AuthorizationConfig
-from deerflow.persistence.base import Base
-from deerflow.persistence.personal_access_tokens import PersonalAccessTokenRepository
+from nkyel.config.authorization_config import AuthorizationConfig
+from nkyel.persistence.base import Base
+from nkyel.persistence.personal_access_tokens import PersonalAccessTokenRepository
 
 TEST_JWT_SECRET = "test-pat-jwt-secret-0123456789abcdef"
 
@@ -60,7 +60,7 @@ def _default_route_authorization_config(monkeypatch):
         "app.gateway.authz._get_route_authorization_config",
         lambda: AuthorizationConfig(),
     )
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "")
     from app.gateway.auth.config import AuthConfig, set_auth_config
 
     set_auth_config(AuthConfig(jwt_secret=TEST_JWT_SECRET, token_expiry_days=7))
@@ -790,7 +790,7 @@ def test_start_run_gate_denies_create_only_credential_behaviorally():
 
 
 def test_auth_disabled_mode_ignores_bearer_header(monkeypatch, tmp_path):
-    """DEER_FLOW_AUTH_DISABLED is an operator override of all authentication.
+    """NKYEL_AUTH_DISABLED is an operator override of all authentication.
 
     A stray Authorization header (e.g. added by a proxy in front of an E2E
     sandbox) must not turn into a 401 in that mode.

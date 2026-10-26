@@ -63,7 +63,7 @@ async def barrier(boundary, record=None):
 
 
 def install_barriers():
-    from deerflow_extension_workflows.postgres import PostgresStore
+    from nkyel_extension_workflows.postgres import PostgresStore
 
     from app.gateway.extension_agent_runs import _BoundAgentRuns
 

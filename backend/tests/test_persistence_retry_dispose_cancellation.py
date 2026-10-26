@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.persistence import bootstrap as bootstrap_mod
-from deerflow.persistence import engine as engine_mod
+from nkyel.persistence import bootstrap as bootstrap_mod
+from nkyel.persistence import engine as engine_mod
 
 
 class _BlockingDisposeEngine:
@@ -35,7 +35,7 @@ async def test_postgres_auto_create_retry_drains_provisional_engine_dispose_acro
         sqlstate = "3D000"
 
     async def fail_bootstrap(*args, **kwargs) -> None:
-        raise MissingDatabaseError('database "deerflow" does not exist')
+        raise MissingDatabaseError('database "nkyel" does not exist')
 
     async def fake_auto_create(_url: str) -> None:
         return None
@@ -46,7 +46,7 @@ async def test_postgres_auto_create_retry_drains_provisional_engine_dispose_acro
     task = asyncio.create_task(
         engine_mod.init_engine(
             "postgres",
-            url="postgresql+asyncpg://user:password@localhost/deerflow",
+            url="postgresql+asyncpg://user:password@localhost/nkyel",
         )
     )
     try:

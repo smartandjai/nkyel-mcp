@@ -10,18 +10,18 @@ import pytest_asyncio
 from sqlalchemy import event, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.persistence.base import Base
-from deerflow.persistence.models.run_event import RunEventRow
-from deerflow.persistence.run.model import CompletedRunSnapshotRow, RunRow
-from deerflow.persistence.run.sql import RunRepository
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.persistence.base import Base
+from nkyel.persistence.models.run_event import RunEventRow
+from nkyel.persistence.run.model import CompletedRunSnapshotRow, RunRow
+from nkyel.persistence.run.sql import RunRepository
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 
 @pytest_asyncio.fixture
 async def evidence(tmp_path):
-    from deerflow.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
+    from nkyel.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'evidence.db'}")
     async with engine.begin() as conn:
@@ -78,7 +78,7 @@ async def test_new_giant_digest_has_constant_read_queries(evidence):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("sizes", [[1024 * 1024 + 1], [600 * 1024, 600 * 1024]])
 async def test_legacy_digest_budget_is_cumulative_and_never_trusts_metadata(evidence, sizes):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
     sf, events, runs, reader = evidence
     await put_run(runs)
@@ -110,7 +110,7 @@ async def test_legacy_digest_within_budget_is_exact(evidence):
         session.add(RunEventRow(thread_id="t-r", run_id="r", user_id="alice", event_type="test", category="message", content=content, seq=1))
         await session.commit()
     snap = await reader.get_snapshot(thread_id="t-r", run_id="r")
-    from deerflow_extension_api.completed_run_evidence import EvidenceLimits
+    from nkyel_extension_api.completed_run_evidence import EvidenceLimits
 
     page = await reader.read_events(snapshot_ref=snap.snapshot_ref, limits=EvidenceLimits(max_bytes=1024))
     assert page.items[0].content_sha256 == hashlib.sha256(content.encode()).hexdigest()
@@ -120,10 +120,10 @@ async def test_legacy_digest_within_budget_is_exact(evidence):
 async def test_legacy_digest_deadline_interrupts_query_wait(evidence, monkeypatch):
     import asyncio
 
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from deerflow.extensions import completed_run_evidence as module
+    from nkyel.extensions import completed_run_evidence as module
 
     sf, events, runs, reader = evidence
     await put_run(runs)
@@ -184,7 +184,7 @@ async def test_thread_snapshot_cleanup_locks_runs_in_prior_statement(evidence):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("operation", ["run", "thread", "run_events", "thread_events"])
 async def test_snapshot_cleanup_is_owner_scoped(evidence, operation):
-    from deerflow.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
+    from nkyel.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
 
     sf, events, runs, reader = evidence
     await put_run(runs)
@@ -212,7 +212,7 @@ async def test_snapshot_cleanup_is_owner_scoped(evidence, operation):
 
 
 def test_new_dtos_detach_mutable_constructor_sequences():
-    from deerflow_extension_api.completed_run_evidence import CompletedRunEventPage, CompletedRunSnapshot
+    from nkyel_extension_api.completed_run_evidence import CompletedRunEventPage, CompletedRunSnapshot
 
     notes = ["limited"]
     items = []
@@ -227,9 +227,9 @@ def test_new_dtos_detach_mutable_constructor_sequences():
 
 @pytest.mark.asyncio
 async def test_scope_filters_before_pagination_and_cursor_binds_plugin(evidence):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
-    from deerflow.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
+    from nkyel.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
 
     sf, events, runs, reader = evidence
     await put_run(runs, "other", owner="bob")
@@ -250,7 +250,7 @@ async def test_scope_filters_before_pagination_and_cursor_binds_plugin(evidence)
 
 @pytest.mark.parametrize("owners", [None, set(), {None}, {"*"}, {""}])
 def test_explicit_owner_scope_is_required(owners):
-    from deerflow.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
+    from nkyel.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
 
     with pytest.raises(ValueError):
         HostCompletedRunEvidenceReader(None, MemoryRunEventStore(), plugin_id="test", owner_ids=owners)
@@ -258,9 +258,9 @@ def test_explicit_owner_scope_is_required(owners):
 
 @pytest.mark.asyncio
 async def test_unsupported_is_explicit():
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
-    from deerflow.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
+    from nkyel.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
 
     reader = HostCompletedRunEvidenceReader(None, MemoryRunEventStore(), plugin_id="test", owner_ids={"alice"})
     with pytest.raises(HostCapabilityError, match="UNSUPPORTED"):
@@ -269,7 +269,7 @@ async def test_unsupported_is_explicit():
 
 @pytest.mark.asyncio
 async def test_snapshot_fixed_boundaries_and_retention_invalidation(evidence):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
     sf, events, runs, reader = evidence
     await put_run(runs)
@@ -301,7 +301,7 @@ async def test_snapshot_fixed_boundaries_and_retention_invalidation(evidence):
 
 @pytest.mark.asyncio
 async def test_every_page_reauthorizes_current_owner(evidence):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
     sf, events, runs, reader = evidence
     await put_run(runs)
@@ -316,7 +316,7 @@ async def test_every_page_reauthorizes_current_owner(evidence):
 
 @pytest.mark.asyncio
 async def test_internal_resolver_rechecks_current_retention_without_reading_events(evidence):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
     sf, events, runs, reader = evidence
     await put_run(runs)
@@ -329,7 +329,7 @@ async def test_internal_resolver_rechecks_current_retention_without_reading_even
 
 @pytest.mark.asyncio
 async def test_giant_event_preview_fits_envelope_and_advances(evidence):
-    from deerflow_extension_api.completed_run_evidence import EvidenceLimits
+    from nkyel_extension_api.completed_run_evidence import EvidenceLimits
 
     sf, events, runs, reader = evidence
     await put_run(runs)
@@ -382,7 +382,7 @@ async def test_seal_requires_drain_and_current_owner(evidence):
 
 @pytest.mark.asyncio
 async def test_proven_not_committed_flush_never_issues_seal_and_close_can_retry():
-    from deerflow.runtime.events.store.base import RunEventStoreNotCommittedError
+    from nkyel.runtime.events.store.base import RunEventStoreNotCommittedError
 
     class FailingStore(MemoryRunEventStore):
         fail = True
@@ -421,7 +421,7 @@ async def test_legacy_terminal_run_is_partial_even_with_delivery(evidence, statu
 
 @pytest.mark.asyncio
 async def test_admission_origin_survives_hydration_and_ignores_metadata(evidence):
-    from deerflow.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.manager import RunManager
 
     sf, events, runs, reader = evidence
     manager = RunManager(store=runs)
@@ -447,7 +447,7 @@ async def test_expired_lease_cannot_seal(evidence):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("status", ["success", "error", "interrupted", "timeout"])
 async def test_terminal_unsealed_crash_recovery_advances_discovery(evidence, status):
-    from deerflow.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.manager import RunManager
 
     sf, events, runs, reader = evidence
     expired = (datetime.now(UTC) - timedelta(minutes=5)).isoformat()
@@ -466,7 +466,7 @@ async def test_terminal_unsealed_crash_recovery_advances_discovery(evidence, sta
 
 @pytest.mark.asyncio
 async def test_startup_recovers_more_than_one_evidence_batch(evidence):
-    from deerflow.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.manager import RunManager
 
     sf, events, runs, reader = evidence
     async with sf() as session:
@@ -483,8 +483,8 @@ async def test_startup_recovers_more_than_one_evidence_batch(evidence):
 
 @pytest.mark.asyncio
 async def test_terminal_unsealed_recovery_keeps_live_local_finalization(evidence):
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.schemas import RunStatus
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.schemas import RunStatus
 
     sf, events, runs, reader = evidence
     manager = RunManager(store=runs)
@@ -499,7 +499,7 @@ async def test_terminal_unsealed_recovery_keeps_live_local_finalization(evidence
 
 @pytest.mark.asyncio
 async def test_thread_delete_invalidates_even_empty_snapshot(evidence):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
     sf, events, runs, reader = evidence
     await put_run(runs)
@@ -515,8 +515,8 @@ async def test_worker_seals_after_completion_hook_before_end(evidence, outcome):
     from types import SimpleNamespace
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.worker import RunContext, run_agent
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.worker import RunContext, run_agent
 
     sf, events, runs, reader = evidence
     manager = RunManager(store=runs, event_store=events)
@@ -552,8 +552,8 @@ async def test_seal_failure_does_not_change_business_success(evidence, monkeypat
     from types import SimpleNamespace
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.worker import RunContext, run_agent
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.worker import RunContext, run_agent
 
     sf, events, runs, reader = evidence
     manager = RunManager(store=runs, event_store=events)
@@ -581,8 +581,8 @@ async def test_seal_cancellation_is_deferred_until_after_end(evidence, monkeypat
     from types import SimpleNamespace
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.worker import RunContext, run_agent
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.worker import RunContext, run_agent
 
     sf, events, runs, reader = evidence
     manager = RunManager(store=runs, event_store=events)
@@ -609,8 +609,8 @@ async def test_host_cancellation_drains_durable_evidence_seal(evidence, monkeypa
     from types import SimpleNamespace
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.worker import RunContext, run_agent
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.worker import RunContext, run_agent
 
     _sf, events, runs, reader = evidence
     manager = RunManager(store=runs, event_store=events)
@@ -670,8 +670,8 @@ async def test_graph_assembly_failure_has_partial_coverage(evidence):
     from types import SimpleNamespace
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.worker import RunContext, run_agent
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.worker import RunContext, run_agent
 
     sf, events, runs, reader = evidence
     manager = RunManager(store=runs, event_store=events)
@@ -691,7 +691,7 @@ async def test_graph_assembly_failure_has_partial_coverage(evidence):
 def test_migration_is_additive_current_chain():
     from alembic.script import ScriptDirectory
 
-    from deerflow.persistence.bootstrap import _MIGRATIONS_DIR
+    from nkyel.persistence.bootstrap import _MIGRATIONS_DIR
 
     script = ScriptDirectory(str(_MIGRATIONS_DIR))
     rev = script.get_revision("0045_completed_run_evidence")
@@ -766,7 +766,7 @@ async def test_already_admitted_cross_thread_callback_survives_stop(evidence):
 
 @pytest.mark.asyncio
 async def test_lifecycle_transition_invalidates_pending_snapshot(evidence):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
     sf, events, runs, reader = evidence
     await put_run(runs, status="running")
@@ -784,7 +784,7 @@ def test_migration_upgrades_real_sqlite_and_preserves_legacy_partial(tmp_path):
     from alembic import command
     from sqlalchemy import create_engine, inspect, text
 
-    from deerflow.persistence.bootstrap import _get_alembic_config
+    from nkyel.persistence.bootstrap import _get_alembic_config
 
     engine = create_engine(f"sqlite:///{tmp_path / 'migration.db'}")
     with engine.begin() as conn:
@@ -820,7 +820,7 @@ async def test_changed_run_page_rejects_invalid_limits(evidence, limit):
 
 @pytest.mark.asyncio
 async def test_changed_run_page_uses_validated_limit(evidence, monkeypatch):
-    from deerflow_extension_api import EvidenceLimits
+    from nkyel_extension_api import EvidenceLimits
 
     _sf, _events, runs, reader = evidence
     for run_id in ("a", "b", "c"):
@@ -830,7 +830,7 @@ async def test_changed_run_page_uses_validated_limit(evidence, monkeypatch):
         return EvidenceLimits(max_events=min(max_events, 1))
 
     # Exercise a tighter host policy without changing the public hard limit.
-    monkeypatch.setattr("deerflow.extensions.completed_run_evidence.EvidenceLimits", bounded_limits)
+    monkeypatch.setattr("nkyel.extensions.completed_run_evidence.EvidenceLimits", bounded_limits)
     first = await reader.list_changed_runs(limit=100)
     assert [row.run_id for row in first.items] == ["a"]
     assert first.has_more

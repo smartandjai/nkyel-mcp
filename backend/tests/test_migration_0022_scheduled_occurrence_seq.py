@@ -15,9 +15,9 @@ from alembic import command
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.persistence.bootstrap import _MIGRATIONS_DIR, _get_alembic_config
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.bootstrap import _MIGRATIONS_DIR, _get_alembic_config
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
 
 pytestmark = pytest.mark.asyncio
 

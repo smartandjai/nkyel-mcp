@@ -4,18 +4,18 @@ on:
   pull_request:
     paths:
       - "docker/sandbox-network-proxy/**"
-      - "backend/packages/harness/deerflow/community/aio_sandbox/network_proxy.py"
+      - "backend/packages/harness/nkyel/community/aio_sandbox/network_proxy.py"
       - ".github/workflows/sandbox-network-proxy-image.yaml"
   push:
     branches:
       - main
     paths:
       - "docker/sandbox-network-proxy/**"
-      - "backend/packages/harness/deerflow/community/aio_sandbox/network_proxy.py"
+      - "backend/packages/harness/nkyel/community/aio_sandbox/network_proxy.py"
       - ".github/workflows/sandbox-network-proxy-image.yaml"
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: bytedance/deer-flow-sandbox-network-proxy
+  IMAGE_NAME: bytedance/nkyel-sandbox-network-proxy
 
 jobs:
   validate:
@@ -39,7 +39,7 @@ jobs:
           push: false
 
   publish:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'bytedance/deer-flow'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'bytedance/nkyel'
     runs-on: ubuntu-latest
     permissions:
       contents: read

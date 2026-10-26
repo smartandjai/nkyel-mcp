@@ -13,8 +13,8 @@ from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence import bootstrap
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 REVISION = "0037_project_document_summaries"
 PREVIOUS = "0036_run_idempotency_request"
@@ -103,7 +103,7 @@ async def test_0037_upgrade_keeps_rows_and_downgrade_drops_summary(tmp_path, bac
 
 def test_postgres_uri_tls_policy_is_preserved(tmp_path, monkeypatch):
     """The fixture must translate, never drop, an explicit sslmode (tests/AGENTS.md)."""
-    monkeypatch.setenv("TEST_POSTGRES_URI", "postgresql://u:p@db:5432/deerflow?sslmode=verify-full&channel_binding=require")
+    monkeypatch.setenv("TEST_POSTGRES_URI", "postgresql://u:p@db:5432/nkyel?sslmode=verify-full&channel_binding=require")
     captured = {}
 
     def capture_engine(url, **kwargs):
@@ -119,7 +119,7 @@ def test_postgres_uri_tls_policy_is_preserved(tmp_path, monkeypatch):
 
 
 def test_postgres_uri_conflicting_ssl_settings_rejected(tmp_path, monkeypatch):
-    monkeypatch.setenv("TEST_POSTGRES_URI", "postgresql://u:p@db:5432/deerflow?sslmode=require&ssl=disable")
+    monkeypatch.setenv("TEST_POSTGRES_URI", "postgresql://u:p@db:5432/nkyel?sslmode=require&ssl=disable")
     monkeypatch.setitem(globals(), "create_async_engine", lambda *a, **k: None)
     with pytest.raises(ValueError, match="Conflicting ssl and sslmode"):
         _engine(tmp_path, "postgres")

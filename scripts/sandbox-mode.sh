@@ -32,9 +32,9 @@ awk '
         seen_url=1
     }
     END {
-        if (index(sandbox_use, "deerflow.sandbox.local:LocalSandboxProvider")) {
+        if (index(sandbox_use, "nkyel.sandbox.local:LocalSandboxProvider")) {
             print "local"
-        } else if (index(sandbox_use, "deerflow.community.aio_sandbox:AioSandboxProvider")) {
+        } else if (index(sandbox_use, "nkyel.community.aio_sandbox:AioSandboxProvider")) {
             print empty_scalar(provisioner_url) ? "aio" : "provisioner"
         } else {
             print "local"

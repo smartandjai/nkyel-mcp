@@ -1,4 +1,4 @@
-"""Tests for deerflow.projects.context.resolve_project_context (spec §7.1).
+"""Tests for nkyel.projects.context.resolve_project_context (spec §7.1).
 
 One admission-time resolution per run: threads_meta membership -> owner-scoped
 project row -> pinned ``{project_id, name, instructions}`` snapshot. Every
@@ -10,15 +10,15 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.projects.context import resolve_project_context
-from deerflow.runtime.user_context import reset_current_user, set_current_user
+from nkyel.projects.context import resolve_project_context
+from nkyel.runtime.user_context import reset_current_user, set_current_user
 
 
 @pytest.fixture
 async def repos(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.persistence.projects import ProjectRepository
-    from deerflow.persistence.thread_meta import ThreadMetaRepository
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.projects import ProjectRepository
+    from nkyel.persistence.thread_meta import ThreadMetaRepository
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -92,7 +92,7 @@ class TestResolveProjectContext:
         async with thread_store._sf() as session:
             from sqlalchemy import update
 
-            from deerflow.persistence.thread_meta.model import ThreadMetaRow
+            from nkyel.persistence.thread_meta.model import ThreadMetaRow
 
             await session.execute(update(ThreadMetaRow).where(ThreadMetaRow.thread_id == "t1").values(project_id=project["id"]))
             await session.commit()
@@ -111,7 +111,7 @@ class TestResolveProjectContext:
         async with thread_store._sf() as session:
             from sqlalchemy import update
 
-            from deerflow.persistence.thread_meta.model import ThreadMetaRow
+            from nkyel.persistence.thread_meta.model import ThreadMetaRow
 
             await session.execute(update(ThreadMetaRow).where(ThreadMetaRow.thread_id == "t1").values(project_id=foreign["id"]))
             await session.commit()

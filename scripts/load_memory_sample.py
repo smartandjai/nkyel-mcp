@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Load the Memory Settings review sample into a local DeerFlow runtime."""
+"""Load the Memory Settings review sample into a local nkyel runtime."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def default_source(repo_root: Path) -> Path:
 
 def parse_args(repo_root: Path, argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Load Memory Settings sample data into DeerFlow runtime memory.",
+        description="Load Memory Settings sample data into nkyel runtime memory.",
     )
     parser.add_argument(
         "--source",
@@ -137,10 +137,10 @@ async def load_sample_for_all_users(
     sys.path.insert(0, str(backend_dir / "packages" / "harness"))
 
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-    from deerflow.agents.memory.manager import get_memory_manager
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.paths import get_paths
-    from deerflow.persistence.engine import (
+    from nkyel.agents.memory.manager import get_memory_manager
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.paths import get_paths
+    from nkyel.persistence.engine import (
         close_engine,
         get_session_factory,
         init_engine_from_config,

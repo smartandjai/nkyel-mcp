@@ -1,6 +1,6 @@
 """Opt-in real two-Gateway acceptance with disposable Docker Postgres/Redis/nginx.
 
-Run with DEERFLOW_WORKFLOW_ACCEPTANCE=1 and a working Docker CLI. Only model
+Run with NKYEL_WORKFLOW_ACCEPTANCE=1 and a working Docker CLI. Only model
 answers and fault delays are synthetic. All HTTP/auth/host/store paths are real.
 """
 
@@ -21,8 +21,8 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
-EXAMPLE = ROOT / "examples/deerflow-extension-workflows"
-pytestmark = pytest.mark.skipif(os.name != "posix" or os.getenv("DEERFLOW_WORKFLOW_ACCEPTANCE") != "1", reason="Opt-in POSIX two-Gateway Docker acceptance")
+EXAMPLE = ROOT / "examples/nkyel-extension-workflows"
+pytestmark = pytest.mark.skipif(os.name != "posix" or os.getenv("NKYEL_WORKFLOW_ACCEPTANCE") != "1", reason="Opt-in POSIX two-Gateway Docker acceptance")
 
 
 def until(fn, seconds=60):
@@ -44,7 +44,7 @@ def port():
 class Cluster:
     def __init__(self, root):
         self.root = root
-        self.docker = os.getenv("DEERFLOW_TEST_DOCKER", "docker")
+        self.docker = os.getenv("NKYEL_TEST_DOCKER", "docker")
         self.containers = []
         self.processes = {}
         self.logs = []
@@ -78,8 +78,8 @@ class Cluster:
         config.update(
             config_version=61,
             models=[{"name": "acceptance", "use": "support.workflow_gateway:AcceptanceModel", "model": "synthetic", "supports_tool_calling": True}],
-            sandbox={"use": "deerflow.sandbox.local:LocalSandboxProvider"},
-            tools=[{"name": "write_file", "group": "file:write", "use": "deerflow.sandbox.tools:write_file_tool"}],
+            sandbox={"use": "nkyel.sandbox.local:LocalSandboxProvider"},
+            tools=[{"name": "write_file", "group": "file:write", "use": "nkyel.sandbox.tools:write_file_tool"}],
             tool_groups=[{"name": "file:write"}],
             title={"enabled": False},
             memory={"enabled": False},
@@ -87,7 +87,7 @@ class Cluster:
             plugins=[
                 {
                     "name": "workflows",
-                    "use": "deerflow_extension_workflows:install",
+                    "use": "nkyel_extension_workflows:install",
                     "enabled": True,
                     "config": {
                         "enabled": True,
@@ -108,12 +108,12 @@ class Cluster:
         self.env = {
             **os.environ,
             **generate_shared_secrets(),
-            "DEER_FLOW_CONFIG_PATH": str(self.root / "config.yaml"),
-            "DEER_FLOW_EXTENSIONS_CONFIG_PATH": str(self.root / "extensions.json"),
-            "DEER_FLOW_HOME": str(self.root / "home"),
-            "DEER_FLOW_PROJECT_ROOT": str(ROOT),
-            "DEER_FLOW_ENV_FILE": str(self.root / "empty.env"),
-            "DEER_FLOW_AUTH_DISABLED": "0",
+            "NKYEL_CONFIG_PATH": str(self.root / "config.yaml"),
+            "NKYEL_EXTENSIONS_CONFIG_PATH": str(self.root / "extensions.json"),
+            "NKYEL_HOME": str(self.root / "home"),
+            "NKYEL_PROJECT_ROOT": str(ROOT),
+            "NKYEL_ENV_FILE": str(self.root / "empty.env"),
+            "NKYEL_AUTH_DISABLED": "0",
             "GATEWAY_WORKERS": "1",
             "WEB_CONCURRENCY": "1",
         }
@@ -370,7 +370,7 @@ def test_distinct_runtime_rollout_drains_old_and_rejects_incompatible_takeover(c
     c = cluster
     alternate = c.root / "alternate"
     shutil.copytree(EXAMPLE, alternate, ignore=shutil.ignore_patterns("__pycache__"))
-    runtime = alternate / "deerflow_extension_workflows/worker.py"
+    runtime = alternate / "nkyel_extension_workflows/worker.py"
     runtime.write_text(runtime.read_text().replace("MAX_FRAME = 48 * 1024", "MAX_FRAME = 47 * 1024"))
     c.kill("b")
     c.start("b", alternate)

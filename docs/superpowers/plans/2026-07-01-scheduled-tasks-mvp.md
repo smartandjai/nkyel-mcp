@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a first-class scheduled-task MVP for DeerFlow with durable backend scheduling, a workspace management page, run history, and real-path validation, limited to thread-attached agent runs with `once` and `cron` schedules.
+**Goal:** Build a first-class scheduled-task MVP for nkyel with durable backend scheduling, a workspace management page, run history, and real-path validation, limited to thread-attached agent runs with `once` and `cron` schedules.
 
 **Architecture:** Add harness persistence models and repositories for scheduled tasks and task-run history, then add an app-layer scheduler service and REST API that reuse the existing run lifecycle. Build a dedicated frontend workspace page and thread-level entry point backed by typed React Query hooks. Validate through backend tests, frontend tests, Playwright, and a real browser smoke path.
 
@@ -12,7 +12,7 @@
 
 - The MVP supports only thread-attached agent runs; there is no text-only task type, no channel dispatch, and no GitHub dispatch.
 - The MVP supports only `once` and `cron`; it must not add `interval`.
-- Scheduled executions must reuse the normal DeerFlow run lifecycle rather than introducing a parallel agent execution path.
+- Scheduled executions must reuse the normal nkyel run lifecycle rather than introducing a parallel agent execution path.
 - Harness persistence code must not import `app.*`.
 - Background scheduling remains opt-in through config and must default to disabled.
 - Owner isolation must cover task list, task detail, task history, mutate, trigger, and delete.
@@ -23,14 +23,14 @@
 ### Task 1: Add scheduler config and persistence skeleton
 
 **Files:**
-- Create: `backend/packages/harness/deerflow/config/scheduler_config.py`
-- Modify: `backend/packages/harness/deerflow/config/app_config.py`
-- Modify: `backend/packages/harness/deerflow/config/reload_boundary.py`
-- Modify: `backend/packages/harness/deerflow/persistence/models/__init__.py`
-- Create: `backend/packages/harness/deerflow/persistence/scheduled_tasks/__init__.py`
-- Create: `backend/packages/harness/deerflow/persistence/scheduled_tasks/model.py`
-- Create: `backend/packages/harness/deerflow/persistence/scheduled_task_runs/__init__.py`
-- Create: `backend/packages/harness/deerflow/persistence/scheduled_task_runs/model.py`
+- Create: `backend/packages/harness/nkyel/config/scheduler_config.py`
+- Modify: `backend/packages/harness/nkyel/config/app_config.py`
+- Modify: `backend/packages/harness/nkyel/config/reload_boundary.py`
+- Modify: `backend/packages/harness/nkyel/persistence/models/__init__.py`
+- Create: `backend/packages/harness/nkyel/persistence/scheduled_tasks/__init__.py`
+- Create: `backend/packages/harness/nkyel/persistence/scheduled_tasks/model.py`
+- Create: `backend/packages/harness/nkyel/persistence/scheduled_task_runs/__init__.py`
+- Create: `backend/packages/harness/nkyel/persistence/scheduled_task_runs/model.py`
 - Test: `backend/tests/test_scheduled_task_models.py`
 
 **Interfaces:**
@@ -50,8 +50,8 @@
 Create `backend/tests/test_scheduled_task_models.py`:
 
 ```python
-from deerflow.config.app_config import AppConfig
-from deerflow.persistence.models import ScheduledTaskRow, ScheduledTaskRunRow
+from nkyel.config.app_config import AppConfig
+from nkyel.persistence.models import ScheduledTaskRow, ScheduledTaskRunRow
 
 
 def test_app_config_exposes_scheduler_section():
@@ -85,7 +85,7 @@ Expected:
 
 - [ ] **Step 3: Implement minimal config and model skeleton**
 
-Create `backend/packages/harness/deerflow/config/scheduler_config.py`:
+Create `backend/packages/harness/nkyel/config/scheduler_config.py`:
 
 ```python
 from pydantic import BaseModel, Field
@@ -99,10 +99,10 @@ class SchedulerConfig(BaseModel):
     min_once_delay_seconds: int = Field(default=60, ge=1, le=86400)
 ```
 
-Update `backend/packages/harness/deerflow/config/app_config.py` imports and fields:
+Update `backend/packages/harness/nkyel/config/app_config.py` imports and fields:
 
 ```python
-from deerflow.config.scheduler_config import SchedulerConfig
+from nkyel.config.scheduler_config import SchedulerConfig
 ```
 
 Add field inside `AppConfig`:
@@ -114,7 +114,7 @@ Add field inside `AppConfig`:
     )
 ```
 
-Create `backend/packages/harness/deerflow/persistence/scheduled_tasks/model.py`:
+Create `backend/packages/harness/nkyel/persistence/scheduled_tasks/model.py`:
 
 ```python
 from __future__ import annotations
@@ -124,7 +124,7 @@ from datetime import UTC, datetime
 from sqlalchemy import JSON, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from deerflow.persistence.base import Base
+from nkyel.persistence.base import Base
 
 
 class ScheduledTaskRow(Base):
@@ -154,7 +154,7 @@ class ScheduledTaskRow(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 ```
 
-Create `backend/packages/harness/deerflow/persistence/scheduled_task_runs/model.py`:
+Create `backend/packages/harness/nkyel/persistence/scheduled_task_runs/model.py`:
 
 ```python
 from __future__ import annotations
@@ -164,7 +164,7 @@ from datetime import UTC, datetime
 from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from deerflow.persistence.base import Base
+from nkyel.persistence.base import Base
 
 
 class ScheduledTaskRunRow(Base):
@@ -197,11 +197,11 @@ from .model import ScheduledTaskRunRow
 __all__ = ["ScheduledTaskRunRow"]
 ```
 
-Update `backend/packages/harness/deerflow/persistence/models/__init__.py`:
+Update `backend/packages/harness/nkyel/persistence/models/__init__.py`:
 
 ```python
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
 ```
 
 Append to `__all__`:
@@ -224,13 +224,13 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/packages/harness/deerflow/config/scheduler_config.py \
-  backend/packages/harness/deerflow/config/app_config.py \
-  backend/packages/harness/deerflow/persistence/models/__init__.py \
-  backend/packages/harness/deerflow/persistence/scheduled_tasks/__init__.py \
-  backend/packages/harness/deerflow/persistence/scheduled_tasks/model.py \
-  backend/packages/harness/deerflow/persistence/scheduled_task_runs/__init__.py \
-  backend/packages/harness/deerflow/persistence/scheduled_task_runs/model.py \
+git add backend/packages/harness/nkyel/config/scheduler_config.py \
+  backend/packages/harness/nkyel/config/app_config.py \
+  backend/packages/harness/nkyel/persistence/models/__init__.py \
+  backend/packages/harness/nkyel/persistence/scheduled_tasks/__init__.py \
+  backend/packages/harness/nkyel/persistence/scheduled_tasks/model.py \
+  backend/packages/harness/nkyel/persistence/scheduled_task_runs/__init__.py \
+  backend/packages/harness/nkyel/persistence/scheduled_task_runs/model.py \
   backend/tests/test_scheduled_task_models.py
 git commit -m "feat(scheduler): add scheduler config and scheduled task models"
 ```
@@ -240,11 +240,11 @@ git commit -m "feat(scheduler): add scheduler config and scheduled task models"
 ### Task 2: Add Alembic migration and repository CRUD
 
 **Files:**
-- Create: `backend/packages/harness/deerflow/persistence/scheduled_tasks/sql.py`
-- Create: `backend/packages/harness/deerflow/persistence/scheduled_task_runs/sql.py`
-- Create: `backend/packages/harness/deerflow/persistence/migrations/versions/0002_scheduled_tasks.py`
-- Modify: `backend/packages/harness/deerflow/persistence/scheduled_tasks/__init__.py`
-- Modify: `backend/packages/harness/deerflow/persistence/scheduled_task_runs/__init__.py`
+- Create: `backend/packages/harness/nkyel/persistence/scheduled_tasks/sql.py`
+- Create: `backend/packages/harness/nkyel/persistence/scheduled_task_runs/sql.py`
+- Create: `backend/packages/harness/nkyel/persistence/migrations/versions/0002_scheduled_tasks.py`
+- Modify: `backend/packages/harness/nkyel/persistence/scheduled_tasks/__init__.py`
+- Modify: `backend/packages/harness/nkyel/persistence/scheduled_task_runs/__init__.py`
 - Test: `backend/tests/test_scheduled_task_repository.py`
 
 **Interfaces:**
@@ -263,9 +263,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
 
 
 @pytest.mark.asyncio
@@ -331,7 +331,7 @@ Expected:
 
 - [ ] **Step 3: Implement repositories and migration**
 
-Create `backend/packages/harness/deerflow/persistence/scheduled_tasks/sql.py`:
+Create `backend/packages/harness/nkyel/persistence/scheduled_tasks/sql.py`:
 
 ```python
 from __future__ import annotations
@@ -342,8 +342,8 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.utils.time import coerce_iso
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.utils.time import coerce_iso
 
 
 class ScheduledTaskRepository:
@@ -410,7 +410,7 @@ class ScheduledTaskRepository:
             return [self._row_to_dict(row) for row in result.scalars()]
 ```
 
-Create `backend/packages/harness/deerflow/persistence/scheduled_task_runs/sql.py`:
+Create `backend/packages/harness/nkyel/persistence/scheduled_task_runs/sql.py`:
 
 ```python
 from __future__ import annotations
@@ -421,8 +421,8 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.utils.time import coerce_iso
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.utils.time import coerce_iso
 
 
 class ScheduledTaskRunRepository:
@@ -489,7 +489,7 @@ from .sql import ScheduledTaskRunRepository
 __all__ = ["ScheduledTaskRunRow", "ScheduledTaskRunRepository"]
 ```
 
-Create `backend/packages/harness/deerflow/persistence/migrations/versions/0002_scheduled_tasks.py` with `upgrade()` / `downgrade()` creating:
+Create `backend/packages/harness/nkyel/persistence/migrations/versions/0002_scheduled_tasks.py` with `upgrade()` / `downgrade()` creating:
 
 ```python
 op.create_table(
@@ -523,11 +523,11 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/packages/harness/deerflow/persistence/scheduled_tasks/__init__.py \
-  backend/packages/harness/deerflow/persistence/scheduled_tasks/sql.py \
-  backend/packages/harness/deerflow/persistence/scheduled_task_runs/__init__.py \
-  backend/packages/harness/deerflow/persistence/scheduled_task_runs/sql.py \
-  backend/packages/harness/deerflow/persistence/migrations/versions/0002_scheduled_tasks.py \
+git add backend/packages/harness/nkyel/persistence/scheduled_tasks/__init__.py \
+  backend/packages/harness/nkyel/persistence/scheduled_tasks/sql.py \
+  backend/packages/harness/nkyel/persistence/scheduled_task_runs/__init__.py \
+  backend/packages/harness/nkyel/persistence/scheduled_task_runs/sql.py \
+  backend/packages/harness/nkyel/persistence/migrations/versions/0002_scheduled_tasks.py \
   backend/tests/test_scheduled_task_repository.py
 git commit -m "feat(scheduler): add scheduled task repositories and migration"
 ```
@@ -537,9 +537,9 @@ git commit -m "feat(scheduler): add scheduled task repositories and migration"
 ### Task 3: Implement schedule parsing and next-run computation
 
 **Files:**
-- Create: `backend/packages/harness/deerflow/scheduler/__init__.py`
-- Create: `backend/packages/harness/deerflow/scheduler/clock.py`
-- Create: `backend/packages/harness/deerflow/scheduler/schedules.py`
+- Create: `backend/packages/harness/nkyel/scheduler/__init__.py`
+- Create: `backend/packages/harness/nkyel/scheduler/clock.py`
+- Create: `backend/packages/harness/nkyel/scheduler/schedules.py`
 - Test: `backend/tests/test_scheduled_task_schedules.py`
 
 **Interfaces:**
@@ -558,7 +558,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from deerflow.scheduler.schedules import (
+from nkyel.scheduler.schedules import (
     next_run_at,
     normalize_cron_expression,
     validate_timezone,
@@ -613,11 +613,11 @@ Run:
 cd backend && PYTHONPATH=. uv run pytest tests/test_scheduled_task_schedules.py -v
 ```
 
-Expected: fail because `deerflow.scheduler.schedules` does not exist.
+Expected: fail because `nkyel.scheduler.schedules` does not exist.
 
 - [ ] **Step 3: Implement**
 
-Create `backend/packages/harness/deerflow/scheduler/schedules.py`:
+Create `backend/packages/harness/nkyel/scheduler/schedules.py`:
 
 ```python
 from __future__ import annotations
@@ -675,7 +675,7 @@ def next_run_at(
     raise ValueError(f"Unsupported schedule_type: {schedule_type}")
 ```
 
-Create `backend/packages/harness/deerflow/scheduler/__init__.py`:
+Create `backend/packages/harness/nkyel/scheduler/__init__.py`:
 
 ```python
 from .schedules import next_run_at, normalize_cron_expression, validate_timezone
@@ -683,7 +683,7 @@ from .schedules import next_run_at, normalize_cron_expression, validate_timezone
 __all__ = ["next_run_at", "normalize_cron_expression", "validate_timezone"]
 ```
 
-Create `backend/packages/harness/deerflow/scheduler/clock.py`:
+Create `backend/packages/harness/nkyel/scheduler/clock.py`:
 
 ```python
 from datetime import UTC, datetime
@@ -706,9 +706,9 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/packages/harness/deerflow/scheduler/__init__.py \
-  backend/packages/harness/deerflow/scheduler/clock.py \
-  backend/packages/harness/deerflow/scheduler/schedules.py \
+git add backend/packages/harness/nkyel/scheduler/__init__.py \
+  backend/packages/harness/nkyel/scheduler/clock.py \
+  backend/packages/harness/nkyel/scheduler/schedules.py \
   backend/tests/test_scheduled_task_schedules.py
 git commit -m "feat(scheduler): add schedule parsing and next-run computation"
 ```
@@ -718,8 +718,8 @@ git commit -m "feat(scheduler): add schedule parsing and next-run computation"
 ### Task 4: Add due-claim, lease management, and task-run status updates
 
 **Files:**
-- Modify: `backend/packages/harness/deerflow/persistence/scheduled_tasks/sql.py`
-- Modify: `backend/packages/harness/deerflow/persistence/scheduled_task_runs/sql.py`
+- Modify: `backend/packages/harness/nkyel/persistence/scheduled_tasks/sql.py`
+- Modify: `backend/packages/harness/nkyel/persistence/scheduled_task_runs/sql.py`
 - Test: `backend/tests/test_scheduled_task_claims.py`
 
 **Interfaces:**
@@ -739,8 +739,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
 
 
 @pytest.mark.asyncio
@@ -801,7 +801,7 @@ Expected: fail because `claim_due_tasks` does not exist.
 
 - [ ] **Step 3: Implement**
 
-Update `backend/packages/harness/deerflow/persistence/scheduled_tasks/sql.py` with:
+Update `backend/packages/harness/nkyel/persistence/scheduled_tasks/sql.py` with:
 
 ```python
 from datetime import UTC, datetime, timedelta
@@ -887,7 +887,7 @@ Add methods:
             await session.commit()
 ```
 
-Update `backend/packages/harness/deerflow/persistence/scheduled_task_runs/sql.py`:
+Update `backend/packages/harness/nkyel/persistence/scheduled_task_runs/sql.py`:
 
 ```python
     async def update_status(
@@ -927,8 +927,8 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/packages/harness/deerflow/persistence/scheduled_tasks/sql.py \
-  backend/packages/harness/deerflow/persistence/scheduled_task_runs/sql.py \
+git add backend/packages/harness/nkyel/persistence/scheduled_tasks/sql.py \
+  backend/packages/harness/nkyel/persistence/scheduled_task_runs/sql.py \
   backend/tests/test_scheduled_task_claims.py
 git commit -m "feat(scheduler): add due-task claim and lease management"
 ```
@@ -1085,7 +1085,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Any, Awaitable, Callable
 
-from deerflow.scheduler.schedules import next_run_at
+from nkyel.scheduler.schedules import next_run_at
 
 
 class ScheduledTaskService:
@@ -1516,8 +1516,8 @@ In `backend/app/gateway/deps.py::langgraph_runtime`, after `thread_store` creati
 
 ```python
         if sf is not None:
-            from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-            from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
+            from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+            from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
 
             app.state.scheduled_task_repo = ScheduledTaskRepository(sf)
             app.state.scheduled_task_run_repo = ScheduledTaskRunRepository(sf)
@@ -2075,7 +2075,7 @@ make dev
 Then verify in a real browser:
 - create a one-time scheduled task due soon
 - observe list row and task detail
-- observe task trigger and resulting DeerFlow run
+- observe task trigger and resulting nkyel run
 - verify final status/result is reflected in the management page
 
 - [ ] **Step 5: Commit**

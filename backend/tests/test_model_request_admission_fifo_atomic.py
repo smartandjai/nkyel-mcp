@@ -2,8 +2,8 @@
 
 import pytest
 
-from deerflow.config.model_config import RequestAdmissionConfig
-from deerflow.models import request_admission as admission
+from nkyel.config.model_config import RequestAdmissionConfig
+from nkyel.models import request_admission as admission
 
 
 @pytest.fixture

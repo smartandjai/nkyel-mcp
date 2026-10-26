@@ -28,7 +28,7 @@ function branch(
   metadata: Record<string, unknown> = {},
 ) {
   return thread(id, updatedAt, {
-    deerflow_branch: true,
+    nkyel_branch: true,
     branch_parent_thread_id: parentId,
     ...metadata,
   });
@@ -132,7 +132,7 @@ describe("flattenThreadBranches", () => {
       "pinned-child",
       "parent",
       "2026-01-02T00:00:00Z",
-      { deerflow_pinned: true },
+      { nkyel_pinned: true },
     );
     const parent = thread("parent", "2026-01-01T00:00:00Z");
 
@@ -154,13 +154,13 @@ describe("flattenThreadBranches", () => {
 
   it("preserves pinned root order while nesting same-state children", () => {
     const first = thread("first", "2026-01-01T00:00:00Z", {
-      deerflow_pinned: true,
+      nkyel_pinned: true,
     });
     const second = thread("second", "2026-01-04T00:00:00Z", {
-      deerflow_pinned: true,
+      nkyel_pinned: true,
     });
     const child = branch("child", "first", "2026-01-05T00:00:00Z", {
-      deerflow_pinned: true,
+      nkyel_pinned: true,
     });
 
     expect(summarize(flattenThreadBranches([first, second, child]))).toEqual([

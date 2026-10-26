@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.core.paths import DEFAULT_AGENT_BUCKET
+from nkyel.agents.memory.backends.deermem.deermem.core.paths import DEFAULT_AGENT_BUCKET
 from scripts.benchmark.deermem_scope_isolation import runner
 from scripts.benchmark.deermem_scope_isolation.contract import load_protocol
 from scripts.benchmark.deermem_scope_isolation.grading import grade_routing_row, grade_semantic_rows

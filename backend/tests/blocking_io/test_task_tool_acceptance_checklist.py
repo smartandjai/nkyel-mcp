@@ -6,7 +6,7 @@ on the LangGraph event loop. The whole check is offloaded with
 ``asyncio.to_thread`` in ``task_tool``; this anchor locks that offload.
 
 Under the strict Blockbuster context (this directory's conftest), any blocking
-IO reached from ``deerflow.*`` while on the event loop raises
+IO reached from ``nkyel.*`` while on the event loop raises
 ``BlockingError``.
 
 The content reader is injected here as a **blocking probe**: it does real
@@ -27,11 +27,11 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import ToolMessage
 
-from deerflow.subagents.config import SubagentConfig
+from nkyel.subagents.config import SubagentConfig
 
 # importlib.import_module binds the real module: the package attribute
-# ``deerflow.tools.builtins.task_tool`` is shadowed by the StructuredTool.
-task_tool_module = importlib.import_module("deerflow.tools.builtins.task_tool")
+# ``nkyel.tools.builtins.task_tool`` is shadowed by the StructuredTool.
+task_tool_module = importlib.import_module("nkyel.tools.builtins.task_tool")
 
 pytestmark = pytest.mark.asyncio
 
@@ -89,7 +89,7 @@ def _completed_result() -> SimpleNamespace:
 def _patch_task_tool_boundary(monkeypatch, tmp_path: Path) -> None:
     """Mock only the external boundaries; the offload under guard stays real."""
     monkeypatch.setattr(
-        "deerflow.sandbox.tools.read_current_file_content",
+        "nkyel.sandbox.tools.read_current_file_content",
         _blocking_probe_reader(tmp_path / "probe.txt"),
     )
 
@@ -124,7 +124,7 @@ def _patch_task_tool_boundary(monkeypatch, tmp_path: Path) -> None:
         return None
 
     monkeypatch.setattr(task_tool_module.asyncio, "sleep", _no_sleep)
-    monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **kwargs: [])
+    monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **kwargs: [])
 
 
 async def test_acceptance_checklist_file_leaf_is_offloaded(monkeypatch, tmp_path):
@@ -161,14 +161,14 @@ async def test_acceptance_checklist_file_leaf_is_offloaded(monkeypatch, tmp_path
 @pytest.mark.parametrize("exists", [True, False])
 async def test_json_acceptance_check_is_offloaded(monkeypatch, tmp_path, permitted, exists):
     """Ordinary delegation authorizes JSON reads in a worker thread and reports an unverified verdict on denial."""
-    from deerflow.authz.rbac import RbacAuthorizationProvider
-    from deerflow.config.authorization_config import AuthorizationConfig
+    from nkyel.authz.rbac import RbacAuthorizationProvider
+    from nkyel.config.authorization_config import AuthorizationConfig
 
     runtime = _runtime(tmp_path)
     provider = RbacAuthorizationProvider(roles={"user": {"sandbox": {"allow": "*" if permitted else []}}})
     config = SimpleNamespace(authorization=AuthorizationConfig(enabled=True))
-    monkeypatch.setattr("deerflow.authz.sandbox_authz.resolve_authorization_provider", lambda config: provider)
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.authz.sandbox_authz.resolve_authorization_provider", lambda config: provider)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
     runtime.context.update(user_id="user-1", user_role="user")
     if exists:
         (tmp_path / "user-data" / "outputs" / "report.json").write_bytes(b'{"ok": true}')
@@ -194,7 +194,7 @@ async def test_blocking_probe_reader_actually_trips_the_gate(monkeypatch, tmp_pa
     since Blockbuster intercepts the syscall before it can block.)"""
     from blockbuster import BlockingError
 
-    from deerflow.subagents.acceptance_checks import check_acceptance_criteria
+    from nkyel.subagents.acceptance_checks import check_acceptance_criteria
 
     (tmp_path / "probe.txt").write_text("probe body", encoding="utf-8")
     thread_data = {

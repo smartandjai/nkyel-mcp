@@ -32,9 +32,9 @@ import pytest
 from fastapi import HTTPException, Request
 
 from app.gateway.routers.skills import CustomSkillUpdateRequest, SkillRollbackRequest, _install_skill_archive, delete_custom_skill, rollback_custom_skill, update_custom_skill
-from deerflow.config.app_config import AppConfig
-from deerflow.config.paths import get_paths
-from deerflow.runtime.user_context import get_effective_user_id, reset_current_user, set_current_user
+from nkyel.config.app_config import AppConfig
+from nkyel.config.paths import get_paths
+from nkyel.runtime.user_context import get_effective_user_id, reset_current_user, set_current_user
 
 pytestmark = pytest.mark.asyncio
 
@@ -48,8 +48,8 @@ def _custom_dir() -> Path:
 
 @pytest.fixture(autouse=True)
 def _isolate_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
 
 
 def _admin_request() -> Request:
@@ -190,7 +190,7 @@ async def test_archive_install_does_not_block_event_loop(tmp_path: Path, monkeyp
 
     await asyncio.to_thread(_build_archive)
     monkeypatch.setattr(
-        "deerflow.skills.installer.scan_skill_content",
+        "nkyel.skills.installer.scan_skill_content",
         AsyncMock(return_value=SimpleNamespace(decision="allow", reason="ok")),
     )
     config = AppConfig.model_validate({"sandbox": {"use": "test"}})

@@ -6,15 +6,15 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from deerflow.sandbox.exceptions import SandboxNotFoundError
-from deerflow.sandbox.lease import (
+from nkyel.sandbox.exceptions import SandboxNotFoundError
+from nkyel.sandbox.lease import (
     SandboxLeaseManager,
     discard_sandbox_lease_manager,
     get_sandbox_lease_manager,
 )
-from deerflow.sandbox.sandbox import Sandbox
-from deerflow.sandbox.sandbox_provider import SandboxProvider
-from deerflow.sandbox.search import GrepMatch
+from nkyel.sandbox.sandbox import Sandbox
+from nkyel.sandbox.sandbox_provider import SandboxProvider
+from nkyel.sandbox.search import GrepMatch
 
 
 class _LeaseSandbox(Sandbox):
@@ -773,7 +773,7 @@ async def test_cancelled_async_acquire_logs_reconciliation_failure(caplog) -> No
     acquire_task = asyncio.create_task(manager.acquire_async("cancelled", "thread-1", user_id="user-1"))
     await acquire_started.wait()
 
-    with caplog.at_level("WARNING", logger="deerflow.sandbox.lease"):
+    with caplog.at_level("WARNING", logger="nkyel.sandbox.lease"):
         acquire_task.cancel()
         allow_acquire_failure.set()
         with pytest.raises(asyncio.CancelledError):
@@ -803,7 +803,7 @@ async def test_cancelled_async_acquire_preserves_cancellation_when_rollback_fail
     acquire_task = asyncio.create_task(manager.acquire_async("cancelled", "thread-1", user_id="user-1"))
     await acquire_started.wait()
 
-    with caplog.at_level("WARNING", logger="deerflow.sandbox.lease"):
+    with caplog.at_level("WARNING", logger="nkyel.sandbox.lease"):
         acquire_task.cancel()
         allow_acquire.set()
         with pytest.raises(asyncio.CancelledError):
@@ -835,7 +835,7 @@ async def test_cancelled_async_release_logs_reconciliation_failure(caplog) -> No
     release_task = asyncio.create_task(manager.release_async("cancelled"))
     assert await asyncio.to_thread(release_started.wait, 1)
 
-    with caplog.at_level("WARNING", logger="deerflow.sandbox.lease"):
+    with caplog.at_level("WARNING", logger="nkyel.sandbox.lease"):
         release_task.cancel()
         allow_release_failure.set()
         with pytest.raises(asyncio.CancelledError):

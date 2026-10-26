@@ -5,24 +5,24 @@ from pathlib import Path
 import pytest
 import yaml
 
-from deerflow.config import app_config as app_config_module
-from deerflow.config import extensions_config as extensions_config_module
-from deerflow.config import skills_config as skills_config_module
-from deerflow.config.app_config import AppConfig
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.config.paths import Paths
-from deerflow.config.runtime_paths import project_root
-from deerflow.config.skills_config import SkillsConfig
-from deerflow.skills.storage import get_or_new_skill_storage
+from nkyel.config import app_config as app_config_module
+from nkyel.config import extensions_config as extensions_config_module
+from nkyel.config import skills_config as skills_config_module
+from nkyel.config.app_config import AppConfig
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.config.paths import Paths
+from nkyel.config.runtime_paths import project_root
+from nkyel.config.skills_config import SkillsConfig
+from nkyel.skills.storage import get_or_new_skill_storage
 
 
 def _clear_path_env(monkeypatch):
     for name in (
-        "DEER_FLOW_CONFIG_PATH",
-        "DEER_FLOW_EXTENSIONS_CONFIG_PATH",
-        "DEER_FLOW_HOME",
-        "DEER_FLOW_PROJECT_ROOT",
-        "DEER_FLOW_SKILLS_PATH",
+        "NKYEL_CONFIG_PATH",
+        "NKYEL_EXTENSIONS_CONFIG_PATH",
+        "NKYEL_HOME",
+        "NKYEL_PROJECT_ROOT",
+        "NKYEL_SKILLS_PATH",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -32,7 +32,7 @@ def test_default_runtime_paths_resolve_from_current_project(tmp_path: Path, monk
     monkeypatch.chdir(tmp_path)
 
     (tmp_path / "config.yaml").write_text(
-        yaml.safe_dump({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}),
+        yaml.safe_dump({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}),
         encoding="utf-8",
     )
     (tmp_path / "extensions_config.json").write_text('{"mcpServers": {}, "skills": {}}', encoding="utf-8")
@@ -40,62 +40,62 @@ def test_default_runtime_paths_resolve_from_current_project(tmp_path: Path, monk
 
     assert AppConfig.resolve_config_path() == tmp_path / "config.yaml"
     assert ExtensionsConfig.resolve_config_path() == tmp_path / "extensions_config.json"
-    assert Paths().base_dir == tmp_path / ".deer-flow"
+    assert Paths().base_dir == tmp_path / ".nkyel"
     assert SkillsConfig().get_skills_path() == tmp_path / "skills"
     assert get_or_new_skill_storage(skills_path=SkillsConfig().get_skills_path()).get_skills_root_path() == tmp_path / "skills"
 
 
-def test_deer_flow_project_root_overrides_current_directory(tmp_path: Path, monkeypatch):
+def test_nkyel_project_root_overrides_current_directory(tmp_path: Path, monkeypatch):
     _clear_path_env(monkeypatch)
     project_root = tmp_path / "project"
     other_cwd = tmp_path / "other"
     project_root.mkdir()
     other_cwd.mkdir()
     monkeypatch.chdir(other_cwd)
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(project_root))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(project_root))
 
     (project_root / "config.yaml").write_text(
-        yaml.safe_dump({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}),
+        yaml.safe_dump({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}),
         encoding="utf-8",
     )
     (project_root / "mcp_config.json").write_text('{"mcpServers": {}, "skills": {}}', encoding="utf-8")
 
     assert AppConfig.resolve_config_path() == project_root / "config.yaml"
     assert ExtensionsConfig.resolve_config_path() == project_root / "mcp_config.json"
-    assert Paths().base_dir == project_root / ".deer-flow"
+    assert Paths().base_dir == project_root / ".nkyel"
     assert SkillsConfig(path="custom-skills").get_skills_path() == project_root / "custom-skills"
 
 
-def test_deer_flow_skills_path_overrides_project_default(tmp_path: Path, monkeypatch):
+def test_nkyel_skills_path_overrides_project_default(tmp_path: Path, monkeypatch):
     _clear_path_env(monkeypatch)
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("DEER_FLOW_SKILLS_PATH", "team-skills")
+    monkeypatch.setenv("NKYEL_SKILLS_PATH", "team-skills")
 
     assert SkillsConfig().get_skills_path() == tmp_path / "team-skills"
     assert get_or_new_skill_storage(skills_path=SkillsConfig().get_skills_path()).get_skills_root_path() == tmp_path / "team-skills"
 
 
-def test_deer_flow_project_root_must_exist(tmp_path: Path, monkeypatch):
+def test_nkyel_project_root_must_exist(tmp_path: Path, monkeypatch):
     _clear_path_env(monkeypatch)
     missing_root = tmp_path / "missing"
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(missing_root))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(missing_root))
 
     with pytest.raises(ValueError, match="does not exist"):
         project_root()
 
 
-def test_deer_flow_project_root_must_be_directory(tmp_path: Path, monkeypatch):
+def test_nkyel_project_root_must_be_directory(tmp_path: Path, monkeypatch):
     _clear_path_env(monkeypatch)
     project_root_file = tmp_path / "project-root"
     project_root_file.write_text("", encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(project_root_file))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(project_root_file))
 
     with pytest.raises(ValueError, match="not a directory"):
         project_root()
 
 
 def test_app_config_falls_back_to_legacy_when_project_root_lacks_config(tmp_path: Path, monkeypatch):
-    """When DEER_FLOW_PROJECT_ROOT is unset and cwd has no config.yaml, the
+    """When NKYEL_PROJECT_ROOT is unset and cwd has no config.yaml, the
     legacy backend/repo-root candidates must be used for monorepo compatibility."""
     _clear_path_env(monkeypatch)
     cwd = tmp_path / "cwd"
@@ -108,7 +108,7 @@ def test_app_config_falls_back_to_legacy_when_project_root_lacks_config(tmp_path
     legacy_repo.mkdir()
     legacy_backend_config = legacy_backend / "config.yaml"
     legacy_backend_config.write_text(
-        yaml.safe_dump({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}),
+        yaml.safe_dump({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}),
         encoding="utf-8",
     )
     repo_root_config = legacy_repo / "config.yaml"
@@ -124,7 +124,7 @@ def test_app_config_falls_back_to_legacy_when_project_root_lacks_config(tmp_path
 
 
 def test_skills_config_falls_back_to_legacy_when_project_root_lacks_skills(tmp_path: Path, monkeypatch):
-    """When DEER_FLOW_PROJECT_ROOT is unset and cwd has no `skills/`, the legacy
+    """When NKYEL_PROJECT_ROOT is unset and cwd has no `skills/`, the legacy
     repo-root candidate must be used so monorepo runs (cwd=backend/) keep finding
     `<repo>/skills` instead of `<repo>/backend/skills` (regression test for #2694)."""
     _clear_path_env(monkeypatch)
@@ -172,7 +172,7 @@ def test_extensions_config_falls_back_to_legacy_when_project_root_lacks_file(tmp
     legacy_extensions = fake_backend / "extensions_config.json"
     legacy_extensions.write_text('{"mcpServers": {}, "skills": {}}', encoding="utf-8")
 
-    fake_paths_module_file = fake_backend / "packages" / "harness" / "deerflow" / "config" / "extensions_config.py"
+    fake_paths_module_file = fake_backend / "packages" / "harness" / "nkyel" / "config" / "extensions_config.py"
     fake_paths_module_file.parent.mkdir(parents=True)
     fake_paths_module_file.write_text("", encoding="utf-8")
 
@@ -189,10 +189,10 @@ def test_extensions_config_default_path_is_the_first_search_location(tmp_path: P
     project.mkdir()
     cwd = tmp_path / "runtime" / "backend"
     cwd.mkdir(parents=True)
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(project))
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(project))
     monkeypatch.chdir(cwd)
 
-    fake_paths_module_file = tmp_path / "fake-backend-empty" / "packages" / "harness" / "deerflow" / "config" / "extensions_config.py"
+    fake_paths_module_file = tmp_path / "fake-backend-empty" / "packages" / "harness" / "nkyel" / "config" / "extensions_config.py"
     fake_paths_module_file.parent.mkdir(parents=True)
     fake_paths_module_file.write_text("", encoding="utf-8")
     monkeypatch.setattr(extensions_config_module, "__file__", str(fake_paths_module_file))
@@ -231,19 +231,19 @@ def test_extensions_config_explicit_path_missing_file_raises(tmp_path: Path, mon
 
 
 def test_extensions_config_env_var_missing_file_raises(tmp_path: Path, monkeypatch):
-    """``DEER_FLOW_EXTENSIONS_CONFIG_PATH`` pointing at a file that has since
+    """``NKYEL_EXTENSIONS_CONFIG_PATH`` pointing at a file that has since
     been deleted must raise ``FileNotFoundError`` identifying the environment
     variable as the culprit, not silently return ``None``.
 
     This is the exact resolution mode Docker dev/prod uses (see
-    backend/AGENTS.md: "Docker development ... points `DEER_FLOW_CONFIG_PATH`
-    / `DEER_FLOW_EXTENSIONS_CONFIG_PATH`" at the mounted config directory), so
+    backend/AGENTS.md: "Docker development ... points `NKYEL_CONFIG_PATH`
+    / `NKYEL_EXTENSIONS_CONFIG_PATH`" at the mounted config directory), so
     a bad mount or deleted file at this explicit, operator-configured path is
     a real misconfiguration that must surface loudly (PR #4275 review,
     fancyboi999 [P1]) instead of silently starting with every MCP server and
     skill absent.
 
-    ``deerflow.mcp.cache._resolve_config_path`` calls
+    ``nkyel.mcp.cache._resolve_config_path`` calls
     ``ExtensionsConfig.resolve_config_path()`` with no args and therefore
     hits this exact branch whenever the env var is set; that module has its
     own narrower catch around this specific exception so the MCP tools-cache
@@ -255,31 +255,31 @@ def test_extensions_config_env_var_missing_file_raises(tmp_path: Path, monkeypat
     _clear_path_env(monkeypatch)
     cfg = tmp_path / "extensions_config.json"
     cfg.write_text('{"mcpServers": {}, "skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     assert ExtensionsConfig.resolve_config_path() == cfg  # sanity: resolves while present
 
     cfg.unlink()
 
-    with pytest.raises(FileNotFoundError, match="DEER_FLOW_EXTENSIONS_CONFIG_PATH"):
+    with pytest.raises(FileNotFoundError, match="NKYEL_EXTENSIONS_CONFIG_PATH"):
         ExtensionsConfig.resolve_config_path()
 
 
 def test_extensions_config_search_finds_nothing_returns_none(tmp_path: Path, monkeypatch):
     """The fallback *search* mode (no explicit ``config_path``, no
-    ``DEER_FLOW_EXTENSIONS_CONFIG_PATH``) must still return ``None`` — not
+    ``NKYEL_EXTENSIONS_CONFIG_PATH``) must still return ``None`` — not
     raise — when none of the search locations (project root, legacy
     backend/repo-root) have an extensions config file.
 
     This is the one resolution mode where "not found" is the expected,
     non-error case (extensions are entirely optional throughout the
     application), so it must keep its pre-existing ``None`` contract even
-    though the explicit `config_path`/`DEER_FLOW_EXTENSIONS_CONFIG_PATH`
+    though the explicit `config_path`/`NKYEL_EXTENSIONS_CONFIG_PATH`
     branches now raise ``FileNotFoundError`` for the analogous "missing file"
     condition (see ``test_extensions_config_explicit_path_missing_file_raises``
     and ``test_extensions_config_env_var_missing_file_raises`` above).
     Regression guard for the original #4124 fix:
-    ``deerflow.mcp.cache._is_cache_stale`` depends on this fallback ``None``
+    ``nkyel.mcp.cache._is_cache_stale`` depends on this fallback ``None``
     to treat "never configured" as "not stale".
     """
     _clear_path_env(monkeypatch)
@@ -294,7 +294,7 @@ def test_extensions_config_search_finds_nothing_returns_none(tmp_path: Path, mon
     # No extensions_config.json / mcp_config.json anywhere: not in cwd, not in
     # the legacy backend dir, not in the legacy repo root.
 
-    fake_paths_module_file = fake_backend / "packages" / "harness" / "deerflow" / "config" / "extensions_config.py"
+    fake_paths_module_file = fake_backend / "packages" / "harness" / "nkyel" / "config" / "extensions_config.py"
     fake_paths_module_file.parent.mkdir(parents=True)
     fake_paths_module_file.write_text("", encoding="utf-8")
 

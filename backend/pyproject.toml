@@ -1,18 +1,18 @@
 [project]
-name = "deer-flow"
+name = "nkyel"
 version = "2.2.0-dev"
 description = "LangGraph-based AI agent system with sandbox execution capabilities"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "deerflow-harness",
-    # Direct dependency on purpose, even though deerflow-harness already pulls
+    "nkyel-harness",
+    # Direct dependency on purpose, even though nkyel-harness already pulls
     # it in: app/gateway/app.py and app/gateway/services.py import the public
     # contract package themselves (the extension principal resolver, and the
     # provenance key set the state route strips). Those are the app layer's own
     # imports of a package whose whole point is a stable public surface, so the
     # app declares them rather than relying on the harness to keep supplying it.
-    "deerflow-extension-api",
+    "nkyel-extension-api",
     "fastapi>=0.115.0",
     "httpx>=0.28.0",
     "websockets>=16.0,<17",
@@ -43,17 +43,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-postgres = ["deerflow-harness[postgres]"]
-redis = ["deerflow-harness[redis]"]
+postgres = ["nkyel-harness[postgres]"]
+redis = ["nkyel-harness[redis]"]
 discord = ["discord.py>=2.7.0"]
 buzz = ["coincurve>=20.0.0"]
-monocle = ["deerflow-harness[monocle]"]
-ollama = ["deerflow-harness[ollama]"]
-browser = ["deerflow-harness[browser]"]
-memory-zh = ["deerflow-harness[memory-zh]"]
+monocle = ["nkyel-harness[monocle]"]
+ollama = ["nkyel-harness[ollama]"]
+browser = ["nkyel-harness[browser]"]
+memory-zh = ["nkyel-harness[memory-zh]"]
 
 [dependency-groups]
-# Managed extension packages are added here by `deerflow extensions install`.
+# Managed extension packages are added here by `nkyel extensions install`.
 # Keeping them separate from development tooling lets every startup mode sync
 # the same locked runtime set without promoting those packages to core deps.
 extensions = []
@@ -71,14 +71,14 @@ dev = [
     # other Python/CPU combinations need a C compiler + Python headers (see extension README).
     "quickjs==1.19.4; sys_platform != 'win32'",
     "ruff>=0.14.11",
-    # Monocle tracer (also the deerflow-harness[monocle] extra); kept in the dev
+    # Monocle tracer (also the nkyel-harness[monocle] extra); kept in the dev
     # group so the tracing tests can import it without forcing it onto installs.
     "monocle_apptrace>=0.8.8",
-    # redis is an optional runtime extra (deerflow-harness[redis]); pin it in the
+    # redis is an optional runtime extra (nkyel-harness[redis]); pin it in the
     # dev group so the stream-bridge tests can always import/exercise the redis
     # bridge without forcing it onto production installs.
     "redis>=5.0.0",
-    # TUI runtime dep (also declared as the deerflow-harness[tui] extra); kept in
+    # TUI runtime dep (also declared as the nkyel-harness[tui] extra); kept in
     # the dev group so the terminal workbench can be run and tested locally / in CI.
     "textual>=0.80",
 ]
@@ -99,8 +99,8 @@ default-groups = ["dev", "extensions"]
 # pin is not grounded in any API incompatibility: websockets 16's only
 # breaking change is requiring Python >=3.10 (we require >=3.12), the sdk
 # only imports `websockets.asyncio.client`/`websockets.exceptions` (both
-# 16-compatible), and DeerFlow never uses the sdk's WebSocket transport
-# (httpx/SSE only). DeerFlow does have one direct consumer of its own: the Buzz
+# 16-compatible), and nkyel never uses the sdk's WebSocket transport
+# (httpx/SSE only). nkyel does have one direct consumer of its own: the Buzz
 # channel (`app/channels/buzz.py`) imports the top-level `websockets` package and
 # calls `websockets.connect()`, which in 16.0 is the same asyncio client the sdk
 # uses, re-exported at the package root -- so it is covered by the same
@@ -115,5 +115,6 @@ override-dependencies = ["websockets==16.0"]
 members = ["packages/harness", "packages/extension-api"]
 
 [tool.uv.sources]
-deerflow-harness = { workspace = true }
-deerflow-extension-api = { workspace = true }
+nkyel-harness = { workspace = true }
+nkyel-extension-api = { workspace = true }
+

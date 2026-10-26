@@ -4,7 +4,7 @@ import copy
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import create_empty_memory, normalize_memory_data
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import create_empty_memory, normalize_memory_data
 
 
 def test_normalize_memory_data_adds_cognitive_style() -> None:

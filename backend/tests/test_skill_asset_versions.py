@@ -7,20 +7,20 @@ import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
-from deerflow.config.paths import Paths
-from deerflow.persistence.base import Base
-from deerflow.skills.mutations.guard import SkillMutationRuntime, configure_mutation_runtime
-from deerflow.skills.mutations.repository import SkillMutationRepository
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config.paths import Paths
+from nkyel.persistence.base import Base
+from nkyel.skills.mutations.guard import SkillMutationRuntime, configure_mutation_runtime
+from nkyel.skills.mutations.repository import SkillMutationRepository
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 CONTENT = "---\nname: example\ndescription: Before\n---\nA\n"
 
 
 @pytest.fixture
 def assets(tmp_path, monkeypatch):
-    from deerflow.persistence.user.model import UserRow
+    from nkyel.persistence.user.model import UserRow
 
-    monkeypatch.setattr("deerflow.config.paths._paths", Paths(base_dir=tmp_path / "home"))
+    monkeypatch.setattr("nkyel.config.paths._paths", Paths(base_dir=tmp_path / "home"))
     storage = UserScopedSkillStorage("owner", host_path=str(tmp_path / "skills"))
     root = storage.get_custom_skill_dir("example")
     root.mkdir(parents=True)
@@ -34,7 +34,7 @@ def assets(tmp_path, monkeypatch):
     runtime = SkillMutationRuntime(repository, owners=frozenset({"owner"}))
     configure_mutation_runtime(runtime)
     # This suite checks canonical versions; view semantics have their own suite.
-    monkeypatch.setattr("deerflow.skills.projection._rebuild_user_locked", lambda *_: None)
+    monkeypatch.setattr("nkyel.skills.projection._rebuild_user_locked", lambda *_: None)
     yield storage, runtime, repository
     configure_mutation_runtime(None)
     engine.dispose()
@@ -105,17 +105,17 @@ def test_catalog_read_uses_owner_guard(assets, monkeypatch):
         entered.append(True)
         yield
 
-    monkeypatch.setattr("deerflow.skills.projection.skill_projection_read_lock", guard)
+    monkeypatch.setattr("nkyel.skills.projection.skill_projection_read_lock", guard)
     storage.load_skills()
     assert entered
 
 
 def test_owner_prompt_cache_never_hides_other_worker_change(assets):
-    from deerflow.agents.lead_agent.prompt import get_enabled_skills_for_config
-    from deerflow.config.app_config import AppConfig
+    from nkyel.agents.lead_agent.prompt import get_enabled_skills_for_config
+    from nkyel.config.app_config import AppConfig
 
     storage, _, _ = assets
-    config = AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "skills": {"path": str(storage.get_skills_root_path())}})
+    config = AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "skills": {"path": str(storage.get_skills_root_path())}})
     first = get_enabled_skills_for_config(config, "owner")
     storage.write_custom_skill("example", "SKILL.md", CONTENT.replace("Before", "After"))
     second = get_enabled_skills_for_config(config, "owner")
@@ -124,7 +124,7 @@ def test_owner_prompt_cache_never_hides_other_worker_change(assets):
 
 
 def test_global_disable_participates_in_effective_revision(assets, monkeypatch):
-    from deerflow.config.extensions_config import ExtensionsConfig
+    from nkyel.config.extensions_config import ExtensionsConfig
 
     storage, runtime, _ = assets
     first = runtime.read_revision(storage, "example")
@@ -134,9 +134,9 @@ def test_global_disable_participates_in_effective_revision(assets, monkeypatch):
 
 
 def test_deleted_owner_cannot_read_catalog(assets):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
-    from deerflow.persistence.user.model import UserRow
+    from nkyel.persistence.user.model import UserRow
 
     storage, _, repository = assets
     with repository.sessions.begin() as session:
@@ -146,7 +146,7 @@ def test_deleted_owner_cannot_read_catalog(assets):
 
 
 def test_uncertain_legacy_write_blocks_catalog_until_revalidated(assets):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
     storage, runtime, repository = assets
     digest, enabled, exists = runtime.state(storage, "example")
@@ -159,9 +159,9 @@ def test_uncertain_legacy_write_blocks_catalog_until_revalidated(assets):
 
 @pytest.mark.parametrize("entry", ["shared", "thread", "rebuild", "slash"])
 def test_every_new_asset_acquire_rejects_unresolved_owner(assets, monkeypatch, entry):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
-    from deerflow.skills.projection import ensure_skill_projections, ensure_thread_skill_projection, rebuild_skill_projections
+    from nkyel.skills.projection import ensure_skill_projections, ensure_thread_skill_projection, rebuild_skill_projections
 
     storage, _, repository = assets
 
@@ -170,7 +170,7 @@ def test_every_new_asset_acquire_rejects_unresolved_owner(assets, monkeypatch, e
 
     monkeypatch.setattr(repository, "check_readable", blocked)
     # Even an otherwise fresh thread projection must honor the DB barrier.
-    monkeypatch.setattr("deerflow.skills.projection._thread_projection_is_fresh", lambda *_: True)
+    monkeypatch.setattr("nkyel.skills.projection._thread_projection_is_fresh", lambda *_: True)
     with pytest.raises(HostCapabilityError, match="NEEDS_REPAIR"):
         if entry == "shared":
             ensure_skill_projections(storage)
@@ -179,13 +179,13 @@ def test_every_new_asset_acquire_rejects_unresolved_owner(assets, monkeypatch, e
         elif entry == "rebuild":
             rebuild_skill_projections(storage, include_public=False)
         else:
-            from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+            from nkyel.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
 
             SkillActivationMiddleware._read_skill_content(storage.get_custom_skill_file("example"), storage.get_skills_root_path(), storage=storage)
 
 
 def test_uncertain_owner_blocks_other_managed_writer_before_touching_source(assets):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
     storage, runtime, repository = assets
     digest, enabled, exists = runtime.state(storage, "example")
@@ -197,12 +197,12 @@ def test_uncertain_owner_blocks_other_managed_writer_before_touching_source(asse
 
 def test_global_toggle_aba_invalidates_same_named_custom_asset(assets, monkeypatch, tmp_path):
     from app.gateway.routers.skills import _write_extensions_skill_state
-    from deerflow.config.extensions_config import reload_extensions_config, reset_extensions_config
+    from nkyel.config.extensions_config import reload_extensions_config, reset_extensions_config
 
     storage, runtime, _ = assets
     config_file = tmp_path / "extensions.json"
     config_file.write_text('{"skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_file))
     reload_extensions_config()
     first = runtime.read_revision(storage, "example")
     _write_extensions_skill_state(storage, "example", False, rebuild_public_projection=False)
@@ -215,9 +215,9 @@ def test_global_toggle_aba_invalidates_same_named_custom_asset(assets, monkeypat
 
 def test_global_toggle_does_not_lock_unrelated_owner(assets, monkeypatch, tmp_path):
     from app.gateway.routers.skills import _write_extensions_skill_state
-    from deerflow.config.extensions_config import ExtensionsConfig, reload_extensions_config, reset_extensions_config
-    from deerflow.persistence.user.model import UserRow
-    from deerflow.skills.projection import skill_projection_read_lock
+    from nkyel.config.extensions_config import ExtensionsConfig, reload_extensions_config, reset_extensions_config
+    from nkyel.persistence.user.model import UserRow
+    from nkyel.skills.projection import skill_projection_read_lock
 
     storage, runtime, repository = assets
     with repository.sessions.begin() as session:
@@ -225,7 +225,7 @@ def test_global_toggle_does_not_lock_unrelated_owner(assets, monkeypatch, tmp_pa
     runtime.owners = frozenset({"owner", "unrelated"})
     config_file = tmp_path / "extensions.json"
     config_file.write_text('{"skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_file))
     reload_extensions_config()
 
     @contextmanager
@@ -235,15 +235,15 @@ def test_global_toggle_does_not_lock_unrelated_owner(assets, monkeypatch, tmp_pa
         with skill_projection_read_lock(scoped, *args, **kwargs):
             yield
 
-    monkeypatch.setattr("deerflow.skills.projection.skill_projection_read_lock", reject_unrelated)
+    monkeypatch.setattr("nkyel.skills.projection.skill_projection_read_lock", reject_unrelated)
     _write_extensions_skill_state(storage, "example", False, rebuild_public_projection=False)
     assert ExtensionsConfig.from_file().is_skill_enabled("example", "public") is False
     reset_extensions_config()
 
 
 def test_global_toggle_acquires_name_fence_before_public_projection(assets, monkeypatch):
-    from deerflow.skills import projection
-    from deerflow.skills.mutations import guard
+    from nkyel.skills import projection
+    from nkyel.skills.mutations import guard
 
     storage, _runtime, _repository = assets
     events = []
@@ -275,14 +275,14 @@ def test_global_toggle_acquires_name_fence_before_public_projection(assets, monk
 
 def test_gateway_global_toggle_enters_managed_write_before_projection(assets, monkeypatch, tmp_path):
     from app.gateway.routers.skills import _write_extensions_skill_state
-    from deerflow.config.extensions_config import reload_extensions_config, reset_extensions_config
-    from deerflow.skills import projection
-    from deerflow.skills.mutations import guard
+    from nkyel.config.extensions_config import reload_extensions_config, reset_extensions_config
+    from nkyel.skills import projection
+    from nkyel.skills.mutations import guard
 
     storage, _runtime, _repository = assets
     config_file = tmp_path / "extensions.json"
     config_file.write_text('{"skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_file))
     reload_extensions_config()
     events = []
 
@@ -315,9 +315,9 @@ def test_gateway_global_toggle_enters_managed_write_before_projection(assets, mo
 
 def test_global_toggle_serializes_same_name_creation(assets, monkeypatch, tmp_path):
     from app.gateway.routers import skills as skills_router
-    from deerflow.config.extensions_config import reload_extensions_config, reset_extensions_config
-    from deerflow.persistence.skill_mutations.model import SkillAssetRow
-    from deerflow.persistence.user.model import UserRow
+    from nkyel.config.extensions_config import reload_extensions_config, reset_extensions_config
+    from nkyel.persistence.skill_mutations.model import SkillAssetRow
+    from nkyel.persistence.user.model import UserRow
 
     storage, runtime, repository = assets
     with repository.sessions.begin() as session:
@@ -326,7 +326,7 @@ def test_global_toggle_serializes_same_name_creation(assets, monkeypatch, tmp_pa
     other = UserScopedSkillStorage("new-owner", host_path=str(storage.get_skills_root_path()))
     config_file = tmp_path / "extensions.json"
     config_file.write_text('{"skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_file))
     reload_extensions_config()
 
     entered, release, writer_done = threading.Event(), threading.Event(), threading.Event()
@@ -377,9 +377,9 @@ def test_global_toggle_serializes_same_name_creation(assets, monkeypatch, tmp_pa
 
 
 def test_export_refuses_uncertain_canonical_state(assets):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
-    from deerflow.skills.export import export_manifest
+    from nkyel.skills.export import export_manifest
 
     storage, runtime, repository = assets
     digest, enabled, exists = runtime.state(storage, "example")
@@ -390,9 +390,9 @@ def test_export_refuses_uncertain_canonical_state(assets):
 
 @pytest.mark.asyncio
 async def test_tool_candidate_copy_refuses_uncertain_canonical_state(assets):
-    from deerflow_extension_api.host_capabilities import HostCapabilityError
+    from nkyel_extension_api.host_capabilities import HostCapabilityError
 
-    from deerflow.tools.skill_manage_tool import _scan_static_candidate_or_raise
+    from nkyel.tools.skill_manage_tool import _scan_static_candidate_or_raise
 
     storage, runtime, repository = assets
     digest, enabled, exists = runtime.state(storage, "example")

@@ -160,7 +160,7 @@ feat(authz): propagate trusted authorization principal context
 新增：
 
 ```text
-backend/packages/harness/deerflow/authz/principal.py
+backend/packages/harness/nkyel/authz/principal.py
 ```
 
 接口：
@@ -208,8 +208,8 @@ _SERVER_OWNED_AUTHZ_CONTEXT_KEYS = frozenset(
 修改：
 
 ```text
-backend/packages/harness/deerflow/tools/builtins/task_tool.py
-backend/packages/harness/deerflow/subagents/executor.py
+backend/packages/harness/nkyel/tools/builtins/task_tool.py
+backend/packages/harness/nkyel/subagents/executor.py
 ```
 
 从 parent runtime context 捕获：
@@ -227,9 +227,9 @@ is_internal / authz_attributes
 修改：
 
 ```text
-backend/packages/harness/deerflow/guardrails/provider.py
-backend/packages/harness/deerflow/guardrails/middleware.py
-backend/packages/harness/deerflow/authz/adapter.py
+backend/packages/harness/nkyel/guardrails/provider.py
+backend/packages/harness/nkyel/guardrails/middleware.py
+backend/packages/harness/nkyel/authz/adapter.py
 backend/tests/test_authorization_provider.py
 ```
 
@@ -246,7 +246,7 @@ adapter 构造函数增加 `default_role`，并在 `_to_authz()` 中调用
 
 ### Step 6：导出与文档
 
-修改 `deerflow/authz/__init__.py` 导出 builder。向 implementation notes 的决策日志
+修改 `nkyel/authz/__init__.py` 导出 builder。向 implementation notes 的决策日志
 追加 Phase 1A-1 记录，不改写 Phase 0 历史。
 
 ### Phase 1A-1 验收
@@ -298,7 +298,7 @@ feat(authz): add built-in RBAC provider and provider factory
 新增：
 
 ```text
-backend/packages/harness/deerflow/authz/rbac.py
+backend/packages/harness/nkyel/authz/rbac.py
 ```
 
 要求：
@@ -315,7 +315,7 @@ backend/packages/harness/deerflow/authz/rbac.py
 新增：
 
 ```text
-backend/packages/harness/deerflow/authz/runtime.py
+backend/packages/harness/nkyel/authz/runtime.py
 ```
 
 接口：
@@ -341,7 +341,7 @@ Layer 1 和 Layer 2。
 
 ### Step 4：导出与文档
 
-修改 `deerflow/authz/__init__.py` 导出 RBAC provider 和 factory。向 implementation
+修改 `nkyel/authz/__init__.py` 导出 RBAC provider 和 factory。向 implementation
 notes 追加 Phase 1A-2 决策记录。
 
 Phase 1A-2 不修改 `config.example.yaml`：在执行层尚未接线时展示“启用 RBAC”的用户配置
@@ -367,8 +367,8 @@ uv run pytest tests/test_authorization_principal.py -q
 uv run pytest tests/test_authorization_provider.py tests/test_gateway_services.py -q
 uv run pytest tests/test_rbac_authorization_provider.py tests/test_authorization_runtime.py -q
 uv run pytest tests/test_harness_boundary.py -q
-uv run ruff check packages/harness/deerflow/authz app/gateway/services.py tests
-uv run ruff format --check packages/harness/deerflow/authz app/gateway/services.py tests
+uv run ruff check packages/harness/nkyel/authz app/gateway/services.py tests
+uv run ruff format --check packages/harness/nkyel/authz app/gateway/services.py tests
 ```
 
 提交前再运行 `make test`；如果全量测试受环境依赖阻塞，PR 描述必须列出已运行命令、
@@ -379,7 +379,7 @@ uv run ruff format --check packages/harness/deerflow/authz app/gateway/services.
 - Lead agent、native subagent、embedded client 的 Layer 1 工具过滤。
 - `DeferredToolCatalog` 和 `tool_search` 的授权集成。
 - Layer 2 `GuardrailMiddleware` 自动装配以及与显式 guardrail 的组合顺序。
-- `DeerFlowClient` 现有 skill filter 缺口修复。
+- `NkyelClient` 现有 skill filter 缺口修复。
 - route、model、skill、sandbox、MCP server 的实际授权接线。
 - provider 缓存、跨 build singleton 或热更新生命周期优化。
 - 前端权限展示。

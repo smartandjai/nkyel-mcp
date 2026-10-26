@@ -19,8 +19,8 @@ from langgraph.types import Overwrite
 from app.gateway import services
 from app.gateway.auth.models import User
 from app.gateway.routers import runs, thread_runs, threads
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.utils.goal_objective import MAX_GOAL_OBJECTIVE_CHARS
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.utils.goal_objective import MAX_GOAL_OBJECTIVE_CHARS
 
 _JSON_OVERWRITE_GOAL = {
     "objective": "outer objective",

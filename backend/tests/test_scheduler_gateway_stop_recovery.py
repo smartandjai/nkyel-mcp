@@ -19,12 +19,12 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
 from app.gateway import services
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.persistence.scheduled_tasks.model import TERMINAL_RUN_STATUSES
-from deerflow.runtime.user_context import DEFAULT_USER_ID
-from deerflow.tools.scheduled_tasks import stop_scheduled_task
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.persistence.scheduled_tasks.model import TERMINAL_RUN_STATUSES
+from nkyel.runtime.user_context import DEFAULT_USER_ID
+from nkyel.tools.scheduled_tasks import stop_scheduled_task
 
 
 def _sqlite_backup(source: Path, destination: Path) -> None:
@@ -36,7 +36,7 @@ def _sqlite_backup(source: Path, destination: Path) -> None:
 def _config(database_dir: Path, skills_dir: Path) -> AppConfig:
     return AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "database": {"backend": "sqlite", "sqlite_dir": str(database_dir)},
             "scheduler": {"enabled": True, "tool_enabled": True, "poll_interval_seconds": 300},
             "memory": {"enabled": False, "token_counting": "char"},
@@ -48,9 +48,9 @@ def _config(database_dir: Path, skills_dir: Path) -> AppConfig:
 
 @pytest.mark.no_auto_user
 def test_fresh_gateway_boot_recovers_self_stop_once_after_running_snapshot(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "home"))
-    monkeypatch.delenv("DEER_FLOW_ENV", raising=False)
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("NKYEL_ENV", raising=False)
     monkeypatch.delenv("ENVIRONMENT", raising=False)
     monkeypatch.setattr(ExtensionsConfig, "from_file", lambda *args, **kwargs: ExtensionsConfig())
     live_dir, recovery_dir = tmp_path / "live", tmp_path / "recovered"
@@ -132,7 +132,7 @@ def test_fresh_gateway_boot_recovers_self_stop_once_after_running_snapshot(tmp_p
                     assert occurrence["status"] == "running"
                     assert occurrence["stop_requested_run_id"] == occurrence["run_id"]
                     assert parent["status"] == "enabled"
-                    await asyncio.to_thread(_sqlite_backup, live_dir / "deerflow.db", recovery_dir / "deerflow.db")
+                    await asyncio.to_thread(_sqlite_backup, live_dir / "nkyel.db", recovery_dir / "nkyel.db")
                     record = await app.state.run_manager.get(occurrence["run_id"], user_id=DEFAULT_USER_ID)
                     return record, occurrence
 

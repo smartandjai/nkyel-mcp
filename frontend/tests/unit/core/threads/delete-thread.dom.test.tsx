@@ -79,7 +79,7 @@ test("already-deleted sidecars still receive local cleanup", async () => {
   mocks.search.mockResolvedValueOnce([
     {
       thread_id: "sidecar",
-      metadata: { deerflow_sidecar: true, parent_thread_id: "parent" },
+      metadata: { nkyel_sidecar: true, parent_thread_id: "parent" },
     },
   ]);
   mocks.remove.mockRejectedValueOnce(

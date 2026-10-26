@@ -20,15 +20,15 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.schema import CreateSchema, DropSchema
 
 from app.scheduler.service import ScheduledTaskService
-from deerflow.persistence.base import Base
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunChangeClockRow, RunRow
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.runtime.runs.manager import RunRecord
-from deerflow.runtime.runs.schemas import DisconnectMode, RunStatus
+from nkyel.persistence.base import Base
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunChangeClockRow, RunRow
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.runtime.runs.manager import RunRecord
+from nkyel.runtime.runs.schemas import DisconnectMode, RunStatus
 
 pytestmark = pytest.mark.asyncio
 

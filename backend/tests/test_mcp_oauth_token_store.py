@@ -26,11 +26,11 @@ from cryptography.fernet import Fernet
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-from deerflow.config.credentials_key import CredentialsCipher
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp import oauth_store
-from deerflow.mcp.oauth import McpOAuthReauthorizationRequired, OAuthTokenManager
-from deerflow.mcp.oauth_store import (
+from nkyel.config.credentials_key import CredentialsCipher
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp import oauth_store
+from nkyel.mcp.oauth import McpOAuthReauthorizationRequired, OAuthTokenManager
+from nkyel.mcp.oauth_store import (
     McpOAuthTokenStore,
     McpOAuthTokenStoreUnavailable,
     StoredTokenLookup,
@@ -38,9 +38,9 @@ from deerflow.mcp.oauth_store import (
     oauth_token_request_fingerprint,
     set_mcp_oauth_token_store,
 )
-from deerflow.persistence.base import Base
-from deerflow.persistence.mcp_oauth_tokens import McpOAuthTokenRow, SqlMcpOAuthTokenRepository
-from deerflow.persistence.postgres_schema import dsn_with_search_path
+from nkyel.persistence.base import Base
+from nkyel.persistence.mcp_oauth_tokens import McpOAuthTokenRow, SqlMcpOAuthTokenRepository
+from nkyel.persistence.postgres_schema import dsn_with_search_path
 
 SERVER = "reports"
 REQUEST = "r" * 64
@@ -91,7 +91,7 @@ def endpoint(monkeypatch):
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr(httpx, "AsyncClient", OfflineClient)
-    monkeypatch.setattr("deerflow.mcp.oauth.datetime", _Clock)
+    monkeypatch.setattr("nkyel.mcp.oauth.datetime", _Clock)
     monkeypatch.setattr(_Clock, "current", datetime(2026, 1, 1, tzinfo=UTC))
     return server
 
@@ -254,14 +254,14 @@ async def test_tokens_are_encrypted_at_rest_and_unreadable_rows_fall_back_to_the
     # seed (here already consumed) instead of failing on the ciphertext, and
     # the rejection tells the connection's user why and who can fix it.
     other = _replica(session_factory, CredentialsCipher.from_keys([Fernet.generate_key()]))
-    with caplog.at_level("WARNING", logger="deerflow.mcp.oauth_store"):
+    with caplog.at_level("WARNING", logger="nkyel.mcp.oauth_store"):
         with pytest.raises(McpOAuthReauthorizationRequired) as rejected:
             await other.get_authorization_header(SERVER)
     assert endpoint.refresh_requests == ["refresh-0", "refresh-0"]
     assert "cannot be decrypted" in caplog.text
     assert "refresh-1" not in caplog.text
     message = str(rejected.value)
-    assert f"'{SERVER}'" in message and "invalid_grant" in message and "DEER_FLOW_CREDENTIALS_KEY" in message
+    assert f"'{SERVER}'" in message and "invalid_grant" in message and "NKYEL_CREDENTIALS_KEY" in message
     assert "refresh-0" not in message and "refresh-1" not in message
     assert isinstance(rejected.value.__cause__, httpx.HTTPStatusError)
 
@@ -366,7 +366,7 @@ async def test_without_a_store_tokens_stay_in_process(endpoint):
     # and the rejection names the remedy instead of a bare HTTP 400.
     with pytest.raises(McpOAuthReauthorizationRequired, match="configuring a new refresh token") as rejected:
         await OAuthTokenManager.from_extensions_config(_config()).get_authorization_header(SERVER)
-    assert "DEER_FLOW_CREDENTIALS_KEY" not in str(rejected.value)
+    assert "NKYEL_CREDENTIALS_KEY" not in str(rejected.value)
 
 
 def test_fingerprint_follows_the_token_chain_identity_not_the_client_secret():
@@ -414,7 +414,7 @@ async def test_an_unloadable_credentials_key_keeps_tokens_in_process(session_fac
     monkeypatch.setattr(store, "_cipher", broken_key)
     manager = OAuthTokenManager.from_extensions_config(_config(), token_store=store)
 
-    with caplog.at_level("WARNING", logger="deerflow.mcp.oauth"):
+    with caplog.at_level("WARNING", logger="nkyel.mcp.oauth"):
         assert await manager.get_authorization_header(SERVER) == "Bearer access-1"
     assert "in this process only" in caplog.text
     assert _rows(session_factory) == []
@@ -423,7 +423,7 @@ async def test_an_unloadable_credentials_key_keeps_tokens_in_process(session_fac
 @pytest.mark.parametrize("backend", ["memory", "sqlite"])
 def test_gateway_shares_tokens_only_through_a_sql_database(backend, tmp_path):
     from app.gateway.mcp_oauth_tokens import build_mcp_oauth_token_store
-    from deerflow.config.database_config import DatabaseConfig
+    from nkyel.config.database_config import DatabaseConfig
 
     database = DatabaseConfig(backend=backend, sqlite_dir=str(tmp_path))
     store = build_mcp_oauth_token_store(SimpleNamespace(database=database))
@@ -460,7 +460,7 @@ async def test_a_revoked_stored_chain_asks_to_reauthorize_without_blaming_the_ke
     with pytest.raises(McpOAuthReauthorizationRequired) as rejected:
         await _replica(session_factory, cipher).get_authorization_header(SERVER)
     assert "configuring a new refresh token" in str(rejected.value)
-    assert "DEER_FLOW_CREDENTIALS_KEY" not in str(rejected.value)
+    assert "NKYEL_CREDENTIALS_KEY" not in str(rejected.value)
     (row,) = _rows(session_factory)
     assert row.refresh_lease_owner is None, "a rejected refresh releases its lease"
     assert endpoint.refresh_requests == ["refresh-0", "refresh-1"]
@@ -606,7 +606,7 @@ async def test_a_rotation_the_store_missed_is_stored_before_the_next_refresh(ses
 
 @pytest.mark.asyncio
 async def test_a_missed_rotation_reaches_peers_while_the_access_token_is_still_valid(session_factory, cipher, endpoint, monkeypatch):
-    monkeypatch.setattr("deerflow.mcp.oauth._UNSAVED_ROTATION_RETRY_SECONDS", 0.0)
+    monkeypatch.setattr("nkyel.mcp.oauth._UNSAVED_ROTATION_RETRY_SECONDS", 0.0)
     a = _replica(session_factory, cipher)
     _fail_next_writes(a._token_store, monkeypatch)
     assert await a.get_authorization_header(SERVER) == "Bearer access-1"

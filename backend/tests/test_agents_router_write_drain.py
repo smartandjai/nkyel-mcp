@@ -26,23 +26,23 @@ from app.gateway.routers.agents import (
     update_agent,
     update_user_profile,
 )
-from deerflow.config.agents_api_config import load_agents_api_config_from_dict
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
+from nkyel.config.agents_api_config import load_agents_api_config_from_dict
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
 
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture
 def _agent_env(tmp_path: Path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     load_agents_api_config_from_dict({"enabled": True})
     set_app_config(
         AppConfig(
             models=[ModelConfig(name="agent-model", display_name="Agent Model", description=None, use="langchain_openai:ChatOpenAI", model="agent-model")],
-            sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+            sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         )
     )
     try:
@@ -65,7 +65,7 @@ async def test_agent_persistent_writes_route_through_write_drain(_agent_env, mon
     monkeypatch.setattr(router, "run_drained_write", drained)
 
     await create_agent_endpoint(AgentCreateRequest(name="planner", model="agent-model"))
-    await router.import_agent_package(router.AgentPackage(format="deerflow.custom-agent", version=1, agent={"name": "imported", "soul": "imported soul"}))
+    await router.import_agent_package(router.AgentPackage(format="nkyel.custom-agent", version=1, agent={"name": "imported", "soul": "imported soul"}))
     await update_agent("planner", AgentUpdateRequest(description="later"))
     await get_agent("planner")
     await update_user_profile(UserProfileUpdateRequest(content="prefs"))
@@ -89,7 +89,7 @@ async def test_agent_import_drains_started_store_write_across_repeated_cancellat
 
     monkeypatch.setattr(router, "get_agent_store", lambda: BlockingStore())
     package = router.AgentPackage(
-        format="deerflow.custom-agent",
+        format="nkyel.custom-agent",
         version=1,
         agent={"name": "imported", "soul": "imported soul", "memory_enabled": False},
     )

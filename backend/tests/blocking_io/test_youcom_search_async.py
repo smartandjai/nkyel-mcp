@@ -30,7 +30,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from deerflow.community.youcom import tools as youcom_tools
+from nkyel.community.youcom import tools as youcom_tools
 
 pytestmark = pytest.mark.asyncio
 

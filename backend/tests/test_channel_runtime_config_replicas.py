@@ -32,25 +32,25 @@ from app.channels.service import ChannelService
 from app.channels.store import JsonChannelStore
 from app.gateway.auth.models import User
 from app.gateway.routers import channel_connections
-from deerflow import reflection
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.credentials_key import CredentialsCipher
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_leases import ChannelLeaseRow, SqlChannelLeaseRepository
-from deerflow.persistence.channel_runtime_configs import ChannelRuntimeConfigRow, SqlChannelRuntimeConfigRepository
+from nkyel import reflection
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.credentials_key import CredentialsCipher
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_leases import ChannelLeaseRow, SqlChannelLeaseRepository
+from nkyel.persistence.channel_runtime_configs import ChannelRuntimeConfigRow, SqlChannelRuntimeConfigRepository
 
 CIPHER = CredentialsCipher.from_keys([Fernet.generate_key()])
 
 
 @pytest.fixture(autouse=True)
 def _app_config(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "0")
-    monkeypatch.delenv("DEER_FLOW_MULTI_INSTANCE", raising=False)
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "0")
+    monkeypatch.delenv("NKYEL_MULTI_INSTANCE", raising=False)
     set_app_config(
         AppConfig.model_validate(
             {
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
-                "channel_connections": {"enabled": True, "slack": {"enabled": True}, "telegram": {"enabled": True, "bot_username": "deerflow_bot"}, "discord": {"enabled": True}},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
+                "channel_connections": {"enabled": True, "slack": {"enabled": True}, "telegram": {"enabled": True, "bot_username": "nkyel_bot"}, "discord": {"enabled": True}},
             }
         )
     )
@@ -78,8 +78,8 @@ def _admin() -> User:
 
 
 async def _connection_repo(tmp_path):
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository
-    from deerflow.persistence.engine import get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository
+    from nkyel.persistence.engine import get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'router.db'}", sqlite_dir=str(tmp_path))
     return ChannelConnectionRepository(get_session_factory())
@@ -134,7 +134,7 @@ def test_saving_credentials_without_an_encryption_key_is_refused(tmp_path, runti
         response = client.post("/api/channels/slack/runtime-config", json={"values": {"bot_token": "xoxb-ui", "app_token": "xapp-ui"}})
 
     assert response.status_code == 503
-    assert "DEER_FLOW_CREDENTIALS_KEY" in response.json()["detail"]
+    assert "NKYEL_CREDENTIALS_KEY" in response.json()["detail"]
     assert _runtime_store(runtime_sessions).load_all() == {}
     anyio.run(connection_repo.close)
 
@@ -371,10 +371,10 @@ def test_startup_imports_the_legacy_file_before_overlaying_runtime_config(runtim
     from types import SimpleNamespace
 
     from app.channels import service as service_module
-    from deerflow.config import paths as paths_module
-    from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+    from nkyel.config import paths as paths_module
+    from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setattr(paths_module, "_paths", None)
     legacy = tmp_path / "channels" / "runtime-config.json"
     legacy.parent.mkdir(parents=True, exist_ok=True)

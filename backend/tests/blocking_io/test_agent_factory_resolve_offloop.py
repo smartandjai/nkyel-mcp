@@ -1,6 +1,6 @@
 """Regression tests: the lead-agent assembly import must stay off the event loop.
 
-``resolve_agent_factory`` lazily imports ``deerflow.agents.lead_agent.agent``,
+``resolve_agent_factory`` lazily imports ``nkyel.agents.lead_agent.agent``,
 which transitively imports the middlewares, authz, MCP and jsonschema chains —
 multiple seconds on a cold start. ``start_run`` is the single choke point every
 run-creation path flows through, so resolving it on the Gateway event loop
@@ -29,19 +29,19 @@ from langgraph.store.memory import InMemoryStore
 
 from app.gateway.run_models import RunCreateRequest
 from app.gateway.services import resolve_agent_factory, start_run
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-from deerflow.runtime import RunManager
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+from nkyel.runtime import RunManager
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
-LEAD_AGENT_MODULE = "deerflow.agents.lead_agent.agent"
+LEAD_AGENT_MODULE = "nkyel.agents.lead_agent.agent"
 
 
 @pytest.fixture
 def _stub_app_config():
     """Keep run tests independent from a developer-local config.yaml."""
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     yield
     reset_app_config()
 
@@ -49,7 +49,7 @@ def _stub_app_config():
 def _install_probe_module(monkeypatch: pytest.MonkeyPatch, probe_file: Path) -> list[int]:
     """Replace the lead-agent module with a probe whose import records the thread.
 
-    ``from deerflow.agents.lead_agent.agent import assemble_lead_agent`` resolves
+    ``from nkyel.agents.lead_agent.agent import assemble_lead_agent`` resolves
     attributes through the module-level ``__getattr__`` (PEP 562), so whatever
     thread calls it is the thread that pays the import.
     """

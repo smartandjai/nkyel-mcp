@@ -18,15 +18,15 @@ import pytest_asyncio
 from langchain_core.messages import ToolMessage
 from support.postgres import asyncpg_test_url
 
-from deerflow.community.ragflow.formatting import format_retrieval_sources
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.subagent_batches import SubagentBatchRepository
-from deerflow.subagents import batch_service
-from deerflow.subagents.batch_runtime import BatchSubmitRequest
-from deerflow.subagents.step_events import capture_step_message
+from nkyel.community.ragflow.formatting import format_retrieval_sources
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.subagent_batches import SubagentBatchRepository
+from nkyel.subagents import batch_service
+from nkyel.subagents.batch_runtime import BatchSubmitRequest
+from nkyel.subagents.step_events import capture_step_message
 
 
 class Status(Enum):
@@ -86,7 +86,7 @@ async def env(monkeypatch, tmp_path, request):
         monkeypatch.setattr(batch_service, "get_background_task_result", lambda _: state.result)
         monkeypatch.setattr(batch_service, "cleanup_background_task", lambda _: None)
         monkeypatch.setattr(batch_service, "resolve_subagent_model_name", lambda *args, **kwargs: "offline-model")
-        monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **kwargs: [])
+        monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **kwargs: [])
         state.service = batch_service.SubagentBatchService(repository=repo, config=SubagentBatchesConfig(), runtime_config=SubagentRuntimeConfig(), app_config=SimpleNamespace())
         service = state.service
         yield state
@@ -167,17 +167,17 @@ async def test_real_subagent_graph_captures_artifact_for_durable_export(env, mon
     from langchain_core.messages import AIMessage
     from langchain_core.tools import StructuredTool
 
-    from deerflow.config.app_config import AppConfig
-    from deerflow.subagents.config import SubagentConfig
+    from nkyel.config.app_config import AppConfig
+    from nkyel.subagents.config import SubagentConfig
 
     # conftest stubs executor to break a circular import. Load the production
     # executor, keeping its actual graph, middleware, ToolNode and step capture.
-    path = Path(__file__).parents[1] / "packages/harness/deerflow/subagents/executor.py"
+    path = Path(__file__).parents[1] / "packages/harness/nkyel/subagents/executor.py"
     spec = importlib.util.spec_from_file_location("_batch_evidence_executor", path)
     module = importlib.util.module_from_spec(spec)
     monkeypatch.setitem(sys.modules, spec.name, module)
     spec.loader.exec_module(module)
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "graph"))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "graph"))
     content, messages = retrieval()
     artifact = messages[0]["artifact"]
 
@@ -188,7 +188,7 @@ async def test_real_subagent_graph_captures_artifact_for_durable_export(env, mon
     model = Model(messages=iter([AIMessage(content="Searching", tool_calls=[{"name": "knowledge_search", "args": {}, "id": "search"}])]))
     monkeypatch.setattr(module, "create_chat_model", lambda **kwargs: model)
     tool = StructuredTool.from_function(lambda: (content, artifact), name="knowledge_search", description="Offline captured evidence", response_format="content_and_artifact", return_direct=True)
-    config = AppConfig.model_validate({"models": [{"name": "offline", "use": "langchain_openai:ChatOpenAI", "model": "offline"}], "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "summarization": {"enabled": False}})
+    config = AppConfig.model_validate({"models": [{"name": "offline", "use": "langchain_openai:ChatOpenAI", "model": "offline"}], "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "summarization": {"enabled": False}})
     executor = module.SubagentExecutor(config=SubagentConfig(name="researcher", description="Research", skills=[]), tools=[tool], parent_model="offline", app_config=config, thread_id="thread-1", user_id="user-1")
     try:
         env.result = await executor._aexecute("Return evidence")
@@ -207,7 +207,7 @@ async def test_real_subagent_graph_captures_artifact_for_durable_export(env, mon
 
 @pytest.mark.parametrize("change", ["uncited", "unsupported-tool", "future-version", "invalid-id", "invalid-provider", "invalid-text", "invalid-locator", "overlong-name"])
 def test_unrelated_or_invalid_evidence_is_not_persisted(change):
-    from deerflow.community.ragflow.sources import durable_source_artifact
+    from nkyel.community.ragflow.sources import durable_source_artifact
 
     content, messages = retrieval()
     source = messages[0]["artifact"]["knowledge_sources"]["sources"][0]
@@ -234,7 +234,7 @@ def test_unrelated_or_invalid_evidence_is_not_persisted(change):
 
 @pytest.mark.parametrize("max_chars", [1, 1000, 1800, 10_000])
 def test_evidence_budget_keeps_whole_records_and_reports_omissions(max_chars):
-    from deerflow.community.ragflow.sources import durable_source_artifact
+    from nkyel.community.ragflow.sources import durable_source_artifact
 
     content, messages = retrieval(text='Quoted "evidence" and 中文 ' * 200)
     original = deepcopy(messages)
@@ -256,7 +256,7 @@ def test_evidence_budget_keeps_whole_records_and_reports_omissions(max_chars):
 
 
 def test_forwarding_limit_counts_duplicate_omissions_once():
-    from deerflow.community.ragflow.sources import cited_source_artifact, durable_source_artifact
+    from nkyel.community.ragflow.sources import cited_source_artifact, durable_source_artifact
 
     entries = [retrieval(text=f"Evidence {index}") for index in range(102)]
     content = "\n".join(entry[0] for entry in entries)
@@ -269,7 +269,7 @@ def test_forwarding_limit_counts_duplicate_omissions_once():
 
 
 def forwarded_task(messages, content):
-    from deerflow.tools.builtins.task_tool import _task_result_command
+    from nkyel.tools.builtins.task_tool import _task_result_command
 
     command = _task_result_command(tool_call_id="child", status="completed", result=content, source_messages=messages)
     captured = []
@@ -307,7 +307,7 @@ async def test_nested_task_omissions_survive_worker_reopen_and_export(env, monke
 
 @pytest.mark.parametrize("selection", ["retained", "omitted", "unknown", "partial"])
 def test_forwarded_omissions_follow_only_current_complete_references(selection):
-    from deerflow.community.ragflow.sources import durable_source_artifact
+    from nkyel.community.ragflow.sources import durable_source_artifact
 
     entries = [retrieval(text=f"Evidence {index}") for index in range(101)]
     report = "\n".join(entry[0] for entry in entries)
@@ -324,7 +324,7 @@ def test_forwarded_omissions_follow_only_current_complete_references(selection):
 
 @pytest.mark.parametrize("reverse", [False, True])
 def test_recaptured_source_supersedes_forwarded_omission(reverse):
-    from deerflow.community.ragflow.sources import durable_source_artifact
+    from nkyel.community.ragflow.sources import durable_source_artifact
 
     content, messages = retrieval()
     source_id = messages[0]["artifact"]["knowledge_sources"]["sources"][0]["id"]
@@ -358,7 +358,7 @@ async def test_plain_results_keep_nullable_evidence(env):
 @pytest.mark.parametrize("action", ["cancel", "cancel-running", "stale-lease", "failure", "retry"])
 async def test_fenced_or_failed_attempts_cannot_publish_evidence(env, action):
     content, messages = retrieval()
-    from deerflow.community.ragflow.sources import durable_source_artifact
+    from nkyel.community.ragflow.sources import durable_source_artifact
 
     artifact = durable_source_artifact(messages, content, max_chars=1000)
     batch = await env.repo.create_batch(
@@ -402,7 +402,7 @@ async def test_fenced_or_failed_attempts_cannot_publish_evidence(env, action):
     assert accepted is (action not in {"cancel", "cancel-running", "stale-lease"})
     if action == "retry":
         # A legacy/external failure row may have old evidence; explicit retry clears it.
-        from deerflow.persistence.subagent_batches.model import SubagentBatchItemRow
+        from nkyel.persistence.subagent_batches.model import SubagentBatchItemRow
 
         async with get_session_factory()() as session:
             stored = await session.get(SubagentBatchItemRow, item["id"])

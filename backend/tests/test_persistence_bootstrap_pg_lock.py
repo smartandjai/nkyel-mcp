@@ -26,7 +26,7 @@ We mock the engine instead of standing up a real Postgres because the only
 behaviour worth pinning here is the SQL execution order; the timeout's
 runtime effect is Postgres's contract, not ours. The one exception drives
 Gateway startup (``init_engine_from_config``) against a live server and is opt-in via
-``DEERFLOW_TEST_POSTGRES_URL``.
+``NKYEL_TEST_POSTGRES_URL``.
 """
 
 from __future__ import annotations
@@ -41,11 +41,11 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.schema import DropSchema
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence import bootstrap as bootstrap_mod
-from deerflow.persistence.engine import close_engine, get_engine, init_engine_from_config
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence import bootstrap as bootstrap_mod
+from nkyel.persistence.engine import close_engine, get_engine, init_engine_from_config
 
-POSTGRES_URL = os.getenv("DEERFLOW_TEST_POSTGRES_URL")
+POSTGRES_URL = os.getenv("NKYEL_TEST_POSTGRES_URL")
 
 
 class _FakeResult:
@@ -251,12 +251,12 @@ async def test_postgres_lock_outwaits_command_timeout_while_a_peer_migrates(monk
     assert len(waiting_logs) == 1, "the wait should be logged once, not on every poll"
 
 
-@pytest.mark.skipif(not POSTGRES_URL, reason="set DEERFLOW_TEST_POSTGRES_URL to run the live PostgreSQL bootstrap-lock test")
+@pytest.mark.skipif(not POSTGRES_URL, reason="set NKYEL_TEST_POSTGRES_URL to run the live PostgreSQL bootstrap-lock test")
 @pytest.mark.asyncio
 async def test_init_engine_outwaits_command_timeout_on_live_postgres(monkeypatch) -> None:
     """Gateway startup waits out a peer's migration that outlasts ``command_timeout``."""
     monkeypatch.setattr(bootstrap_mod, "_PG_LOCK_POLL_INTERVAL_SECONDS", 0.1)
-    schema = f"deerflow_test_{uuid.uuid4().hex[:12]}"
+    schema = f"nkyel_test_{uuid.uuid4().hex[:12]}"
     db_config = DatabaseConfig(backend="postgres", postgres_url=POSTGRES_URL or "", postgres_schema=schema, command_timeout=1)
     peer = create_async_engine(db_config.app_sqlalchemy_url)
     try:

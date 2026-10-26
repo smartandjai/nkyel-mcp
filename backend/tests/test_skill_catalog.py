@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.skills.catalog import MAX_QUERY_CHARS, MAX_RESULTS, SkillCatalog, _normalize_search_text
-from deerflow.skills.types import Skill, SkillCategory
+from nkyel.skills.catalog import MAX_QUERY_CHARS, MAX_RESULTS, SkillCatalog, _normalize_search_text
+from nkyel.skills.types import Skill, SkillCategory
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -129,7 +129,7 @@ def test_ranked_search_still_ignores_terms_beyond_character_limit(prefix: str):
 
 
 def test_search_normalizes_catalog_metadata_once(catalog: SkillCatalog):
-    with patch("deerflow.skills.catalog._normalize_search_text", wraps=_normalize_search_text) as normalize:
+    with patch("nkyel.skills.catalog._normalize_search_text", wraps=_normalize_search_text) as normalize:
         assert catalog.search("select:data-analysis")
         normalize.assert_not_called()
         assert catalog.search("data")

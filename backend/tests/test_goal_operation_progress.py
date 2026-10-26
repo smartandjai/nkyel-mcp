@@ -4,8 +4,8 @@ import json
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from deerflow.runtime.goal import GoalEvaluation, attach_goal_evaluation, build_goal_state, compute_no_progress_count, latest_visible_assistant_signature
-from deerflow.runtime.goal_progress import observe_goal_operations
+from nkyel.runtime.goal import GoalEvaluation, attach_goal_evaluation, build_goal_state, compute_no_progress_count, latest_visible_assistant_signature
+from nkyel.runtime.goal_progress import observe_goal_operations
 
 EVALUATION = GoalEvaluation(satisfied=False, blocker="goal_not_met_yet", reason="Work remains.", evidence_summary="")
 
@@ -15,14 +15,14 @@ def operation(index=1, *, call_id=None, status="success", content="OK", receipt=
     call = {"name": name, "args": args if args is not None else {"path": f"/tmp/part-{index}.txt", "content": f"Part {index}"}, "id": call_id}
     result = ToolMessage(content=content, tool_call_id=call_id, status=status)
     if receipt:
-        from deerflow.agents.middlewares.tool_receipt import make_tool_receipt
+        from nkyel.agents.middlewares.tool_receipt import make_tool_receipt
 
-        result.additional_kwargs["deerflow_tool_receipt"] = make_tool_receipt(call, result)
+        result.additional_kwargs["nkyel_tool_receipt"] = make_tool_receipt(call, result)
     return [AIMessage(content="", tool_calls=[call]), result]
 
 
 def turn(*operations, text="More work remains."):
-    return [HumanMessage(content="Continue", additional_kwargs={"hide_from_ui": True, "deerflow_goal_continuation": True}), *[message for pair in operations for message in pair], AIMessage(content=text)]
+    return [HumanMessage(content="Continue", additional_kwargs={"hide_from_ui": True, "nkyel_goal_continuation": True}), *[message for pair in operations for message in pair], AIMessage(content=text)]
 
 
 def evaluate(goal, messages):
@@ -65,7 +65,7 @@ def test_exact_history_has_no_64_operation_cutoff(count):
     assert evaluate(goal, turn(operation(count)))["no_progress_count"] == 0
 
 
-@pytest.mark.parametrize("body,status,kwargs", [("Error: missing file", "success", {}), ("varied error", "error", {}), ("partial result", "success", {"deerflow_tool_meta": {"status": "partial_success"}})])
+@pytest.mark.parametrize("body,status,kwargs", [("Error: missing file", "success", {}), ("varied error", "error", {}), ("partial result", "success", {"nkyel_tool_meta": {"status": "partial_success"}})])
 def test_failures_do_not_gain_progress_from_new_arguments(body, status, kwargs):
     goal = evaluate(build_goal_state("Write the parts"), turn(operation()))
     failed = operation(2, status=status, content=body)
@@ -105,7 +105,7 @@ def test_pure_text_preserves_native_behavior_after_tool_turn():
 def test_tool_failure_cannot_be_overridden_by_stale_success_metadata():
     goal = evaluate(build_goal_state("Write the parts"), turn(operation()))
     failed = operation(2, status="error")
-    failed[1].additional_kwargs["deerflow_tool_meta"] = {"status": "success"}
+    failed[1].additional_kwargs["nkyel_tool_meta"] = {"status": "success"}
     assert evaluate(goal, turn(failed))["no_progress_count"] == 1
 
 
@@ -126,14 +126,14 @@ def test_serialized_message_dicts_have_same_operation_identity():
 def test_matching_failed_receipt_cannot_gain_progress():
     goal = evaluate(build_goal_state("Write the parts"), turn(operation()))
     failed = operation(2, receipt=True)
-    failed[1].additional_kwargs["deerflow_tool_receipt"]["status"] = "error"
+    failed[1].additional_kwargs["nkyel_tool_receipt"]["status"] = "error"
     assert evaluate(goal, turn(failed))["no_progress_count"] == 1
 
 
 def test_foreign_receipt_is_not_used_to_classify_current_result():
     goal = evaluate(build_goal_state("Write the parts"), turn(operation()))
     current = operation(2, receipt=True)
-    current[1].additional_kwargs["deerflow_tool_receipt"].update(status="error", tool_call_id="different")
+    current[1].additional_kwargs["nkyel_tool_receipt"].update(status="error", tool_call_id="different")
     assert evaluate(goal, turn(current))["no_progress_count"] == 0
 
 
@@ -152,7 +152,7 @@ def test_foreign_receipt_is_not_used_to_classify_current_result():
 def test_sandbox_ui_description_does_not_change_operation_identity(name, args):
     first = operation(name=name, args={**args, "description": "Inspect the source"}, receipt=True)
     repeated = operation(name=name, args={**args, "description": "Inspect it again"}, call_id="another-call", receipt=True)
-    assert first[1].additional_kwargs["deerflow_tool_receipt"]["args_sha256"] != repeated[1].additional_kwargs["deerflow_tool_receipt"]["args_sha256"]
+    assert first[1].additional_kwargs["nkyel_tool_receipt"]["args_sha256"] != repeated[1].additional_kwargs["nkyel_tool_receipt"]["args_sha256"]
     original = copy.deepcopy(repeated)
     goal = evaluate(build_goal_state("Finish the task"), turn(first))
     assert evaluate(goal, turn(repeated))["no_progress_count"] == 1
@@ -189,7 +189,7 @@ def test_legacy_fetched_error_page_reuses_existing_tool_classification():
 def test_native_todo_reminder_cannot_hide_successful_operations(serialized):
     from langgraph.runtime import Runtime
 
-    from deerflow.agents.middlewares.todo_middleware import TodoMiddleware
+    from nkyel.agents.middlewares.todo_middleware import TodoMiddleware
 
     goal = evaluate(build_goal_state("Write the parts"), turn(operation()))
     goal = evaluate(goal, turn(operation()))
@@ -222,15 +222,15 @@ def test_valid_hidden_card_reply_starts_a_new_interval(serialized):
 
 
 def _externalized_bash_operation(tmp_path, *, call_id, receipts=True, content=None, description="Inspect the file"):
-    from deerflow.agents.middlewares.tool_output_budget_middleware import _patch_tool_message
-    from deerflow.agents.middlewares.tool_receipt import make_tool_receipt
-    from deerflow.agents.middlewares.tool_result_meta import normalize_tool_message
-    from deerflow.config.tool_output_config import ToolOutputConfig
+    from nkyel.agents.middlewares.tool_output_budget_middleware import _patch_tool_message
+    from nkyel.agents.middlewares.tool_receipt import make_tool_receipt
+    from nkyel.agents.middlewares.tool_result_meta import normalize_tool_message
+    from nkyel.config.tool_output_config import ToolOutputConfig
 
     call = {"name": "bash", "args": {"command": "cat /tmp/large-input.txt", "description": description}, "id": call_id}
     raw = normalize_tool_message(ToolMessage(content=content or ("same data\n" * 1400 + "\nExit Code: 0"), tool_call_id=call_id, name="bash"))
     if receipts:
-        raw.additional_kwargs["deerflow_tool_receipt"] = make_tool_receipt(call, raw)
+        raw.additional_kwargs["nkyel_tool_receipt"] = make_tool_receipt(call, raw)
     visible = _patch_tool_message(raw, ToolOutputConfig(), str(tmp_path))
     assert visible.content != raw.content
     return [AIMessage(content="", tool_calls=[call]), visible]
@@ -238,7 +238,7 @@ def _externalized_bash_operation(tmp_path, *, call_id, receipts=True, content=No
 
 @pytest.mark.parametrize("receipts", [False, True])
 def test_externalized_output_path_and_call_id_cannot_manufacture_progress(tmp_path, monkeypatch, receipts):
-    from deerflow.agents.middlewares import tool_output_budget_middleware
+    from nkyel.agents.middlewares import tool_output_budget_middleware
 
     monkeypatch.setattr(tool_output_budget_middleware, "get_blob_store_if_enabled", lambda: None)
     first = _externalized_bash_operation(tmp_path, call_id="first", receipts=receipts)
@@ -253,7 +253,7 @@ def test_externalized_output_path_and_call_id_cannot_manufacture_progress(tmp_pa
 def test_changed_raw_externalized_result_is_new_progress_without_reading_saved_file(tmp_path, monkeypatch):
     from pathlib import Path
 
-    from deerflow.agents.middlewares import tool_output_budget_middleware
+    from nkyel.agents.middlewares import tool_output_budget_middleware
 
     monkeypatch.setattr(tool_output_budget_middleware, "get_blob_store_if_enabled", lambda: None)
     first = _externalized_bash_operation(tmp_path, call_id="first")
@@ -271,7 +271,7 @@ def test_changed_raw_externalized_result_is_new_progress_without_reading_saved_f
 
 
 def test_transformed_receipt_must_still_match_raw_arguments(tmp_path, monkeypatch):
-    from deerflow.agents.middlewares import tool_output_budget_middleware
+    from nkyel.agents.middlewares import tool_output_budget_middleware
 
     monkeypatch.setattr(tool_output_budget_middleware, "get_blob_store_if_enabled", lambda: None)
     first = _externalized_bash_operation(tmp_path, call_id="first")

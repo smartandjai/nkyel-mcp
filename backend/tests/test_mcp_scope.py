@@ -2,7 +2,7 @@
 
 import pytest
 
-from deerflow.mcp_scope import (
+from nkyel.mcp_scope import (
     mcp_scope_belongs_to_thread,
     mcp_session_scope_key,
 )

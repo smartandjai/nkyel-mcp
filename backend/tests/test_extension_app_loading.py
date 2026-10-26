@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from deerflow.extensions import reset_loaded_extensions, reset_runtime_diagnostics
-from deerflow.extensions.loader import ExtensionLoadError, ExtensionSpec
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions import reset_loaded_extensions, reset_runtime_diagnostics
+from nkyel.extensions.loader import ExtensionLoadError, ExtensionSpec
+from nkyel.extensions.registry import ExtensionRegistry
 
 
 @pytest.fixture(autouse=True)
@@ -28,8 +28,8 @@ def stub_app_config(monkeypatch):
     loading one from disk.
     """
     import app.gateway.app as app_module
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     config = AppConfig(sandbox=SandboxConfig(use="test"))
     monkeypatch.setattr(app_module, "get_app_config", lambda: config)
@@ -37,7 +37,7 @@ def stub_app_config(monkeypatch):
 
 
 def test_create_app_exposes_loaded_extensions_on_app_state_and_process_singleton(monkeypatch):
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
 
     loaded = ExtensionRegistry().build()
     monkeypatch.setattr(
@@ -55,7 +55,7 @@ def test_create_app_exposes_loaded_extensions_on_app_state_and_process_singleton
 
 
 def test_create_app_exposes_one_canonical_live_diagnostics_list(monkeypatch):
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
 
     loaded = ExtensionRegistry().build()
     load_diagnostic = extensions_module.Diagnostic.warning(
@@ -89,7 +89,7 @@ def test_create_app_mounts_extension_routers_after_all_host_routes(monkeypatch):
     from fastapi import APIRouter
     from fastapi.testclient import TestClient
 
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
 
     conflict = APIRouter()
     good = APIRouter()
@@ -127,13 +127,13 @@ def test_create_app_mounts_extension_routers_after_all_host_routes(monkeypatch):
     client = TestClient(app)
     assert client.get("/health").json() == {
         "status": "healthy",
-        "service": "deer-flow-gateway",
+        "service": "nkyel-gateway",
     }
     assert client.get("/api/extension-test/ping").status_code == 401
 
 
 def test_create_app_fails_open_when_extension_loading_raises_unexpectedly(monkeypatch):
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
 
     def _raise_unexpectedly(plugins):
         raise RuntimeError("malformed plugins configuration")
@@ -150,7 +150,7 @@ def test_create_app_fails_open_when_extension_loading_raises_unexpectedly(monkey
 
 
 def test_create_app_fails_closed_when_a_required_extension_cannot_load(monkeypatch):
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
     from app.gateway.app import create_app
 
     def _raise_required(plugins):
@@ -169,7 +169,7 @@ def test_create_app_tolerates_a_missing_config_file_and_loads_no_extensions(monk
     config loading before the Gateway serves traffic.
     """
     import app.gateway.app as app_module
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
 
     def _missing_config():
         raise FileNotFoundError("`config.yaml` file not found in the project root or legacy backend/repository root locations")
@@ -199,7 +199,7 @@ def test_create_app_propagates_config_failures_instead_of_blaming_extension_load
     drop a ``required: true`` extension without failing the boot.
     """
     import app.gateway.app as app_module
-    import deerflow.extensions as extensions_module
+    import nkyel.extensions as extensions_module
 
     def _broken_config():
         raise ValueError("config.yaml failed validation")
@@ -228,7 +228,7 @@ def test_create_app_fails_closed_for_required_extension_with_malformed_api_marke
 
     monkeypatch.setattr(
         demo_extensions.install_ok,
-        "__deerflow_api__",
+        "__nkyel_api__",
         _ExplodingAPIMarker(),
         raising=False,
     )

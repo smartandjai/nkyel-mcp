@@ -23,12 +23,12 @@ export const MOCK_SIDECAR_THREAD_ID = "00000000-0000-0000-0000-0000000000aa";
 export const MOCK_RUN_ID = "00000000-0000-0000-0000-000000000099";
 // Keep in sync with frontend runtime thread utils and the backend thread_meta
 // constant; the mock must mirror the same metadata contract for pin ordering.
-export const THREAD_PINNED_METADATA_KEY = "deerflow_pinned";
+export const THREAD_PINNED_METADATA_KEY = "nkyel_pinned";
 
 // Keep in sync with frontend runtime thread utils and the backend thread_meta
 // constant; the mock must mirror the same metadata contract for project
 // membership.
-export const THREAD_PROJECT_METADATA_KEY = "deerflow_project_id";
+export const THREAD_PROJECT_METADATA_KEY = "nkyel_project_id";
 
 /**
  * The keys the Gateway's POST /history head may carry, from the goal contract
@@ -466,7 +466,7 @@ function mockStreamMessages(
   responseMessage: Record<string, unknown> = {
     type: "ai",
     id: "msg-ai-1",
-    content: "Hello from DeerFlow!",
+    content: "Hello from nkyel!",
   },
 ) {
   const submittedMessages = inputMessages
@@ -622,7 +622,7 @@ export function mockLangGraphAPI(
     skills_installed: 0,
     installed_skills: [] as string[],
     enabled_skills: [] as string[],
-    install_path: "/tmp/deer-flow/integrations/skills/lark-cli",
+    install_path: "/tmp/nkyel/integrations/skills/lark-cli",
     cli: {
       available: false,
       path: null as string | null,
@@ -1295,7 +1295,7 @@ export function mockLangGraphAPI(
         if (typeof postData.archived === "boolean") {
           body = body.filter(
             (thread) =>
-              (Reflect.get(thread.metadata, "deerflow_archived") === true) ===
+              (Reflect.get(thread.metadata, "nkyel_archived") === true) ===
               postData.archived,
           );
         }
@@ -1435,7 +1435,7 @@ export function mockLangGraphAPI(
         project_id?: string;
       };
       const threadId = body.thread_id ?? MOCK_SIDECAR_THREAD_ID;
-      // The backend stamps `metadata.deerflow_project_id` from the assigned
+      // The backend stamps `metadata.nkyel_project_id` from the assigned
       // project_id column; mirror that so project membership is readable.
       const metadata = {
         ...body.metadata,
@@ -1971,11 +1971,11 @@ export function mockLangGraphAPI(
         ),
       );
       let sourceTitle = sourceThread?.title?.trim();
-      if (sourceThread?.metadata?.deerflow_branch === true) {
+      if (sourceThread?.metadata?.nkyel_branch === true) {
         sourceTitle = sourceTitle?.replace(/^(Branch:\s*)+/i, "").trim();
       }
       const sourceSequence =
-        sourceThread?.metadata?.deerflow_branch === true &&
+        sourceThread?.metadata?.nkyel_branch === true &&
         Number.isSafeInteger(sourceThread.metadata.branch_title_sequence) &&
         Number(sourceThread.metadata.branch_title_sequence) >= 2 &&
         Number(sourceThread.metadata.branch_title_sequence) <
@@ -1999,7 +1999,7 @@ export function mockLangGraphAPI(
         title,
         updated_at: new Date().toISOString(),
         metadata: {
-          deerflow_branch: true,
+          nkyel_branch: true,
           ...(!body.title && title ? { branch_title_sequence: sequence } : {}),
           branch_parent_thread_id: sourceThreadId,
           branch_parent_message_id: body.message_id,
@@ -2454,7 +2454,7 @@ export function mockLangGraphAPI(
       body: readFileSync(
         path.resolve(
           process.cwd(),
-          "../backend/packages/harness/deerflow/capabilities/builtin.json",
+          "../backend/packages/harness/nkyel/capabilities/builtin.json",
         ),
         "utf8",
       ),
@@ -2539,7 +2539,7 @@ export function mockLangGraphAPI(
         skills_installed: 3,
         installed_skills: ["lark-doc", "lark-im", "lark-shared"],
         enabled_skills: ["lark-doc", "lark-im", "lark-shared"],
-        install_path: "/tmp/deer-flow/integrations/skills/lark-cli",
+        install_path: "/tmp/nkyel/integrations/skills/lark-cli",
         cli: {
           available: true,
           path: "/usr/bin/lark-cli",
@@ -2777,7 +2777,7 @@ export function mockLangGraphAPI(
 
 /**
  * Build a minimal SSE stream that the LangGraph SDK can parse.
- * The stream returns a single AI message: "Hello from DeerFlow!".
+ * The stream returns a single AI message: "Hello from nkyel!".
  */
 export function handleRunStream(
   route: Route,
@@ -2792,7 +2792,7 @@ export function handleRunStream(
   const responseMessage = options?.responseMessage ?? {
     type: "ai",
     id: "msg-ai-1",
-    content: "Hello from DeerFlow!",
+    content: "Hello from nkyel!",
   };
   const events = [
     {

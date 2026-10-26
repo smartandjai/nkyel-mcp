@@ -132,8 +132,8 @@ async def test_button_answer_is_persisted_as_latest_human_input(card_channel):
     from langchain_core.messages import HumanMessage
 
     from app.channels.manager import _human_input_message_with_channel_response
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
-    from deerflow.runtime.journal import RunJournal
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.journal import RunJournal
 
     await card_channel.send(clarification_outbound(), _max_retries=1)
     try:
@@ -163,10 +163,10 @@ async def test_button_answer_is_persisted_as_latest_human_input(card_channel):
 async def test_consecutive_card_answers_resume_the_same_thread(card_channel, tmp_path, monkeypatch, bound_identity, topic_id, reset_conversation):
     from app.channels.manager import ChannelManager
     from app.channels.store import JsonChannelStore
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
-    monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+    monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
     store = JsonChannelStore(path=tmp_path / "routing.json")
     card_channel.config["channel_store"] = store
     message = clarification_outbound(topic_id=topic_id)
@@ -460,10 +460,10 @@ async def test_explicit_text_answer_keeps_the_new_conversation_route(card_channe
 @pytest.mark.parametrize("topic_id", [None, "source-1"])
 async def test_ordinary_text_uses_current_conversation(card_channel, tmp_path, monkeypatch, bound_identity, reset_conversation, topic_id):
     from app.channels.manager import ChannelManager
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
-    monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+    monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
     store = card_channel.config["channel_store"]
     message = clarification_outbound(topic_id=topic_id)
     repo = None

@@ -36,7 +36,7 @@ for (const { debug, content, status, label } of [
   test(`generic tool details: ${label}`, async ({ page }) => {
     await page.addInitScript((enabled) => {
       localStorage.setItem(
-        "deerflow.local-settings",
+        "nkyel.local-settings",
         JSON.stringify({
           tokenUsage: {
             headerTotal: true,
@@ -294,7 +294,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
             tool_call_id: id,
             content,
             status,
-            additional_kwargs: { deerflow_tool_meta: { status: meta } },
+            additional_kwargs: { nkyel_tool_meta: { status: meta } },
           },
         );
       }
@@ -368,7 +368,7 @@ for (const locale of ["en-US", "zh-CN"] as const) {
       ).toHaveCount(2);
       await page.evaluate(() =>
         localStorage.setItem(
-          "deerflow.local-settings",
+          "nkyel.local-settings",
           JSON.stringify({
             tokenUsage: { headerTotal: true, inlineMode: "step_debug" },
           }),

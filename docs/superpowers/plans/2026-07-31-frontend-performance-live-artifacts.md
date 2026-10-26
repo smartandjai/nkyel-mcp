@@ -30,7 +30,7 @@
 ## Task 2: Negotiate binary Browser Live frames in the backend
 
 **Files:**
-- Modify: `backend/packages/harness/deerflow/community/browser_automation/session.py`
+- Modify: `backend/packages/harness/nkyel/community/browser_automation/session.py`
 - Modify: `backend/app/gateway/routers/browser.py`
 - Modify: `backend/tests/test_browser_automation.py`
 - Modify: `backend/tests/test_browser_router.py`

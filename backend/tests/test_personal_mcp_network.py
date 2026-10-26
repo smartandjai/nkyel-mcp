@@ -7,7 +7,7 @@ import httpcore
 import pytest
 from httpcore._backends.anyio import AnyIOBackend
 
-from deerflow.mcp.personal_network import personal_httpx_client_factory
+from nkyel.mcp.personal_network import personal_httpx_client_factory
 
 
 class RecordingStream(httpcore.AsyncNetworkStream):
@@ -110,7 +110,7 @@ async def test_personal_transport_blocks_private_addresses_before_connect(monkey
 @pytest.mark.asyncio
 @pytest.mark.parametrize("addresses", [[], ["8.8.8.8", "127.0.0.1"], ["2606:4700:4700::1111", "::1"]])
 async def test_personal_transport_rejects_empty_or_mixed_dns_answers(monkeypatch, addresses):
-    monkeypatch.setattr("deerflow.mcp.personal_network.resolve_host_addresses", lambda host: [ipaddress.ip_address(address) for address in addresses])
+    monkeypatch.setattr("nkyel.mcp.personal_network.resolve_host_addresses", lambda host: [ipaddress.ip_address(address) for address in addresses])
 
     async def connect(*args, **kwargs):
         pytest.fail("Rejected DNS answers reached TCP connect")
@@ -124,7 +124,7 @@ async def test_personal_transport_rejects_empty_or_mixed_dns_answers(monkeypatch
 @pytest.mark.asyncio
 async def test_personal_transport_tries_only_vetted_addresses(monkeypatch):
     addresses = ["2606:4700:4700::1111", "8.8.8.8"]
-    monkeypatch.setattr("deerflow.mcp.personal_network.resolve_host_addresses", lambda host: [ipaddress.ip_address(address) for address in addresses])
+    monkeypatch.setattr("nkyel.mcp.personal_network.resolve_host_addresses", lambda host: [ipaddress.ip_address(address) for address in addresses])
     attempts = []
 
     async def connect(self, host, port, **kwargs):

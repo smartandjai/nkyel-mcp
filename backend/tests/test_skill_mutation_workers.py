@@ -2,9 +2,9 @@ import asyncio
 import threading
 
 import pytest
-from deerflow_extension_api.host_capabilities import HostCapabilityError
+from nkyel_extension_api.host_capabilities import HostCapabilityError
 
-from deerflow.skills.mutations.workers import MutationWorkers
+from nkyel.skills.mutations.workers import MutationWorkers
 
 
 @pytest.mark.asyncio
@@ -47,7 +47,7 @@ async def test_cancelled_caller_does_not_release_running_worker_slot():
 
 @pytest.mark.asyncio
 async def test_waiting_worker_gets_cancellation_checkpoint():
-    from deerflow.skills.mutations.workers import MutationWorkers
+    from nkyel.skills.mutations.workers import MutationWorkers
 
     pool = MutationWorkers(limit=1)
     entered, release, cancelled = threading.Event(), threading.Event(), threading.Event()
@@ -74,7 +74,7 @@ async def test_waiting_worker_gets_cancellation_checkpoint():
 
 @pytest.mark.asyncio
 async def test_pool_closes_to_new_work():
-    from deerflow.skills.mutations.workers import MutationWorkers
+    from nkyel.skills.mutations.workers import MutationWorkers
 
     pool = MutationWorkers()
     assert await pool.run(lambda check: 42) == 42

@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 import pytest
 
-from deerflow.projects import documents
+from nkyel.projects import documents
 
 pytestmark = pytest.mark.anyio
 

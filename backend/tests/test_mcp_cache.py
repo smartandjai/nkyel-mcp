@@ -1,4 +1,4 @@
-"""Tests for MCP tools cache staleness detection (``deerflow.mcp.cache``).
+"""Tests for MCP tools cache staleness detection (``nkyel.mcp.cache``).
 
 Regression coverage for the content-signature invalidation fix. The cache used
 to invalidate on a strict extensions-config *mtime* ``>`` comparison and tracked
@@ -12,7 +12,7 @@ tools serving in the LangGraph-embedded runtime and every non-writer worker:
 3. a resolved-path switch to a different config file whose mtime is <= the one
    recorded at initialization.
 
-The fix mirrors ``deerflow.config.app_config``'s ``(path, (mtime, size,
+The fix mirrors ``nkyel.config.app_config``'s ``(path, (mtime, size,
 sha256))`` detection so both runtime-editable config files share one staleness
 signal. These tests fail on the pre-fix code (cases 1-3 return ``False``) and
 pass afterwards.
@@ -30,9 +30,9 @@ from pathlib import Path
 
 import pytest
 
-import deerflow.mcp.cache as cache_module
-from deerflow.config.extensions_config import ExtensionsConfig, atomic_write_extensions_config
-from deerflow.config.file_signature import get_config_signature
+import nkyel.mcp.cache as cache_module
+from nkyel.config.extensions_config import ExtensionsConfig, atomic_write_extensions_config
+from nkyel.config.file_signature import get_config_signature
 
 _MISSING = object()
 
@@ -77,7 +77,7 @@ def _server(command: str = "npx") -> dict:
 
 @pytest.fixture()
 def cache_globals():
-    """Snapshot/restore ``deerflow.mcp.cache`` module globals and reset the lock."""
+    """Snapshot/restore ``nkyel.mcp.cache`` module globals and reset the lock."""
     saved = {name: getattr(cache_module, name, _MISSING) for name in _TRACKED_GLOBALS}
 
     cache_module._mcp_tools_cache = None
@@ -102,7 +102,7 @@ def cache_globals():
     cache_module._cache_generation = 0
     # ``_has_mcp_reconciliation_state`` now also counts durable-only deployment
     # bindings, so "never initialized" requires a fresh pool singleton too.
-    from deerflow.mcp.session_pool import reset_session_pool
+    from nkyel.mcp.session_pool import reset_session_pool
 
     reset_session_pool()
 
@@ -127,9 +127,9 @@ def _patch_discovery(monkeypatch, flat_fake):
     tool list to the first selected server (the rest succeed with zero tools).
     The flattened ordering the tests assert is unchanged.
     """
-    from deerflow.mcp.client import build_servers_config
-    from deerflow.mcp.session_pool import get_session_pool, normalized_connection_fingerprint
-    from deerflow.mcp.tools import ServerDiscoveryResult
+    from nkyel.mcp.client import build_servers_config
+    from nkyel.mcp.session_pool import get_session_pool, normalized_connection_fingerprint
+    from nkyel.mcp.tools import ServerDiscoveryResult
 
     async def grouped(*, extensions_config, server_names=None, session_pool=None, personal_user_id=None):
         pool = session_pool if session_pool is not None else get_session_pool()
@@ -144,7 +144,7 @@ def _patch_discovery(monkeypatch, flat_fake):
             groups[name] = ServerDiscoveryResult(tools=tuple(tools) if index == 0 else (), pool=pool if is_stdio else None, binding=binding)
         return groups
 
-    monkeypatch.setattr("deerflow.mcp.tools.get_mcp_tools_by_server", grouped)
+    monkeypatch.setattr("nkyel.mcp.tools.get_mcp_tools_by_server", grouped)
 
 
 def _initialize_against(monkeypatch, config_path: Path) -> None:
@@ -154,7 +154,7 @@ def _initialize_against(monkeypatch, config_path: Path) -> None:
     signature after loading tools; the tool load itself is stubbed so this stays
     a cache-state unit test with no real MCP servers.
     """
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
 
     async def _fake_get_mcp_tools(**_kwargs):
         return []
@@ -226,7 +226,7 @@ def test_config_path_switch_is_stale(cache_globals, monkeypatch, tmp_path):
     older = recorded_mtime - 50
     os.utime(cfg_b, (older, older))  # a DIFFERENT file, mtime <= recorded
 
-    # The resolver now points at cfg_b (e.g. DEER_FLOW_EXTENSIONS_CONFIG_PATH
+    # The resolver now points at cfg_b (e.g. NKYEL_EXTENSIONS_CONFIG_PATH
     # was repointed, or default resolution now finds a different file).
     monkeypatch.setattr(
         ExtensionsConfig,
@@ -325,7 +325,7 @@ def test_config_deleted_after_init_is_not_stale(cache_globals, monkeypatch, tmp_
 def test_config_deleted_after_init_via_real_env_resolution_does_not_raise(cache_globals, monkeypatch, tmp_path):
     """End-to-end regression for the explicit-vs-search distinction raised by
     fancyboi999 [P1] on PR #4275: when the extensions config path comes from
-    ``DEER_FLOW_EXTENSIONS_CONFIG_PATH`` (exactly how Docker dev/prod point at
+    ``NKYEL_EXTENSIONS_CONFIG_PATH`` (exactly how Docker dev/prod point at
     it, per backend/AGENTS.md) and the file is deleted after a successful
     init, ``_is_cache_stale()`` must not raise — even though
     ``ExtensionsConfig.resolve_config_path()`` itself now (again) raises
@@ -345,7 +345,7 @@ def test_config_deleted_after_init_via_real_env_resolution_does_not_raise(cache_
     """
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    _initialize_against(monkeypatch, cfg)  # sets DEER_FLOW_EXTENSIONS_CONFIG_PATH=cfg
+    _initialize_against(monkeypatch, cfg)  # sets NKYEL_EXTENSIONS_CONFIG_PATH=cfg
     assert cache_module._config_signature is not None  # guard: had a real signature
 
     cfg.unlink()  # config deleted; env var still points at the now-missing path
@@ -375,7 +375,7 @@ class TestCrossLoopReinitialization:
 
             cfg = tmp_path / "extensions_config.json"
             _write_extensions_config(cfg, {"srv1": _server()})
-            monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+            monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
             async def _fake_tools(**_kwargs):
                 return []
@@ -414,7 +414,7 @@ class TestCrossLoopReinitialization:
 
             cfg = tmp_path / "extensions_config.json"
             _write_extensions_config(cfg, {"srv1": _server()})
-            monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+            monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
             calls = 0
 
@@ -463,7 +463,7 @@ class TestCrossLoopReinitialization:
 
             cfg = tmp_path / "extensions_config.json"
             _write_extensions_config(cfg, {"srv1": _server()})
-            monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+            monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
             async def _fake_tools(**_kwargs):
                 return []
@@ -493,7 +493,7 @@ def test_config_change_during_initialization_discards_stale_tools(cache_globals,
     """A config rewrite during load must not publish tools loaded from the old config."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"old": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     calls = 0
 
@@ -533,9 +533,9 @@ def test_config_change_during_initialization_reconciles_in_place_for_same_server
     epoch advances, which fences the session created under the superseded
     connection while leaving every other server untouched.
     """
-    from deerflow.mcp import session_pool as session_pool_module
-    from deerflow.mcp.client import build_server_params
-    from deerflow.mcp.session_pool import normalized_connection_fingerprint
+    from nkyel.mcp import session_pool as session_pool_module
+    from nkyel.mcp.client import build_server_params
+    from nkyel.mcp.session_pool import normalized_connection_fingerprint
 
     class FakeSession:
         def __init__(self, command: str) -> None:
@@ -564,7 +564,7 @@ def test_config_change_during_initialization_reconciles_in_place_for_same_server
 
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"same": _server("npx")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     calls = 0
     loaded_pools = []
@@ -621,13 +621,13 @@ def test_superseded_initializer_cannot_seed_replacement_pool(cache_globals, monk
     """
     from unittest.mock import AsyncMock
 
-    from deerflow.mcp import session_pool as session_pool_module
-    from deerflow.mcp import tools as tools_module
-    from deerflow.mcp.session_pool import normalized_connection_fingerprint
+    from nkyel.mcp import session_pool as session_pool_module
+    from nkyel.mcp import tools as tools_module
+    from nkyel.mcp.session_pool import normalized_connection_fingerprint
 
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"A": _server("old-cmd")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     real_get_mcp_tools_by_server = tools_module.get_mcp_tools_by_server
 
@@ -656,8 +656,8 @@ def test_superseded_initializer_cannot_seed_replacement_pool(cache_globals, monk
             return await real_get_mcp_tools_by_server(*args, **kwargs)
 
         monkeypatch.setattr(tools_module, "get_mcp_tools_by_server", _gated_get_mcp_tools)
-        monkeypatch.setattr("deerflow.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
-        monkeypatch.setattr("deerflow.mcp.tools.build_mcp_tool_interceptors", lambda *a, **k: [])
+        monkeypatch.setattr("nkyel.mcp.tools.get_initial_oauth_headers", AsyncMock(return_value={}))
+        monkeypatch.setattr("nkyel.mcp.tools.build_mcp_tool_interceptors", lambda *a, **k: [])
         monkeypatch.setattr("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient)
 
         stale = asyncio.create_task(cache_module.initialize_mcp_tools())
@@ -695,7 +695,7 @@ def test_reset_mcp_tools_cache_does_not_wait_for_in_flight_initialization(cache_
     """Event-loop callers can reset cache state without waiting for a slow tool load."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     started = threading.Event()
     finish = threading.Event()
@@ -737,7 +737,7 @@ def test_automatic_stale_invalidation_retires_session_pool_before_reinitializing
     otherwise the fresh wrappers can keep reusing sessions created from the old
     connection config.
     """
-    from deerflow.mcp import session_pool as session_pool_module
+    from nkyel.mcp import session_pool as session_pool_module
 
     real_reset_session_pool = session_pool_module.reset_session_pool
     real_reset_session_pool()
@@ -773,7 +773,7 @@ def test_automatic_stale_invalidation_retires_session_pool_before_reinitializing
 
 def test_reset_mcp_tools_cache_retires_session_pool_before_releasing_initializers(cache_globals, monkeypatch):
     """A reset must not let fresh tool wrappers publish with the retiring pool."""
-    from deerflow.mcp import session_pool as session_pool_module
+    from nkyel.mcp import session_pool as session_pool_module
 
     real_reset_session_pool = session_pool_module.reset_session_pool
     real_reset_session_pool()
@@ -817,7 +817,7 @@ def test_cancelled_initializer_releases_generation_claim(cache_globals, monkeypa
     """Cancelling the owner task must not strand waiters on its generation claim."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     started = asyncio.Event()
     release = asyncio.Event()
@@ -865,11 +865,11 @@ def test_cancelled_initializer_releases_generation_claim(cache_globals, monkeypa
 
 def test_skills_only_change_keeps_tools_and_pool(cache_globals, monkeypatch, tmp_path):
     """Toggling a skill must not rebuild tools, replace the pool, or close sessions."""
-    from deerflow.mcp.session_pool import get_session_pool, reset_session_pool
+    from nkyel.mcp.session_pool import get_session_pool, reset_session_pool
 
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()}, skills={"skill-a": {"enabled": True}})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     sentinel_tool = object()
 
@@ -998,7 +998,7 @@ def test_shared_reset_during_initialization_discards_stale_tools(cache_globals, 
     """A remote reset fences discovery that started under the previous generation."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     async def _fake_tools(**_kwargs):
         _write_remote_cache_reset_marker(cfg, "changed-during-discovery")
@@ -1017,7 +1017,7 @@ def test_publish_shared_reset_changes_marker_and_resets_local_cache(cache_global
     """Each admin reset publishes a fresh durable generation before local retirement."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     local_resets: list[bool] = []
     monkeypatch.setattr(cache_module, "reset_mcp_tools_cache", lambda: local_resets.append(True))
 
@@ -1061,7 +1061,7 @@ def test_refresh_is_noop_before_initialization(cache_globals, monkeypatch):
 
 def test_refresh_retires_cache_when_last_server_is_disabled(cache_globals, monkeypatch, tmp_path):
     """Disabling the last server converges the cache without swapping the pool."""
-    from deerflow.mcp.session_pool import get_session_pool, reset_session_pool
+    from nkyel.mcp.session_pool import get_session_pool, reset_session_pool
 
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
@@ -1102,7 +1102,7 @@ def test_skills_only_change_during_initialization_publishes_loaded_tools(cache_g
     """A skills-only edit during tool discovery must not force a needless rebuild."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()}, skills={"skill-a": {"enabled": True}})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     calls = 0
 
@@ -1126,7 +1126,7 @@ def test_refresh_during_initialization_discards_stale_publish(cache_globals, mon
     """Disabling the last server while discovery is in flight must void the result."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     started = threading.Event()
     release = threading.Event()
@@ -1157,7 +1157,7 @@ def test_initialization_without_a_readable_snapshot_discards_result(cache_global
     """Never publish tools that cannot be tied to a parsed MCP snapshot."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     async def _fake_get_mcp_tools(**_kwargs):
         return ["loaded-tools"]
@@ -1212,9 +1212,9 @@ def test_initialization_hands_the_snapshotted_config_to_discovery(cache_globals,
     """Discovery must use the exact revision the cache snapshotted, not re-read."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server("npx")})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
-    from deerflow.mcp import session_pool as session_pool_module
+    from nkyel.mcp import session_pool as session_pool_module
 
     seen: dict[str, object] = {}
     claimed_pool = session_pool_module.get_session_pool()
@@ -1271,7 +1271,7 @@ def test_initialization_with_unreadable_post_signature_discards_result(cache_glo
     """A resolved path with an unreadable signature must not publish an unpinned cache."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     async def _fake_get_mcp_tools(**_kwargs):
         return ["loaded-tools"]
@@ -1290,7 +1290,7 @@ def test_lazy_init_does_not_leak_credentials_on_malformed_config(cache_globals, 
     """Lazy init must not echo resolved secrets when the config is malformed."""
     cfg = tmp_path / "extensions_config.json"
     _write_extensions_config(cfg, {"srv1": _server()})
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     monkeypatch.setenv("MCP_SECRET", "TOPSECRET123")
 
     cfg.write_text(
@@ -1313,9 +1313,9 @@ def test_lazy_init_does_not_leak_credentials_on_malformed_config(cache_globals, 
 
 def _assert_cache_survives_edit(monkeypatch, cfg, sentinel, rewrite):
     """Initialize with *sentinel*, apply *rewrite*, and prove nothing was retired."""
-    from deerflow.mcp.session_pool import get_session_pool, reset_session_pool
+    from nkyel.mcp.session_pool import get_session_pool, reset_session_pool
 
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     async def _fake_get_mcp_tools(**_kwargs):
         return [sentinel]
@@ -1375,7 +1375,7 @@ def test_interceptor_order_change_is_still_stale(cache_globals, monkeypatch, tmp
 
 def test_path_switch_with_equivalent_mcp_config_keeps_tools_and_pool(cache_globals, monkeypatch, tmp_path):
     """Switching to a file whose MCP slice is identical must not retire sessions."""
-    from deerflow.mcp.session_pool import get_session_pool, reset_session_pool
+    from nkyel.mcp.session_pool import get_session_pool, reset_session_pool
 
     cfg_a = tmp_path / "a_extensions_config.json"
     cfg_b = tmp_path / "b_extensions_config.json"
@@ -1467,7 +1467,7 @@ class TestLazyInitializationFailure:
     def _install_failing_discovery(monkeypatch, tmp_path: Path) -> list[str]:
         cfg = tmp_path / "extensions_config.json"
         _write_extensions_config(cfg, {"srv1": _server()})
-        monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+        monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
         calls: list[str] = []
 
         async def _fake_tools(**_kwargs):
@@ -1480,12 +1480,12 @@ class TestLazyInitializationFailure:
     def test_runtime_error_from_discovery_without_running_loop_runs_once(self, cache_globals, monkeypatch, tmp_path, caplog):
         calls = self._install_failing_discovery(monkeypatch, tmp_path)
 
-        with caplog.at_level("ERROR", logger="deerflow.mcp.cache"):
+        with caplog.at_level("ERROR", logger="nkyel.mcp.cache"):
             assert cache_module.get_cached_mcp_tools() == []
 
         assert calls == [threading.current_thread().name]
         assert cache_module._cache_initialized is False
-        logged = [record for record in caplog.records if record.name == "deerflow.mcp.cache" and record.levelname == "ERROR"]
+        logged = [record for record in caplog.records if record.name == "nkyel.mcp.cache" and record.levelname == "ERROR"]
         assert len(logged) == 1
         # The failure must be attributed to the discovery error by type, never to
         # a misleading asyncio loop error -- and the raw message is deliberately
@@ -1499,14 +1499,14 @@ class TestLazyInitializationFailure:
         async def _call_from_running_loop():
             return cache_module.get_cached_mcp_tools()
 
-        with caplog.at_level("ERROR", logger="deerflow.mcp.cache"):
+        with caplog.at_level("ERROR", logger="nkyel.mcp.cache"):
             assert asyncio.run(_call_from_running_loop()) == []
 
         assert len(calls) == 1
         assert cache_module._cache_initialized is False
         # The logged failure must be the discovery error, not a misleading
         # "asyncio.run() cannot be called from a running event loop".
-        logged = [record for record in caplog.records if record.name == "deerflow.mcp.cache" and record.levelname == "ERROR"]
+        logged = [record for record in caplog.records if record.name == "nkyel.mcp.cache" and record.levelname == "ERROR"]
         assert len(logged) == 1
         # The failure must be attributed to the discovery error by type, never to
         # a misleading asyncio loop error -- and the raw message is deliberately
@@ -1518,7 +1518,7 @@ class TestLazyInitializationFailure:
         """The no-loop fallback stays intact: a worker thread with no loop set initializes via ``asyncio.run``."""
         cfg = tmp_path / "extensions_config.json"
         _write_extensions_config(cfg, {"srv1": _server()})
-        monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+        monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
         calls: list[str] = []
 
         async def _fake_tools(**_kwargs):
@@ -1554,7 +1554,7 @@ class TestLazyInitializationFailure:
         """A closed loop left as the current loop must not be driven; fall back to ``asyncio.run``."""
         cfg = tmp_path / "extensions_config.json"
         _write_extensions_config(cfg, {"srv1": _server()})
-        monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+        monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
         calls: list[str] = []
 
         async def _fake_tools(**_kwargs):
@@ -1587,7 +1587,7 @@ def test_failed_task_server_discovery_publishes_healthy_tools_once(cache_globals
             "reports": {"type": "http", "url": "http://reports.invalid/mcp", "task_toolsets": [toolset]},
         },
     )
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
     discovered: list[str] = []
 
     class FakeClient:

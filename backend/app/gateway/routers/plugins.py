@@ -6,11 +6,11 @@ import json
 import logging
 from types import MappingProxyType
 
-from deerflow_extension_api.auth import resolve_principal
+from nkyel_extension_api.auth import resolve_principal
 from fastapi import APIRouter, HTTPException, Request, Response
 
-from deerflow.extensions.browser_assets import LoadedBrowserAssets, valid_asset_path
-from deerflow.extensions.plugin_tools import plugin_settings
+from nkyel.extensions.browser_assets import LoadedBrowserAssets, valid_asset_path
+from nkyel.extensions.plugin_tools import plugin_settings
 
 router = APIRouter(prefix="/api/plugins", tags=["plugins"])
 logger = logging.getLogger(__name__)
@@ -93,16 +93,16 @@ async def plugin_asset(request: Request, namespace: str, revision: str, path: st
 @router.post("/{namespace}/actions/{action_name}")
 async def invoke_plugin_action(request: Request, namespace: str, action_name: str):
     """Invoke an installed action with the authenticated viewer and deployment settings."""
-    from deerflow_extension_api.agent_runs import AgentRunError, resolve_agent_runs
-    from deerflow_extension_api.auth import resolve_principal
-    from deerflow_extension_api.plugins import ActionContext
+    from nkyel_extension_api.agent_runs import AgentRunError, resolve_agent_runs
+    from nkyel_extension_api.auth import resolve_principal
+    from nkyel_extension_api.plugins import ActionContext
 
-    from deerflow.extensions.plugin_tools import plugin_settings
+    from nkyel.extensions.plugin_tools import plugin_settings
 
     principal = resolve_principal(request)
     if principal is None:
         raise HTTPException(401, "Authentication required.")
-    if request.headers.get("x-deerflow-plugin-viewer") not in (None, principal.user_id):
+    if request.headers.get("x-nkyel-plugin-viewer") not in (None, principal.user_id):
         raise HTTPException(409, "Account changed; reload this plugin view.")
     found = next(((source, plugin) for source, plugin in request.app.state.extensions.plugins if plugin.namespace == namespace), None)
     if found is None:

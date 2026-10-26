@@ -34,11 +34,11 @@ from typing import Any
 import pytest
 from pydantic import AnyHttpUrl, SecretStr, TypeAdapter, ValidationError
 
-import deerflow.community.lightrag.client as lightrag_client
-import deerflow.community.lightrag.tools as lightrag_tools
-import deerflow.community.provider_credentials as owner
-import deerflow.community.ragflow.client as ragflow_client
-import deerflow.community.ragflow.tools as ragflow_tools
+import nkyel.community.lightrag.client as lightrag_client
+import nkyel.community.lightrag.tools as lightrag_tools
+import nkyel.community.provider_credentials as owner
+import nkyel.community.ragflow.client as ragflow_client
+import nkyel.community.ragflow.tools as ragflow_tools
 
 COMMUNITY_ROOT = Path(lightrag_tools.__file__).resolve().parent.parent
 PROVIDER_KEY = "sekret-key-42"

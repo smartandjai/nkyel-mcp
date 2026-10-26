@@ -14,14 +14,14 @@ import pytest
 from langchain_mcp_adapters.interceptors import MCPToolCallRequest
 from pydantic import ValidationError
 
-from deerflow.config.extensions_config import ExtensionsConfig, McpServerConfig, McpUserScopedAuthConfig
-from deerflow.mcp.headers import (
+from nkyel.config.extensions_config import ExtensionsConfig, McpServerConfig, McpUserScopedAuthConfig
+from nkyel.mcp.headers import (
     apply_header_overrides,
     header_spellings,
     illegal_header_value_reason,
 )
-from deerflow.mcp.oauth import build_oauth_tool_interceptor
-from deerflow.mcp.user_scoped_auth import build_user_scoped_auth_interceptor
+from nkyel.mcp.oauth import build_oauth_tool_interceptor
+from nkyel.mcp.user_scoped_auth import build_user_scoped_auth_interceptor
 
 DISCOVERY = "Bearer discovery-token"
 
@@ -238,7 +238,7 @@ def test_oauth_token_replaces_a_differently_cased_static_header():
 @pytest.mark.asyncio
 async def test_durable_task_call_sends_one_authorization_header():
     """The task caller merges OAuth and interceptor headers into the connection itself."""
-    from deerflow.mcp.task_tool_caller import McpTaskToolCaller
+    from nkyel.mcp.task_tool_caller import McpTaskToolCaller
 
     config = ExtensionsConfig.model_validate(
         {

@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.skills.package_paths import is_eval_fixture_skill_md
-from deerflow.skills.storage import get_or_new_skill_storage
-from deerflow.skills.validation import _validate_skill_frontmatter
+from nkyel.skills.package_paths import is_eval_fixture_skill_md
+from nkyel.skills.storage import get_or_new_skill_storage
+from nkyel.skills.validation import _validate_skill_frontmatter
 
 SKILLS_PUBLIC_DIR = Path(__file__).resolve().parents[2] / "skills" / "public"
 

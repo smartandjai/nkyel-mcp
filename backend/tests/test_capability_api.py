@@ -11,7 +11,7 @@ from app.gateway import capabilities
 from app.gateway.deps import get_config
 from app.gateway.routers import capabilities as router
 from app.gateway.routers import mcp
-from deerflow.config.extensions_config import ExtensionsConfig
+from nkyel.config.extensions_config import ExtensionsConfig
 
 
 @pytest.fixture
@@ -129,7 +129,7 @@ def test_business_install_uses_existing_mcp_lifecycle(capability_client, provide
 
 
 def test_business_config_rejects_arbitrary_execution_and_preserves_store(capability_client):
-    from deerflow.capabilities.business import connection_config
+    from nkyel.capabilities.business import connection_config
 
     client, path = capability_client
     before = path.read_bytes()
@@ -155,7 +155,7 @@ def test_catalog_rejects_incomplete_or_unsafe_http_configuration(capability_clie
 @pytest.mark.parametrize("route", ["/api/mcp/config/servers", "/api/mcp/config"])
 @pytest.mark.parametrize("fallback", [False, True])
 def test_mcp_writes_reject_colliding_installation_ids(capability_client, route, fallback):
-    from deerflow.capabilities.runtime import installation_id
+    from nkyel.capabilities.runtime import installation_id
 
     client, path = capability_client
     raw = json.loads(path.read_text())
@@ -174,7 +174,7 @@ def test_mcp_writes_reject_colliding_installation_ids(capability_client, route, 
 
 
 def test_targeted_edit_enable_and_delete_handle_identity_collisions(capability_client):
-    from deerflow.capabilities.runtime import installation_id
+    from nkyel.capabilities.runtime import installation_id
 
     client, path = capability_client
     raw = json.loads(path.read_text())
@@ -201,7 +201,7 @@ def test_targeted_edit_enable_and_delete_handle_identity_collisions(capability_c
 def test_stale_bundled_interpreter_can_be_repaired_without_reinstall(capability_client, provider):
     import sys
 
-    from deerflow.capabilities.business import CREDENTIALS, connection_config
+    from nkyel.capabilities.business import CREDENTIALS, connection_config
 
     client, path = capability_client
     configuration = connection_config(provider, {field: "private-token" for field in CREDENTIALS[provider]})
@@ -229,7 +229,7 @@ def test_stale_bundled_interpreter_can_be_repaired_without_reinstall(capability_
 
 
 def test_delete_recovers_multiple_legacy_identity_collisions(capability_client):
-    from deerflow.capabilities.runtime import installation_id
+    from nkyel.capabilities.runtime import installation_id
 
     client, path = capability_client
     raw = json.loads(path.read_text())

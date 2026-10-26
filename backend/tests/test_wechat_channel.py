@@ -704,8 +704,8 @@ class TestWechatAllowedUsers:
 
 def test_connect_code_bypasses_allowed_users_filter(tmp_path: Path):
     from app.channels.wechat import WechatChannel
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelCredentialCipher
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     async def go():
         from datetime import UTC, datetime, timedelta
@@ -718,7 +718,7 @@ def test_connect_code_bypasses_allowed_users_filter(tmp_path: Path):
             )
             code = "wechat-bind-code"
             await repo.create_oauth_state(
-                owner_user_id="deerflow-user-1",
+                owner_user_id="nkyel-user-1",
                 provider="wechat",
                 state=code,
                 expires_at=datetime.now(UTC) + timedelta(minutes=5),
@@ -749,7 +749,7 @@ def test_connect_code_bypasses_allowed_users_filter(tmp_path: Path):
                 }
             )
 
-            connections = await repo.list_connections("deerflow-user-1")
+            connections = await repo.list_connections("nkyel-user-1")
             assert len(connections) == 1
             assert connections[0]["provider"] == "wechat"
             assert connections[0]["external_account_id"] == "blocked-user"
@@ -1335,10 +1335,10 @@ def test_handle_update_downloads_inbound_file(monkeypatch, tmp_path: Path):
 def test_handle_update_preserves_same_name_attachments(tmp_path: Path, monkeypatch, separate_updates, filename):
     from app.channels.manager import _ingest_inbound_files
     from app.channels.wechat import WechatChannel, _encrypt_aes_128_ecb
-    from deerflow.config.paths import Paths
+    from nkyel.config.paths import Paths
 
     upload_paths = Paths(tmp_path / "owner-data")
-    monkeypatch.setattr("deerflow.uploads.manager.get_paths", lambda: upload_paths)
+    monkeypatch.setattr("nkyel.uploads.manager.get_paths", lambda: upload_paths)
 
     async def go():
         bus = MessageBus()

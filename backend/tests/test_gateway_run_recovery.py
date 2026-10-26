@@ -11,15 +11,15 @@ import anyio
 import pytest
 from fastapi import FastAPI
 
-import deerflow.runtime as runtime_module
+import nkyel.runtime as runtime_module
 from app.gateway import deps as gateway_deps
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.persistence import engine as engine_module
-from deerflow.persistence import thread_meta as thread_meta_module
-from deerflow.runtime import END_SENTINEL, MemoryStreamBridge, RunManager
-from deerflow.runtime.checkpointer import async_provider as checkpointer_module
-from deerflow.runtime.events import store as event_store_module
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.persistence import engine as engine_module
+from nkyel.persistence import thread_meta as thread_meta_module
+from nkyel.runtime import END_SENTINEL, MemoryStreamBridge, RunManager
+from nkyel.runtime.checkpointer import async_provider as checkpointer_module
+from nkyel.runtime.events import store as event_store_module
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 @asynccontextmanager
@@ -348,7 +348,7 @@ async def test_sql_runtime_shares_run_repository_with_scheduler(monkeypatch):
 
     # This test asserts repository identity, not SQL startup/recovery. Its
     # session factory is intentionally an opaque sentinel, not a usable DB.
-    monkeypatch.setattr("deerflow.extensions.host_capabilities.HostCapabilities.start", noop)
+    monkeypatch.setattr("nkyel.extensions.host_capabilities.HostCapabilities.start", noop)
     monkeypatch.setattr(engine_module, "init_engine_from_config", noop)
     monkeypatch.setattr(engine_module, "get_session_factory", lambda: session_factory)
     monkeypatch.setattr(engine_module, "close_engine", noop)

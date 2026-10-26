@@ -21,10 +21,10 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.retrieval import FTS5RetrievalAdapter, create_fts5_retrieval
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage, MemoryStorageCorruption, create_empty_memory
+from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.retrieval import FTS5RetrievalAdapter, create_fts5_retrieval
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage, MemoryStorageCorruption, create_empty_memory
 
 INDEX_FILENAME = "memory-fts5.sqlite3"
 SCOPE = {"userId": "alice", "agentName": "agent-a"}

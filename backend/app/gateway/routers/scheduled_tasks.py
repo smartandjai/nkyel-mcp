@@ -26,18 +26,18 @@ from app.gateway.deps import (
 from app.gateway.scheduled_task_errors import active_occurrence_error, active_occurrence_message, repository_error, scheduler_error
 from app.gateway.scheduled_task_validation import prepare_resume_updates, validate_scheduled_task_create, validate_scheduled_task_update
 from app.scheduler.service import TASK_CHANGED_ERROR
-from deerflow.config.agents_config import AGENT_NAME_PATTERN, load_agent_config
-from deerflow.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict, ScheduledTaskQuotaExceeded
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRunStatus
-from deerflow.scheduler.host_notes import RUN_ERROR_DELETED_WHILE_QUEUED, RUN_ERROR_PAUSED_WHILE_QUEUED
-from deerflow.scheduler.schedules import (
+from nkyel.config.agents_config import AGENT_NAME_PATTERN, load_agent_config
+from nkyel.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict, ScheduledTaskQuotaExceeded
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRunStatus
+from nkyel.scheduler.host_notes import RUN_ERROR_DELETED_WHILE_QUEUED, RUN_ERROR_PAUSED_WHILE_QUEUED
+from nkyel.scheduler.schedules import (
     next_run_at as compute_next_run_at,
 )
-from deerflow.scheduler.schedules import (
+from nkyel.scheduler.schedules import (
     normalize_cron_expression,
     validate_timezone,
 )
-from deerflow.utils.thread_id import ThreadId
+from nkyel.utils.thread_id import ThreadId
 
 logger = logging.getLogger(__name__)
 

@@ -7,8 +7,8 @@ from copy import deepcopy
 from unittest.mock import AsyncMock
 
 from app.gateway.conversation_reader import read_visible_message_page
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.manager import EditReplayVisibility
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.manager import EditReplayVisibility
 
 
 def _run_manager(*, superseded=(), hidden_sources=(), hidden_attempts=()):

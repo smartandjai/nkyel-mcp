@@ -1,19 +1,19 @@
 ---
 title: Reference
-description: Every public name in deerflow-extension-api 0.2.4, grouped by topic, with signatures, fields, and defaults. Also covers the compatibility rules and the contract's version history.
+description: Every public name in nkyel-extension-api 0.2.4, grouped by topic, with signatures, fields, and defaults. Also covers the compatibility rules and the contract's version history.
 ---
 
 import { Callout } from "nextra/components";
 
 # Reference
 
-This page lists every name in `deerflow_extension_api.__all__` for contract version **0.2.4**. Import them from the package root:
+This page lists every name in `nkyel_extension_api.__all__` for contract version **0.2.4**. Import them from the package root:
 
 ```python
-from deerflow_extension_api import ExtensionRegistry, MiddlewarePlacement, Placement
+from nkyel_extension_api import ExtensionRegistry, MiddlewarePlacement, Placement
 ```
 
-The package has no dependencies and never imports DeerFlow. Types written as `Any` below, such as a middleware or a router, are validated by the host at runtime rather than by the contract.
+The package has no dependencies and never imports nkyel. Types written as `Any` below, such as a middleware or a router, are validated by the host at runtime rather than by the contract.
 
 ## Entry point and registry
 
@@ -27,7 +27,7 @@ The signature of the function named by a `plugins:` record's `use`. The second a
 
 ### `extension(*, api, name=None)`
 
-Decorator that stamps an install function with the contract version it was written against (`__deerflow_api__`) and an optional name (`__deerflow_name__`). Optional; see [Compatibility rules](#compatibility-rules).
+Decorator that stamps an install function with the contract version it was written against (`__nkyel_api__`) and an optional name (`__nkyel_name__`). Optional; see [Compatibility rules](#compatibility-rules).
 
 ```python
 @extension(api="0.2.0", name="hello")
@@ -42,7 +42,7 @@ A `runtime_checkable` Protocol: the write-only surface passed to `install()`. Ev
 | ---------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------- |
 | `middlewares(contributor: MiddlewareContributor)`          | `None`  | A middleware contributor                                                                 |
 | `task_lifecycle(contributor: TaskLifecycleContributor)`    | `None`  | Start and stop hooks for lead runs and subagents                                        |
-| `system_model_observer(observer: SystemModelCallObserver)` | `None`  | An observer of DeerFlow-owned model calls                                                |
+| `system_model_observer(observer: SystemModelCallObserver)` | `None`  | An observer of nkyel-owned model calls                                                |
 | `agent_assembly_observer(observer: AgentAssemblyObserver)` | `None`  | An observer of assembled agents                                                          |
 | `context_compaction_observer(observer: ContextCompactionObserver)` | `None` | An observer of summarization                                                       |
 | `service(service: ExtensionService)`                       | `None`  | A Gateway-lifetime service                                                               |
@@ -94,7 +94,7 @@ Frozen dataclass passed to `contribute_middlewares()`.
 
 ### `HostPolicySnapshot`
 
-Frozen dataclass: the limits the host enforces, projected so extensions do not depend on DeerFlow's config types. Every field has a default.
+Frozen dataclass: the limits the host enforces, projected so extensions do not depend on nkyel's config types. Every field has a default.
 
 | Field                   | Type            | Default |
 | ----------------------- | --------------- | ------- |
@@ -127,7 +127,7 @@ Return the task-scoped store from a LangGraph runtime (`request.runtime` in a wr
 
 ### `EXTENSION_TASK_STORE_KEY`
 
-`"__deerflow_extension_task_store"`. The host-owned runtime-context key behind `task_store_from_runtime()`. Read it only through that helper and never write it.
+`"__nkyel_extension_task_store"`. The host-owned runtime-context key behind `task_store_from_runtime()`. Read it only through that helper and never write it.
 
 ## Task lifecycle
 
@@ -322,7 +322,7 @@ Like `resolve_run_evidence_reader()`, but raises `NotImplementedError("request-s
 
 ### `RUN_EVIDENCE_READER_RESOLVER_KEY`
 
-`"deerflow_extension_run_evidence_reader_resolver"`. The `app.state` attribute the host installs its request-scoped resolver under. Host-owned.
+`"nkyel_extension_run_evidence_reader_resolver"`. The `app.state` attribute the host installs its request-scoped resolver under. Host-owned.
 
 ### `InvalidRunEvidenceCursor`
 
@@ -344,7 +344,7 @@ Return the principal if it is an administrator, otherwise raise `PermissionError
 
 ### `EXTENSION_PRINCIPAL_RESOLVER_KEY`
 
-`"deerflow_extension_principal_resolver"`. The `app.state` attribute the host installs its resolver under. Host-owned.
+`"nkyel_extension_principal_resolver"`. The `app.state` attribute the host installs its resolver under. Host-owned.
 
 ### `require_plugin_management(request: object, namespace: str, *, scope: Literal["read", "write"] = "read") -> ExtensionPrincipal`
 
@@ -360,11 +360,11 @@ The async form of `require_plugin_management`, for `async def` endpoints. It awa
 
 ### `EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY`
 
-`"deerflow_extension_plugin_authz_resolver"`. The `app.state` attribute the host installs the synchronous `plugin_management` resolver under, answering `(request, namespace, scope) -> bool | None`. Host-owned.
+`"nkyel_extension_plugin_authz_resolver"`. The `app.state` attribute the host installs the synchronous `plugin_management` resolver under, answering `(request, namespace, scope) -> bool | None`. Host-owned.
 
 ### `EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY`
 
-`"deerflow_extension_plugin_authz_resolver_async"`. The async counterpart, answering `async (request, namespace, scope) -> bool | None`. Host-owned.
+`"nkyel_extension_plugin_authz_resolver_async"`. The async counterpart, answering `async (request, namespace, scope) -> bool | None`. Host-owned.
 
 ## Message provenance
 
@@ -372,9 +372,9 @@ Middleware that injects messages stamps them, so an observer can tell an injecte
 
 | Constant                         | Value                           |
 | -------------------------------- | ------------------------------- |
-| `MESSAGE_CONTENT_KIND_KEY`       | `"deerflow_content_kind"`       |
-| `MESSAGE_PRODUCER_KIND_KEY`      | `"deerflow_producer_kind"`      |
-| `MESSAGE_PRODUCER_ENTITY_ID_KEY` | `"deerflow_producer_entity_id"` |
+| `MESSAGE_CONTENT_KIND_KEY`       | `"nkyel_content_kind"`       |
+| `MESSAGE_PRODUCER_KIND_KEY`      | `"nkyel_producer_kind"`      |
+| `MESSAGE_PRODUCER_ENTITY_ID_KEY` | `"nkyel_producer_entity_id"` |
 | `PROVENANCE_KEYS`                | `frozenset` of the three keys. The host treats them as server-owned and strips caller-supplied values from untrusted input |
 
 ### `ContentKind`
@@ -513,7 +513,7 @@ The host's contract version as a dotted string, `"0.2.4"` for the contract this 
   - from 1.0: the same major, and the host's version is at least the declared one.
 
   A marker that is not a dotted numeric string is refused. An install function without a marker is not checked.
-- **Package metadata** is the primary mechanism: declare `deerflow-extension-api>=0.2,<0.3` so the resolver rejects a mismatched host before anything loads. The marker covers installs that bypass resolution.
+- **Package metadata** is the primary mechanism: declare `nkyel-extension-api>=0.2,<0.3` so the resolver rejects a mismatched host before anything loads. The marker covers installs that bypass resolution.
 - **Declare frameworks yourself.** The contract depends on nothing. An extension that imports LangChain, LangGraph, or FastAPI declares them.
 
 ## Version history

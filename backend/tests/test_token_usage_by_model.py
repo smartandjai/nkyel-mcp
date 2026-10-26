@@ -23,10 +23,10 @@ from uuid import uuid4
 
 import pytest
 
-from deerflow.persistence.run import RunRepository
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.persistence.run import RunRepository
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 # ---------------------------------------------------------------------------
 # Test doubles
@@ -359,7 +359,7 @@ async def test_memory_store_by_model_invariant_and_fallback():
 
 
 async def _make_sql_repo(tmp_path):
-    from deerflow.persistence.engine import get_session_factory, init_engine
+    from nkyel.persistence.engine import get_session_factory, init_engine
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'by-model.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -367,7 +367,7 @@ async def _make_sql_repo(tmp_path):
 
 
 async def _close_sql_engine() -> None:
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     await close_engine()
 
@@ -535,7 +535,7 @@ class TestJournalCacheRead:
         assert bucket["input_tokens"] - bucket["cache_read_tokens"] == raw["prompt_cache_miss_tokens"]
 
     def test_collector_extracts_cache_read_from_usage_metadata(self) -> None:
-        from deerflow.subagents.token_collector import SubagentTokenCollector
+        from nkyel.subagents.token_collector import SubagentTokenCollector
 
         collector = SubagentTokenCollector("subagent:general-purpose")
         collector.on_llm_end(
@@ -550,7 +550,7 @@ class TestJournalCacheRead:
         assert records[0]["cache_read_tokens"] == 20
 
     def test_collector_omits_cache_read_key_when_no_cache_hits(self) -> None:
-        from deerflow.subagents.token_collector import SubagentTokenCollector
+        from nkyel.subagents.token_collector import SubagentTokenCollector
 
         collector = SubagentTokenCollector("subagent:general-purpose")
         collector.on_llm_end(

@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from app.gateway.auth.models import User
 from app.gateway.deps import get_config
 from app.gateway.routers import knowledge
-from deerflow.community.ragflow import provider as ragflow_provider
+from nkyel.community.ragflow import provider as ragflow_provider
 
 
 def _config(
@@ -19,7 +19,7 @@ def _config(
     api_key: str | None = "ragflow-secret",
     scope_selection_enabled: bool = False,
     datasets: list[str] | None = None,
-    provider: str = "deerflow.community.ragflow.tools:knowledge_search_tool",
+    provider: str = "nkyel.community.ragflow.tools:knowledge_search_tool",
 ) -> SimpleNamespace:
     tool = SimpleNamespace(
         use=provider,
@@ -250,7 +250,7 @@ def test_retrieval_catalog_documents_marks_only_searchable_files_selectable(
         _config(scope_selection_enabled=False),
         _config(
             scope_selection_enabled=True,
-            provider=("deerflow.community.lightrag.tools:knowledge_search_tool"),
+            provider=("nkyel.community.lightrag.tools:knowledge_search_tool"),
         ),
     ],
 )

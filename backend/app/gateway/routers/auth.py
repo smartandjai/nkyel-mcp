@@ -39,8 +39,8 @@ from app.gateway.auth.user_provisioning import get_or_provision_oidc_user
 from app.gateway.csrf_middleware import CSRF_COOKIE_NAME, _request_origin, auth_csrf_cookie_settings, generate_csrf_token, is_secure_request
 from app.gateway.deps import get_current_user_from_request, get_local_provider
 from app.gateway.utils import constant_time_equals
-from deerflow.config.auth_config import OIDCProviderConfig
-from deerflow.persistence.login_throttle import LoginThrottleStore
+from nkyel.config.auth_config import OIDCProviderConfig
+from nkyel.persistence.login_throttle import LoginThrottleStore
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ def _set_session_cookie(response: Response, token: str, request: Request, *, rem
 
 # ── Rate Limiting ────────────────────────────────────────────────────────
 # Failed logins are counted per client IP in a ``LoginThrottleStore``
-# (``deerflow.persistence.login_throttle``). The store is resolved once per
+# (``nkyel.persistence.login_throttle``). The store is resolved once per
 # process by ``app.gateway.auth.login_throttle`` — the Gateway lifespan
 # installs it from the startup config and the persistence engine, a bare app
 # resolves it lazily on the first throttle call — and ``auth.local.
@@ -186,7 +186,7 @@ def _set_session_cookie(response: Response, token: str, request: Request, *, rem
 # included): a lowered lockout_seconds releases an active lock early, a raised
 # one extends it — and a sentence that already served the last-evaluated
 # duration is never resurrected. The stores implement that contract
-# (``deerflow/persistence/login_throttle/base.py``); this module only sequences
+# (``nkyel/persistence/login_throttle/base.py``); this module only sequences
 # the calls and keeps the config read off the event loop.
 
 
@@ -213,8 +213,8 @@ def _login_throttle_policy() -> tuple[int, float]:
     ``get_app_config`` re-hashes the config file on every call, and the login
     endpoint is unauthenticated.
     """
-    from deerflow.config.app_config import get_app_config
-    from deerflow.config.auth_config import LocalAuthConfig
+    from nkyel.config.app_config import get_app_config
+    from nkyel.config.auth_config import LocalAuthConfig
 
     try:
         local = get_app_config().auth.local
@@ -411,7 +411,7 @@ async def _record_login_failure(ip: str) -> None:
         # long as the file stays broken. Count under the model defaults so
         # the throttle fails closed (the next check reads the broken config
         # before authenticate), then re-raise.
-        from deerflow.config.auth_config import LocalAuthConfig
+        from nkyel.config.auth_config import LocalAuthConfig
 
         fallback = LocalAuthConfig()
         await store.record_failure(ip, max_attempts=fallback.max_login_attempts, lockout_seconds=fallback.lockout_seconds, now=time.time())
@@ -475,7 +475,7 @@ def _local_registration_enabled() -> bool:
     ``/register`` reads this fresh on every request (``get_app_config`` reloads on file
     change); ``/setup-status`` may serve it up to 60s stale via its per-IP result cache.
     """
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     try:
         return get_app_config().auth.local.allow_registration
@@ -550,7 +550,7 @@ async def change_password(request: Request, response: Response, body: ChangePass
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=AuthErrorResponse(
                 code=AuthErrorCode.INVALID_CREDENTIALS,
-                message="Password changes are not available when DEER_FLOW_AUTH_DISABLED=1.",
+                message="Password changes are not available when NKYEL_AUTH_DISABLED=1.",
             ).model_dump(),
         )
 
@@ -916,7 +916,7 @@ async def list_auth_providers():
     Returns only safe frontend metadata — no secrets, endpoints, or
     internal configuration.
     """
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     app_config = get_app_config()
     oidc_config = app_config.auth.oidc
@@ -949,7 +949,7 @@ async def oauth_login(
     and PKCE parameters. The ``next`` query parameter specifies where to
     redirect after successful login (default: /workspace).
     """
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     app_config = get_app_config()
     oidc_config = app_config.auth.oidc
@@ -1028,10 +1028,10 @@ async def oauth_callback(
 
     Handles the OIDC provider's redirect after user authorization.
     Validates the state cookie, exchanges the code for tokens, validates
-    the ID token, provisions/links the DeerFlow user, and sets the
+    the ID token, provisions/links the nkyel user, and sets the
     session cookie.
     """
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     app_config = get_app_config()
     oidc_config = app_config.auth.oidc
@@ -1113,7 +1113,7 @@ async def oauth_callback(
 
     user = result["user"]
 
-    # ── Issue DeerFlow session ───────────────────────────────────────
+    # ── Issue nkyel session ───────────────────────────────────────
     token = create_access_token(str(user.id), token_version=user.token_version)
 
     # Revalidate as defense-in-depth if future state writers populate this target.

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.community.image_search import tools
+from nkyel.community.image_search import tools
 
 pytestmark = pytest.mark.asyncio
 

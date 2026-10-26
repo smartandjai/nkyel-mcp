@@ -4,7 +4,7 @@ import { mockLangGraphAPI } from "./utils/mock-api";
 
 declare global {
   interface Window {
-    __deerflowNotifications?: Array<{ title: string; body?: string }>;
+    __nkyelNotifications?: Array<{ title: string; body?: string }>;
   }
 }
 
@@ -13,7 +13,7 @@ async function installNotificationMock(
   initialPermission: NotificationPermission = "default",
 ) {
   await page.addInitScript((permission) => {
-    window.__deerflowNotifications = [];
+    window.__nkyelNotifications = [];
 
     class MockNotification {
       static permission: NotificationPermission = permission;
@@ -28,7 +28,7 @@ async function installNotificationMock(
       closed = false;
 
       constructor(title: string, options?: NotificationOptions) {
-        window.__deerflowNotifications?.push({
+        window.__nkyelNotifications?.push({
           title,
           body: options?.body,
         });
@@ -78,10 +78,10 @@ test.describe("Notification settings", () => {
       .click();
 
     await expect
-      .poll(() => page.evaluate(() => window.__deerflowNotifications ?? []))
+      .poll(() => page.evaluate(() => window.__nkyelNotifications ?? []))
       .toEqual([
         {
-          title: "DeerFlow",
+          title: "nkyel",
           body: "This is a test notification.",
         },
       ]);
@@ -104,11 +104,11 @@ test.describe("Notification settings", () => {
     await textarea.press("Enter");
 
     await expect
-      .poll(() => page.evaluate(() => window.__deerflowNotifications ?? []))
+      .poll(() => page.evaluate(() => window.__nkyelNotifications ?? []))
       .toEqual([
         {
           title: "New Chat",
-          body: "Hello from DeerFlow!",
+          body: "Hello from nkyel!",
         },
       ]);
   });

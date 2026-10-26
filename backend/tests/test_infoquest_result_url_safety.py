@@ -19,9 +19,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from deerflow.community import url_safety
-from deerflow.community.infoquest import infoquest_client as infoquest_module
-from deerflow.community.infoquest.infoquest_client import InfoQuestClient
+from nkyel.community import url_safety
+from nkyel.community.infoquest import infoquest_client as infoquest_module
+from nkyel.community.infoquest.infoquest_client import InfoQuestClient
 
 NON_PUBLIC_URLS: list[Any] = [
     "http://127.0.0.1/record",

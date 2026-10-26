@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, Mock
 import httpx
 import pytest
 
-from deerflow.community.jina_ai.jina_client import JinaClient
+from nkyel.community.jina_ai.jina_client import JinaClient
 
 pytestmark = pytest.mark.anyio
 
@@ -187,7 +187,7 @@ async def test_shared_deadline_covers_retry_stream(transport, monkeypatch):
 
 @pytest.mark.parametrize("limit", [4, "4"])
 async def test_tool_error_skips_extraction(transport, monkeypatch, limit):
-    from deerflow.community.jina_ai import tools
+    from nkyel.community.jina_ai import tools
 
     config = SimpleNamespace(model_extra={"max_response_bytes": limit})
     monkeypatch.setattr(tools, "get_app_config", lambda: SimpleNamespace(get_tool_config=lambda name: config))
@@ -205,7 +205,7 @@ async def test_tool_error_skips_extraction(transport, monkeypatch, limit):
 
 
 async def test_tool_real_extraction_preserves_output_cap(transport, monkeypatch):
-    from deerflow.community.jina_ai import tools
+    from nkyel.community.jina_ai import tools
 
     monkeypatch.setattr("readabilipy.simple_json.have_node", lambda: False)
     body = ("<html><title>Example</title><body><article><p>" + "Useful article text. " * 500 + "</p></article></body></html>").encode()

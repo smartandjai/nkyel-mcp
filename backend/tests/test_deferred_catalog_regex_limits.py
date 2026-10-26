@@ -7,9 +7,9 @@ import sys
 import pytest
 from langchain_core.tools import StructuredTool
 
-from deerflow.tools.builtins import tool_search as search_module
-from deerflow.tools.builtins.tool_search import MAX_REGEX_FIELD_CHARS, MAX_REGEX_PATTERN_CHARS, DeferredToolCatalog, ToolSearchLimitError, build_tool_search_tool
-from deerflow.tools.mcp_metadata import tag_mcp_tool
+from nkyel.tools.builtins import tool_search as search_module
+from nkyel.tools.builtins.tool_search import MAX_REGEX_FIELD_CHARS, MAX_REGEX_PATTERN_CHARS, DeferredToolCatalog, ToolSearchLimitError, build_tool_search_tool
+from nkyel.tools.mcp_metadata import tag_mcp_tool
 
 
 def make_tool(name="aaa_tool", description="ordinary"):
@@ -23,7 +23,7 @@ def test_pathological_regex_finishes_in_isolated_process(mode):
     script = """
 import sys
 from langchain_core.tools import StructuredTool
-from deerflow.tools.builtins.tool_search import DeferredToolCatalog
+from nkyel.tools.builtins.tool_search import DeferredToolCatalog
 mode = sys.argv[1]
 name = 'a' * 10000 + ('_' if mode == 'valid_name' else '!') if mode in ('name', 'valid_name') else 'aaa_tool'
 description = 'a' * 10000 + '!' if mode in ('description', 'required') else 'ordinary'

@@ -5,15 +5,15 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.gateway.routers import suggestions
-from deerflow.trace_context import request_trace_context
-from deerflow.utils import oneshot_llm
+from nkyel.trace_context import request_trace_context
+from nkyel.utils import oneshot_llm
 
 
 @pytest.fixture(autouse=True)
 def _clear_langfuse_env(monkeypatch):
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
-    for name in ("LANGFUSE_TRACING", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL", "DEER_FLOW_ENV", "ENVIRONMENT"):
+    for name in ("LANGFUSE_TRACING", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL", "NKYEL_ENV", "ENVIRONMENT"):
         monkeypatch.delenv(name, raising=False)
     reset_tracing_config()
     # These tests bypass route auth to exercise parsing and tracing. Model
@@ -154,11 +154,11 @@ def test_generate_suggestions_respects_configured_max(monkeypatch):
     assert result.suggestions == ["Q1", "Q2"]
 
 
-def test_generate_suggestions_injects_deerflow_trace_metadata_when_langfuse_enabled(monkeypatch):
+def test_generate_suggestions_injects_nkyel_trace_metadata_when_langfuse_enabled(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
     req = suggestions.SuggestionsRequest(
@@ -181,7 +181,7 @@ def test_generate_suggestions_injects_deerflow_trace_metadata_when_langfuse_enab
 
     assert result.suggestions == ["Q1"]
     metadata = fake_model.ainvoke.await_args.kwargs["config"]["metadata"]
-    assert metadata["deerflow_trace_id"] == "suggest-trace-1"
+    assert metadata["nkyel_trace_id"] == "suggest-trace-1"
     assert metadata["langfuse_session_id"] == "thread-suggest"
     assert metadata["langfuse_trace_name"] == "suggest_agent"
 

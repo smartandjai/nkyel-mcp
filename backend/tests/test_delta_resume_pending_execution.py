@@ -18,13 +18,13 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.graph import END, StateGraph
 from langgraph.types import Command
 
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.runtime.checkpoint_mode import inject_checkpoint_mode
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.schemas import RunStatus
-from deerflow.runtime.runs.worker import RunContext, _linearize_delta_checkpoint_resume, run_agent
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.runtime.checkpoint_mode import inject_checkpoint_mode
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.schemas import RunStatus
+from nkyel.runtime.runs.worker import RunContext, _linearize_delta_checkpoint_resume, run_agent
 
 pytestmark = pytest.mark.anyio
 THREAD_ID = "pending-delta-resume"
@@ -38,8 +38,8 @@ def anyio_backend():
 
 @pytest.fixture(autouse=True)
 def offline_config(monkeypatch, tmp_path):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     yield
     reset_app_config()
 

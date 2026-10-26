@@ -5,7 +5,7 @@ import errno
 
 import pytest
 
-from deerflow.utils.file_lock import retry_until_locked
+from nkyel.utils.file_lock import retry_until_locked
 
 
 @pytest.mark.parametrize("error_number", [errno.EACCES, errno.EAGAIN, errno.EDEADLK])

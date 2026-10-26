@@ -21,9 +21,9 @@ import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_leases import ChannelLeaseRow, SqlChannelLeaseRepository, db_now
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_leases import ChannelLeaseRow, SqlChannelLeaseRepository, db_now
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 pytestmark = pytest.mark.asyncio
 

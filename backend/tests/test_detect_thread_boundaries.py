@@ -25,7 +25,7 @@ def test_scan_file_detects_async_thread_and_tool_boundaries(tmp_path):
         import threading
         import time
         from concurrent.futures import ThreadPoolExecutor
-        from deerflow.utils.file_io import run_file_io
+        from nkyel.utils.file_io import run_file_io
         from langchain.tools import tool
         from langchain_core.tools import StructuredTool
 

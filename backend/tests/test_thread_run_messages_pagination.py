@@ -10,8 +10,8 @@ from _run_message_pagination_helpers import assert_run_message_page
 from fastapi.testclient import TestClient
 
 from app.gateway.routers import thread_runs
-from deerflow.runtime import END_SENTINEL, MemoryStreamBridge, RunManager
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime import END_SENTINEL, MemoryStreamBridge, RunManager
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -273,7 +273,7 @@ def test_list_run_messages_injects_turn_duration_only_on_last_ai():
     so only the run's final AI message carries it — not every AI message."""
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime import RunRecord
+    from nkyel.runtime import RunRecord
 
     # Mock a run record that took exactly 5 seconds
     mock_run = RunRecord(
@@ -313,7 +313,7 @@ def test_list_run_messages_turn_duration_skips_middleware_tail():
     trailing middleware-caller message (e.g. title generation)."""
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime import RunRecord
+    from nkyel.runtime import RunRecord
 
     mock_run = RunRecord(
         run_id="run-1",
@@ -351,7 +351,7 @@ def test_list_thread_messages_injects_turn_duration_once_per_run():
     other runs interleave in the same thread."""
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime import RunRecord
+    from nkyel.runtime import RunRecord
 
     def _run(run_id: str, seconds: int) -> RunRecord:
         return RunRecord(
@@ -404,7 +404,7 @@ def test_list_thread_messages_turn_duration_skips_middleware_tail():
     on this path too, not just ``list_run_messages``."""
     from unittest.mock import AsyncMock
 
-    from deerflow.runtime import RunRecord
+    from nkyel.runtime import RunRecord
 
     mock_run = RunRecord(
         run_id="run-1",

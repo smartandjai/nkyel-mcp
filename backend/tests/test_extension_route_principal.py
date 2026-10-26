@@ -8,7 +8,7 @@ different questions and an extension must be able to ask the second one.
 from types import SimpleNamespace
 
 import pytest
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     EXTENSION_PRINCIPAL_RESOLVER_KEY,
     RUN_EVIDENCE_READER_RESOLVER_KEY,
     ExtensionPrincipal,
@@ -70,9 +70,9 @@ def _stub_app_config(monkeypatch):
     same pattern).
     """
     import app.gateway.app as app_module
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.extensions import reset_loaded_extensions, reset_runtime_diagnostics
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.extensions import reset_loaded_extensions, reset_runtime_diagnostics
 
     config = AppConfig(sandbox=SandboxConfig(use="test"))
     monkeypatch.setattr(app_module, "get_app_config", lambda: config)

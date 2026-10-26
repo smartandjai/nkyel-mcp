@@ -17,11 +17,11 @@ import sqlalchemy as sa
 from alembic import command
 from alembic.script import ScriptDirectory
 
-import deerflow.persistence.models  # noqa: F401  -- registers ORM models
-from deerflow.persistence.base import Base
-from deerflow.persistence.bootstrap import _MIGRATIONS_DIR, _get_alembic_config, _get_head_revision
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.run import RunRepository
+import nkyel.persistence.models  # noqa: F401  -- registers ORM models
+from nkyel.persistence.base import Base
+from nkyel.persistence.bootstrap import _MIGRATIONS_DIR, _get_alembic_config, _get_head_revision
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.run import RunRepository
 
 pytestmark = pytest.mark.asyncio
 
@@ -120,7 +120,7 @@ async def test_0025_downgrade_preserves_ancestor_owned_schema_and_data(tmp_path)
     url = f"sqlite+aiosqlite:///{db_path.as_posix()}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
     try:
-        from deerflow.persistence.engine import get_engine
+        from nkyel.persistence.engine import get_engine
 
         engine = get_engine()
         assert engine is not None

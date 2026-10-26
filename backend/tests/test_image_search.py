@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from deerflow.community.image_search import tools
-from deerflow.community.image_search.tools import image_search_tool
+from nkyel.community.image_search import tools
+from nkyel.community.image_search.tools import image_search_tool
 
 
 @pytest.mark.anyio
@@ -25,8 +25,8 @@ async def test_image_search_uses_full_image_url_not_thumbnail():
     cfg.get_tool_config.return_value = None
 
     with (
-        patch("deerflow.community.image_search.tools._search_images", return_value=fake_results),
-        patch("deerflow.community.image_search.tools.get_app_config", return_value=cfg),
+        patch("nkyel.community.image_search.tools._search_images", return_value=fake_results),
+        patch("nkyel.community.image_search.tools.get_app_config", return_value=cfg),
     ):
         output = json.loads(await image_search_tool.ainvoke({"query": "a cat"}))
 
@@ -44,8 +44,8 @@ async def _search_kwargs(query="a cat", **kwargs):
     cfg.get_tool_config.return_value = None
 
     with (
-        patch("deerflow.community.image_search.tools._search_images", return_value=fake_results) as mock_search,
-        patch("deerflow.community.image_search.tools.get_app_config", return_value=cfg),
+        patch("nkyel.community.image_search.tools._search_images", return_value=fake_results) as mock_search,
+        patch("nkyel.community.image_search.tools.get_app_config", return_value=cfg),
     ):
         await image_search_tool.ainvoke({"query": query, **kwargs})
 
@@ -111,12 +111,12 @@ async def test_image_search_max_results_with_real_ddgs(monkeypatch, caplog, conf
     from ddgs.ddgs import DDGS
     from ddgs.results import ImagesResult
 
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.tool_config import ToolConfig
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.tool_config import ToolConfig
 
     monkeypatch.setenv("IMAGE_SEARCH_TEST_MAX_RESULTS", env_value)
     caplog.set_level(logging.WARNING, logger=tools.__name__)
-    raw_config = {"name": "image_search", "group": "web", "use": "deerflow.community.image_search.tools:image_search_tool"}
+    raw_config = {"name": "image_search", "group": "web", "use": "nkyel.community.image_search.tools:image_search_tool"}
     if configured_limit is not None:
         raw_config["max_results"] = configured_limit
     tool_config = ToolConfig.model_validate(AppConfig.resolve_env_variables(raw_config))

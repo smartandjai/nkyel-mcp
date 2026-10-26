@@ -12,10 +12,10 @@ import pytest
 from textual import events
 from textual.containers import VerticalScroll
 
-from deerflow.client import StreamEvent
-from deerflow.tui.app import DeerFlowTUI
-from deerflow.tui.cli import LaunchPlan
-from deerflow.tui.view_state import SystemMessage
+from nkyel.client import StreamEvent
+from nkyel.tui.app import NkyelTUI
+from nkyel.tui.cli import LaunchPlan
+from nkyel.tui.view_state import SystemMessage
 
 
 class _FakeClient:
@@ -54,7 +54,7 @@ async def _wait_until(predicate, pilot, *, timeout=3.0):
     return predicate()
 
 
-async def _fill_scrollable_transcript(app: DeerFlowTUI, pilot) -> VerticalScroll:
+async def _fill_scrollable_transcript(app: NkyelTUI, pilot) -> VerticalScroll:
     for index in range(80):
         app._dispatch(SystemMessage(f"row {index}: " + "content " * 12))
     await pilot.pause()
@@ -66,7 +66,7 @@ async def _fill_scrollable_transcript(app: DeerFlowTUI, pilot) -> VerticalScroll
 
 @pytest.mark.asyncio
 async def test_app_runs_a_turn_and_renders_streamed_assistant():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         await pilot.press("h", "i")
@@ -88,7 +88,7 @@ async def test_app_runs_a_turn_and_renders_streamed_assistant():
 @pytest.mark.parametrize("prefix", ["", "/tdd\n", "/tdd\t"])
 async def test_multiline_paste_reaches_agent_without_dropping_lines(prefix):
     session = _FakeSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     pasted = prefix + 'Traceback:\n  File "worker.py", line 7\nRuntimeError: boom'
 
     async with app.run_test() as pilot:
@@ -105,7 +105,7 @@ async def test_multiline_paste_reaches_agent_without_dropping_lines(prefix):
 @pytest.mark.parametrize("separator", [" ", "\t", "\n", "\u00a0", "\u2003", "\u202f", "\u3000"])
 async def test_pasted_whitespace_closes_palette_and_enter_submits_skill(separator):
     session = _FakeSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     pasted = f"/tdd{separator}"
 
     async with app.run_test() as pilot:
@@ -129,7 +129,7 @@ async def test_pasted_whitespace_closes_palette_and_enter_submits_skill(separato
 
 @pytest.mark.asyncio
 async def test_multiline_arrows_move_lines_before_input_history():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -158,7 +158,7 @@ async def test_multiline_arrows_move_lines_before_input_history():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("draft", ["unsent question", "first line\nsecond line"])
 async def test_up_with_empty_history_preserves_draft_and_cursor(draft):
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -176,7 +176,7 @@ async def test_up_with_empty_history_preserves_draft_and_cursor(draft):
 
 @pytest.mark.asyncio
 async def test_up_with_empty_history_preserves_undo():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -189,7 +189,7 @@ async def test_up_with_empty_history_preserves_undo():
 
 @pytest.mark.asyncio
 async def test_app_assigns_thread_id_on_first_send():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app._conv_thread_id is None
@@ -201,7 +201,7 @@ async def test_app_assigns_thread_id_on_first_send():
 
 @pytest.mark.asyncio
 async def test_help_command_renders_system_row_without_calling_agent():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         for ch in "/help":
@@ -222,9 +222,9 @@ async def test_help_command_renders_system_row_without_calling_agent():
 
 @pytest.mark.asyncio
 async def test_help_text_matches_command_registry():
-    from deerflow.tui.command_registry import format_command_help
+    from nkyel.tui.command_registry import format_command_help
 
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         for ch in "/help":
@@ -239,7 +239,7 @@ async def test_help_text_matches_command_registry():
 @pytest.mark.asyncio
 async def test_clear_command_clears_display_without_resetting_thread_or_calling_agent():
     session = _FakeSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app._conv_thread_id = "thread-123"
@@ -256,7 +256,7 @@ async def test_clear_command_clears_display_without_resetting_thread_or_calling_
 
 @pytest.mark.asyncio
 async def test_up_arrow_recalls_previous_input_from_history():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         for ch in "remember me":
@@ -271,7 +271,7 @@ async def test_up_arrow_recalls_previous_input_from_history():
 
 @pytest.mark.asyncio
 async def test_escape_interrupts_an_active_run():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app._streaming = True
@@ -313,7 +313,7 @@ class _BlockedSession(_FakeSession):
 @pytest.mark.asyncio
 async def test_clear_command_is_blocked_during_active_stream():
     session = _BlockedSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         await pilot.press("h", "i")
@@ -334,7 +334,7 @@ async def test_clear_command_is_blocked_during_active_stream():
 @pytest.mark.asyncio
 async def test_new_command_is_blocked_during_active_stream():
     session = _BlockedSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         await pilot.press("h", "i")
@@ -368,7 +368,7 @@ async def test_quit_interrupts_an_active_stream_before_exiting():
     step, so the app says it is waiting and exits once that step returns.
     """
     session = _BlockedSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         try:
             await pilot.pause()
@@ -396,7 +396,7 @@ async def test_quit_interrupts_an_active_stream_before_exiting():
 async def test_ctrl_c_interrupts_an_active_stream_without_exiting():
     """Contrast/control: Ctrl+C on a real blocked worker interrupts but stays open."""
     session = _BlockedSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         await pilot.press("h", "i")
@@ -416,7 +416,7 @@ async def test_ctrl_c_interrupts_an_active_stream_without_exiting():
 @pytest.mark.asyncio
 async def test_ctrl_c_quit_waits_for_the_interrupted_run_and_refuses_new_sends():
     session = _BlockedSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         try:
             await pilot.pause()
@@ -449,7 +449,7 @@ async def test_ctrl_c_quit_waits_for_the_interrupted_run_and_refuses_new_sends()
 @pytest.mark.asyncio
 async def test_second_quit_request_exits_without_waiting_for_the_interrupted_run():
     session = _BlockedSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         try:
             await pilot.pause()
@@ -492,7 +492,7 @@ async def test_quit_waits_for_a_completed_run_still_saving_its_title():
     session = _FakeSession()
     session.client = _TitledClient()
     session.writer = _BlockingTitleWriter()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         try:
             await pilot.pause()
@@ -519,7 +519,7 @@ async def test_unexpected_worker_failure_ends_the_run_with_an_error_row():
 
     session = _FakeSession()
     session.writer = _FailingWriter()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         await pilot.press("h", "i")
@@ -533,10 +533,10 @@ async def test_unexpected_worker_failure_ends_the_run_with_an_error_row():
 
 _FORCE_QUIT_SCRIPT = """
 import threading, time
-from deerflow.client import StreamEvent
-from deerflow.tui.app import DeerFlowTUI
-from deerflow.tui.cli import LaunchPlan
-from deerflow.tui.session import Session
+from nkyel.client import StreamEvent
+from nkyel.tui.app import NkyelTUI
+from nkyel.tui.cli import LaunchPlan
+from nkyel.tui.session import Session
 
 in_step = threading.Event()
 
@@ -549,7 +549,7 @@ class Client:
         time.sleep(60)  # a long tool step that emits no event
         yield StreamEvent(type="end", data={"usage": {}})
 
-class App(DeerFlowTUI):
+class App(NkyelTUI):
     def on_mount(self):
         super().on_mount()
         self._send_to_agent("q")
@@ -582,7 +582,7 @@ def test_quit_now_exits_the_process_while_the_interrupted_step_is_still_running(
 
 @pytest.mark.asyncio
 async def test_tab_keeps_focus_on_composer_when_palette_closed():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         composer = app.query_one("#composer")
@@ -595,7 +595,7 @@ async def test_tab_keeps_focus_on_composer_when_palette_closed():
 
 @pytest.mark.asyncio
 async def test_page_keys_scroll_transcript_without_moving_composer_focus():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test(size=(80, 24)) as pilot:
         await pilot.pause()
         composer = app.query_one("#composer")
@@ -618,7 +618,7 @@ async def test_page_keys_scroll_transcript_without_moving_composer_focus():
 
 @pytest.mark.asyncio
 async def test_transcript_update_does_not_cancel_pending_page_scroll():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test(size=(80, 24)) as pilot:
         await pilot.pause()
         scroll = await _fill_scrollable_transcript(app, pilot)
@@ -634,7 +634,7 @@ async def test_transcript_update_does_not_cancel_pending_page_scroll():
 
 @pytest.mark.asyncio
 async def test_transcript_refresh_preserves_manual_scroll_until_returning_to_end():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test(size=(80, 24)) as pilot:
         await pilot.pause()
         scroll = await _fill_scrollable_transcript(app, pilot)
@@ -663,7 +663,7 @@ async def test_transcript_refresh_preserves_manual_scroll_until_returning_to_end
 
 @pytest.mark.asyncio
 async def test_transcript_refresh_preserves_non_key_scroll_position():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test(size=(80, 24)) as pilot:
         await pilot.pause()
         scroll = await _fill_scrollable_transcript(app, pilot)
@@ -680,7 +680,7 @@ async def test_transcript_refresh_preserves_non_key_scroll_position():
 
 @pytest.mark.asyncio
 async def test_unknown_command_shows_error_system_row():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         for ch in "/nope":
@@ -732,7 +732,7 @@ def _system_rows(app):
 @pytest.mark.asyncio
 async def test_goal_set_mints_thread_and_reports_objective():
     session = _GoalSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         assert app._conv_thread_id is None
@@ -746,7 +746,7 @@ async def test_goal_set_mints_thread_and_reports_objective():
 @pytest.mark.asyncio
 async def test_goal_status_without_thread_reports_no_active_goal():
     session = _GoalSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app._handle_goal("")
@@ -760,7 +760,7 @@ async def test_goal_status_without_thread_reports_no_active_goal():
 async def test_goal_status_reports_active_objective():
     session = _GoalSession()
     session.client.goal = {"objective": "ship it", "status": "active"}
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app._conv_thread_id = "t-1"
@@ -774,7 +774,7 @@ async def test_goal_status_reports_active_objective():
 async def test_goal_clear_calls_gateway_and_confirms():
     session = _GoalSession()
     session.client.goal = {"objective": "ship it", "status": "active"}
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app._conv_thread_id = "t-1"
@@ -792,7 +792,7 @@ async def test_goal_set_failure_shows_error_tone():
 
     session = _GoalSession()
     session.client = _Boom()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     async with app.run_test() as pilot:
         await pilot.pause()
         app._conv_thread_id = "t-1"
@@ -805,7 +805,7 @@ async def test_goal_set_failure_shows_error_tone():
 @pytest.mark.asyncio
 async def test_multiline_paste_keeps_leading_indentation_and_trailing_newline():
     session = _FakeSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     pasted = "    def f():\n        return 1\n"
 
     async with app.run_test() as pilot:
@@ -822,7 +822,7 @@ async def test_multiline_paste_keeps_leading_indentation_and_trailing_newline():
 @pytest.mark.asyncio
 async def test_whitespace_only_input_is_not_submitted():
     session = _FakeSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -838,7 +838,7 @@ async def test_whitespace_only_input_is_not_submitted():
 @pytest.mark.asyncio
 async def test_message_refused_during_a_run_stays_in_the_composer():
     session = _FakeSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
     pasted = "    def f():\n        return 1\n"
 
     async with app.run_test() as pilot:
@@ -867,7 +867,7 @@ async def test_message_refused_during_a_run_stays_in_the_composer():
 async def test_refused_bare_skill_activation_is_restored_without_reopening_the_palette():
     """Restoring "/tdd" must not reopen the palette, or Enter would fill it instead of resending."""
     session = _FakeSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -888,7 +888,7 @@ async def test_refused_bare_skill_activation_is_restored_without_reopening_the_p
 
 @pytest.mark.asyncio
 async def test_editing_a_restored_slash_draft_reopens_the_palette():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -909,7 +909,7 @@ async def test_editing_a_restored_slash_draft_reopens_the_palette():
 
 @pytest.mark.asyncio
 async def test_refused_skill_activation_is_restored_as_recorded_in_history():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -925,7 +925,7 @@ async def test_refused_skill_activation_is_restored_as_recorded_in_history():
 
 @pytest.mark.asyncio
 async def test_down_on_last_line_of_multiline_input_falls_back_to_history():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -946,7 +946,7 @@ async def test_down_on_last_line_of_multiline_input_falls_back_to_history():
 @pytest.mark.parametrize("history", [[], ["previous prompt"]])
 @pytest.mark.parametrize("draft", ["unsent question", "first line\nsecond line"])
 async def test_down_without_history_navigation_preserves_draft_and_cursor(history, draft):
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -969,7 +969,7 @@ async def test_down_without_history_navigation_preserves_draft_and_cursor(histor
 
 @pytest.mark.asyncio
 async def test_history_round_trip_restores_draft_and_idle_down_keeps_later_edits():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
     draft = "first line\nsecond line"
 
     async with app.run_test() as pilot:
@@ -1004,7 +1004,7 @@ async def test_history_round_trip_restores_draft_and_idle_down_keeps_later_edits
 @pytest.mark.asyncio
 async def test_slash_command_with_surrounding_whitespace_still_runs_as_command():
     session = _FakeSession()
-    app = DeerFlowTUI(session, LaunchPlan(mode="tui"))
+    app = NkyelTUI(session, LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -1023,7 +1023,7 @@ _LONG_PROMPT = " ".join(f"word{i}" for i in range(60))  # one logical line that 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("direction", ["up", "down"])
 async def test_equal_history_recall_preserves_cursor_and_undo(direction):
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test() as pilot:
         await pilot.pause()
@@ -1046,7 +1046,7 @@ async def test_equal_history_recall_preserves_cursor_and_undo(direction):
 
 @pytest.mark.asyncio
 async def test_up_inside_a_soft_wrapped_line_moves_the_cursor_not_history():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test(size=(60, 24)) as pilot:
         await pilot.pause()
@@ -1065,7 +1065,7 @@ async def test_up_inside_a_soft_wrapped_line_moves_the_cursor_not_history():
 
 @pytest.mark.asyncio
 async def test_down_inside_a_soft_wrapped_line_moves_the_cursor_not_history():
-    app = DeerFlowTUI(_FakeSession(), LaunchPlan(mode="tui"))
+    app = NkyelTUI(_FakeSession(), LaunchPlan(mode="tui"))
 
     async with app.run_test(size=(60, 24)) as pilot:
         await pilot.pause()

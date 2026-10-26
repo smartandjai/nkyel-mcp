@@ -10,20 +10,20 @@ from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import uvicorn
-from deerflow_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
+from nkyel_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
 from fastapi import FastAPI, Request
 from langchain_core.messages import AIMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
 from app.gateway.routers.plugins import router
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
-from deerflow.extensions.plugin_tools import build_plugin_tools
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.plugin_tools import build_plugin_tools
 
 
 def create_app(directory):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-bookmarks"))
-    extensions, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_bookmarks:install", config={"enabled": True, "storage_path": str(Path(directory) / "bookmarks.sqlite")}, required=True)])
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-bookmarks"))
+    extensions, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_bookmarks:install", config={"enabled": True, "storage_path": str(Path(directory) / "bookmarks.sqlite")}, required=True)])
     assert not diagnostics
     app = FastAPI()
     app.state.extensions = extensions
@@ -52,5 +52,5 @@ def create_app(directory):
 
 
 if __name__ == "__main__":
-    with TemporaryDirectory(prefix="deerflow-bookmark-preview-") as directory:
+    with TemporaryDirectory(prefix="nkyel-bookmark-preview-") as directory:
         uvicorn.run(create_app(directory), host="127.0.0.1", port=int(sys.argv[1]), log_level="warning")

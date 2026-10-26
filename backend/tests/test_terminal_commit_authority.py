@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.runtime import RunManager, RunStatus
-from deerflow.runtime.runs.store.base import RunStore, StatusFinalization
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.runtime import RunManager, RunStatus
+from nkyel.runtime.runs.store.base import RunStore, StatusFinalization
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 def manager_for(store):

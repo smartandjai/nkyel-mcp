@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from deerflow.mcp.session_pool import MCPSessionPool, call_pooled_session_tool
-from deerflow.tools.sync import make_sync_tool_wrapper
+from nkyel.mcp.session_pool import MCPSessionPool, call_pooled_session_tool
+from nkyel.tools.sync import make_sync_tool_wrapper
 
 
 @pytest.fixture

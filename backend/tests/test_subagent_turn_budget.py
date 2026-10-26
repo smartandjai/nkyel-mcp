@@ -20,7 +20,7 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.tools import tool
 from langgraph.errors import GraphRecursionError
 
-from deerflow.subagents.turn_budget import count_invocation_steps, count_turn_steps, find_jumping_hooks, resolve_recursion_limit
+from nkyel.subagents.turn_budget import count_invocation_steps, count_turn_steps, find_jumping_hooks, resolve_recursion_limit
 
 
 def _middleware(name: str, *hooks: str) -> AgentMiddleware:

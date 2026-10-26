@@ -10,10 +10,10 @@ import pytest
 from fastapi import FastAPI
 
 from app.gateway import app as gateway_app
-from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.subagents import batch_service as batch_service_module
-from deerflow.subagents.batch_service import SubagentBatchService
+from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.subagents import batch_service as batch_service_module
+from nkyel.subagents.batch_service import SubagentBatchService
 
 
 @pytest.mark.asyncio

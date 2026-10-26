@@ -18,8 +18,8 @@ from fastapi.testclient import TestClient
 os.environ.setdefault("AUTH_JWT_SECRET", "test-secret-key-auth-me-permissions-min-32")
 
 from app.gateway.authz import Permissions  # noqa: E402
-from deerflow.authz.provider import AuthzDecision, AuthzReason  # noqa: E402
-from deerflow.config.authorization_config import AuthorizationConfig  # noqa: E402
+from nkyel.authz.provider import AuthzDecision, AuthzReason  # noqa: E402
+from nkyel.config.authorization_config import AuthorizationConfig  # noqa: E402
 
 _TEST_SECRET = "test-secret-key-auth-me-permissions-min-32"
 
@@ -70,7 +70,7 @@ def _setup_auth(tmp_path):
     from app.gateway import deps
     from app.gateway.auth.config import AuthConfig, set_auth_config
     from app.gateway.routers.auth import _SETUP_STATUS_CACHE, _SETUP_STATUS_INFLIGHT
-    from deerflow.persistence.engine import close_engine, init_engine
+    from nkyel.persistence.engine import close_engine, init_engine
 
     set_auth_config(AuthConfig(jwt_secret=_TEST_SECRET))
     url = f"sqlite+aiosqlite:///{tmp_path}/auth_me.db"
@@ -175,7 +175,7 @@ def test_auth_disabled_me_includes_default_admin_permissions(monkeypatch, _setup
     from app.gateway.app import create_app
     from app.gateway.auth.config import AuthConfig, set_auth_config
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     set_auth_config(AuthConfig(jwt_secret=_TEST_SECRET))
     client = TestClient(create_app())
 

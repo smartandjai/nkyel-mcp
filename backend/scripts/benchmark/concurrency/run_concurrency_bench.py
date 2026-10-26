@@ -3,7 +3,7 @@
 not asyncio.gather, not threading) hitting the SAME users table at the same
 time, comparing SQLite vs Postgres at 2/4/8/16 workers.
 
-This tests exactly the scenario DeerFlow's own docs describe
+This tests exactly the scenario nkyel's own docs describe
 (CONFIGURATION.md line 325): "Multi-worker deployments (GATEWAY_WORKERS > 1)
 must use the Postgres database backend... SQLite silently ignores row-level
 locks" -- multiple Gateway PROCESSES, each with its own connection, not
@@ -16,7 +16,7 @@ Usage:
 
     uv run python scripts/benchmark/concurrency/run_concurrency_bench.py \
         --backend postgres --workers 2,4,8,16 --ops-per-worker 50 --read-ratio 0.7 \
-        --pg-url postgresql+asyncpg://deerflow_test:deerflow_test_pw@localhost/deerflow_test
+        --pg-url postgresql+asyncpg://nkyel_test:nkyel_test_pw@localhost/nkyel_test
 """
 
 from __future__ import annotations
@@ -50,17 +50,17 @@ WORKER_SCRIPT = Path(__file__).parent / "worker.py"
 # One absolute path, shared by the seeder (this file) and every worker
 # process (worker.py's make_session_factory). DatabaseConfig.sqlite_dir
 # resolves relative strings against the CALLER's CWD, not this file's
-# location -- passing the literal ".deer-flow/bench_data" meant the
+# location -- passing the literal ".nkyel/bench_data" meant the
 # orchestrator (running from wherever it was invoked) and the workers
 # (spawned with cwd=BACKEND_DIR) could silently resolve to two different
 # directories whenever this script is invoked from outside backend/,
 # leaving workers pointed at a DB the seeder never created (or already
 # removed).
-SQLITE_BENCH_DIR = str(BACKEND_DIR / ".deer-flow" / "bench_data")
+SQLITE_BENCH_DIR = str(BACKEND_DIR / ".nkyel" / "bench_data")
 # The orchestrator itself is already running under the correct interpreter
 # (`uv run python ...`, per this file's own usage docstring above) -- reuse
 # it for workers instead of a second hard-coded venv path that silently
-# assumes deer-flow is checked out at /opt/deer-flow.
+# assumes nkyel is checked out at /opt/nkyel.
 PYTHON = [sys.executable]
 
 
@@ -71,8 +71,8 @@ async def seed_baseline(backend: str, pg_url: str, pg_schema: str, n_users: int 
     the same run."""
     from app.gateway.auth.models import User
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-    from deerflow.config.database_config import DatabaseConfig
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+    from nkyel.config.database_config import DatabaseConfig
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
 
     if backend == "sqlite":
         sqlite_dir = Path(SQLITE_BENCH_DIR)
@@ -98,7 +98,7 @@ async def seed_baseline(backend: str, pg_url: str, pg_schema: str, n_users: int 
         # schema, never a shared/production one.
         from sqlalchemy import text
 
-        from deerflow.persistence.engine import get_engine
+        from nkyel.persistence.engine import get_engine
 
         engine = get_engine()
         async with engine.begin() as conn:
@@ -122,7 +122,7 @@ async def drop_isolated_schema(pg_url: str, pg_schema: str) -> None:
     from sqlalchemy import text
     from sqlalchemy.ext.asyncio import create_async_engine
 
-    from deerflow.config.database_config import DatabaseConfig
+    from nkyel.config.database_config import DatabaseConfig
 
     cfg = DatabaseConfig(backend="postgres", postgres_url=pg_url, postgres_schema=pg_schema)
     engine = create_async_engine(cfg.app_sqlalchemy_url)

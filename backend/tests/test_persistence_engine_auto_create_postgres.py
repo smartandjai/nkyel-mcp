@@ -1,6 +1,6 @@
 """Live PostgreSQL checks for init_engine's missing-database auto-create.
 
-Opt in with DEERFLOW_TEST_POSTGRES_URL or TEST_POSTGRES_URI (set by the
+Opt in with NKYEL_TEST_POSTGRES_URL or TEST_POSTGRES_URI (set by the
 backend unit-test CI job). The role must be allowed to create databases.
 """
 
@@ -16,7 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from deerflow.persistence import engine as engine_mod
+from nkyel.persistence import engine as engine_mod
 
 
 def _asyncpg_url(url: str | None) -> str | None:
@@ -28,11 +28,11 @@ def _asyncpg_url(url: str | None) -> str | None:
     return urlunsplit(parts._replace(scheme=scheme, query=query))
 
 
-POSTGRES_URL = _asyncpg_url(os.getenv("DEERFLOW_TEST_POSTGRES_URL") or os.getenv("TEST_POSTGRES_URI"))
+POSTGRES_URL = _asyncpg_url(os.getenv("NKYEL_TEST_POSTGRES_URL") or os.getenv("TEST_POSTGRES_URI"))
 
 pytestmark = [
     pytest.mark.asyncio,
-    pytest.mark.skipif(not POSTGRES_URL, reason="set DEERFLOW_TEST_POSTGRES_URL or TEST_POSTGRES_URI to run live PostgreSQL tests"),
+    pytest.mark.skipif(not POSTGRES_URL, reason="set NKYEL_TEST_POSTGRES_URL or TEST_POSTGRES_URI to run live PostgreSQL tests"),
 ]
 
 
@@ -51,7 +51,7 @@ async def _execute_on_server(*statements: str, database: str | None = None) -> N
 
 @pytest_asyncio.fixture
 async def missing_database():
-    name = f"deerflow_autocreate_{uuid.uuid4().hex[:12]}"
+    name = f"nkyel_autocreate_{uuid.uuid4().hex[:12]}"
     url = make_url(POSTGRES_URL or "").set(database=name).render_as_string(hide_password=False)
     try:
         yield name, url

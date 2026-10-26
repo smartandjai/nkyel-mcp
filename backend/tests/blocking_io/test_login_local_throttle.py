@@ -32,11 +32,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from starlette.requests import Request
 
 # Pre-import so the router's lazy imports are cached no-ops under the gate.
-import deerflow.persistence.models  # noqa: F401
+import nkyel.persistence.models  # noqa: F401
 from app.gateway.auth import login_throttle
 from app.gateway.routers import auth as auth_router
-from deerflow.persistence.base import Base
-from deerflow.persistence.login_throttle import LoginThrottleRow, LoginThrottleStore, MemoryLoginThrottleStore, SqlLoginThrottleStore
+from nkyel.persistence.base import Base
+from nkyel.persistence.login_throttle import LoginThrottleRow, LoginThrottleStore, MemoryLoginThrottleStore, SqlLoginThrottleStore
 
 pytestmark = pytest.mark.asyncio
 

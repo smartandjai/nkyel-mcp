@@ -1,4 +1,4 @@
-"""ChannelManager — consumes inbound messages and dispatches them to the DeerFlow agent via Gateway."""
+"""ChannelManager — consumes inbound messages and dispatches them to the nkyel agent via Gateway."""
 
 from __future__ import annotations
 
@@ -53,21 +53,21 @@ from app.gateway.csrf_middleware import CSRF_COOKIE_NAME, CSRF_HEADER_NAME, gene
 from app.gateway.github import run_policy as _github_run_policy  # noqa: F401
 from app.gateway.internal_auth import create_internal_auth_headers
 from app.gateway.path_utils import resolve_outputs_confined_path
-from deerflow.agents.human_input import read_human_input_response
-from deerflow.config.agents_config import list_custom_agents, load_agent_config
-from deerflow.config.paths import make_safe_user_id
-from deerflow.runtime import END_SENTINEL, StreamBridge
-from deerflow.runtime.goal import parse_goal_command
-from deerflow.runtime.keyed_lock import AsyncKeyedLockTable
-from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY, make_origin
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.skills.slash import parse_slash_skill_reference
-from deerflow.skills.storage import get_or_new_skill_storage
-from deerflow.skills.storage.skill_storage import SkillStorage
-from deerflow.trace_context import ensure_trace_context
-from deerflow.uploads.manager import apply_upload_sandbox_permits
-from deerflow.utils.file_io import await_drained
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+from nkyel.agents.human_input import read_human_input_response
+from nkyel.config.agents_config import list_custom_agents, load_agent_config
+from nkyel.config.paths import make_safe_user_id
+from nkyel.runtime import END_SENTINEL, StreamBridge
+from nkyel.runtime.goal import parse_goal_command
+from nkyel.runtime.keyed_lock import AsyncKeyedLockTable
+from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY, make_origin
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.skills.slash import parse_slash_skill_reference
+from nkyel.skills.storage import get_or_new_skill_storage
+from nkyel.skills.storage.skill_storage import SkillStorage
+from nkyel.trace_context import ensure_trace_context
+from nkyel.uploads.manager import apply_upload_sandbox_permits
+from nkyel.utils.file_io import await_drained
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +133,7 @@ _HUMAN_MESSAGE_ID_NAMESPACE = uuid.UUID("5b7c1e0e-8f5a-4d43-9a63-0c5b2f1d7e21")
 # active run: the redelivery's input differs (re-ingested attachments get new
 # names), or the run is live on a peer whose stream this instance cannot read.
 _ADMITTED_RUN_CONFLICT_DETAILS = ("Idempotency-Key already used", "is not active on this worker and cannot be streamed")
-ALREADY_ADMITTED_MESSAGE = "This message is already being processed. Its answer will appear in this conversation in DeerFlow."
+ALREADY_ADMITTED_MESSAGE = "This message is already being processed. Its answer will appear in this conversation in nkyel."
 _LIVE_RUN_STATUSES = frozenset({"pending", "running"})
 
 
@@ -150,7 +150,7 @@ class _RunAdmission:
     confirmed: bool = False
 
 
-_RUN_ADMISSION: ContextVar[_RunAdmission | None] = ContextVar("deerflow_channel_run_admission", default=None)
+_RUN_ADMISSION: ContextVar[_RunAdmission | None] = ContextVar("nkyel_channel_run_admission", default=None)
 
 # Transport failures that can only happen after the Gateway read the request:
 # the run was admitted and continues (``on_disconnect: continue``), so a
@@ -213,8 +213,8 @@ class StalePinRecovery(NamedTuple):
     resolved: bool
 
 
-BOUND_IDENTITY_REQUIRED_MESSAGE = "Connect this channel from DeerFlow Settings, complete the in-channel connect step, then send your message again."
-BOUND_IDENTITY_UNAVAILABLE_MESSAGE = "Channel connection verification is temporarily unavailable. Please try again later or contact the DeerFlow operator."
+BOUND_IDENTITY_REQUIRED_MESSAGE = "Connect this channel from nkyel Settings, complete the in-channel connect step, then send your message again."
+BOUND_IDENTITY_UNAVAILABLE_MESSAGE = "Channel connection verification is temporarily unavailable. Please try again later or contact the nkyel operator."
 # Inbound-redelivery dedup window. The dedupe state lives in
 # ``self._inbound_dedupe_store``: the default in-process Memory store is
 # local to this Gateway process (a recorded key survives only for the store's
@@ -1016,7 +1016,7 @@ def _stream_payload_type(payload: Mapping[str, Any]) -> str:
     Two payload shapes reach this function and they name the message type in
     different places:
 
-    * The shape DeerFlow's own gateway emits (``runtime/serialization.py``
+    * The shape nkyel's own gateway emits (``runtime/serialization.py``
       calls ``model_dump()``): ``type`` is the LangChain literal directly --
       ``"ai"`` / ``"AIMessageChunk"`` / ``"human"`` / ``"tool"`` / ``"system"``.
     * LangChain's ``to_json()`` constructor shape, which
@@ -1051,7 +1051,7 @@ def _is_assistant_stream_type(payload_type: str) -> bool:
     """Is this message type assistant output, i.e. displayable in an IM channel?
 
     An ALLOWLIST, deliberately.  The previous denylist ("reject anything whose
-    type contains 'tool'") published every other message type, and DeerFlow
+    type contains 'tool'") published every other message type, and nkyel
     writes hidden model context into the ``messages`` channel as ordinary
     messages: ``DynamicContextMiddleware`` injects the ``<memory>`` block as a
     hidden ``HumanMessage`` (``type == "human"``) and rewrites the user's own
@@ -1090,7 +1090,7 @@ def _accumulate_stream_text(
 
     A bare ``str`` payload -- previously accepted here and buffered under the
     current message id -- carries no type information at all, so it cannot be
-    attributed to the assistant.  Nothing in DeerFlow produces it (the gateway
+    attributed to the assistant.  Nothing in nkyel produces it (the gateway
     always serializes a ``messages-tuple`` chunk as ``[message_dict, metadata]``
     via ``runtime/serialization.py::serialize_messages_tuple``), and a runtime
     that did emit raw text deltas would emit hidden context the same way, with
@@ -1247,7 +1247,7 @@ def _apply_effective_owner(msg: InboundMessage) -> InboundMessage:
 
 
 def _run_origin(msg: InboundMessage) -> dict[str, str] | None:
-    """Server-owned ``deerflow_origin`` for a run this manager starts.
+    """Server-owned ``nkyel_origin`` for a run this manager starts.
 
     The Gateway honours it only from internal callers (this manager's client
     carries the internal token); a provider name outside the origin shape is
@@ -1261,7 +1261,7 @@ def _run_origin(msg: InboundMessage) -> dict[str, str] | None:
 
 def _apply_run_origin(run_kwargs: dict[str, Any], msg: InboundMessage) -> None:
     if (origin := _run_origin(msg)) is not None:
-        run_kwargs["metadata"] = {DEERFLOW_ORIGIN_KEY: origin}
+        run_kwargs["metadata"] = {NKYEL_ORIGIN_KEY: origin}
 
 
 def _owner_headers(msg: InboundMessage) -> dict[str, str] | None:
@@ -1279,7 +1279,7 @@ def _run_request_headers(msg: InboundMessage, idempotency_key: str | None) -> di
 
 
 def _safe_user_id_for_run(raw_user_id: str) -> str:
-    from deerflow.config.paths import get_paths
+    from nkyel.config.paths import get_paths
 
     try:
         return get_paths().prepare_user_dir_for_raw_id(raw_user_id)
@@ -1289,13 +1289,13 @@ def _safe_user_id_for_run(raw_user_id: str) -> str:
 
 
 def _channel_storage_user_id(msg: InboundMessage) -> str | None:
-    """Resolve the canonical DeerFlow user id for a channel-triggered message.
+    """Resolve the canonical nkyel user id for a channel-triggered message.
 
     Single source of truth for both the agent **run identity**
     (``_resolve_run_params`` → ``run_context["user_id"]``) and the **file/artifact
     storage bucket** (``receive_file`` / ``_ingest_inbound_files`` /
     ``_prepare_artifact_delivery``), so the bucket the agent reads/writes always
-    matches where channel files are staged. Prefer the bound DeerFlow owner,
+    matches where channel files are staged. Prefer the bound nkyel owner,
     otherwise fall back to the sanitized raw platform user id. Without that
     fallback, an unbound auth-enabled channel would run under ``safe(msg.user_id)``
     but stage files under ``get_effective_user_id()`` (the dispatcher task's unset
@@ -1438,7 +1438,7 @@ async def _ingest_inbound_files_impl(thread_id: str, msg: InboundMessage, *, use
     if not msg.files:
         return []
 
-    from deerflow.uploads.manager import (
+    from nkyel.uploads.manager import (
         UnsafeUploadPathError,
         claim_unique_filename,
         ensure_uploads_dir,
@@ -1543,7 +1543,7 @@ async def _ingest_inbound_files_impl(thread_id: str, msg: InboundMessage, *, use
 
 
 class ChannelManager:
-    """Core dispatcher that bridges IM channels to the DeerFlow agent.
+    """Core dispatcher that bridges IM channels to the nkyel agent.
 
     It reads from the MessageBus inbound queue, creates/reuses threads on
     Gateway's LangGraph-compatible API, sends messages via ``runs.wait``, and publishes
@@ -2116,8 +2116,8 @@ class ChannelManager:
         configurable["checkpoint_ns"] = ""
         configurable["thread_id"] = thread_id
 
-        # ``user_id`` drives DeerFlow-owned memory, files, and thread buckets.
-        # For browser-connected IM channels, prefer the DeerFlow account that
+        # ``user_id`` drives nkyel-owned memory, files, and thread buckets.
+        # For browser-connected IM channels, prefer the nkyel account that
         # owns the connection. Preserve the raw platform user under
         # ``channel_user_id`` for platform-facing lookups and audits.
         run_context_identity: dict[str, Any] = {"thread_id": thread_id}
@@ -2308,7 +2308,7 @@ class ChannelManager:
         self._worker_tasks = {
             asyncio.create_task(
                 self._worker_loop(worker_index),
-                name=f"deerflow-channel-worker-{worker_index}",
+                name=f"nkyel-channel-worker-{worker_index}",
             )
             for worker_index in range(self._max_concurrency)
         }
@@ -2351,7 +2351,7 @@ class ChannelManager:
         for task in watcher_tasks:
             task.cancel()
 
-        join_task = asyncio.create_task(self.bus.join_inbound(), name="deerflow-channel-inbound-drain")
+        join_task = asyncio.create_task(self.bus.join_inbound(), name="nkyel-channel-inbound-drain")
         drained = False
         try:
             done, _ = await asyncio.wait({join_task}, timeout=max(0.0, grace_deadline - loop.time()))
@@ -2718,7 +2718,7 @@ class ChannelManager:
             return None
         # Webhook-authenticated channels (GitHub) opt out via
         # ChannelRunPolicy.requires_bound_identity=False. Authenticity is
-        # enforced at the webhook route by HMAC, and the "sender → DeerFlow
+        # enforced at the webhook route by HMAC, and the "sender → nkyel
         # user" binding is encoded in the agent's config.yaml ownership, not
         # in the channel-connections table — there is no per-sender
         # /connect handshake to perform.
@@ -2737,7 +2737,7 @@ class ChannelManager:
 
         # The manager is the run-creation security boundary, so it does not
         # trust mutable InboundMessage identity fields by themselves. Re-read
-        # the binding by provider identity before creating DeerFlow threads or
+        # the binding by provider identity before creating nkyel threads or
         # runs. If the asserted identity does not match, keep only the
         # server-side connection fields as outbound routing hints.
         connection = await self._connection_repo.find_connection_by_external_identity(
@@ -3206,7 +3206,7 @@ class ChannelManager:
         client = self._get_client()
         storage_user_id = _channel_storage_user_id(msg)
 
-        # Look up the existing DeerFlow thread, creating one if this is the
+        # Look up the existing nkyel thread, creating one if this is the
         # first message for the chat. topic_id may be None (e.g. Telegram
         # private chats) — the store handles this by using the "channel:chat_id"
         # key without a topic suffix.

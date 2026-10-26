@@ -41,10 +41,10 @@ from typing import TYPE_CHECKING, Any
 
 from fastapi import HTTPException
 
-from deerflow.config.app_config import AppConfig
-from deerflow.uploads.companions import register_companion, unregister_companion
-from deerflow.utils.atomic_write import cleanup_failed_atomic_write
-from deerflow.utils.file_io import await_drained, run_file_io
+from nkyel.config.app_config import AppConfig
+from nkyel.uploads.companions import register_companion, unregister_companion
+from nkyel.utils.atomic_write import cleanup_failed_atomic_write
+from nkyel.utils.file_io import await_drained, run_file_io
 
 if TYPE_CHECKING:
     from fastapi import Request
@@ -392,7 +392,7 @@ class ThreadUploadIngestionService:
 
             async def prepare_conversion() -> None:
                 nonlocal private_dir
-                private_dir = Path(await run_file_io(tempfile.mkdtemp, "-deerflow-convert"))
+                private_dir = Path(await run_file_io(tempfile.mkdtemp, "-nkyel-convert"))
 
             def cleanup_conversion() -> None:
                 # Release the pinned descriptor before removing either name

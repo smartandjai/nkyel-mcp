@@ -78,10 +78,10 @@
     "backend_tests": "skipped"
   },
   "source_sha256": {
-    "backend/packages/harness/deerflow/agents/middlewares/AGENTS.md": "db9ff80a863c6ce8045264d0d048a2fb5e91cf00f951d271df64a87390b53917",
-    "backend/packages/harness/deerflow/agents/middlewares/durable_context_middleware.py": "cf37b6d48e81b1f4c8c9a9c1a12a874d893e423e13a771c17d988c19dde9bdfd",
-    "backend/packages/harness/deerflow/agents/task_continuity/archive.py": "f15ffc029e571f09ab3fa41319f6e5a7a70c0ce48425677cc3ccbe400a0dd448",
-    "backend/packages/harness/deerflow/agents/task_continuity/state.py": "0d35bf66316d9d2e09b20b124af77cbb40aa0f38eb0d43cb333a31d0266510c0",
+    "backend/packages/harness/nkyel/agents/middlewares/AGENTS.md": "db9ff80a863c6ce8045264d0d048a2fb5e91cf00f951d271df64a87390b53917",
+    "backend/packages/harness/nkyel/agents/middlewares/durable_context_middleware.py": "cf37b6d48e81b1f4c8c9a9c1a12a874d893e423e13a771c17d988c19dde9bdfd",
+    "backend/packages/harness/nkyel/agents/task_continuity/archive.py": "f15ffc029e571f09ab3fa41319f6e5a7a70c0ce48425677cc3ccbe400a0dd448",
+    "backend/packages/harness/nkyel/agents/task_continuity/state.py": "0d35bf66316d9d2e09b20b124af77cbb40aa0f38eb0d43cb333a31d0266510c0",
     "backend/tests/test_task_continuity.py": "5e46fdda1dcc14a896ef9a6cfeb64fa80d9842238adb995f46b5ef29a2e49149",
     "docs/task-continuity.md": "38e242b80a2134247fef0094b6663184a365705540c7ed38ae62039b371812dc"
   },

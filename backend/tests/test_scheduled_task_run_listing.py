@@ -4,10 +4,10 @@ import pytest
 import pytest_asyncio
 from _scheduled_rows import create_task, durable_run, occurrence
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
 
 
 @pytest_asyncio.fixture
@@ -82,7 +82,7 @@ async def test_rows_carry_token_totals_and_the_agents_reply_not_the_evaluator_re
 
 
 def test_summary_is_bounded():
-    from deerflow.persistence.scheduled_task_runs.sql import run_summary
+    from nkyel.persistence.scheduled_task_runs.sql import run_summary
 
     summary = run_summary("x" * 400)
     assert len(summary) == 160 and summary.endswith("…")
@@ -103,7 +103,7 @@ LIVE_RUN_2_REPLY = "已按停止规则暂停该定时任务：清单中所有条
 
 
 def test_a_lead_in_line_carries_the_list_that_follows_it():
-    from deerflow.persistence.scheduled_task_runs.sql import run_summary
+    from nkyel.persistence.scheduled_task_runs.sql import run_summary
 
     # Recorded live: the first line alone ("清单中还有 2 项未完成：") said nothing.
     assert run_summary(LIVE_RUN_1_REPLY) == "清单中还有 2 项未完成：Publish the Docker image — 负责人：Sam Okafor；Post the release notes — 负责人：Nora Lind"
@@ -112,7 +112,7 @@ def test_a_lead_in_line_carries_the_list_that_follows_it():
 
 
 def test_lead_in_list_variants():
-    from deerflow.persistence.scheduled_task_runs.sql import run_summary
+    from nkyel.persistence.scheduled_task_runs.sql import run_summary
 
     # No list after the colon: the line is returned unchanged.
     assert run_summary("Two items are still open:\n\nSee the checklist for details.") == "Two items are still open:"
@@ -127,7 +127,7 @@ def test_lead_in_list_variants():
 
 
 def test_a_long_lead_in_list_is_capped_with_an_ellipsis():
-    from deerflow.persistence.scheduled_task_runs.sql import run_summary
+    from nkyel.persistence.scheduled_task_runs.sql import run_summary
 
     reply = "还有这些未完成：\n" + "\n".join(f"- 第 {n} 项任务，负责人是一位很忙的同事" for n in range(1, 20))
     summary = run_summary(reply)

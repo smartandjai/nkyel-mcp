@@ -11,10 +11,10 @@ from pydantic import ValidationError
 from app.gateway.deps import get_current_user_from_request, is_admin_user
 from app.gateway.mcp_oauth_tokens import forget_unconfigured_mcp_oauth_tokens
 from app.gateway.routers import mcp
-from deerflow.capabilities.runtime import ambiguous_installation_ids
-from deerflow.config.extensions_config import ExtensionsConfig, atomic_write_extensions_config, extensions_config_file_lock, extensions_config_write_lock
-from deerflow.mcp.user_config import personal_server_name_variants, read_user_mcp_config, user_mcp_config_path
-from deerflow.utils.file_io import await_drained
+from nkyel.capabilities.runtime import ambiguous_installation_ids
+from nkyel.config.extensions_config import ExtensionsConfig, atomic_write_extensions_config, extensions_config_file_lock, extensions_config_write_lock
+from nkyel.mcp.user_config import personal_server_name_variants, read_user_mcp_config, user_mcp_config_path
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +48,14 @@ def _validate_personal_server(server: mcp.McpServerConfigResponse, *, admin: boo
     # A personal store must not grant ordinary users the deployment operator's
     # ability to launch arbitrary host packages or query internal services.
     if not admin:
-        from deerflow.capabilities.business import is_bundled_connection
+        from nkyel.capabilities.business import is_bundled_connection
 
         # The response model does not declare `cwd`; a supplied one is an extra.
         cwd = (server.model_extra or {}).get("cwd")
         bundled = server.type == "stdio" and is_bundled_connection(server.command, server.args, server.env) and not cwd
         if (server.type not in {"http", "sse"} and not bundled) or server.oauth is not None:
             raise HTTPException(403, "Only an administrator may configure host commands or OAuth token endpoints")
-        from deerflow.community.url_safety import validate_public_http_url
+        from nkyel.community.url_safety import validate_public_http_url
 
         if not bundled and (not server.url or validate_public_http_url(server.url, action="connect to")):
             raise HTTPException(400, "Personal MCP connections require a public HTTP(S) endpoint")

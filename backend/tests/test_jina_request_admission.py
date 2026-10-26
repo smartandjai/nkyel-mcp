@@ -9,9 +9,9 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from deerflow.community.jina_ai import request_admission as admission_module
-from deerflow.community.jina_ai import tools
-from deerflow.community.jina_ai.jina_client import JinaClient
+from nkyel.community.jina_ai import request_admission as admission_module
+from nkyel.community.jina_ai import tools
+from nkyel.community.jina_ai.jina_client import JinaClient
 
 pytestmark = pytest.mark.anyio
 POLICY = {"max_concurrent_requests": 1, "max_queue_size": 3, "max_wait_seconds": 5}
@@ -432,7 +432,7 @@ async def test_closed_owner_loop_returns_reserved_permit(expired):
 
 
 async def test_retry_releases_during_backoff_and_rejoins_fifo(install_transport, monkeypatch):
-    from deerflow.community.jina_ai import jina_client
+    from nkyel.community.jina_ai import jina_client
 
     backoff, resume = asyncio.Event(), asyncio.Event()
     holding = Stream(hold_read=True)

@@ -10,14 +10,14 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.checkpoint.base import empty_checkpoint
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.agents.middlewares import memory_middleware, pii_redaction_middleware
-from deerflow.agents.middlewares.pii_redaction_middleware import redact_text
-from deerflow.config.app_config import AppConfig
-from deerflow.config.pii_redaction_config import PiiRedactionConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.runtime import goal
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.runs import worker
+from nkyel.agents.middlewares import memory_middleware, pii_redaction_middleware
+from nkyel.agents.middlewares.pii_redaction_middleware import redact_text
+from nkyel.config.app_config import AppConfig
+from nkyel.config.pii_redaction_config import PiiRedactionConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.runtime import goal
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.runs import worker
 
 _PII = PiiRedactionConfig(enabled=True, token_secret="unit-test-deployment-secret-0123456789")
 _ENABLED = AppConfig(sandbox=SandboxConfig(use="test"), pii_redaction=_PII)

@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
 
 
 def granted(**overrides):
@@ -39,20 +39,20 @@ def test_host_access_requires_stable_name():
 
 def test_granted_source_cannot_be_ambiguous_even_with_other_ungranted_entry(monkeypatch):
     calls = []
-    monkeypatch.setattr("deerflow.extensions.loader.resolve_variable", lambda _: calls.append(1))
+    monkeypatch.setattr("nkyel.extensions.loader.resolve_variable", lambda _: calls.append(1))
     with pytest.raises(ValueError, match="unique"):
         load_extensions([granted(), ExtensionSpec(use="example:install", name="other")])
     assert calls == []
 
 
 def test_granted_name_cannot_be_ambiguous(monkeypatch):
-    monkeypatch.setattr("deerflow.extensions.loader.resolve_variable", lambda _: None)
+    monkeypatch.setattr("nkyel.extensions.loader.resolve_variable", lambda _: None)
     with pytest.raises(ValueError, match="unique"):
         load_extensions([granted(), ExtensionSpec(use="other:install", name="evolution")])
 
 
 def test_binding_changes_with_entry_point_and_empty_scope_means_none():
-    from deerflow.extensions.host_access import bind_host_access
+    from nkyel.extensions.host_access import bind_host_access
 
     first = bind_host_access([granted()])["example:install"]
     replacement = granted().model_copy(update={"use": "replacement:install"})
@@ -67,8 +67,8 @@ def test_binding_changes_with_entry_point_and_empty_scope_means_none():
 
 @pytest.mark.asyncio
 async def test_services_receive_independently_bound_capabilities():
-    from deerflow.extensions.gateway import start_services
-    from deerflow.extensions.registry import ExtensionRegistry
+    from nkyel.extensions.gateway import start_services
+    from nkyel.extensions.registry import ExtensionRegistry
 
     received = []
 
@@ -89,7 +89,7 @@ async def test_services_receive_independently_bound_capabilities():
 
 
 def test_new_host_contracts_are_available_without_harness_imports():
-    import deerflow_extension_api as api
+    import nkyel_extension_api as api
 
     for name in (
         "HostCapabilityError",
@@ -110,11 +110,11 @@ def test_new_host_contracts_are_available_without_harness_imports():
         "SkillMutationService",
     ):
         assert name in api.__all__
-        assert getattr(api, name).__module__.startswith("deerflow_extension_api.")
+        assert getattr(api, name).__module__.startswith("nkyel_extension_api.")
 
 
 def test_mutation_bundles_and_capabilities_detach_mutable_constructor_values():
-    from deerflow_extension_api import AssetRevision, BundleFile, MutationCapabilities, Proposal, ProposalBundle
+    from nkyel_extension_api import AssetRevision, BundleFile, MutationCapabilities, Proposal, ProposalBundle
 
     content = bytearray(b"original")
     files = [BundleFile("SKILL.md", content, "digest", False)]
@@ -135,7 +135,7 @@ def test_mutation_bundles_and_capabilities_detach_mutable_constructor_values():
 
 @pytest.mark.asyncio
 async def test_model_and_evolution_grants_compose_in_same_service(monkeypatch):
-    from deerflow.extensions.gateway import start_services, stop_services
+    from nkyel.extensions.gateway import start_services, stop_services
 
     received = []
 
@@ -149,7 +149,7 @@ async def test_model_and_evolution_grants_compose_in_same_service(monkeypatch):
     def install(registry, config):
         registry.service(Service())
 
-    monkeypatch.setattr("deerflow.extensions.loader.resolve_variable", lambda _: install)
+    monkeypatch.setattr("nkyel.extensions.loader.resolve_variable", lambda _: install)
     access = granted().host_access.model_dump()
     access["model_invocation"] = {"roles": {"default": "host-model"}}
     spec = ExtensionSpec(use="example:install", name="evolution", host_access=access)

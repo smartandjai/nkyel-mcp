@@ -11,8 +11,8 @@ from typing import Any
 
 import pytest
 
-from deerflow.config.extensions_config import ExtensionsConfig, McpOAuthConfig
-from deerflow.mcp.oauth import OAuthTokenManager, build_oauth_tool_interceptor, get_initial_oauth_headers
+from nkyel.config.extensions_config import ExtensionsConfig, McpOAuthConfig
+from nkyel.mcp.oauth import OAuthTokenManager, build_oauth_tool_interceptor, get_initial_oauth_headers
 
 
 class _MockResponse:
@@ -98,7 +98,7 @@ def oauth_now(monkeypatch):
         def now(cls, tz):
             return now
 
-    monkeypatch.setattr("deerflow.mcp.oauth.datetime", _FixedDatetime)
+    monkeypatch.setattr("nkyel.mcp.oauth.datetime", _FixedDatetime)
     return now
 
 
@@ -488,9 +488,9 @@ def test_oauth_refresh_token_rotation_persists_rotated_value(monkeypatch):
 def test_get_authorization_header_concurrent_threads_no_deadlock(monkeypatch):
     """Concurrent callers on different event loops/threads must not deadlock.
 
-    The embedded/TUI sync tool-call path (``DeerFlowClient.stream()`` ->
+    The embedded/TUI sync tool-call path (``NkyelClient.stream()`` ->
     LangGraph's ``ToolNode._func`` -> a ``ThreadPoolExecutor`` ->
-    ``deerflow.tools.sync.make_sync_tool_wrapper``'s per-call ``asyncio.run()``)
+    ``nkyel.tools.sync.make_sync_tool_wrapper``'s per-call ``asyncio.run()``)
     invokes ``get_authorization_header`` from a fresh event loop on a fresh OS
     thread for every concurrent tool call. A per-server ``asyncio.Lock`` binds
     to whichever loop first contends on it; when a caller on a *different*
@@ -889,7 +889,7 @@ def test_initial_oauth_headers_skips_server_with_illegal_token(monkeypatch, capl
     _token_endpoint_returns(monkeypatch, {"access_token": "oauth-secret-xyz\n", "token_type": "Bearer", "expires_in": 3600})
     config = _oauth_server_config()
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.mcp.oauth"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.mcp.oauth"):
         headers = asyncio.run(get_initial_oauth_headers(config))
 
     # No header at all rather than a broken one: the connection then fails

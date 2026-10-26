@@ -18,11 +18,11 @@ from app.gateway.authz import (
     resolve_route_permissions,
 )
 from app.gateway.routers import runs, scheduled_tasks
-from deerflow.authz.provider import AuthzDecision, AuthzReason
-from deerflow.authz.rbac import RbacAuthorizationProvider
-from deerflow.config.app_config import AppConfig, pop_current_app_config, push_current_app_config
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
-from deerflow.config.sandbox_config import SandboxConfig
+from nkyel.authz.provider import AuthzDecision, AuthzReason
+from nkyel.authz.rbac import RbacAuthorizationProvider
+from nkyel.config.app_config import AppConfig, pop_current_app_config, push_current_app_config
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.config.sandbox_config import SandboxConfig
 
 
 class _RecordingProvider:
@@ -271,12 +271,12 @@ async def test_route_permissions_read_config_in_a_worker_with_the_caller_context
 
     monkeypatch.setattr(authz_module, "_get_route_authorization_config", recording_read)
     override = AppConfig(
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         authorization=AuthorizationConfig(
             enabled=True,
             default_role="user",
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"routes": {"allow": [Permissions.THREADS_READ]}}}},
             ),
         ),
@@ -325,7 +325,7 @@ def _make_middleware_app() -> FastAPI:
 
 
 def test_auth_middleware_stamps_provider_derived_permissions(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     permission_resolver = AsyncMock(return_value=[Permissions.THREADS_READ])
     monkeypatch.setattr("app.gateway.auth_middleware.resolve_route_permissions", permission_resolver)
 
@@ -356,8 +356,8 @@ _STATELESS_RUN_PATHS = ("/api/runs/stream", "/api/runs/wait")
 
 
 def _enable_auth_disabled_for_route_test(monkeypatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
-    monkeypatch.delenv("DEER_FLOW_ENV", raising=False)
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
+    monkeypatch.delenv("NKYEL_ENV", raising=False)
     monkeypatch.delenv("ENVIRONMENT", raising=False)
 
 
@@ -472,7 +472,7 @@ class TestRouteProviderCache:
         config = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"routes": {"allow": "*"}}}},
             ),
         )
@@ -493,14 +493,14 @@ class TestRouteProviderCache:
         config1 = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"routes": {"allow": "*"}}}},
             ),
         )
         config2 = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"routes": {"allow": []}}}},
             ),
         )
@@ -522,7 +522,7 @@ class TestRouteProviderCache:
         config1 = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"routes": {"allow": "*"}}}},
             ),
         )
@@ -530,7 +530,7 @@ class TestRouteProviderCache:
         config2 = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"routes": {"allow": "*"}}}},
             ),
         )

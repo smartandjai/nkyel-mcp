@@ -9,14 +9,14 @@ import pytest
 from langchain_openai import ChatOpenAI
 
 from app.gateway.routers import managed_models as router
-from deerflow.config.app_config import AppConfig
-from deerflow.config.managed_models import ManagedModel, ManagedModelStore
-from deerflow.models.patched_deepseek import PatchedChatDeepSeek
+from nkyel.config.app_config import AppConfig
+from nkyel.config.managed_models import ManagedModel, ManagedModelStore
+from nkyel.models.patched_deepseek import PatchedChatDeepSeek
 
 
 @pytest.mark.asyncio
 async def test_admin_catalog_round_trip_offloads_storage(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     config = AppConfig.model_validate({"sandbox": {"use": "test"}})
     monkeypatch.setattr(router, "get_app_config", lambda: config)
     request = SimpleNamespace(state=SimpleNamespace(user=SimpleNamespace(system_role="admin")))
@@ -30,7 +30,7 @@ async def test_admin_catalog_round_trip_offloads_storage(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_deepseek_probe_offloads_credentials_and_client_construction(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setenv("LANGSMITH_TRACING", "false")
     store = await asyncio.to_thread(ManagedModelStore)
     profile = ManagedModel(name="flash", model="deepseek-flash", base_url="https://api.deepseek.com", api_key="test-secret")
@@ -78,7 +78,7 @@ async def test_deepseek_probe_offloads_credentials_and_client_construction(tmp_p
 async def test_preset_catalog_registration_and_native_client_stay_off_loop(tmp_path, monkeypatch):
     from langchain_anthropic import ChatAnthropic
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setenv("LANGSMITH_TRACING", "false")
     base = AppConfig.model_validate({"sandbox": {"use": "test"}})
     monkeypatch.setattr(router, "get_app_config", lambda: base)

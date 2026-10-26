@@ -21,11 +21,11 @@ from langchain_core.messages import HumanMessage
 
 from app.gateway.routers import threads
 from app.gateway.services import SERVER_OWNED_STATE_CHANNELS
-from deerflow.agents.goal_state import GoalOutcomeState
-from deerflow.agents.thread_state import ThreadState
-from deerflow.persistence.scheduled_task_runs import finalization
-from deerflow.runtime import goal
-from deerflow.runtime.runs import worker
+from nkyel.agents.goal_state import GoalOutcomeState
+from nkyel.agents.thread_state import ThreadState
+from nkyel.persistence.scheduled_task_runs import finalization
+from nkyel.runtime import goal
+from nkyel.runtime.runs import worker
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _CONTRACT = json.loads((_REPO_ROOT / "contracts" / "thread_goal_contract.json").read_text(encoding="utf-8"))

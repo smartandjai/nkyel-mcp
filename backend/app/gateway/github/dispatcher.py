@@ -33,7 +33,7 @@ from app.gateway.github.identity import extract_target, resolve_thread_id
 from app.gateway.github.prompts import build_prompt
 from app.gateway.github.registry import build_github_agent_registry, lookup_agents
 from app.gateway.github.triggers import event_should_fire
-from deerflow.config.agents_config import GitHubAgentConfig, GitHubTriggerConfig
+from nkyel.config.agents_config import GitHubAgentConfig, GitHubTriggerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -306,12 +306,12 @@ async def fanout_event(
         #      resolves to something usable.
         #
         # An operator who sets ``channels.github.default_mention_login:
-        # deerflow-bot`` reasonably expects every ``@deerflow-bot``
+        # nkyel-bot`` reasonably expects every ``@nkyel-bot``
         # mention to gate on that handle by default. The previous version
         # of this expression skipped step 3 entirely, so an agent named
         # ``coder`` with ``require_mention: true`` and no per-trigger or
         # per-agent override silently required ``@coder`` mentions instead
-        # of ``@deerflow-bot``.
+        # of ``@nkyel-bot``.
         #
         # ``github.bot_login`` is normalized (whitespace-only -> None) by
         # ``GitHubAgentConfig``'s field validator, so this ``or`` chain

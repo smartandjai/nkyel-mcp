@@ -20,22 +20,22 @@ from app.gateway.authz import SandboxRequestLease, require_permission, try_acqui
 from app.gateway.deps import get_run_manager
 from app.gateway.internal_auth import get_trusted_internal_owner_user_id
 from app.gateway.path_utils import normalize_outputs_virtual_path, resolve_outputs_confined_path, resolve_thread_virtual_path
-from deerflow.authz.sandbox_authz import safe_app_config
-from deerflow.config.paths import make_safe_user_id
-from deerflow.runtime import ConflictError, ThreadOperationKind
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.sandbox.sandbox_provider import get_sandbox_provider
-from deerflow.utils.atomic_write import cleanup_failed_atomic_write
-from deerflow.utils.file_io import await_drained
-from deerflow.utils.text_detection import _is_active_content_mime_type, is_text_file_by_content
-from deerflow.utils.thread_id import ThreadId
+from nkyel.authz.sandbox_authz import safe_app_config
+from nkyel.config.paths import make_safe_user_id
+from nkyel.runtime import ConflictError, ThreadOperationKind
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.sandbox.sandbox_provider import get_sandbox_provider
+from nkyel.utils.atomic_write import cleanup_failed_atomic_write
+from nkyel.utils.file_io import await_drained
+from nkyel.utils.text_detection import _is_active_content_mime_type, is_text_file_by_content
+from nkyel.utils.thread_id import ThreadId
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["artifacts"])
 
 # Active-content MIME classification (``_is_active_content_mime_type``) lives
-# in ``deerflow.utils.text_detection``, shared with the project-document shelf.
+# in ``nkyel.utils.text_detection``, shared with the project-document shelf.
 MAX_SKILL_ARCHIVE_MEMBER_BYTES = 16 * 1024 * 1024
 _SKILL_ARCHIVE_READ_CHUNK_SIZE = 64 * 1024
 MAX_EDITABLE_ARTIFACT_BYTES = 2 * 1024 * 1024

@@ -6,10 +6,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.agents.lead_agent.prompt import _get_memory_context
-from deerflow.agents.memory import MemoryManager
-from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
-from deerflow.agents.memory.backends.deermem.deermem.core.relevance import build_idf, lexical_relevance, tokenize
+from nkyel.agents.lead_agent.prompt import _get_memory_context
+from nkyel.agents.memory import MemoryManager
+from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
+from nkyel.agents.memory.backends.deermem.deermem.core.relevance import build_idf, lexical_relevance, tokenize
 
 
 class _LegacyBackend(MemoryManager):
@@ -27,7 +27,7 @@ class _LegacyBackend(MemoryManager):
 @pytest.mark.parametrize("query", [None, "", "database migration"])
 def test_old_backend_signature_keeps_prompt_memory(monkeypatch, query):
     manager = _LegacyBackend()
-    monkeypatch.setattr("deerflow.agents.memory.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.get_memory_manager", lambda: manager)
     config = SimpleNamespace(memory=SimpleNamespace(enabled=True, injection_enabled=True, backend_config={}))
     context = _get_memory_context("agent-a", app_config=config, user_id="user-a", query=query)
     assert "<memory>" in context
@@ -54,7 +54,7 @@ def test_query_capable_backend_receives_hint_in_prompt_and_async(monkeypatch, ac
         get_context = variadic if accepts_kwargs else explicit
 
     manager = QueryBackend()
-    monkeypatch.setattr("deerflow.agents.memory.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.get_memory_manager", lambda: manager)
     config = SimpleNamespace(memory=SimpleNamespace(enabled=True, injection_enabled=True))
     assert "query-aware memory" in _get_memory_context("a", app_config=config, user_id="u", query="migration")
     assert asyncio.run(manager.aget_context("u", agent_name="a", thread_id="t", query="migration")) == "query-aware memory"
@@ -73,7 +73,7 @@ def test_backend_typeerror_is_not_retried_as_legacy_signature(monkeypatch):
     with pytest.raises(TypeError, match="backend implementation failed"):
         asyncio.run(manager.aget_context("u", query="migration"))
     assert calls == ["migration"]
-    monkeypatch.setattr("deerflow.agents.memory.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.get_memory_manager", lambda: manager)
     config = SimpleNamespace(memory=SimpleNamespace(enabled=True, injection_enabled=True))
     assert _get_memory_context(app_config=config, user_id="u", query="migration") == ""
     assert calls == ["migration", "migration"]
@@ -86,7 +86,7 @@ def test_uninspectable_legacy_callable_keeps_prompt_memory(monkeypatch):
         def __call__(self, user_id, *, agent_name=None, thread_id=None):
             return "legacy callable memory"
 
-    monkeypatch.setattr("deerflow.agents.memory.get_memory_manager", lambda: SimpleNamespace(get_context=LegacyCallable()))
+    monkeypatch.setattr("nkyel.agents.memory.get_memory_manager", lambda: SimpleNamespace(get_context=LegacyCallable()))
     config = SimpleNamespace(memory=SimpleNamespace(enabled=True, injection_enabled=True))
     assert "legacy callable memory" in _get_memory_context(app_config=config, user_id="u", query="migration")
 
@@ -167,7 +167,7 @@ def test_absent_query_keeps_forwarding_wrapper_legacy_contract(monkeypatch):
             return inner.get_context(user_id, **kwargs)
 
     manager = ForwardingBackend()
-    monkeypatch.setattr("deerflow.agents.memory.get_memory_manager", lambda: manager)
+    monkeypatch.setattr("nkyel.agents.memory.get_memory_manager", lambda: manager)
     config = SimpleNamespace(memory=SimpleNamespace(enabled=True, injection_enabled=True))
     assert "memory:u:a:None" in _get_memory_context("a", app_config=config, user_id="u")
     assert asyncio.run(manager.aget_context("u", agent_name="a", thread_id="t")) == "memory:u:a:t"
@@ -204,14 +204,14 @@ def test_inactive_relevance_does_not_build_injection_idf(monkeypatch, enabled, q
     def unexpected_idf(corpus):
         pytest.fail("IDF must not be built when lexical relevance is unused")
 
-    monkeypatch.setattr("deerflow.agents.memory.backends.deermem.deer_mem.build_idf", unexpected_idf)
+    monkeypatch.setattr("nkyel.agents.memory.backends.deermem.deer_mem.build_idf", unexpected_idf)
     manager = DeerMem(backend_config={"retrieval_relevance_enabled": enabled, "retrieval_relevance_weight": weight, "token_counting": "char"})
     manager._updater = SimpleNamespace(get_memory_data=lambda agent_name=None, *, user_id=None: _idf_scope("python"))
     assert manager.get_context("u", agent_name="a", query=query) == manager.get_context("u", agent_name="a")
 
 
 def test_large_scope_idf_is_bounded_and_keeps_rare_fact_within_budget(monkeypatch):
-    from deerflow.agents.memory.backends.deermem.deermem.core.prompt import _count_tokens
+    from nkyel.agents.memory.backends.deermem.deermem.core.prompt import _count_tokens
 
     corpora = []
 
@@ -219,7 +219,7 @@ def test_large_scope_idf_is_bounded_and_keeps_rare_fact_within_budget(monkeypatc
         corpora.append((len(corpus), max(map(len, corpus))))
         return build_idf(corpus)
 
-    monkeypatch.setattr("deerflow.agents.memory.backends.deermem.deer_mem.build_idf", observed_idf)
+    monkeypatch.setattr("nkyel.agents.memory.backends.deermem.deer_mem.build_idf", observed_idf)
     facts = [{"id": f"fact_{i}", "content": "python background " * 1000, "category": "context", "confidence": 0.7} for i in range(499)]
     facts.append({"id": "fact_rare", "content": "migration conventions", "category": "context", "confidence": 0.7})
     manager = DeerMem(backend_config={"retrieval_relevance_enabled": True, "retrieval_relevance_weight": 1.0, "token_counting": "char", "max_injection_tokens": 100, "guaranteed_categories": []})

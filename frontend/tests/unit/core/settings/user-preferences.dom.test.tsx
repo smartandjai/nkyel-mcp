@@ -124,7 +124,7 @@ describe("authenticated workspace preferences", () => {
         mocks.fetch.mock.calls.every(([, init]) => init.method === "GET"),
       ).toBe(true);
       expect(
-        sessionStorage.getItem("deerflow.preferences.alice.pending"),
+        sessionStorage.getItem("nkyel.preferences.alice.pending"),
       ).toBeNull();
     },
   );
@@ -134,7 +134,7 @@ describe("authenticated workspace preferences", () => {
       JSON.stringify({ context: { model_name: "legacy-other-account" } }),
     );
     localStorage.setItem(
-      "deerflow.preferences.alice",
+      "nkyel.preferences.alice",
       JSON.stringify({
         notification_enabled: false,
         model_name: "alice-cached",
@@ -181,7 +181,7 @@ describe("authenticated workspace preferences", () => {
       }),
     );
     expect(
-      sessionStorage.getItem("deerflow.preferences.alice.pending"),
+      sessionStorage.getItem("nkyel.preferences.alice.pending"),
     ).toBeNull();
     expect(getThreadModelSnapshot("slow-hydration")).toBeUndefined();
     finish(Response.json({ model_name: "server-choice", mode: "ultra" }));
@@ -210,7 +210,7 @@ describe("authenticated workspace preferences", () => {
     act(() => updateLocalSettings("notification", { enabled: true }));
     await waitFor(() => expect(server.notification_enabled).toBe(true));
     await waitFor(() =>
-      expect(sessionStorage.getItem("deerflow.preferences.alice.pending")).toBe(
+      expect(sessionStorage.getItem("nkyel.preferences.alice.pending")).toBe(
         "{}",
       ),
     );
@@ -250,7 +250,7 @@ describe("authenticated workspace preferences", () => {
     await waitFor(() => expect(mocks.fetch).toHaveBeenCalledTimes(1));
     act(() => updateLocalSettings("context", { mode: "ultra" }));
     expect(
-      JSON.parse(sessionStorage.getItem("deerflow.preferences.alice.pending")!),
+      JSON.parse(sessionStorage.getItem("nkyel.preferences.alice.pending")!),
     ).toEqual({ mode: "ultra" });
     view.unmount();
     mocks.fetch.mockImplementation(async (_url: string, init: RequestInit) => {
@@ -266,7 +266,7 @@ describe("authenticated workspace preferences", () => {
     });
     await screen.findByText("true:remote:ultra");
     await waitFor(() =>
-      expect(sessionStorage.getItem("deerflow.preferences.alice.pending")).toBe(
+      expect(sessionStorage.getItem("nkyel.preferences.alice.pending")).toBe(
         "{}",
       ),
     );
@@ -281,7 +281,7 @@ describe("authenticated workspace preferences", () => {
     const writes = rs.spyOn(Storage.prototype, "setItem");
     act(() => {
       window.dispatchEvent(
-        new StorageEvent("storage", { key: "deerflow.preferences.alice" }),
+        new StorageEvent("storage", { key: "nkyel.preferences.alice" }),
       );
     });
     await waitFor(() => expect(mocks.fetch).toHaveBeenCalledTimes(2));
@@ -291,7 +291,7 @@ describe("authenticated workspace preferences", () => {
 
   it("stops requests when another tab changes the authenticated account", async () => {
     sessionStorage.setItem(
-      "deerflow.preferences.alice.pending",
+      "nkyel.preferences.alice.pending",
       JSON.stringify({ mode: "ultra" }),
     );
     mocks.fetch.mockImplementation(
@@ -307,7 +307,7 @@ describe("authenticated workspace preferences", () => {
     });
     expect(mocks.fetch).toHaveBeenCalledTimes(1);
     expect(
-      sessionStorage.getItem("deerflow.preferences.alice.pending"),
+      sessionStorage.getItem("nkyel.preferences.alice.pending"),
     ).toContain("ultra");
   });
 });

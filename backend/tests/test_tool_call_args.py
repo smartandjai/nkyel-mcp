@@ -4,7 +4,7 @@ import json
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
-from deerflow.agents.middlewares.tool_call_args import pair_tool_call_results, rewrite_messages_tool_call_args, rewrite_tool_call_args
+from nkyel.agents.middlewares.tool_call_args import pair_tool_call_results, rewrite_messages_tool_call_args, rewrite_tool_call_args
 
 ARGS = {"path": "/mnt/user-data/outputs/report.md", "content": "x" * 50}
 NEW_ARGS = {"path": "/mnt/user-data/outputs/report.md", "content": "[elided]"}

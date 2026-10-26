@@ -10,11 +10,11 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from langchain_core.messages import AIMessage
 
-from deerflow.config.app_config import AppConfig
-from deerflow.models import factory
-from deerflow.models.openai_codex_provider import CodexChatModel
-from deerflow.runtime.user_context import get_effective_user_id, reset_current_user, set_current_user
-from deerflow.utils import oneshot_llm
+from nkyel.config.app_config import AppConfig
+from nkyel.models import factory
+from nkyel.models.openai_codex_provider import CodexChatModel
+from nkyel.runtime.user_context import get_effective_user_id, reset_current_user, set_current_user
+from nkyel.utils import oneshot_llm
 
 
 def _request(app_config):
@@ -42,8 +42,8 @@ async def test_real_codex_credentials_are_loaded_off_loop(tmp_path, monkeypatch,
     monkeypatch.setattr(CodexChatModel, "ainvoke", invoke)
     config = AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
-            "models": [{"name": "fixture-codex", "model": "fixture-model", "use": "deerflow.models.openai_codex_provider:CodexChatModel"}],
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
+            "models": [{"name": "fixture-codex", "model": "fixture-model", "use": "nkyel.models.openai_codex_provider:CodexChatModel"}],
         }
     )
     helper = oneshot_llm.run_oneshot_llm_detailed if detailed else oneshot_llm.run_oneshot_llm

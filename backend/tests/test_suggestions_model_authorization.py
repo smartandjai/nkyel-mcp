@@ -10,13 +10,13 @@ from fastapi.testclient import TestClient
 from app.gateway import authz
 from app.gateway.deps import get_config
 from app.gateway.routers import models, suggestions
-from deerflow.authz.provider import AuthzDecision
-from deerflow.authz.rbac import RbacAuthorizationProvider
-from deerflow.config.app_config import AppConfig
-from deerflow.config.authorization_config import AuthorizationConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.utils import oneshot_llm
+from nkyel.authz.provider import AuthzDecision
+from nkyel.authz.rbac import RbacAuthorizationProvider
+from nkyel.config.app_config import AppConfig
+from nkyel.config.authorization_config import AuthorizationConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.utils import oneshot_llm
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def route_env(monkeypatch):
     user = SimpleNamespace(id="user-123", system_role="user", oauth_provider=None, oauth_id=None)
     config = AppConfig(
         models=[ModelConfig(name=name, model=name, use="langchain_openai:ChatOpenAI") for name in ["restricted", "allowed"]],
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         authorization=AuthorizationConfig(enabled=True, fail_closed=True),
     )
     provider = RbacAuthorizationProvider(roles={"user": {"models": {"allow": ["allowed"]}}})

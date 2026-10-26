@@ -11,7 +11,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def reset_api_key_warned():
     """Reset the module-level warning flag before each test."""
-    import deerflow.community.serply.tools as serply_mod
+    import nkyel.community.serply.tools as serply_mod
 
     serply_mod._api_key_warned = set()
     yield
@@ -20,7 +20,7 @@ def reset_api_key_warned():
 
 def _patch_config(extra: dict | None):
     """Patch get_app_config so web_search resolves to a tool config with ``extra``."""
-    patcher = patch("deerflow.community.serply.tools.get_app_config")
+    patcher = patch("nkyel.community.serply.tools.get_app_config")
     mock = patcher.start()
     if extra is None:
         mock.return_value.get_tool_config.return_value = None
@@ -57,7 +57,7 @@ def _search_rows(n: int) -> list[dict]:
 
 
 def _run(query: str = "test query", max_results: int = 5) -> dict:
-    from deerflow.community.serply.tools import web_search_tool
+    from nkyel.community.serply.tools import web_search_tool
 
     return json.loads(web_search_tool.invoke({"query": query, "max_results": max_results}))
 
@@ -66,7 +66,7 @@ class TestGetApiKey:
     def test_returns_config_key_when_present(self):
         patcher, _ = _patch_config({"api_key": "from-config"})
         try:
-            from deerflow.community.serply.tools import _get_api_key
+            from nkyel.community.serply.tools import _get_api_key
 
             assert _get_api_key("web_search") == "from-config"
         finally:
@@ -76,7 +76,7 @@ class TestGetApiKey:
         patcher, _ = _patch_config({"api_key": "   "})
         try:
             with patch.dict("os.environ", {"SERPLY_API_KEY": "env-key"}):
-                from deerflow.community.serply.tools import _get_api_key
+                from nkyel.community.serply.tools import _get_api_key
 
                 assert _get_api_key("web_search") == "env-key"
         finally:
@@ -86,7 +86,7 @@ class TestGetApiKey:
         patcher, _ = _patch_config(None)
         try:
             with patch.dict("os.environ", {"SERPLY_API_KEY": "env-only"}):
-                from deerflow.community.serply.tools import _get_api_key
+                from nkyel.community.serply.tools import _get_api_key
 
                 assert _get_api_key("web_search") == "env-only"
         finally:
@@ -96,7 +96,7 @@ class TestGetApiKey:
         patcher, _ = _patch_config(None)
         try:
             with patch.dict("os.environ", {}, clear=True):
-                from deerflow.community.serply.tools import _get_api_key
+                from nkyel.community.serply.tools import _get_api_key
 
                 assert _get_api_key("web_search") is None
         finally:
@@ -105,18 +105,18 @@ class TestGetApiKey:
 
 class TestCoerceMaxResults:
     def test_returns_value_when_valid(self):
-        from deerflow.community.serply.tools import _coerce_max_results
+        from nkyel.community.serply.tools import _coerce_max_results
 
         assert _coerce_max_results(3) == 3
         assert _coerce_max_results("7") == 7
 
     def test_caps_at_serply_maximum(self):
-        from deerflow.community.serply.tools import _coerce_max_results
+        from nkyel.community.serply.tools import _coerce_max_results
 
         assert _coerce_max_results(999) == 100
 
     def test_invalid_values_fall_back_to_default(self):
-        from deerflow.community.serply.tools import _coerce_max_results
+        from nkyel.community.serply.tools import _coerce_max_results
 
         assert _coerce_max_results("oops") == 5
         assert _coerce_max_results(None) == 5
@@ -126,14 +126,14 @@ class TestCoerceMaxResults:
 
 class TestCoerceVertical:
     def test_accepts_known_verticals(self):
-        from deerflow.community.serply.tools import _coerce_vertical
+        from nkyel.community.serply.tools import _coerce_vertical
 
         assert _coerce_vertical(None) == "search"
         assert _coerce_vertical("news") == "news"
         assert _coerce_vertical(" Scholar ") == "scholar"
 
     def test_unknown_vertical_falls_back_to_search(self, caplog):
-        from deerflow.community.serply.tools import _coerce_vertical
+        from nkyel.community.serply.tools import _coerce_vertical
 
         with caplog.at_level(logging.WARNING):
             assert _coerce_vertical("images") == "search"
@@ -142,7 +142,7 @@ class TestCoerceVertical:
 
 class TestWebSearchTool:
     def test_basic_search_returns_normalized_results(self, mock_config_with_key):
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.return_value = _make_response({"results": _search_rows(2)})
             result = _run("test query")
 
@@ -151,7 +151,7 @@ class TestWebSearchTool:
         assert result["results"][0] == {"title": "Result 1", "url": "https://example.com/1", "content": "Snippet 1"}
 
     def test_sends_correct_headers_and_params(self, mock_config_with_key):
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_get = mock_client.return_value.__enter__.return_value.get
             mock_get.return_value = _make_response({"results": _search_rows(1)})
             _run("  padded query  ")
@@ -165,7 +165,7 @@ class TestWebSearchTool:
     def test_config_max_results_overrides_parameter(self):
         patcher, _ = _patch_config({"api_key": "k", "max_results": 2})
         try:
-            with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+            with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
                 mock_get = mock_client.return_value.__enter__.return_value.get
                 mock_get.return_value = _make_response({"results": _search_rows(5)})
                 result = _run("q", max_results=5)
@@ -178,7 +178,7 @@ class TestWebSearchTool:
     def test_passes_through_locale_params_from_config(self):
         patcher, _ = _patch_config({"api_key": "k", "gl": "fr", "hl": "fr", "ignored": "x"})
         try:
-            with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+            with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
                 mock_get = mock_client.return_value.__enter__.return_value.get
                 mock_get.return_value = _make_response({"results": _search_rows(1)})
                 _run("q")
@@ -203,7 +203,7 @@ class TestWebSearchTool:
         ]
         patcher, _ = _patch_config({"api_key": "k", "max_results": 3, "vertical": "news"})
         try:
-            with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+            with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
                 mock_get = mock_client.return_value.__enter__.return_value.get
                 mock_get.return_value = _make_response({"entries": entries})
                 result = _run("q")
@@ -234,7 +234,7 @@ class TestWebSearchTool:
         ]
         patcher, _ = _patch_config({"api_key": "k", "vertical": "scholar"})
         try:
-            with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+            with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
                 mock_get = mock_client.return_value.__enter__.return_value.get
                 mock_get.return_value = _make_response({"articles": articles})
                 result = _run("transformers")
@@ -248,21 +248,21 @@ class TestWebSearchTool:
         assert result["results"][1] == {"title": "No metadata", "url": "https://example.org/paper", "content": "", "authors": [], "cited_by": 0, "pdf_url": ""}
 
     def test_empty_results_returns_error_json(self, mock_config_with_key):
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.return_value = _make_response({"results": []})
             assert _run("nothing") == {"error": "No results found", "query": "nothing"}
 
     def test_missing_results_key_is_treated_as_no_results(self, mock_config_with_key):
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.return_value = _make_response({"results": None})
             assert _run("nothing")["error"] == "No results found"
 
     def test_unexpected_payload_shape_returns_error_json(self, mock_config_with_key):
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.return_value = _make_response({"results": "not-a-list"})
             assert "unexpected response format" in _run("q")["error"]
 
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.return_value = _make_response(["not", "a", "dict"])
             assert "unexpected response format" in _run("q")["error"]
 
@@ -273,7 +273,7 @@ class TestWebSearchTool:
         Reporting "No results found" for it would tell the agent the query
         legitimately matched nothing, hiding a broken upstream payload.
         """
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.return_value = _make_response({"results": rows})
 
             with caplog.at_level(logging.ERROR):
@@ -285,7 +285,7 @@ class TestWebSearchTool:
     def test_mixed_rows_keep_the_object_entries(self, mock_config_with_key):
         rows = ["junk", {"title": "Kept", "link": "https://example.com/kept", "description": "Body"}, 7]
 
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.return_value = _make_response({"results": rows})
             result = _run("q")
 
@@ -300,7 +300,7 @@ class TestWebSearchTool:
         """The news and scholar verticals share the helper, so they contain malformed rows too."""
         patcher, _ = _patch_config({"api_key": "test-serply-key", "max_results": 5, "vertical": vertical})
         try:
-            with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+            with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
                 mock_client.return_value.__enter__.return_value.get.return_value = _make_response({rows_key: ["junk", 3]})
                 result = _run("q")
         finally:
@@ -316,11 +316,11 @@ class TestWebSearchTool:
         """A missing or empty vertical container stays a legitimate empty search."""
         patcher, _ = _patch_config({"api_key": "test-serply-key", "max_results": 5, "vertical": vertical})
         try:
-            with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+            with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
                 mock_client.return_value.__enter__.return_value.get.return_value = _make_response({rows_key: []})
                 assert _run("nothing")["error"] == "No results found"
 
-            with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+            with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
                 mock_client.return_value.__enter__.return_value.get.return_value = _make_response({})
                 assert _run("nothing")["error"] == "No results found"
         finally:
@@ -342,21 +342,21 @@ class TestWebSearchTool:
         mock_resp.status_code = 403
         mock_resp.text = "Forbidden"
         mock_resp.raise_for_status.side_effect = httpx.HTTPStatusError("403", request=MagicMock(), response=mock_resp)
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.return_value = mock_resp
             result = _run("q")
 
         assert result == {"error": "Serply API error: HTTP 403", "query": "q"}
 
     def test_network_exception_returns_error_json(self, mock_config_with_key):
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_client.return_value.__enter__.return_value.get.side_effect = httpx.ConnectError("boom")
             result = _run("q")
 
         assert result == {"error": "boom", "query": "q"}
 
     def test_long_query_is_truncated(self, mock_config_with_key):
-        with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+        with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
             mock_get = mock_client.return_value.__enter__.return_value.get
             mock_get.return_value = _make_response({"results": _search_rows(1)})
             _run("x" * 600)
@@ -367,7 +367,7 @@ class TestWebSearchTool:
         patcher, _ = _patch_config(None)
         try:
             with patch.dict("os.environ", {"SERPLY_API_KEY": "env-key"}):
-                with patch("deerflow.community.serply.tools.httpx.Client") as mock_client:
+                with patch("nkyel.community.serply.tools.httpx.Client") as mock_client:
                     mock_get = mock_client.return_value.__enter__.return_value.get
                     mock_get.return_value = _make_response({"results": _search_rows(1)})
                     result = _run("q")
@@ -380,6 +380,6 @@ class TestWebSearchTool:
 
 def test_coerce_max_results_inf_falls_back_to_default():
     """A YAML `.inf` max_results must fall back to the default, not crash."""
-    import deerflow.community.serply.tools as serply_mod
+    import nkyel.community.serply.tools as serply_mod
 
     assert serply_mod._coerce_max_results(float("inf")) == serply_mod._DEFAULT_MAX_RESULTS

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.utils.network import PortAllocator
+from nkyel.utils.network import PortAllocator
 
 
 @pytest.mark.parametrize("start_port", [65534, 65535])
@@ -24,7 +24,7 @@ def test_occupied_tail_never_probes_invalid_port():
             raise OverflowError("port must be 0-65535")
         raise OSError("Address already in use")
 
-    with patch("deerflow.utils.network.socket.socket") as socket_factory:
+    with patch("nkyel.utils.network.socket.socket") as socket_factory:
         sock = socket_factory.return_value.__enter__.return_value
         sock.bind.side_effect = bind
         with pytest.raises(RuntimeError, match="No available port"):
@@ -37,7 +37,7 @@ def test_last_valid_port_can_be_allocated_and_released():
     allocator = PortAllocator()
     allocator._reserved_ports.add(65534)
 
-    with patch("deerflow.utils.network.socket.socket") as socket_factory:
+    with patch("nkyel.utils.network.socket.socket") as socket_factory:
         sock = socket_factory.return_value.__enter__.return_value
         with allocator.allocate_context(start_port=65534) as port:
             assert port == 65535

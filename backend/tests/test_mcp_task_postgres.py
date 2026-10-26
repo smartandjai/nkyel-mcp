@@ -11,12 +11,12 @@ import pytest_asyncio
 from sqlalchemy import event, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.mcp_tasks import McpTaskRepository, McpTaskThreadMismatchError
-from deerflow.persistence.mcp_tasks.model import McpTaskRow
-from deerflow.persistence.thread_meta import ThreadMetaRepository
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.mcp_tasks import McpTaskRepository, McpTaskThreadMismatchError
+from nkyel.persistence.mcp_tasks.model import McpTaskRow
+from nkyel.persistence.thread_meta import ThreadMetaRepository
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
 
 POSTGRES_URL = os.environ.get("TEST_POSTGRES_URI")
 

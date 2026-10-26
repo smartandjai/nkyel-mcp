@@ -5,11 +5,11 @@ import threading
 
 import pytest
 
-from deerflow.client import StreamEvent
-from deerflow.tui.app import DeerFlowTUI
-from deerflow.tui.cli import LaunchPlan
-from deerflow.tui.session import Session
-from deerflow.tui.view_state import AssistantDelta, RunEnded, RunStarted, ThreadTitle
+from nkyel.client import StreamEvent
+from nkyel.tui.app import NkyelTUI
+from nkyel.tui.cli import LaunchPlan
+from nkyel.tui.session import Session
+from nkyel.tui.view_state import AssistantDelta, RunEnded, RunStarted, ThreadTitle
 
 
 class _Client:
@@ -70,7 +70,7 @@ async def _settle(pilot, predicate):
 
 async def _late_delivery(monkeypatch, gate, switch_thread=False, restart=True):
     client, writer = _Client(), _Writer()
-    app = DeerFlowTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
     queued, deliver, old_done, new_done = (threading.Event() for _ in range(4))
     old_worker_id = None
     original_worker, original_callback = app._stream_worker, app.call_from_thread
@@ -189,7 +189,7 @@ async def test_interrupt_without_restart_discards_pending_delta(monkeypatch):
 @pytest.mark.asyncio
 async def test_send_reserves_busy_state_before_worker_starts(monkeypatch):
     client = _Client()
-    app = DeerFlowTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a"))
     queued, release, done = (threading.Event() for _ in range(3))
     original_worker = app._stream_worker
 
@@ -229,7 +229,7 @@ async def test_send_reserves_busy_state_before_worker_starts(monkeypatch):
 async def test_worker_start_failure_restores_idle_state_and_allows_retry(monkeypatch):
     client, writer = _Client(), _Writer()
     client.release_new.set()
-    app = DeerFlowTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
     failed_runs = []
     original_start = app._start_run_thread
 
@@ -272,7 +272,7 @@ async def test_worker_start_failure_restores_idle_state_and_allows_retry(monkeyp
 @pytest.mark.asyncio
 async def test_launch_message_that_fails_to_start_stays_in_the_composer(monkeypatch):
     client = _Client()
-    app = DeerFlowTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a", message="launch question"))
+    app = NkyelTUI(Session(client=client), LaunchPlan(mode="tui", thread_id="thread-a", message="launch question"))
 
     def fail_agent_worker(*args, **kwargs):
         raise RuntimeError("Cannot start the launch worker")
@@ -292,7 +292,7 @@ async def test_launch_message_that_fails_to_start_stays_in_the_composer(monkeypa
 async def test_completed_run_rejects_a_duplicate_terminal_callback(monkeypatch):
     client, writer = _Client(), _Writer()
     client.release_old.set()
-    app = DeerFlowTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
     delivered = []
     original = app.call_from_thread
 
@@ -322,7 +322,7 @@ async def test_completed_run_rejects_a_duplicate_terminal_callback(monkeypatch):
 async def test_completed_run_keeps_title_write_after_ui_moves_on(monkeypatch, next_action):
     client, writer = _Client(), _Writer()
     client.release_old.set()
-    app = DeerFlowTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
+    app = NkyelTUI(Session(client=client, writer=writer), LaunchPlan(mode="tui", thread_id="thread-a"))
     terminal_delivered, release, old_done, new_done = (threading.Event() for _ in range(4))
     original_worker, original_callback = app._stream_worker, app.call_from_thread
     old_worker_id = None

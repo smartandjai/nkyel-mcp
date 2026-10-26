@@ -8,8 +8,8 @@ from alembic import command
 from alembic.script import ScriptDirectory
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from deerflow.persistence import bootstrap
-from deerflow.persistence.run.model import RunRow
+from nkyel.persistence import bootstrap
+from nkyel.persistence.run.model import RunRow
 
 REVISION = "0046_skill_mutations"
 TABLES = {"skill_mutation_assets", "skill_mutation_owners", "skill_mutation_proposals", "skill_mutation_operations", "skill_mutation_scan_attempts"}

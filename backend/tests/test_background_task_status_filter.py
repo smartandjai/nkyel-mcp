@@ -6,14 +6,14 @@ import pytest_asyncio
 from pydantic import ValidationError
 
 from app.mcp_tasks.service import McpTaskService
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.mcp.tasks import McpTaskDriverRegistry, TaskStatus
-from deerflow.mcp.tasks.runtime import set_mcp_task_submitter
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.mcp_tasks import McpTaskRepository
-from deerflow.persistence.mcp_tasks.model import McpTaskRow
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
-from deerflow.tools.builtins.background_tasks_tool import list_background_tasks
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.mcp.tasks import McpTaskDriverRegistry, TaskStatus
+from nkyel.mcp.tasks.runtime import set_mcp_task_submitter
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.mcp_tasks import McpTaskRepository
+from nkyel.persistence.mcp_tasks.model import McpTaskRow
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.tools.builtins.background_tasks_tool import list_background_tasks
 
 
 @pytest_asyncio.fixture

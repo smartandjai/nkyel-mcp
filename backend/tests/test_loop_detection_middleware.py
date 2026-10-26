@@ -15,8 +15,8 @@ from langchain_core.runnables import Runnable
 from langchain_core.tools import tool as as_tool
 from pydantic import PrivateAttr
 
-from deerflow.agents.middlewares import loop_detection_middleware as loop_detection_module
-from deerflow.agents.middlewares.loop_detection_middleware import (
+from nkyel.agents.middlewares import loop_detection_middleware as loop_detection_module
+from nkyel.agents.middlewares.loop_detection_middleware import (
     _HARD_STOP_MSG,
     _MAX_PENDING_WARNINGS_PER_RUN,
     LoopDetectionMiddleware,
@@ -738,7 +738,7 @@ class TestLoopDetection:
         ``SubagentExecutor`` sets ``context["run_id"] = self.run_id``
         unconditionally (no truthiness guard), so an embedded/TUI-dispatched
         subagent — whose ``run_id`` is never assigned per ``AGENTS.md``'s
-        description of the embedded ``DeerFlowClient`` — runs with a context
+        description of the embedded ``NkyelClient`` — runs with a context
         that legitimately carries ``run_id=None`` (the key is *present*, not
         absent). The executor later reads the reason back with the raw
         attribute: ``consume_stop_reason(self.run_id)``, i.e.
@@ -1426,9 +1426,9 @@ class TestLoopDetectionAgentGraphIntegration:
 
     def test_loop_warning_survives_a_retried_model_call_in_real_agent_graph(self):
         """LLMErrorHandlingMiddleware retries a failed call by running the inner wraps again; the retry must still carry the warning."""
-        from deerflow.agents.middlewares.llm_error_handling_middleware import LLMErrorHandlingMiddleware
-        from deerflow.config.app_config import AppConfig, LlmCallConfig
-        from deerflow.config.sandbox_config import SandboxConfig
+        from nkyel.agents.middlewares.llm_error_handling_middleware import LLMErrorHandlingMiddleware
+        from nkyel.config.app_config import AppConfig, LlmCallConfig
+        from nkyel.config.sandbox_config import SandboxConfig
 
         class ProviderUnavailable(Exception):
             def __init__(self) -> None:
@@ -2247,7 +2247,7 @@ class TestFromConfig:
 
     @staticmethod
     def _config(**kwargs):
-        from deerflow.config.loop_detection_config import LoopDetectionConfig
+        from nkyel.config.loop_detection_config import LoopDetectionConfig
 
         return LoopDetectionConfig(**kwargs)
 
@@ -2393,7 +2393,7 @@ class TestWarningLetsAgentSaveResultsFirst:
 
     @pytest.mark.asyncio
     async def test_warned_agent_can_recover_an_existing_file_save_through_the_real_gate(self, tmp_path):
-        from deerflow.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
+        from nkyel.agents.middlewares.read_before_write_middleware import ReadBeforeWriteMiddleware
 
         output = tmp_path / "out.md"
         output.write_text("previous attempt", encoding="utf-8")
@@ -2429,9 +2429,9 @@ class TestWarningLetsAgentSaveResultsFirst:
         warnings = [message for message in model.seen_messages[3] if isinstance(message, HumanMessage) and message.name == "loop_warning"]
         assert len(warnings) == 1 and "retry the save once" in warnings[0].content
         blocked = next(message for message in result["messages"] if isinstance(message, ToolMessage) and message.tool_call_id == "blocked_save")
-        assert blocked.status == "error" and "deerflow_write_block" in blocked.additional_kwargs
+        assert blocked.status == "error" and "nkyel_write_block" in blocked.additional_kwargs
         read = next(message for message in result["messages"] if isinstance(message, ToolMessage) and message.name == "read_file")
-        assert read.additional_kwargs["deerflow_read_mark"]["path"] == str(output)
+        assert read.additional_kwargs["nkyel_read_mark"]["path"] == str(output)
         assert executed == [("read", "previous attempt"), ("write", "partial results")]
         assert output.read_text(encoding="utf-8") == "partial results"
         assert result["messages"][-1].content == "Saved partial results."

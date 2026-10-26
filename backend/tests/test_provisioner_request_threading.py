@@ -44,7 +44,7 @@ def test_presence_only_attests_absence_on_kubernetes_not_found(monkeypatch, prov
 
 
 def test_provisioner_thread_id_pattern_matches_gateway_contract(provisioner_module) -> None:
-    from deerflow.utils.thread_id import THREAD_ID_PATTERN
+    from nkyel.utils.thread_id import THREAD_ID_PATTERN
 
     assert provisioner_module.SAFE_THREAD_ID_PATTERN == THREAD_ID_PATTERN
 
@@ -214,10 +214,10 @@ async def test_capacity_upgrade_preserves_peer_pod_after_discovery_error(monkeyp
     """Discovery failure must not bypass ownership; a later safe retry replaces."""
     from test_sandbox_orphan_reconciliation import _make_provider_for_reconciliation, _make_shared_ownership_store
 
-    from deerflow.community.aio_sandbox import aio_sandbox_provider as provider_mod
-    from deerflow.community.aio_sandbox import remote_backend as remote_mod
-    from deerflow.community.aio_sandbox.ownership import compute_lease_ttl
-    from deerflow.config.paths import Paths
+    from nkyel.community.aio_sandbox import aio_sandbox_provider as provider_mod
+    from nkyel.community.aio_sandbox import remote_backend as remote_mod
+    from nkyel.community.aio_sandbox.ownership import compute_lease_ttl
+    from nkyel.config.paths import Paths
 
     shared = _make_shared_ownership_store()
     old = _make_provider_for_reconciliation(worker_id="old-gateway", store=shared)
@@ -303,11 +303,11 @@ async def test_quarantined_pod_cleanup_recovers_after_partial_delete(monkeypatch
     """A lost Service must not strand the fenced Pod after a temporary delete failure."""
     from test_sandbox_orphan_reconciliation import _make_provider_for_reconciliation
 
-    from deerflow.community.aio_sandbox import aio_sandbox_provider as provider_mod
-    from deerflow.community.aio_sandbox import remote_backend as remote_mod
-    from deerflow.community.aio_sandbox.quarantine import SandboxQuarantine
-    from deerflow.community.aio_sandbox.sandbox_info import SandboxInfo
-    from deerflow.config.paths import Paths
+    from nkyel.community.aio_sandbox import aio_sandbox_provider as provider_mod
+    from nkyel.community.aio_sandbox import remote_backend as remote_mod
+    from nkyel.community.aio_sandbox.quarantine import SandboxQuarantine
+    from nkyel.community.aio_sandbox.sandbox_info import SandboxInfo
+    from nkyel.config.paths import Paths
 
     provider = _make_provider_for_reconciliation()
     sid = "sandbox-existing"
@@ -501,7 +501,7 @@ class _RecordingCoreV1:
 
     def list_namespaced_service(self, _namespace: str, *, label_selector: str):
         self._record_k8s_call()
-        assert label_selector == "app=deer-flow-sandbox"
+        assert label_selector == "app=nkyel-sandbox"
         return SimpleNamespace(items=[_node_port_service("sandbox-listed")])
 
 
@@ -646,7 +646,7 @@ def test_create_sandbox_route_threads_custom_skills_root_into_pod(
             skills_container_path="/custom-skills",
             extra_mounts=[
                 provisioner_module.ExtraMount(
-                    host_path=(f"/.deer-flow/users/alice/threads/thread-1/skills_view/{category}"),
+                    host_path=(f"/.nkyel/users/alice/threads/thread-1/skills_view/{category}"),
                     container_path=f"/custom-skills/{category}",
                     read_only=True,
                 )

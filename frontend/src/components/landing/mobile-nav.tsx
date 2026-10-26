@@ -91,7 +91,7 @@ export function MobileNav({
         }}
       >
         <SheetHeader>
-          <SheetTitle className="font-serif text-xl">DeerFlow</SheetTitle>
+          <SheetTitle className="font-serif text-xl">nkyel</SheetTitle>
         </SheetHeader>
         {search && (
           // Radix's modal scroll lock only allows descendants of its content.

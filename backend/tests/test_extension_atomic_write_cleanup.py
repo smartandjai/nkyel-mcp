@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.extensions.manager import _FileSnapshot, _write_plugins_block
+from nkyel.extensions.manager import _FileSnapshot, _write_plugins_block
 
 
 @pytest.mark.parametrize("primary_type", [OSError, KeyboardInterrupt])
@@ -49,9 +49,9 @@ def test_snapshot_restore_preserves_publish_error_when_cleanup_fails(tmp_path, m
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
         with pytest.raises(primary_type) as raised:
             snapshot.restore()
 
@@ -106,9 +106,9 @@ def test_plugins_rewrite_preserves_publish_error_when_cleanup_fails(tmp_path, mo
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
         with pytest.raises(primary_type) as raised:
             _write_plugins_block(target, original, [{"name": "demo", "enabled": True}])
 
@@ -146,7 +146,7 @@ def test_plugins_rewrite_success_keeps_neighbor_bytes_and_mode(tmp_path):
 @pytest.mark.parametrize("close_fails", [False, True])
 @pytest.mark.parametrize("unlink_fails", [False, True])
 def test_snapshot_fdopen_failure_closes_descriptor_without_masking(tmp_path, monkeypatch, caplog, close_fails, unlink_fails):
-    from deerflow.extensions import manager as extension_manager
+    from nkyel.extensions import manager as extension_manager
 
     target = tmp_path / "pyproject.toml"
     target.write_bytes(b"kept")
@@ -186,7 +186,7 @@ def test_snapshot_fdopen_failure_closes_descriptor_without_masking(tmp_path, mon
     monkeypatch.setattr(Path, "unlink", unlink)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             with pytest.raises(OSError) as raised:
                 snapshot.restore()
         assert raised.value is primary
@@ -210,7 +210,7 @@ def test_snapshot_fdopen_failure_closes_descriptor_without_masking(tmp_path, mon
 
 @pytest.mark.parametrize("failure", ["none", "unlink", "logging"])
 def test_plugins_short_write_still_removes_the_temporary(tmp_path, monkeypatch, caplog, failure):
-    from deerflow.extensions import manager as extension_manager
+    from nkyel.extensions import manager as extension_manager
 
     target = tmp_path / "config.yaml"
     original = "kept: true\n"
@@ -244,10 +244,10 @@ def test_plugins_short_write_still_removes_the_temporary(tmp_path, monkeypatch, 
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
     try:
-        with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
             with pytest.raises(OSError) as raised:
                 _write_plugins_block(target, original, [{"name": "demo", "enabled": True}])
         assert raised.value is primary
@@ -289,7 +289,7 @@ def test_snapshot_delete_branch_cleanup_failure_does_not_skip_later_restores(tmp
         def boom_log(*args, **kwargs):
             raise RuntimeError("log handler failed")
 
-        monkeypatch.setattr("deerflow.utils.atomic_write.logger.warning", boom_log)
+        monkeypatch.setattr("nkyel.utils.atomic_write.logger.warning", boom_log)
 
     def _rollback():
         try:
@@ -299,7 +299,7 @@ def test_snapshot_delete_branch_cleanup_failure_does_not_skip_later_restores(tmp
                 snapshot.restore()
             raise
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.utils.atomic_write"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.utils.atomic_write"):
         with pytest.raises(RuntimeError) as raised:
             _rollback()
 

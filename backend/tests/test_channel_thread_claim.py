@@ -29,10 +29,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from support.postgres import asyncpg_test_url
 
 from app.channels.store import JsonChannelStore, SqlChannelStore
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_connections import ChannelConnectionRepository, ChannelConnectionRow, ChannelConversationRow, ChannelCredentialCipher
-from deerflow.persistence.channel_thread_bindings import ChannelThreadBindingRow
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_connections import ChannelConnectionRepository, ChannelConnectionRow, ChannelConversationRow, ChannelCredentialCipher
+from nkyel.persistence.channel_thread_bindings import ChannelThreadBindingRow
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 pytestmark = pytest.mark.asyncio
 

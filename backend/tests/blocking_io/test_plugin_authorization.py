@@ -20,11 +20,11 @@ from types import ModuleType, SimpleNamespace
 from uuid import uuid4
 
 import pytest
-from deerflow_extension_api.auth import (
+from nkyel_extension_api.auth import (
     EXTENSION_PRINCIPAL_RESOLVER_KEY,
     ExtensionPrincipal,
 )
-from deerflow_extension_api.plugins import BackendAction, PluginContribution
+from nkyel_extension_api.plugins import BackendAction, PluginContribution
 from fastapi import HTTPException
 from starlette.requests import Request
 
@@ -32,18 +32,18 @@ from app.gateway import authz as gateway_authz
 from app.gateway.app import _resolve_extension_plugin_management_async
 from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
 from app.gateway.routers.plugins import invoke_plugin_action
-from deerflow.authz.plugin_authz import afilter_plugin_management
-from deerflow.authz.provider import Principal
-from deerflow.authz.rbac import RbacAuthorizationProvider
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.authz.plugin_authz import afilter_plugin_management
+from nkyel.authz.provider import Principal
+from nkyel.authz.rbac import RbacAuthorizationProvider
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.extensions.registry import ExtensionRegistry
 
 pytestmark = pytest.mark.asyncio
 
 NAMESPACE = "community.check"
-RBAC = "deerflow.authz.rbac:RbacAuthorizationProvider"
+RBAC = "nkyel.authz.rbac:RbacAuthorizationProvider"
 
 
 def _blocking_probe(tmp_path: Path) -> Path:
@@ -54,7 +54,7 @@ def _blocking_probe(tmp_path: Path) -> Path:
 
 def _app_config(*, roles: dict, provider_use: str = RBAC, provider_config: dict | None = None) -> AppConfig:
     return AppConfig(
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         authorization=AuthorizationConfig(
             enabled=True,
             fail_closed=True,

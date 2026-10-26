@@ -80,15 +80,15 @@ sys.path[:0] = [
 ]
 case_dir = args.output / args.case
 case_dir.mkdir(exist_ok=True)
-os.environ["DEER_FLOW_HOME"] = str(case_dir / "home")
-os.environ["DEER_FLOW_CONFIG_PATH"] = str(case_dir / "config.yaml")
+os.environ["NKYEL_HOME"] = str(case_dir / "home")
+os.environ["NKYEL_CONFIG_PATH"] = str(case_dir / "config.yaml")
 (case_dir / ".env").write_text("", encoding="utf-8")
 os.chdir(case_dir)
 
 # Import only after selecting the checkout and isolated configuration above.
-from deerflow.config.app_config import AppConfig, set_app_config  # noqa: E402
-from deerflow.community.aio_sandbox import aio_sandbox_provider as aio  # noqa: E402
-from deerflow.sandbox import sandbox_provider as registry  # noqa: E402
+from nkyel.config.app_config import AppConfig, set_app_config  # noqa: E402
+from nkyel.community.aio_sandbox import aio_sandbox_provider as aio  # noqa: E402
+from nkyel.sandbox import sandbox_provider as registry  # noqa: E402
 
 assert Path(aio.__file__).resolve().is_relative_to(root)
 prefix = "df-retry-" + args.case + "-" + uuid.uuid4().hex[:8]
@@ -101,7 +101,7 @@ config = {
     "tool_groups": [],
     "memory": {"enabled": False},
     "sandbox": {
-        "use": "deerflow.community.aio_sandbox:AioSandboxProvider",
+        "use": "nkyel.community.aio_sandbox:AioSandboxProvider",
         "image": image,
         "container_prefix": prefix,
         "port": 18800,
@@ -176,7 +176,7 @@ try:
         assert len(provider._warm_pool) == 1
         registry.set_sandbox_provider(provider)
         if args.case == "shutdown-held":
-            from deerflow.sandbox.lease import get_sandbox_lease_manager
+            from nkyel.sandbox.lease import get_sandbox_lease_manager
 
             manager = get_sandbox_lease_manager(provider)
             manager.retain("unfinished", bad_id, thread_id="bad", user_id="probe")

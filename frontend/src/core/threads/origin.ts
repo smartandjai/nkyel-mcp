@@ -4,13 +4,13 @@ import type { AgentThread } from "./types";
 import { channelSourceOfThread, labelOfChannelProvider } from "./utils";
 
 /**
- * Server-owned run/thread origin key (`metadata.deerflow_origin`), stamped by
+ * Server-owned run/thread origin key (`metadata.nkyel_origin`), stamped by
  * the Gateway on runs a server-side launcher starts and on the thread it
  * creates for them. Pinned by `contracts/thread_origin_contract.json`. Not to
- * be confused with the message-level `deerflow_scheduled_origin` key
+ * be confused with the message-level `nkyel_scheduled_origin` key
  * (`core/messages/utils.ts`), which marks the scheduled prompt inside a run.
  */
-export const DEERFLOW_ORIGIN_KEY = "deerflow_origin";
+export const NKYEL_ORIGIN_KEY = "nkyel_origin";
 
 export const THREAD_ORIGIN_KINDS = [
   "extension",
@@ -70,7 +70,7 @@ function originFromMetadata(value: unknown): ThreadOrigin | null {
 
 /**
  * Who created a thread, for the sidebar marker. In order:
- * 1. the server-owned `metadata.deerflow_origin`;
+ * 1. the server-owned `metadata.nkyel_origin`;
  * 2. else the IM `channel_source` marker (also covers IM threads from before
  *    the origin key existed; a `github` provider is a GitHub agent thread);
  * 3. else a legacy scheduled run thread (`metadata.scheduled_task_id`);
@@ -80,7 +80,7 @@ export function threadOriginOf(
   thread: Pick<AgentThread, "metadata">,
 ): ThreadOrigin | null {
   const metadata = thread.metadata;
-  const stamped = originFromMetadata(metadata?.[DEERFLOW_ORIGIN_KEY]);
+  const stamped = originFromMetadata(metadata?.[NKYEL_ORIGIN_KEY]);
   if (stamped) {
     // An IM origin without a provider falls through to `channel_source`.
     return stamped;

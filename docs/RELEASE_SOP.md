@@ -1,6 +1,6 @@
-# DeerFlow Release SOP
+# nkyel Release SOP
 
-Standard operating procedure for cutting a DeerFlow release. The goal is a
+Standard operating procedure for cutting a nkyel release. The goal is a
 self-consistent release: **every merged milestone PR is documented in English
 *and* Chinese**, a curated release-notes file ships, and the tree is bumped to
 the next development version.
@@ -16,7 +16,7 @@ the next development version.
 
 ```bash
 VER=2.0.0
-REPO=bytedance/deer-flow
+REPO=bytedance/nkyel
 
 # All merged milestone PRs: number, title, labels
 gh search prs --repo $REPO --milestone "$VER" --merged --limit 300 \
@@ -124,10 +124,10 @@ The project version lives in **five** places:
 
 | File | What |
 |------|------|
-| `backend/pyproject.toml` | root `deer-flow` |
-| `backend/packages/harness/pyproject.toml` | `deerflow-harness` |
-| `frontend/package.json` | `deer-flow-frontend` |
-| `backend/uv.lock` | `deer-flow` + `deerflow-harness` `[[package]]` entries |
+| `backend/pyproject.toml` | root `nkyel` |
+| `backend/packages/harness/pyproject.toml` | `nkyel-harness` |
+| `frontend/package.json` | `nkyel-frontend` |
+| `backend/uv.lock` | `nkyel` + `nkyel-harness` `[[package]]` entries |
 
 > `frontend/pnpm-lock.yaml` does **not** store our project version — leave it
 > alone (its `2.0.0` hits are third-party deps like `cffi`).

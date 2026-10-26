@@ -1,9 +1,9 @@
 """`make clean` says what it deletes and refuses while the Gateway container runs.
 
-The target deletes ``backend/.deer-flow`` -- the database, users, threads,
+The target deletes ``backend/.nkyel`` -- the database, users, threads,
 uploads, and secrets -- but ``make help`` described it as cleaning up
 "temporary files". Both Docker stacks mount that directory into the
-``deer-flow-gateway`` container, and ``make stop`` only stops local services,
+``nkyel-gateway`` container, and ``make stop`` only stops local services,
 so ``make clean`` used to delete the data under a running Gateway.
 
 These tests run the real ``make clean`` from the real Makefile and guard script
@@ -37,15 +37,15 @@ def _checkout(tmp_path: Path) -> Path:
     shutil.copy2(REPO_ROOT / "Makefile", root / "Makefile")
     shutil.copy2(REPO_ROOT / "scripts" / "check-data-not-in-use.sh", root / "scripts" / "check-data-not-in-use.sh")
     # Records each stop call and whether the data still existed at that point:
-    # the real serve.sh --stop also stops deer-flow-sandbox* containers, which
-    # bind-mount thread directories under backend/.deer-flow.
+    # the real serve.sh --stop also stops nkyel-sandbox* containers, which
+    # bind-mount thread directories under backend/.nkyel.
     (root / "scripts" / "serve.sh").write_text(
-        '#!/usr/bin/env bash\nif [ -e backend/.deer-flow ]; then state=data-present; else state=data-gone; fi\necho "$* $state" >> stop-calls\n',
+        '#!/usr/bin/env bash\nif [ -e backend/.nkyel ]; then state=data-present; else state=data-gone; fi\necho "$* $state" >> stop-calls\n',
         encoding="utf-8",
     )
-    data = root / "backend" / ".deer-flow" / "data"
+    data = root / "backend" / ".nkyel" / "data"
     data.mkdir(parents=True)
-    (data / "deerflow.db").write_text("db", encoding="utf-8")
+    (data / "nkyel.db").write_text("db", encoding="utf-8")
     (root / "logs").mkdir()
     (root / "logs" / "gateway.log").write_text("log", encoding="utf-8")
     return root
@@ -76,12 +76,12 @@ def test_help_says_clean_deletes_runtime_data(tmp_path: Path) -> None:
     help_line = next(line for line in _make(root, _bin(tmp_path, None), "help").stdout.splitlines() if "make clean" in line)
 
     assert "temporary files" not in help_line
-    assert "DELETE" in help_line and "backend/.deer-flow" in help_line
+    assert "DELETE" in help_line and "backend/.nkyel" in help_line
 
 
 @pytest.mark.parametrize(
     "names",
-    ["deer-flow-gateway", "deer-flow-redis\ndeer-flow-gateway", "deer-flow-gateway\r"],
+    ["nkyel-gateway", "nkyel-redis\nnkyel-gateway", "nkyel-gateway\r"],
     ids=["gateway", "whole-stack", "crlf"],
 )
 def test_clean_refuses_while_the_gateway_container_runs(tmp_path: Path, names: str) -> None:
@@ -91,8 +91,8 @@ def test_clean_refuses_while_the_gateway_container_runs(tmp_path: Path, names: s
     result = _make(root, _bin(tmp_path, f"printf '{listing}\\n'"))
 
     assert result.returncode != 0
-    assert "deer-flow-gateway container is running" in result.stderr
-    assert (root / "backend" / ".deer-flow" / "data" / "deerflow.db").exists()
+    assert "nkyel-gateway container is running" in result.stderr
+    assert (root / "backend" / ".nkyel" / "data" / "nkyel.db").exists()
     assert (root / "logs" / "gateway.log").exists()
     # The guard runs before stop, which would stop the stack's sandboxes.
     assert not (root / "stop-calls").exists()
@@ -100,7 +100,7 @@ def test_clean_refuses_while_the_gateway_container_runs(tmp_path: Path, names: s
 
 @pytest.mark.parametrize(
     "docker",
-    [None, "exit 1", "printf 'deer-flow-gateway-old\\nmy-deer-flow-gateway\\ndeer-flow-sandbox-1\\n'"],
+    [None, "exit 1", "printf 'nkyel-gateway-old\\nmy-nkyel-gateway\\nnkyel-sandbox-1\\n'"],
     ids=["no-docker", "daemon-down", "other-containers"],
 )
 def test_clean_deletes_runtime_data_when_no_gateway_container_runs(tmp_path: Path, docker: str | None) -> None:
@@ -109,8 +109,8 @@ def test_clean_deletes_runtime_data_when_no_gateway_container_runs(tmp_path: Pat
     result = _make(root, _bin(tmp_path, docker))
 
     assert result.returncode == 0, result.stderr
-    assert "Deleting local runtime data in backend/.deer-flow" in result.stdout
-    assert not (root / "backend" / ".deer-flow").exists()
+    assert "Deleting local runtime data in backend/.nkyel" in result.stdout
+    assert not (root / "backend" / ".nkyel").exists()
     assert not (root / "logs" / "gateway.log").exists()
     # stop (and with it the sandbox-container cleanup) runs before the deletion.
     assert (root / "stop-calls").read_text(encoding="utf-8").split() == ["--stop", "data-present"]
@@ -127,6 +127,6 @@ def test_help_and_deletion_notice_list_the_same_data(tmp_path: Path) -> None:
     help_line = next(line for line in _make(root, bin_dir, "help").stdout.splitlines() if "make clean" in line)
     notice = next(line for line in _make(root, bin_dir).stdout.splitlines() if line.startswith("Deleting local runtime data"))
 
-    listed = _listed_contents(help_line, "backend/.deer-flow: ")
-    assert listed == _listed_contents(notice, "backend/.deer-flow (")
+    listed = _listed_contents(help_line, "backend/.nkyel: ")
+    assert listed == _listed_contents(notice, "backend/.nkyel (")
     assert {"database", "users", "threads", "uploads", "memory", "secrets"} <= set(listed)

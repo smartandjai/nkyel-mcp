@@ -12,16 +12,16 @@ from langgraph.graph import END, START, StateGraph
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.agents.interaction_policy import RunInteractionMode, RunInteractionPolicy
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.persistence.base import Base
-from deerflow.persistence.run.sql import RunRepository
-from deerflow.runtime import goal
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.schemas import RunStatus
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.agents.interaction_policy import RunInteractionMode, RunInteractionPolicy
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.persistence.base import Base
+from nkyel.persistence.run.sql import RunRepository
+from nkyel.runtime import goal
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.schemas import RunStatus
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 @pytest_asyncio.fixture(params=["memory", "sql"])
@@ -176,7 +176,7 @@ async def test_scheduled_goal_is_installed_before_first_turn_and_removed_at_term
 @pytest.mark.parametrize("heartbeat", [False, True])
 @pytest.mark.parametrize("with_events", [False, True])
 async def test_scheduled_cleanup_failure_updates_terminal_outcome_without_run_store(monkeypatch, heartbeat, with_events):
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
     checkpointer = InMemorySaver()
     events = MemoryRunEventStore() if with_events else None

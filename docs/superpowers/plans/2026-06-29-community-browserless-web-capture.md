@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:test-driven-development for code changes. Commit and push steps are intentionally deferred because this local branch must stay uncommitted until user review.
 
-**Goal:** Add an opt-in community `web_capture` tool backed by Browserless `/screenshot` that renders a URL in headless Chrome, saves a PNG/JPEG/WebP screenshot into the current thread outputs directory, and exposes the file as a DeerFlow artifact path.
+**Goal:** Add an opt-in community `web_capture` tool backed by Browserless `/screenshot` that renders a URL in headless Chrome, saves a PNG/JPEG/WebP screenshot into the current thread outputs directory, and exposes the file as a nkyel artifact path.
 
-**Architecture:** Keep the integration inside the existing `deerflow.community.browserless` package. `BrowserlessClient` owns HTTP request construction and binary response handling; `tools.py` owns DeerFlow runtime/config resolution, output filename generation, file persistence, and artifact-state updates. The feature uses existing thread-data outputs semantics rather than inventing a new artifact channel.
+**Architecture:** Keep the integration inside the existing `nkyel.community.browserless` package. `BrowserlessClient` owns HTTP request construction and binary response handling; `tools.py` owns nkyel runtime/config resolution, output filename generation, file persistence, and artifact-state updates. The feature uses existing thread-data outputs semantics rather than inventing a new artifact channel.
 
 **Tech Stack:** Python 3.12, LangChain tool decorators, LangGraph `Command`, `httpx.AsyncClient`, Browserless REST `/screenshot`, pytest.
 
@@ -20,7 +20,7 @@ Add a new configured tool:
 tools:
   - name: web_capture
     group: web
-    use: deerflow.community.browserless.tools:web_capture_tool
+    use: nkyel.community.browserless.tools:web_capture_tool
     base_url: http://localhost:3032
     timeout_s: 30
     output_format: png
@@ -160,7 +160,7 @@ Update:
 - `frontend/src/content/en/harness/tools.mdx`: add Browserless tab for web fetch and a web capture section.
 - `frontend/src/content/zh/harness/tools.mdx`: mirror the English documentation.
 - `scripts/doctor.py`: recognize `web_capture` and `browserless` token/config status.
-- `backend/packages/harness/deerflow/community/browserless/__init__.py`: export `web_capture_tool`.
+- `backend/packages/harness/nkyel/community/browserless/__init__.py`: export `web_capture_tool`.
 
 No `README.md` update is planned because this is a provider-specific opt-in community tool, and existing provider additions in this area document through config/docs pages.
 
@@ -179,7 +179,7 @@ Steps:
 ### Task 2: Implement Browserless Screenshot Client
 
 **Files:**
-- Modify: `backend/packages/harness/deerflow/community/browserless/browserless_client.py`
+- Modify: `backend/packages/harness/nkyel/community/browserless/browserless_client.py`
 - Modify: `backend/tests/test_browserless_client.py`
 
 Steps:
@@ -203,8 +203,8 @@ Steps:
 ### Task 4: Implement `web_capture_tool`
 
 **Files:**
-- Modify: `backend/packages/harness/deerflow/community/browserless/tools.py`
-- Modify: `backend/packages/harness/deerflow/community/browserless/__init__.py`
+- Modify: `backend/packages/harness/nkyel/community/browserless/tools.py`
+- Modify: `backend/packages/harness/nkyel/community/browserless/__init__.py`
 
 Steps:
 - Add helpers for config lookup, URL validation, format validation, filename sanitization, and virtual artifact path generation.
@@ -234,8 +234,8 @@ Run:
 
 ```bash
 cd backend && uv run pytest tests/test_browserless_client.py -q
-cd backend && uv run ruff check packages/harness/deerflow/community/browserless tests/test_browserless_client.py
-cd backend && uv run ruff format --check packages/harness/deerflow/community/browserless tests/test_browserless_client.py
+cd backend && uv run ruff check packages/harness/nkyel/community/browserless tests/test_browserless_client.py
+cd backend && uv run ruff format --check packages/harness/nkyel/community/browserless tests/test_browserless_client.py
 ```
 
 Manual review checklist:

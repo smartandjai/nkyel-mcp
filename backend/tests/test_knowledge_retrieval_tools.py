@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from deerflow.knowledge import KnowledgeCapabilities, RetrievalResult
-from deerflow.knowledge.providers import search_provider, validate_provider
+from nkyel.knowledge import KnowledgeCapabilities, RetrievalResult
+from nkyel.knowledge.providers import search_provider, validate_provider
 
 
 @pytest.mark.asyncio
@@ -46,14 +46,14 @@ async def test_all_tool_combinations_use_config_and_shared_evidence(mask):
     from langgraph.graph import END, START, MessagesState, StateGraph
     from langgraph.prebuilt import ToolNode
 
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.config.tool_config import ToolConfig
-    from deerflow.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, ExtensionRegistry
-    from deerflow.knowledge import KnowledgeSource, RetrievalHit, sources_from_messages, tools
-    from deerflow.knowledge.providers import KNOWLEDGE_TOOL_OPERATIONS, get_knowledge_capabilities
-    from deerflow.knowledge.sources import forward_sources, prune_sources
-    from deerflow.runtime.serialization import serialize_channel_values_for_api
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.config.tool_config import ToolConfig
+    from nkyel.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, ExtensionRegistry
+    from nkyel.knowledge import KnowledgeSource, RetrievalHit, sources_from_messages, tools
+    from nkyel.knowledge.providers import KNOWLEDGE_TOOL_OPERATIONS, get_knowledge_capabilities
+    from nkyel.knowledge.sources import forward_sources, prune_sources
+    from nkyel.runtime.serialization import serialize_channel_values_for_api
 
     names = [name for i, name in enumerate(KNOWLEDGE_TOOL_OPERATIONS) if mask & (1 << i)]
     provider = SimpleNamespace(capabilities=KnowledgeCapabilities(operations={"search", "sources", "entries_search", "relations_search"}))
@@ -64,7 +64,7 @@ async def test_all_tool_combinations_use_config_and_shared_evidence(mask):
     with registry.attributed_to("synthetic:install"):
         registry.knowledge_provider("synthetic", provider)
     loaded = registry.build()
-    config = AppConfig(sandbox=SandboxConfig(use="example.remote:Sandbox"), tools=[ToolConfig(name=name, group="knowledge", use=f"deerflow.knowledge.tools:{name}_tool", provider="synthetic") for name in names])
+    config = AppConfig(sandbox=SandboxConfig(use="example.remote:Sandbox"), tools=[ToolConfig(name=name, group="knowledge", use=f"nkyel.knowledge.tools:{name}_tool", provider="synthetic") for name in names])
     assert get_knowledge_capabilities(config, extensions=loaded).supports("search") == bool(names)
     if not names:
         return
@@ -92,7 +92,7 @@ async def test_all_tool_combinations_use_config_and_shared_evidence(mask):
 
 @pytest.mark.parametrize("name", ["knowledge_search", "knowledge_entries_search", "entity_relations_search"])
 def test_disabled_scope_blocks_each_tool(name):
-    from deerflow.agents.middlewares.knowledge_scope_middleware import KnowledgeScopeMiddleware
+    from nkyel.agents.middlewares.knowledge_scope_middleware import KnowledgeScopeMiddleware
 
     request = SimpleNamespace(tool_call={"name": name, "id": "call"}, runtime=SimpleNamespace(context={"__knowledge_scope_execution": {"version": 1, "mode": "disabled"}}))
     message = KnowledgeScopeMiddleware._disabled_tool_message(request)
@@ -100,8 +100,8 @@ def test_disabled_scope_blocks_each_tool(name):
 
 
 def test_combined_scope_is_intersection_and_rejects_mixed_namespaces():
-    from deerflow.extensions import ExtensionRegistry
-    from deerflow.knowledge.providers import get_knowledge_capabilities
+    from nkyel.extensions import ExtensionRegistry
+    from nkyel.knowledge.providers import get_knowledge_capabilities
 
     registry = ExtensionRegistry()
     capabilities = KnowledgeCapabilities(operations={"search", "catalog", "documents", "dataset_filter", "document_filter", "entries_search", "entries_dataset_filter"})
@@ -109,7 +109,7 @@ def test_combined_scope_is_intersection_and_rejects_mixed_namespaces():
     with registry.attributed_to("test:install"):
         registry.knowledge_provider("one", provider)
         registry.knowledge_provider("two", provider)
-    entries = {name: SimpleNamespace(use=f"deerflow.knowledge.tools:{name}_tool", model_extra={"provider": "one"}) for name in ["knowledge_search", "knowledge_entries_search"]}
+    entries = {name: SimpleNamespace(use=f"nkyel.knowledge.tools:{name}_tool", model_extra={"provider": "one"}) for name in ["knowledge_search", "knowledge_entries_search"]}
     config = SimpleNamespace(get_tool_config=entries.get)
     caps = get_knowledge_capabilities(config, extensions=registry.build())
     assert caps.supports("dataset_filter") and not caps.supports("document_filter")
@@ -120,11 +120,11 @@ def test_combined_scope_is_intersection_and_rejects_mixed_namespaces():
 
 @pytest.mark.parametrize("registered", [True, False])
 def test_incompatible_tool_reports_pair_without_silently_emptying_capabilities(caplog, registered):
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.sandbox_config import SandboxConfig
-    from deerflow.config.tool_config import ToolConfig
-    from deerflow.extensions import ExtensionRegistry
-    from deerflow.knowledge.providers import get_knowledge_capabilities
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.sandbox_config import SandboxConfig
+    from nkyel.config.tool_config import ToolConfig
+    from nkyel.extensions import ExtensionRegistry
+    from nkyel.knowledge.providers import get_knowledge_capabilities
 
     registry = ExtensionRegistry()
     if registered:
@@ -134,7 +134,7 @@ def test_incompatible_tool_reports_pair_without_silently_emptying_capabilities(c
     names = ["knowledge_search", "knowledge_entries_search"]
     config = AppConfig(
         sandbox=SandboxConfig(use="example:Sandbox"),
-        tools=[ToolConfig(name=name, group="knowledge", use=f"deerflow.knowledge.tools:{name}_tool", provider="documents-only") for name in names],
+        tools=[ToolConfig(name=name, group="knowledge", use=f"nkyel.knowledge.tools:{name}_tool", provider="documents-only") for name in names],
     )
     with pytest.raises(ValueError, match="Invalid knowledge tool configuration"):
         get_knowledge_capabilities(config, extensions=registry.build())

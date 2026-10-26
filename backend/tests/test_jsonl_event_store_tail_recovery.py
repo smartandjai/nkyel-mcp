@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
+from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
 
 TAILS = {
     "lf": b"\n",

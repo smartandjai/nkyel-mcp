@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 from app.gateway.routers import skills as skills_router
-from deerflow.agents.lead_agent import prompt as prompt_module
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.agents.lead_agent import prompt as prompt_module
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
 pytestmark = pytest.mark.asyncio
 
@@ -46,7 +46,7 @@ async def test_reload_skills_publishes_shared_marker_off_the_loop(tmp_path: Path
     storage = await asyncio.to_thread(LocalSkillStorage, host_path=str(tmp_path))
     config_path = tmp_path / "extensions_config.json"
     await asyncio.to_thread(config_path.write_text, '{"mcpServers": {}, "skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
 
     async def _noop_admin(_request, **_kwargs) -> None:
         return None

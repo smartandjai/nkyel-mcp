@@ -4,8 +4,8 @@ import os
 
 import pytest
 
-from deerflow.skills.mutations.assets import capture_package
-from deerflow.skills.mutations.validation import validate_candidate
+from nkyel.skills.mutations.assets import capture_package
+from nkyel.skills.mutations.validation import validate_candidate
 
 BASE = "---\nname: example\ndescription: Before\nallowed-tools: [Read]\nsecrets-autonomous: false\nmetadata: {custom: 1}\nfuture-field: {enabled: true}\n---\nBefore body\n"
 

@@ -30,11 +30,11 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.orm import Session
 
-import deerflow.persistence.models  # noqa: F401  -- registers ORM models
-from deerflow.persistence.base import Base
-from deerflow.persistence.bootstrap import _get_head_revision
-from deerflow.persistence.engine import close_engine, init_engine
-from deerflow.persistence.run.model import RunRow
+import nkyel.persistence.models  # noqa: F401  -- registers ORM models
+from nkyel.persistence.base import Base
+from nkyel.persistence.bootstrap import _get_head_revision
+from nkyel.persistence.engine import close_engine, init_engine
+from nkyel.persistence.run.model import RunRow
 
 pytestmark = pytest.mark.asyncio
 

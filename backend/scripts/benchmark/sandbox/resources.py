@@ -4,7 +4,7 @@
 Run from ``backend`` alongside the benchmark::
 
     python -m scripts.benchmark.sandbox.resources \
-        --prefix deerflow-bench-<run-id>- --output resources.jsonl --duration 60
+        --prefix nkyel-bench-<run-id>- --output resources.jsonl --duration 60
 
 The caller must reserve a unique prefix and use it for benchmark containers.
 Only matching *running* containers are measured. An empty successful inventory

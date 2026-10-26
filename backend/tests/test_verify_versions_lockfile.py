@@ -65,29 +65,29 @@ if os.environ.get("FAKE_UV_ERROR"):
 
 root = Path.cwd()
 declared = re.search(r'(?m)^version\\s*=\\s*"([^"]+)"', (root / "pyproject.toml").read_text(encoding="utf-8")).group(1)
-recorded = re.search(r'(?m)^name = "deer-flow"\\nversion = "([^"]+)"', (root / "uv.lock").read_text(encoding="utf-8"))
+recorded = re.search(r'(?m)^name = "nkyel"\\nversion = "([^"]+)"', (root / "uv.lock").read_text(encoding="utf-8"))
 if recorded is None or recorded.group(1) != declared.replace("-", ""):
     sys.exit("The lockfile at `uv.lock` needs to be updated, but `--check` was provided. To update the lockfile, run `uv lock`.")
 print("Resolved 1 package")
 """
 
 
-def _write_sandbox(root: Path, *, sources: str, lock: str, lock_name: str = "deer-flow") -> Path:
+def _write_sandbox(root: Path, *, sources: str, lock: str, lock_name: str = "nkyel") -> Path:
     """A repo-shaped tree with every version source at ``sources`` and the lock at ``lock``."""
     (root / "scripts").mkdir(parents=True)
     (root / "backend").mkdir()
     (root / "frontend").mkdir()
-    (root / "deploy" / "helm" / "deer-flow").mkdir(parents=True)
+    (root / "deploy" / "helm" / "nkyel").mkdir(parents=True)
     shutil.copy2(REPO_ROOT / "scripts" / "verify_versions.sh", root / "scripts" / "verify_versions.sh")
 
-    (root / "backend" / "pyproject.toml").write_text(f'[project]\nname = "deer-flow"\nversion = "{sources}"\n', encoding="utf-8")
+    (root / "backend" / "pyproject.toml").write_text(f'[project]\nname = "nkyel"\nversion = "{sources}"\n', encoding="utf-8")
     (root / "backend" / "uv.lock").write_text(
         f'version = 1\n\n[[package]]\nname = "{lock_name}"\nversion = "{lock}"\nsource = {{ virtual = "." }}\n',
         encoding="utf-8",
     )
-    (root / "frontend" / "package.json").write_text(f'{{\n  "name": "deer-flow-frontend",\n  "version": "{sources}"\n}}\n', encoding="utf-8")
-    (root / "deploy" / "helm" / "deer-flow" / "Chart.yaml").write_text(
-        f'apiVersion: v2\nname: deer-flow\nversion: {sources}\nappVersion: "{sources}"\n',
+    (root / "frontend" / "package.json").write_text(f'{{\n  "name": "nkyel-frontend",\n  "version": "{sources}"\n}}\n', encoding="utf-8")
+    (root / "deploy" / "helm" / "nkyel" / "Chart.yaml").write_text(
+        f'apiVersion: v2\nname: nkyel\nversion: {sources}\nappVersion: "{sources}"\n',
         encoding="utf-8",
     )
     return root
@@ -164,7 +164,7 @@ def test_gate_does_not_blame_the_lock_for_an_unrelated_uv_failure(tmp_path: Path
 
 def test_gate_explains_a_lock_without_the_root_entry(tmp_path: Path):
     """The printed lock version is for the job log; an unparsable lock must say so instead of printing nothing."""
-    root = _write_sandbox(tmp_path / "repo", sources="2.2.0", lock="2.2.0", lock_name="deer-flow-renamed")
+    root = _write_sandbox(tmp_path / "repo", sources="2.2.0", lock="2.2.0", lock_name="nkyel-renamed")
     bin_dir = _install_fake_uv(root)
 
     result = _run_verify(root, "2.2.0", path=_with_fake_uv(bin_dir))

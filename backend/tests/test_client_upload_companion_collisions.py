@@ -7,8 +7,8 @@ import pytest
 from openpyxl import Workbook
 from pptx import Presentation
 
-from deerflow.client import DeerFlowClient
-from deerflow.uploads.companions import resolve_companion
+from nkyel.client import NkyelClient
+from nkyel.uploads.companions import resolve_companion
 
 
 def _document(path: Path, content: str) -> None:
@@ -28,12 +28,12 @@ def _document(path: Path, content: str) -> None:
 
 @pytest.fixture
 def upload_case(tmp_path, monkeypatch):
-    import deerflow.client as client_module
+    import nkyel.client as client_module
 
     uploads = tmp_path / "thread/user-data/uploads"
     uploads.mkdir(parents=True)
     monkeypatch.setattr(client_module, "ensure_uploads_dir", lambda *args, **kwargs: uploads)
-    return DeerFlowClient.__new__(DeerFlowClient), uploads
+    return NkyelClient.__new__(NkyelClient), uploads
 
 
 @pytest.mark.parametrize("in_loop", [False, True])

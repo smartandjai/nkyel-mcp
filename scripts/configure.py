@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cross-platform config bootstrap script for DeerFlow."""
+"""Cross-platform config bootstrap script for nkyel."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def copy_if_missing(src: Path, dst: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="configure.py",
-        description="Cross-platform config bootstrap script for DeerFlow.",
+        description="Cross-platform config bootstrap script for nkyel.",
     )
     parser.parse_args(argv)
 

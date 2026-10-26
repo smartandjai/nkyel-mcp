@@ -1,6 +1,6 @@
 """Regression tests for gateway config freshness on the request hot path.
 
-Bytedance/deer-flow issue #3107 BUG-001: the worker and lead-agent path
+Bytedance/nkyel issue #3107 BUG-001: the worker and lead-agent path
 captured ``app.state.config`` at gateway startup. ``config.yaml`` edits during
 runtime were therefore ignored — ``get_app_config()``'s mtime-based reload
 existed but was bypassed because the snapshot object was passed through
@@ -21,10 +21,10 @@ import pytest
 from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 
-import deerflow.config.app_config as app_config_module
+import nkyel.config.app_config as app_config_module
 from app.gateway import deps as gateway_deps
 from app.gateway.deps import get_config
-from deerflow.config.app_config import (
+from nkyel.config.app_config import (
     AppConfig,
     get_app_config,
     pop_current_app_config,
@@ -32,7 +32,7 @@ from deerflow.config.app_config import (
     reset_app_config,
     set_app_config,
 )
-from deerflow.config.sandbox_config import SandboxConfig
+from nkyel.config.sandbox_config import SandboxConfig
 
 
 @pytest.fixture(autouse=True)
@@ -60,7 +60,7 @@ database:
     path.write_text(
         f"""
 sandbox:
-  use: deerflow.sandbox.local.provider:LocalSandboxProvider
+  use: nkyel.sandbox.local.provider:LocalSandboxProvider
 log_level: {log_level}
 {database}""".strip()
         + "\n",
@@ -86,7 +86,7 @@ def test_get_config_reflects_file_mtime_reload(tmp_path, monkeypatch):
     """
     config_file = tmp_path / "config.yaml"
     _write_config_yaml(config_file, log_level="info")
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(config_file))
 
     app = _build_app()
     client = TestClient(app)
@@ -132,7 +132,7 @@ def test_edit_landing_during_load_is_applied_on_the_next_call(tmp_path, monkeypa
     """
     config_file = tmp_path / "config.yaml"
     _write_config_yaml(config_file, log_level="info")
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(config_file))
     assert get_app_config().log_level == "info"
 
     _write_config_yaml(config_file, log_level="warning")  # edit #1: triggers a reload
@@ -146,7 +146,7 @@ def test_recorded_signature_is_the_signature_of_the_parsed_content(tmp_path, mon
     """The cache metadata must describe the bytes that were parsed, not whatever is on disk afterwards."""
     config_file = tmp_path / "config.yaml"
     _write_config_yaml(config_file, log_level="info")
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(config_file))
     assert get_app_config().log_level == "info"
 
     _write_config_yaml(config_file, log_level="warning")
@@ -172,7 +172,7 @@ def test_parsed_content_is_the_signed_content_even_across_an_edit_and_revert(tmp
     """
     config_file = tmp_path / "config.yaml"
     _write_config_yaml(config_file, log_level="info")
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(config_file))
     assert get_app_config().log_level == "info"
 
     _write_config_yaml(config_file, log_level="warning")  # edit #1: triggers a reload
@@ -199,7 +199,7 @@ def test_get_config_respects_runtime_context_override(tmp_path, monkeypatch):
     """Per-request ``push_current_app_config`` injection must still win."""
     config_file = tmp_path / "config.yaml"
     _write_config_yaml(config_file, log_level="info")
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(config_file))
 
     override = AppConfig(sandbox=SandboxConfig(use="test"), log_level="trace")
     push_current_app_config(override)
@@ -235,7 +235,7 @@ def test_run_context_app_config_reflects_yaml_edit(tmp_path, monkeypatch):
 
     config_file = tmp_path / "config.yaml"
     _write_config_yaml(config_file, log_level="info")
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(config_file))
 
     app = FastAPI()
     # Sentinel values for the rest of the RunContext wiring — we only care
@@ -274,7 +274,7 @@ def test_run_context_freezes_checkpoint_channel_mode_at_startup(tmp_path, monkey
 
     config_file = tmp_path / "config.yaml"
     _write_config_yaml(config_file, log_level="info", checkpoint_channel_mode="delta")
-    monkeypatch.setenv("DEER_FLOW_CONFIG_PATH", str(config_file))
+    monkeypatch.setenv("NKYEL_CONFIG_PATH", str(config_file))
 
     request = MagicMock()
     request.app.state.checkpointer = MagicMock()
@@ -301,7 +301,7 @@ def test_run_context_freezes_checkpoint_channel_mode_at_startup(tmp_path, monkey
 def test_get_config_returns_503_on_any_load_failure(monkeypatch, exception):
     """Any failure to materialise the config must surface as 503, not 500.
 
-    Bytedance/deer-flow issue #3107 BUG-001 review: the original snapshot
+    Bytedance/nkyel issue #3107 BUG-001 review: the original snapshot
     contract returned 503 when ``app.state.config is None``. The first cut of
     this fix only mapped ``FileNotFoundError`` to 503, which left
     ``PermissionError`` / ``yaml.YAMLError`` / ``ValidationError`` etc. bubbling

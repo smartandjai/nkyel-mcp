@@ -10,15 +10,15 @@ import pytest
 @pytest.mark.live
 @pytest.mark.asyncio
 async def test_weknora_live_selected_document_evidence(monkeypatch):
-    if os.getenv("DEER_FLOW_RUN_LIVE_TESTS") != "1":
+    if os.getenv("NKYEL_RUN_LIVE_TESTS") != "1":
         pytest.skip("live knowledge checks are opt-in")
     names = ["WEKNORA_BASE_URL", "WEKNORA_TENANT_ID", "WEKNORA_KNOWLEDGE_BASE_ID", "WEKNORA_DOCUMENT_ID", "WEKNORA_EVIDENCE_QUERY", "WEKNORA_API_KEY"]
     if any(not os.getenv(name) for name in names):
         pytest.fail("Set all documented WEKNORA_* variables for live verification")
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-weknora"))
-    from deerflow_extension_weknora import WeKnoraProvider
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-weknora"))
+    from nkyel_extension_weknora import WeKnoraProvider
 
-    from deerflow.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
+    from nkyel.knowledge import KnowledgeRequestContext, format_result, sources_from_messages
 
     provider = WeKnoraProvider(
         {"spaces": [{"base_url": os.environ["WEKNORA_BASE_URL"], "tenant_id": os.environ["WEKNORA_TENANT_ID"], "api_key_env": "WEKNORA_API_KEY", "user_ids": ["live-probe"], "knowledge_base_ids": [os.environ["WEKNORA_KNOWLEDGE_BASE_ID"]]}]}
@@ -56,16 +56,16 @@ async def test_weknora_live_selected_document_evidence(monkeypatch):
     from langgraph.graph import END, START, MessagesState, StateGraph
     from langgraph.prebuilt import ToolNode
 
-    from deerflow.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, ExtensionRegistry
-    from deerflow.knowledge import tools
-    from deerflow.knowledge.sources import prune_sources
-    from deerflow.runtime.serialization import serialize_channel_values_for_api
-    from deerflow.tools.builtins.task_tool import _task_result_command
+    from nkyel.extensions import EXTENSION_SNAPSHOT_CONTEXT_KEY, ExtensionRegistry
+    from nkyel.knowledge import tools
+    from nkyel.knowledge.sources import prune_sources
+    from nkyel.runtime.serialization import serialize_channel_values_for_api
+    from nkyel.tools.builtins.task_tool import _task_result_command
 
     registry = ExtensionRegistry()
-    with registry.attributed_to("deerflow_extension_weknora:install"):
+    with registry.attributed_to("nkyel_extension_weknora:install"):
         registry.knowledge_provider("weknora", provider)
-    config = SimpleNamespace(get_tool_config=lambda _: SimpleNamespace(use="deerflow.knowledge.tools:knowledge_search_tool", model_extra={"provider": "weknora"}))
+    config = SimpleNamespace(get_tool_config=lambda _: SimpleNamespace(use="nkyel.knowledge.tools:knowledge_search_tool", model_extra={"provider": "weknora"}))
     monkeypatch.setattr(tools, "get_app_config", lambda: config)
     builder = StateGraph(MessagesState, context_schema=dict)
     builder.add_node("tools", ToolNode([tools.knowledge_search_tool]))

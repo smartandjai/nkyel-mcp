@@ -23,12 +23,12 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.guardrails.provider import GuardrailDecision, GuardrailReason
-from deerflow.guardrails.typesafe import DEFAULT_CRITERIA_FALSE, DEFAULT_CRITERIA_TRUE, DEFAULT_INSTRUCTIONS, TypeSafeGuardrailError
+from nkyel.guardrails.provider import GuardrailDecision, GuardrailReason
+from nkyel.guardrails.typesafe import DEFAULT_CRITERIA_FALSE, DEFAULT_CRITERIA_TRUE, DEFAULT_INSTRUCTIONS, TypeSafeGuardrailError
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "eval_typesafe_risk_gate.py"
 
-spec = importlib.util.spec_from_file_location("deerflow_eval_typesafe_risk_gate", SCRIPT_PATH)
+spec = importlib.util.spec_from_file_location("nkyel_eval_typesafe_risk_gate", SCRIPT_PATH)
 assert spec is not None and spec.loader is not None
 eval_script = importlib.util.module_from_spec(spec)
 # dataclasses resolve ``cls.__module__`` through sys.modules, so register first.
@@ -157,7 +157,7 @@ def test_tool_and_allowed_tools_lists_ignore_surrounding_whitespace(monkeypatch)
 def test_prompt_override_flags_reach_the_provider(monkeypatch):
     """The report's ``policy`` is built from the same flags as the provider; without
     a passthrough check the report could record an override the provider never got."""
-    from deerflow_extension_api import canonical_hash
+    from nkyel_extension_api import canonical_hash
 
     monkeypatch.setenv("TYPESAFE_TEST_KEY", "key")
     provider = eval_script._provider(_args(api_key_env="TYPESAFE_TEST_KEY", instructions="custom", criteria_true="ct", criteria_false="cf"), cache_enabled=False)

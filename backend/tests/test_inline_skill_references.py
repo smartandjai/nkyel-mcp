@@ -10,8 +10,8 @@ import pytest
 from langchain.agents.middleware.types import ModelRequest
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
-from deerflow.runtime.secret_context import (
+from nkyel.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+from nkyel.runtime.secret_context import (
     _SLASH_SECRET_SOURCE_KEY,
     _SLASH_SKILL_ACTIVATION_RUN_KEY,
     ACTIVE_SECRETS_CONTEXT_KEY,
@@ -20,7 +20,7 @@ from deerflow.runtime.secret_context import (
     write_slash_skill_source_path,
     write_slash_skill_source_paths,
 )
-from deerflow.skills.types import SecretRequirement, Skill, SkillCategory
+from nkyel.skills.types import SecretRequirement, Skill, SkillCategory
 
 OWNER = "test-chain-owner"
 
@@ -39,7 +39,7 @@ def catalog(tmp_path, monkeypatch):
         )
     storage = SimpleNamespace(load_skills=lambda **_: skills, get_container_root=lambda: "/mnt/skills", get_skills_root_path=lambda: tmp_path, validate_skill_file_path=lambda path: path.resolve())
     factory = Mock(return_value=storage)
-    monkeypatch.setattr("deerflow.agents.middlewares.skill_activation_middleware.get_or_new_user_skill_storage", factory)
+    monkeypatch.setattr("nkyel.agents.middlewares.skill_activation_middleware.get_or_new_user_skill_storage", factory)
     middleware = SkillActivationMiddleware(user_id="owner-a", slash_source_owner_token=OWNER)
     return middleware, skills, factory
 
@@ -73,7 +73,7 @@ def test_inline_batch_activates_once_with_owner_scoped_secrets_and_usage(catalog
     reminder = seen[0].messages[0]
     assert isinstance(reminder, HumanMessage)
     assert reminder.additional_kwargs["hide_from_ui"] is True
-    assert reminder.additional_kwargs["deerflow_producer_kind"]
+    assert reminder.additional_kwargs["nkyel_producer_kind"]
     assert "Do &lt;safe&gt; work." in reminder.content
     assert reminder.content.count("Compare &lt;inputs&gt;") == 1
     assert original.state["messages"] == original.messages
@@ -169,8 +169,8 @@ def test_plural_source_malformed_list_fails_closed(paths):
 @pytest.mark.parametrize("denied", [False, True])
 @pytest.mark.parametrize("fail_closed", [False, True])
 def test_async_inline_batch_authorizes_every_selection_on_the_event_loop(catalog, denied, fail_closed):
-    from deerflow.authz.provider import AuthzDecision
-    from deerflow.authz.skill_filter import ResolvedSkillAuthorization
+    from nkyel.authz.provider import AuthzDecision
+    from nkyel.authz.skill_filter import ResolvedSkillAuthorization
 
     middleware, _, _ = catalog
     provider = SimpleNamespace(authorize=Mock(side_effect=RuntimeError("sync API must not run")))
@@ -205,8 +205,8 @@ def test_async_inline_batch_authorizes_every_selection_on_the_event_loop(catalog
 
 
 def test_each_inline_activation_excludes_its_stale_entry_secret_snapshot(catalog):
-    from deerflow.authz.provider import AuthzDecision
-    from deerflow.authz.skill_filter import ResolvedSkillAuthorization
+    from nkyel.authz.provider import AuthzDecision
+    from nkyel.authz.skill_filter import ResolvedSkillAuthorization
 
     middleware, skills, factory = catalog
     old = skills[1]

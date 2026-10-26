@@ -24,10 +24,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from app.gateway.authz import AuthContext, Permissions
 from app.gateway.deps import get_config
 from app.gateway.routers import project_documents, projects, trash
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
-from deerflow.persistence.thread_meta import ThreadMetaRepository
-from deerflow.runtime.user_context import reset_current_user, set_current_user
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
+from nkyel.persistence.thread_meta import ThreadMetaRepository
+from nkyel.runtime.user_context import reset_current_user, set_current_user
 
 _STUB_PERMISSIONS: list[str] = [
     Permissions.PROJECTS_READ,
@@ -80,9 +80,9 @@ def _as_user(user_id: str) -> dict[str, str]:
 
 @pytest.fixture(autouse=True)
 def _isolate(tmp_path, monkeypatch):
-    import deerflow.config.paths as paths_mod
+    import nkyel.config.paths as paths_mod
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "home"))
     monkeypatch.setattr(paths_mod, "_paths", None)
     yield
     anyio.run(close_engine)
@@ -114,7 +114,7 @@ def _get_row(app: FastAPI, document_id: str, *, user_id: str = "user-a") -> dict
 def _set_trashed_at(document_id: str, when: datetime) -> None:
     from sqlalchemy import update as sa_update
 
-    from deerflow.persistence.projects.model import ProjectDocumentRow
+    from nkyel.persistence.projects.model import ProjectDocumentRow
 
     async def _run() -> None:
         sf = get_session_factory()
@@ -126,8 +126,8 @@ def _set_trashed_at(document_id: str, when: datetime) -> None:
 
 
 def _original_path(app: FastAPI, row: dict, *, user_id: str = "user-a") -> Path:
-    from deerflow.config.paths import get_paths
-    from deerflow.projects.documents import original_file_path
+    from nkyel.config.paths import get_paths
+    from nkyel.projects.documents import original_file_path
 
     return original_file_path(get_paths(), user_id=user_id, row=row)
 
@@ -135,12 +135,12 @@ def _original_path(app: FastAPI, row: dict, *, user_id: str = "user-a") -> Path:
 @pytest.mark.parametrize("filename", ["notes.txt", "a" * 251 + ".txt"])
 def test_long_workspace_document_lifecycle(tmp_path, monkeypatch, filename):
     """Real router/file operations must work beyond Windows' legacy MAX_PATH."""
-    from deerflow.config.paths import get_paths
-    from deerflow.projects.trash import run_trash_retention_sweep
+    from nkyel.config.paths import get_paths
+    from nkyel.projects.trash import run_trash_retention_sweep
 
     home = tmp_path / ("nested-" + "a" * 73) / ("nested-" + "b" * 73) / ("nested-" + "c" * 73)
     assert len(str(home)) > 260
-    monkeypatch.setenv("DEER_FLOW_HOME", str(home))
+    monkeypatch.setenv("NKYEL_HOME", str(home))
     app = _build_app(tmp_path)
     with TestClient(app) as client:
         origin = _create_project(client, name="Origin")

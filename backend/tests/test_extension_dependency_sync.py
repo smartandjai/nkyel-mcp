@@ -37,9 +37,9 @@ def test_extensions_dependency_group_is_part_of_the_default_sync() -> None:
 
 
 def test_the_app_layer_declares_the_contract_package_it_imports_directly() -> None:
-    """The app imports ``deerflow_extension_api`` itself, so it declares it.
+    """The app imports ``nkyel_extension_api`` itself, so it declares it.
 
-    Only ``deerflow-harness`` guarantees the package transitively. That is the
+    Only ``nkyel-harness`` guarantees the package transitively. That is the
     harness's own dependency to change, and the app's imports would break with
     it — the same argument the ``starlette`` entry in ``pyproject.toml`` spells
     out for a package FastAPI happens to pull in.
@@ -50,7 +50,7 @@ def test_the_app_layer_declares_the_contract_package_it_imports_directly() -> No
         str(path.relative_to(BACKEND_ROOT))
         for path in (BACKEND_ROOT / "app").rglob("*.py")
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
-        if (isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] == "deerflow_extension_api") or (isinstance(node, ast.Import) and any(alias.name.split(".")[0] == "deerflow_extension_api" for alias in node.names))
+        if (isinstance(node, ast.ImportFrom) and (node.module or "").split(".")[0] == "nkyel_extension_api") or (isinstance(node, ast.Import) and any(alias.name.split(".")[0] == "nkyel_extension_api" for alias in node.names))
     )
     if not importers:
         pytest.skip("app no longer imports the contract package directly")
@@ -58,7 +58,7 @@ def test_the_app_layer_declares_the_contract_package_it_imports_directly() -> No
     project = tomllib.loads((BACKEND_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     declared = {re.split(r"[<>=!\[ ]", entry, maxsplit=1)[0] for entry in project["project"]["dependencies"]}
 
-    assert "deerflow-extension-api" in declared, f"imported directly by {importers} but only guaranteed transitively"
+    assert "nkyel-extension-api" in declared, f"imported directly by {importers} but only guaranteed transitively"
 
 
 def test_backend_make_targets_never_mutate_the_extension_lock() -> None:
@@ -86,26 +86,26 @@ def test_root_makefile_exposes_extension_management_commands() -> None:
     makefile = REPO_ROOT / "Makefile"
 
     install = _make_recipe(makefile, "extension-install")
-    assert "deerflow extensions install" in install
-    assert "--source-env __deerflow_extension_source__" in install
-    assert "DEER_FLOW_EXTENSION_SOURCE" not in install
+    assert "nkyel extensions install" in install
+    assert "--source-env __nkyel_extension_source__" in install
+    assert "NKYEL_EXTENSION_SOURCE" not in install
     assert "$(SOURCE)" not in install
     assert "uv run --frozen --no-group extensions" in install
     assert "--yes" not in install
 
     upgrade = _make_recipe(makefile, "extension-upgrade")
-    assert "deerflow extensions upgrade" in upgrade
-    assert "--source-env __deerflow_extension_source__" in upgrade
-    assert "DEER_FLOW_EXTENSION_SOURCE" not in upgrade
+    assert "nkyel extensions upgrade" in upgrade
+    assert "--source-env __nkyel_extension_source__" in upgrade
+    assert "NKYEL_EXTENSION_SOURCE" not in upgrade
     assert "$(SOURCE)" not in upgrade
     assert "uv run --frozen --no-group extensions" in upgrade
     assert "--yes" not in upgrade
 
     for target, command in (
-        ("extension-list", "deerflow extensions list"),
-        ("extension-enable", "deerflow extensions enable"),
-        ("extension-disable", "deerflow extensions disable"),
-        ("extension-remove", "deerflow extensions remove"),
+        ("extension-list", "nkyel extensions list"),
+        ("extension-enable", "nkyel extensions enable"),
+        ("extension-disable", "nkyel extensions disable"),
+        ("extension-remove", "nkyel extensions remove"),
     ):
         recipe = _make_recipe(makefile, target)
         assert command in recipe
@@ -234,11 +234,11 @@ def test_root_extension_shortcuts_reject_ambient_environment_arguments() -> None
 @pytest.mark.parametrize(
     ("target", "variable", "env_option"),
     [
-        ("extension-install", "SOURCE", "--source-env __deerflow_extension_source__"),
-        ("extension-upgrade", "SOURCE", "--source-env __deerflow_extension_source__"),
-        ("extension-enable", "NAME", "--name-env __deerflow_extension_name__"),
-        ("extension-disable", "NAME", "--name-env __deerflow_extension_name__"),
-        ("extension-remove", "NAME", "--name-env __deerflow_extension_name__"),
+        ("extension-install", "SOURCE", "--source-env __nkyel_extension_source__"),
+        ("extension-upgrade", "SOURCE", "--source-env __nkyel_extension_source__"),
+        ("extension-enable", "NAME", "--name-env __nkyel_extension_name__"),
+        ("extension-disable", "NAME", "--name-env __nkyel_extension_name__"),
+        ("extension-remove", "NAME", "--name-env __nkyel_extension_name__"),
     ],
 )
 @_skip_without_make
@@ -261,18 +261,18 @@ def test_root_extension_shortcuts_keep_command_line_arguments_out_of_the_shell_r
     assert result.returncode == 0, result.stderr
     assert marker not in result.stdout
     assert env_option in result.stdout
-    assert "$DEER_FLOW_EXTENSION_" not in result.stdout
-    assert "%DEER_FLOW_EXTENSION_" not in result.stdout
+    assert "$NKYEL_EXTENSION_" not in result.stdout
+    assert "%NKYEL_EXTENSION_" not in result.stdout
 
 
 @pytest.mark.parametrize(
     ("target", "variable", "env_option"),
     [
-        ("extension-install", "SOURCE", "--source-env __deerflow_extension_source__"),
-        ("extension-upgrade", "SOURCE", "--source-env __deerflow_extension_source__"),
-        ("extension-enable", "NAME", "--name-env __deerflow_extension_name__"),
-        ("extension-disable", "NAME", "--name-env __deerflow_extension_name__"),
-        ("extension-remove", "NAME", "--name-env __deerflow_extension_name__"),
+        ("extension-install", "SOURCE", "--source-env __nkyel_extension_source__"),
+        ("extension-upgrade", "SOURCE", "--source-env __nkyel_extension_source__"),
+        ("extension-enable", "NAME", "--name-env __nkyel_extension_name__"),
+        ("extension-disable", "NAME", "--name-env __nkyel_extension_name__"),
+        ("extension-remove", "NAME", "--name-env __nkyel_extension_name__"),
     ],
 )
 @_skip_without_make
@@ -302,8 +302,8 @@ def test_root_extension_shortcuts_keep_values_out_of_the_cmd_recipe_on_windows(
     assert result.returncode == 0, result.stderr
     assert marker not in result.stdout
     assert env_option in result.stdout
-    assert "$DEER_FLOW_EXTENSION_" not in result.stdout
-    assert "%DEER_FLOW_EXTENSION_" not in result.stdout
+    assert "$NKYEL_EXTENSION_" not in result.stdout
+    assert "%NKYEL_EXTENSION_" not in result.stdout
 
 
 def test_docker_dev_entrypoint_syncs_the_lock_before_runtime() -> None:

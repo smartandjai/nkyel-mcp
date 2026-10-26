@@ -10,7 +10,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_webz_configuration_runs_off_event_loop(monkeypatch):
-    import deerflow.community.webz.tools as module
+    import nkyel.community.webz.tools as module
 
     loop_thread = threading.get_ident()
     config_threads = []

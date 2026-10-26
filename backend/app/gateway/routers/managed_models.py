@@ -12,11 +12,11 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.gateway.deps import require_admin_user
 from app.gateway.persistent_writes import run_drained_write
-from deerflow.config.app_config import AppConfig, get_app_config
-from deerflow.config.managed_model_providers import PROVIDERS
-from deerflow.config.managed_models import ManagedModel, ManagedModelInputError, ManagedModelStore, retained_api_key
-from deerflow.models.factory import create_chat_model
-from deerflow.models.reasoning import resolve_reasoning_contract
+from nkyel.config.app_config import AppConfig, get_app_config
+from nkyel.config.managed_model_providers import PROVIDERS
+from nkyel.config.managed_models import ManagedModel, ManagedModelInputError, ManagedModelStore, retained_api_key
+from nkyel.models.factory import create_chat_model
+from nkyel.models.reasoning import resolve_reasoning_contract
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ def _build_probe(body: SaveModelRequest):
     # For an unrecognized model on a third-party preset, tool_choice forcing
     # is not a verified capability. Use auto instead of inventing a contract.
     force_tool = not required and (body.config.provider in {"openai-compatible", "openai", "anthropic"} or config.when_thinking_disabled is not None)
-    app_config = AppConfig.model_validate({"models": [config], "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}})
+    app_config = AppConfig.model_validate({"models": [config], "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}})
     model = create_chat_model(
         name=config.name,
         app_config=app_config,

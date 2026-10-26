@@ -22,11 +22,11 @@ from sqlalchemy import func, select
 
 from app.gateway.authz import require_permission
 from app.gateway.deps import get_current_user
-from deerflow.config import get_app_config
-from deerflow.config.agents_config import list_custom_agents
-from deerflow.persistence.engine import get_session_factory
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.config import get_app_config
+from nkyel.config.agents_config import list_custom_agents
+from nkyel.persistence.engine import get_session_factory
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/console", tags=["console"])

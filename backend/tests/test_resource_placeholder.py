@@ -1,6 +1,6 @@
 """Tests for the canonical resource placeholder formatter and location gate."""
 
-from deerflow.tools.resource_placeholder import model_visible_location, resource_placeholder_text
+from nkyel.tools.resource_placeholder import model_visible_location, resource_placeholder_text
 
 
 def test_full_shape_with_name_mime_and_url():

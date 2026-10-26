@@ -5,26 +5,26 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from deerflow_extension_api import ExtensionData, ExtensionRuntimeDeps, HostPolicySnapshot
+from nkyel_extension_api import ExtensionData, ExtensionRuntimeDeps, HostPolicySnapshot
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.paths import Paths
-from deerflow.extensions.host_capabilities import HostCapabilities
-from deerflow.extensions.loader import ExtensionSpec
-from deerflow.persistence.base import Base
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.user.model import UserRow
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.skills.mutations.scanner import CandidateScanner, ScanVerdict
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.paths import Paths
+from nkyel.extensions.host_capabilities import HostCapabilities
+from nkyel.extensions.loader import ExtensionSpec
+from nkyel.persistence.base import Base
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.user.model import UserRow
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.skills.mutations.scanner import CandidateScanner, ScanVerdict
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 
 @pytest.mark.asyncio
 async def test_public_consumer_end_to_end_and_plugin_removed_restart(tmp_path, monkeypatch):
-    monkeypatch.setattr("deerflow.config.paths._paths", Paths(base_dir=tmp_path / "home"))
+    monkeypatch.setattr("nkyel.config.paths._paths", Paths(base_dir=tmp_path / "home"))
     storage = UserScopedSkillStorage("owner", host_path=str(tmp_path / "skills"))
     root = storage.get_custom_skill_dir("example")
     root.mkdir(parents=True)

@@ -1,10 +1,10 @@
 """Resolve and hold the Gateway's login throttle store.
 
 The auth router counts failed local logins through a
-:class:`~deerflow.persistence.login_throttle.LoginThrottleStore`. Which
+:class:`~nkyel.persistence.login_throttle.LoginThrottleStore`. Which
 implementation backs it is decided once per process from
 ``auth.local.throttle_storage`` and ``database.backend``
-(:func:`deerflow.config.auth_config.resolve_login_throttle_storage`):
+(:func:`nkyel.config.auth_config.resolve_login_throttle_storage`):
 
 - ``db`` (the ``auto`` result whenever an application database exists) —
   :class:`SqlLoginThrottleStore` over the shared ``login_throttle`` table, so
@@ -27,8 +27,8 @@ import logging
 import threading
 from typing import Any
 
-from deerflow.config.auth_config import LocalAuthConfig, resolve_login_throttle_storage
-from deerflow.persistence.login_throttle import LoginThrottleStore, MemoryLoginThrottleStore, SqlLoginThrottleStore
+from nkyel.config.auth_config import LocalAuthConfig, resolve_login_throttle_storage
+from nkyel.persistence.login_throttle import LoginThrottleStore, MemoryLoginThrottleStore, SqlLoginThrottleStore
 
 logger = logging.getLogger(__name__)
 
@@ -106,8 +106,8 @@ def resolve_and_install_from_live_config() -> LoginThrottleStore:
     does at Gateway startup (nothing is installed). Racing resolvers keep the
     first installed store.
     """
-    from deerflow.config.app_config import get_app_config
-    from deerflow.persistence.engine import get_session_factory
+    from nkyel.config.app_config import get_app_config
+    from nkyel.persistence.engine import get_session_factory
 
     with _install_lock:
         if _store is not None:

@@ -28,17 +28,17 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from sqlalchemy.orm import sessionmaker
 
 # Pre-import so lazy imports inside the service are cached no-ops under the gate.
-import deerflow.persistence.models  # noqa: F401
+import nkyel.persistence.models  # noqa: F401
 from app.channels.leadership import ChannelLeadership, RenewOutcome
 from app.channels.runtime_config_store import SqlChannelRuntimeConfigStore
 from app.channels.service import ChannelService
 from app.channels.store import JsonChannelStore
-from deerflow import reflection
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.credentials_key import CredentialsCipher
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_leases import ChannelLeaseRow, SqlChannelLeaseRepository
-from deerflow.persistence.channel_runtime_configs import ChannelRuntimeConfigRow, SqlChannelRuntimeConfigRepository
+from nkyel import reflection
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.credentials_key import CredentialsCipher
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_leases import ChannelLeaseRow, SqlChannelLeaseRepository
+from nkyel.persistence.channel_runtime_configs import ChannelRuntimeConfigRow, SqlChannelRuntimeConfigRepository
 
 pytestmark = pytest.mark.asyncio
 
@@ -118,7 +118,7 @@ def _build_runtime_store(path: Path) -> SqlChannelRuntimeConfigStore:
 
 async def test_supervision_applies_a_peer_runtime_config_save_without_blocking_loop(repo, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(reflection, "resolve_class", lambda *_args, **_kwargs: _Transport)
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "channel_connections": {"enabled": True, "telegram": {"enabled": True}}}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "channel_connections": {"enabled": True, "telegram": {"enabled": True}}}))
     runtime_store = await asyncio.to_thread(_build_runtime_store, tmp_path / "runtime.db")
     store_path = await asyncio.to_thread(lambda: tmp_path / "store.json")
     service = ChannelService(

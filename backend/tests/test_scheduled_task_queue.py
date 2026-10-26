@@ -16,14 +16,14 @@ from app.gateway.auth.models import User
 from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
 from app.gateway.routers import scheduled_tasks
 from app.scheduler.service import ScheduledTaskService
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.runtime import ConflictError
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.runtime import ConflictError
 
 pytestmark = pytest.mark.asyncio
 

@@ -20,10 +20,10 @@ from types import SimpleNamespace
 import pytest
 from support.symlinks import symlink_or_skip
 
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
-from deerflow.projects.documents import add_staged_document, converted_markdown_path, original_file_path, stage_document_bytes
-from deerflow.projects.trash import make_purge_file_remover, restore_document, run_trash_retention_sweep
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
+from nkyel.projects.documents import add_staged_document, converted_markdown_path, original_file_path, stage_document_bytes
+from nkyel.projects.trash import make_purge_file_remover, restore_document, run_trash_retention_sweep
 
 pytestmark = pytest.mark.anyio
 
@@ -32,9 +32,9 @@ _USER = "u1"
 
 @pytest.fixture
 async def env(tmp_path, monkeypatch):
-    import deerflow.config.paths as paths_mod
+    import nkyel.config.paths as paths_mod
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "home"))
     monkeypatch.setattr(paths_mod, "_paths", None)
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}", sqlite_dir=str(tmp_path))
     sf = get_session_factory()
@@ -59,7 +59,7 @@ async def _trash(env: SimpleNamespace, row: dict, *, user_id: str = _USER) -> di
 async def _set_column(document_id: str, **values) -> None:
     from sqlalchemy import update as sa_update
 
-    from deerflow.persistence.projects.model import ProjectDocumentRow
+    from nkyel.persistence.projects.model import ProjectDocumentRow
 
     sf = get_session_factory()
     async with sf() as session:
@@ -608,7 +608,7 @@ class TestStartupSweep:
         from fastapi import FastAPI
 
         from app.gateway.app import _run_startup_trash_sweep
-        from deerflow.config.projects_config import ProjectsConfig
+        from nkyel.config.projects_config import ProjectsConfig
 
         p1 = await env.projects.create(name="P1", user_id=_USER)
         p2 = await env.projects.create(name="P2", user_id="u2")
@@ -631,7 +631,7 @@ class TestStartupSweep:
         """A sweep failure is logged and never blocks gateway readiness."""
         from fastapi import FastAPI
 
-        import deerflow.projects.trash as trash_mod
+        import nkyel.projects.trash as trash_mod
         from app.gateway.app import _run_startup_trash_sweep
 
         async def failing(*args, **kwargs):
@@ -665,7 +665,7 @@ class TestStartupSweep:
         from fastapi import FastAPI
 
         import app.gateway.app as gateway_app
-        import deerflow.projects.trash as trash_mod
+        import nkyel.projects.trash as trash_mod
 
         started = asyncio.Event()
         observed_cancel = asyncio.Event()
@@ -700,7 +700,7 @@ class TestStartupSweep:
         from fastapi import FastAPI
 
         import app.gateway.app as gateway_app
-        import deerflow.projects.trash as trash_mod
+        import nkyel.projects.trash as trash_mod
 
         started = asyncio.Event()
         gate = asyncio.Event()

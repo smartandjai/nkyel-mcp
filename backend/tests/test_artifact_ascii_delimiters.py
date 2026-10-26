@@ -4,9 +4,9 @@ import pytest
 from langchain_core.messages import ToolMessage
 from langgraph.prebuilt.tool_node import ToolCallRequest
 
-from deerflow.agents.middlewares.artifact_resolution_middleware import ArtifactResolutionMiddleware
-from deerflow.sandbox.tools import _format_glob_results
-from deerflow.tools.artifact_registry import _detect_refs_in_text, extract_artifacts_from_result
+from nkyel.agents.middlewares.artifact_resolution_middleware import ArtifactResolutionMiddleware
+from nkyel.sandbox.tools import _format_glob_results
+from nkyel.tools.artifact_registry import _detect_refs_in_text, extract_artifacts_from_result
 
 
 @pytest.mark.parametrize("name", ["archive(old)", "archive[old]", "archive{old}", "archive(old[1])", "archive)old(done)"])

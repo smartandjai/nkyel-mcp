@@ -29,8 +29,8 @@ from fastapi import HTTPException, Request
 import app.gateway.auth  # noqa: F401
 import app.gateway.auth.errors  # noqa: F401
 from app.gateway.routers.skills import get_skill, list_custom_skills, list_skills
-from deerflow.config.paths import get_paths
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.config.paths import get_paths
+from nkyel.runtime.user_context import get_effective_user_id
 
 pytestmark = pytest.mark.asyncio
 
@@ -40,8 +40,8 @@ _SKILL_MD = f"---\nname: {_SKILL_NAME}\ndescription: Anchor fixture skill.\n---\
 
 @pytest.fixture(autouse=True)
 def _isolate_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
 
 
 def _config(skills_root: Path) -> SimpleNamespace:
@@ -49,7 +49,7 @@ def _config(skills_root: Path) -> SimpleNamespace:
         skills=SimpleNamespace(
             get_skills_path=lambda: skills_root,
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         ),
         authorization=SimpleNamespace(enabled=False, fail_closed=False),
     )

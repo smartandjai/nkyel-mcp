@@ -10,10 +10,10 @@ import pytest
 from fastapi import HTTPException
 
 from app.gateway.routers import subagents as router
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.subagents_config import CustomSubagentConfig, SubagentsAppConfig
-from deerflow.persistence.managed_subagents.file import FileManagedSubagentStore
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.subagents_config import CustomSubagentConfig, SubagentsAppConfig
+from nkyel.persistence.managed_subagents.file import FileManagedSubagentStore
 
 pytestmark = pytest.mark.asyncio
 
@@ -24,9 +24,9 @@ def _request(role: str):
 
 @pytest.fixture(autouse=True)
 def _environment(tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
-    set_app_config(AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider")))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
+    set_app_config(AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider")))
     store = FileManagedSubagentStore()
     monkeypatch.setattr(router, "get_managed_subagent_store", lambda *_: store)
     yield
@@ -158,7 +158,7 @@ async def test_admin_can_create_update_and_delete_managed_subagent():
 async def test_ordinary_user_can_list_but_cannot_read_prompts_or_write():
     set_app_config(
         AppConfig(
-            sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+            sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
             subagents=SubagentsAppConfig(
                 custom_agents={
                     "config-worker": CustomSubagentConfig(
@@ -254,7 +254,7 @@ async def test_builtin_name_is_rejected_at_create():
 async def test_config_name_is_rejected_at_create():
     set_app_config(
         AppConfig(
-            sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+            sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
             subagents=SubagentsAppConfig(
                 custom_agents={
                     "planner": CustomSubagentConfig(
@@ -281,7 +281,7 @@ async def test_config_name_is_rejected_at_create():
 async def test_catalog_marks_config_definition_shadowed_by_builtin_as_conflict():
     set_app_config(
         AppConfig(
-            sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+            sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
             subagents=SubagentsAppConfig(
                 custom_agents={
                     "general-purpose": CustomSubagentConfig(

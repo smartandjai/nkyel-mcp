@@ -44,7 +44,7 @@ def _persistence_engine(tmp_path):
     import asyncio
 
     from app.gateway import deps
-    from deerflow.persistence.engine import close_engine, init_engine
+    from nkyel.persistence.engine import close_engine, init_engine
 
     url = f"sqlite+aiosqlite:///{tmp_path}/auth_types.db"
     asyncio.run(init_engine("sqlite", url=url, sqlite_dir=str(tmp_path)))
@@ -538,7 +538,7 @@ def test_api_auth_me_no_cookie_returns_structured_401():
 
 def test_api_auth_me_auth_disabled_returns_synthetic_user(monkeypatch):
     _setup_config()
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     client = _get_auth_client()
 
     resp = client.get("/api/v1/auth/me")
@@ -665,7 +665,7 @@ def test_session_cookie_policy_persists_on_https():
     from app.gateway.auth.session_cookie import resolve_session_cookie_policy
 
     _setup_config()
-    request = Request(_make_request_scope(scheme="http", host="internal:8000", headers={"x-forwarded-proto": "https", "x-forwarded-host": "deerflow.example"}))
+    request = Request(_make_request_scope(scheme="http", host="internal:8000", headers={"x-forwarded-proto": "https", "x-forwarded-host": "nkyel.example"}))
 
     policy = resolve_session_cookie_policy(request, remember_me=True)
 
@@ -799,7 +799,7 @@ def test_register_https_cookie_httponly_true_secure_true():
 
 def test_register_remember_me_false_keeps_access_and_csrf_session_only():
     _setup_config()
-    client = TestClient(_make_auth_app(), base_url="https://deerflow.example")
+    client = TestClient(_make_auth_app(), base_url="https://nkyel.example")
 
     resp = client.post(
         "/api/v1/auth/register",
@@ -810,13 +810,13 @@ def test_register_remember_me_false_keeps_access_and_csrf_session_only():
     set_cookies = _get_set_cookie_headers(resp)
     access_cookies = [h for h in set_cookies if "access_token=" in h]
     csrf_cookies = [h for h in set_cookies if "csrf_token=" in h]
-    preference_cookies = [h for h in set_cookies if "deerflow_session_persistent=" in h]
+    preference_cookies = [h for h in set_cookies if "nkyel_session_persistent=" in h]
     assert access_cookies and csrf_cookies and preference_cookies
     assert "secure" in access_cookies[0].lower()
     assert "secure" in csrf_cookies[0].lower()
     assert "max-age" not in access_cookies[0].lower()
     assert "max-age" not in csrf_cookies[0].lower()
-    assert "deerflow_session_persistent=0" in preference_cookies[0].lower()
+    assert "nkyel_session_persistent=0" in preference_cookies[0].lower()
 
 
 def test_login_https_sets_secure_cookie():
@@ -861,7 +861,7 @@ def test_login_remember_me_false_keeps_access_and_csrf_session_only():
 
 def test_login_remember_me_false_over_https_keeps_csrf_session_only():
     _setup_config()
-    client = TestClient(_make_auth_app(), base_url="https://deerflow.example")
+    client = TestClient(_make_auth_app(), base_url="https://nkyel.example")
     email = _unique_email("remember-false-https")
     client.post("/api/v1/auth/register", json={"email": email, "password": "Tr0ub4dor3a"})
 
@@ -883,7 +883,7 @@ def test_login_remember_me_false_over_https_keeps_csrf_session_only():
 
 def test_login_failure_uses_csrf_fallback_cookie_lifetime_on_https():
     _setup_config()
-    client = TestClient(_make_auth_app(), base_url="https://deerflow.example")
+    client = TestClient(_make_auth_app(), base_url="https://nkyel.example")
 
     resp = client.post(
         "/api/v1/auth/login/local",
@@ -920,7 +920,7 @@ def test_login_remember_me_true_keeps_access_and_csrf_max_age_in_lockstep_on_loc
 
 def test_change_password_preserves_session_only_preference():
     _setup_config()
-    client = TestClient(_make_auth_app(), base_url="https://deerflow.example")
+    client = TestClient(_make_auth_app(), base_url="https://nkyel.example")
     email = _unique_email("change-password-session")
     client.post("/api/v1/auth/register", json={"email": email, "password": "Tr0ub4dor3a"})
     client.post(
@@ -938,15 +938,15 @@ def test_change_password_preserves_session_only_preference():
     assert resp.status_code == 200
     set_cookies = _get_set_cookie_headers(resp)
     access_cookies = [h for h in set_cookies if "access_token=" in h]
-    preference_cookies = [h for h in set_cookies if "deerflow_session_persistent=" in h]
+    preference_cookies = [h for h in set_cookies if "nkyel_session_persistent=" in h]
     assert access_cookies and preference_cookies
     assert "max-age" not in access_cookies[0].lower()
-    assert "deerflow_session_persistent=0" in preference_cookies[0].lower()
+    assert "nkyel_session_persistent=0" in preference_cookies[0].lower()
 
 
 def test_change_password_reissues_access_and_csrf_in_lockstep_when_preference_changes():
     _setup_config()
-    client = TestClient(_make_auth_app(), base_url="https://deerflow.example")
+    client = TestClient(_make_auth_app(), base_url="https://nkyel.example")
     email = _unique_email("change-password-persistent")
     client.post("/api/v1/auth/register", json={"email": email, "password": "Tr0ub4dor3a"})
     client.post(
@@ -978,7 +978,7 @@ def test_change_password_reissues_access_and_csrf_in_lockstep_when_preference_ch
 
 def test_initialize_remember_me_false_keeps_access_and_csrf_session_only():
     _setup_config()
-    client = TestClient(_make_auth_app(), base_url="https://deerflow.example")
+    client = TestClient(_make_auth_app(), base_url="https://nkyel.example")
 
     resp = client.post(
         "/api/v1/auth/initialize",
@@ -989,18 +989,18 @@ def test_initialize_remember_me_false_keeps_access_and_csrf_session_only():
     set_cookies = _get_set_cookie_headers(resp)
     access_cookies = [h for h in set_cookies if "access_token=" in h]
     csrf_cookies = [h for h in set_cookies if "csrf_token=" in h]
-    preference_cookies = [h for h in set_cookies if "deerflow_session_persistent=" in h]
+    preference_cookies = [h for h in set_cookies if "nkyel_session_persistent=" in h]
     assert access_cookies and csrf_cookies and preference_cookies
     assert "secure" in access_cookies[0].lower()
     assert "secure" in csrf_cookies[0].lower()
     assert "max-age" not in access_cookies[0].lower()
     assert "max-age" not in csrf_cookies[0].lower()
-    assert "deerflow_session_persistent=0" in preference_cookies[0].lower()
+    assert "nkyel_session_persistent=0" in preference_cookies[0].lower()
 
 
 def test_logout_clears_access_and_csrf_without_reissuing_csrf():
     _setup_config()
-    client = TestClient(_make_auth_app(), base_url="https://deerflow.example")
+    client = TestClient(_make_auth_app(), base_url="https://nkyel.example")
     client.post(
         "/api/v1/auth/register",
         json={"email": _unique_email("logout-clear"), "password": "Tr0ub4dor3a"},
@@ -1012,7 +1012,7 @@ def test_logout_clears_access_and_csrf_without_reissuing_csrf():
     set_cookies = _get_set_cookie_headers(resp)
     access_cookies = [h for h in set_cookies if "access_token=" in h]
     csrf_cookies = [h for h in set_cookies if "csrf_token=" in h]
-    preference_cookies = [h for h in set_cookies if "deerflow_session_persistent=" in h]
+    preference_cookies = [h for h in set_cookies if "nkyel_session_persistent=" in h]
     assert access_cookies and "max-age=0" in access_cookies[0].lower()
     assert csrf_cookies and "max-age=0" in csrf_cookies[0].lower()
     assert preference_cookies and "max-age=0" in preference_cookies[0].lower()

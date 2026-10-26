@@ -2,10 +2,10 @@ from types import SimpleNamespace
 
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from deerflow.agents.middlewares.artifact_capture_middleware import ArtifactCaptureMiddleware
-from deerflow.agents.thread_state import merge_artifacts, merge_tool_artifacts
-from deerflow.config.tool_artifact_config import ToolArtifactConfig
-from deerflow.tools.artifact_registry import generate_handle
+from nkyel.agents.middlewares.artifact_capture_middleware import ArtifactCaptureMiddleware
+from nkyel.agents.thread_state import merge_artifacts, merge_tool_artifacts
+from nkyel.config.tool_artifact_config import ToolArtifactConfig
+from nkyel.tools.artifact_registry import generate_handle
 
 
 def merge_and_apply(existing: list | None, update: list | None) -> list:
@@ -162,7 +162,7 @@ class TestCapture:
         fresh_handles = {entry["handle"] for entry in update[:2]}
         assert fresh_handles == {generate_handle("thread_1", f"call_new_{i}", 0) for i in range(2)}
 
-        from deerflow.agents.thread_state import merge_tool_artifacts
+        from nkyel.agents.thread_state import merge_tool_artifacts
 
         merged = merge_tool_artifacts(existing, update)
         assert len(merged) == 20
@@ -231,7 +231,7 @@ class TestCapture:
 
     def test_capture_skips_already_seen_and_empty_results(self, monkeypatch):
         """Steady-state cost must drop to the new message tail, not full history."""
-        from deerflow.agents.middlewares import artifact_capture_middleware
+        from nkyel.agents.middlewares import artifact_capture_middleware
 
         calls: list[str] = []
         real_extract = artifact_capture_middleware.extract_artifacts_from_result
@@ -264,7 +264,7 @@ class TestCapture:
 
     def test_evicted_results_are_not_resurrected(self, monkeypatch):
         """A sliding-window eviction must be final: no per-round re-registration churn."""
-        from deerflow.agents.middlewares import artifact_capture_middleware
+        from nkyel.agents.middlewares import artifact_capture_middleware
 
         calls: list[str] = []
         real_extract = artifact_capture_middleware.extract_artifacts_from_result

@@ -7,7 +7,7 @@ import httpx
 import pytest
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, ToolMessage
 
-from deerflow.models.vllm_provider import VllmChatModel
+from nkyel.models.vllm_provider import VllmChatModel
 
 
 def _make_model(*, cumulative_stream_usage: bool = False) -> VllmChatModel:
@@ -543,11 +543,11 @@ def test_vllm_provider_leaves_usage_unchanged_without_stable_completion_id():
 
 def test_vllm_provider_does_not_evict_active_streams_at_soft_capacity(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.models.vllm_provider._CUMULATIVE_USAGE_TRACKER_CAPACITY",
+        "nkyel.models.vllm_provider._CUMULATIVE_USAGE_TRACKER_CAPACITY",
         2,
     )
     now = [0.0]
-    monkeypatch.setattr("deerflow.models.vllm_provider.time.monotonic", lambda: now[0])
+    monkeypatch.setattr("nkyel.models.vllm_provider.time.monotonic", lambda: now[0])
     model = _make_model(cumulative_stream_usage=True)
 
     for index in range(3):
@@ -582,15 +582,15 @@ def test_vllm_provider_does_not_evict_active_streams_at_soft_capacity(monkeypatc
 
 def test_vllm_provider_evicts_only_idle_streams_above_soft_capacity(monkeypatch):
     monkeypatch.setattr(
-        "deerflow.models.vllm_provider._CUMULATIVE_USAGE_TRACKER_CAPACITY",
+        "nkyel.models.vllm_provider._CUMULATIVE_USAGE_TRACKER_CAPACITY",
         2,
     )
     monkeypatch.setattr(
-        "deerflow.models.vllm_provider._CUMULATIVE_USAGE_TRACKER_IDLE_SECONDS",
+        "nkyel.models.vllm_provider._CUMULATIVE_USAGE_TRACKER_IDLE_SECONDS",
         10,
     )
     now = [0.0]
-    monkeypatch.setattr("deerflow.models.vllm_provider.time.monotonic", lambda: now[0])
+    monkeypatch.setattr("nkyel.models.vllm_provider.time.monotonic", lambda: now[0])
     model = _make_model(cumulative_stream_usage=True)
 
     for index in range(3):

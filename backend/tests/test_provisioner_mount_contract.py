@@ -19,7 +19,7 @@ def _literal_assignment(path: Path, name: str):
 
 
 def test_gateway_and_provisioner_extra_mount_contracts_match() -> None:
-    gateway_path = REPO_ROOT / "backend/packages/harness/deerflow/community/aio_sandbox/remote_backend.py"
+    gateway_path = REPO_ROOT / "backend/packages/harness/nkyel/community/aio_sandbox/remote_backend.py"
     provisioner_path = REPO_ROOT / "docker/provisioner/app.py"
 
     gateway_paths = _literal_assignment(gateway_path, "_PROVISIONER_EXTRA_MOUNT_PATHS")

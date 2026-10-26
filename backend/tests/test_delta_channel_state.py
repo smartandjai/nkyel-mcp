@@ -13,7 +13,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph
 from langgraph.graph.message import REMOVE_ALL_MESSAGES, add_messages
 
-from deerflow.agents.thread_state import (
+from nkyel.agents.thread_state import (
     DeltaThreadState,
     ThreadState,
     adapt_state_schema_for_mode,
@@ -225,7 +225,7 @@ def test_merge_message_writes_preserves_missing_id_allocation_order(monkeypatch:
 
 
 def test_merge_message_writes_normalizes_state_and_each_write_once(monkeypatch: pytest.MonkeyPatch) -> None:
-    import deerflow.agents.thread_state as thread_state
+    import nkyel.agents.thread_state as thread_state
 
     state = [HumanMessage(id="state", content="state")]
     writes = [
@@ -296,7 +296,7 @@ def test_snapshot_frequency_parametrizes_delta_schema() -> None:
 
 
 def test_frozen_snapshot_frequency_drives_default_delta_schema(monkeypatch: pytest.MonkeyPatch) -> None:
-    from deerflow.runtime import checkpoint_mode
+    from nkyel.runtime import checkpoint_mode
 
     monkeypatch.setattr(checkpoint_mode, "_frozen_checkpoint_snapshot_frequency", 500)
     assert _delta_channel(get_thread_state_schema("delta")).snapshot_frequency == 500
@@ -332,7 +332,7 @@ def test_delta_adaptation_replaces_agent_state_message_reducer() -> None:
 
 
 def test_agents_package_exports_delta_thread_state() -> None:
-    from deerflow.agents import DeltaThreadState as ExportedDeltaThreadState
+    from nkyel.agents import DeltaThreadState as ExportedDeltaThreadState
 
     assert ExportedDeltaThreadState is DeltaThreadState
 

@@ -23,7 +23,7 @@ def _load_script(path: Path, name: str):
 
 
 def test_find_pnpm_command_prefers_resolved_executable(monkeypatch):
-    pnpm_script = _load_script(PNPM_SCRIPT_PATH, "deerflow_pnpm_script_direct")
+    pnpm_script = _load_script(PNPM_SCRIPT_PATH, "nkyel_pnpm_script_direct")
 
     def fake_which(name: str) -> str | None:
         if name == "pnpm":
@@ -39,7 +39,7 @@ def test_find_pnpm_command_prefers_resolved_executable(monkeypatch):
 
 
 def test_find_pnpm_command_falls_back_to_corepack(monkeypatch):
-    pnpm_script = _load_script(PNPM_SCRIPT_PATH, "deerflow_pnpm_script_corepack")
+    pnpm_script = _load_script(PNPM_SCRIPT_PATH, "nkyel_pnpm_script_corepack")
 
     def fake_which(name: str) -> str | None:
         if name == "corepack":
@@ -55,7 +55,7 @@ def test_find_pnpm_command_falls_back_to_corepack(monkeypatch):
 
 
 def test_find_pnpm_command_falls_back_to_corepack_cmd(monkeypatch):
-    pnpm_script = _load_script(PNPM_SCRIPT_PATH, "deerflow_pnpm_script_corepack_cmd")
+    pnpm_script = _load_script(PNPM_SCRIPT_PATH, "nkyel_pnpm_script_corepack_cmd")
 
     def fake_which(name: str) -> str | None:
         if name == "corepack":
@@ -83,7 +83,7 @@ def test_check_script_resolves_runner_paths_independently_of_cwd(monkeypatch):
     # repository root. Before the fix, `__file__` stayed relative and the
     # runner became `scripts/pnpm.py`, which later broke after cwd changed.
     monkeypatch.chdir(REPO_ROOT)
-    check_script = _load_script(Path("scripts/check.py"), "deerflow_check_script_paths")
+    check_script = _load_script(Path("scripts/check.py"), "nkyel_check_script_paths")
 
     assert check_script.PNPM_SCRIPT_PATH == PNPM_SCRIPT_PATH
     assert check_script.PNPM_SCRIPT_PATH.is_absolute()
@@ -92,7 +92,7 @@ def test_check_script_resolves_runner_paths_independently_of_cwd(monkeypatch):
 
 
 def test_check_script_preserves_runner_failure_diagnostics(monkeypatch):
-    check_script = _load_script(CHECK_SCRIPT_PATH, "deerflow_check_script_failure")
+    check_script = _load_script(CHECK_SCRIPT_PATH, "nkyel_check_script_failure")
     call_kwargs = {}
 
     def fake_run(*args, **kwargs):
@@ -115,7 +115,7 @@ def test_check_script_preserves_runner_failure_diagnostics(monkeypatch):
 
 
 def test_check_script_preserves_corepack_resolution_hint(monkeypatch):
-    check_script = _load_script(CHECK_SCRIPT_PATH, "deerflow_check_script_corepack")
+    check_script = _load_script(CHECK_SCRIPT_PATH, "nkyel_check_script_corepack")
 
     def fake_run(*args, **kwargs):
         return subprocess.CompletedProcess(
@@ -131,7 +131,7 @@ def test_check_script_preserves_corepack_resolution_hint(monkeypatch):
 
 
 def test_check_status_labels_corepack_fallback(monkeypatch, capsys):
-    check_script = _load_script(CHECK_SCRIPT_PATH, "deerflow_check_script_status")
+    check_script = _load_script(CHECK_SCRIPT_PATH, "nkyel_check_script_status")
 
     monkeypatch.setattr(check_script.shutil, "which", lambda name: f"/fake/{name}")
     monkeypatch.setattr(
@@ -154,7 +154,7 @@ def test_check_status_labels_corepack_fallback(monkeypatch, capsys):
 
 
 def test_old_node_check_suggests_a_version_manager_command(monkeypatch, capsys):
-    check_script = _load_script(CHECK_SCRIPT_PATH, "deerflow_check_script_old_node")
+    check_script = _load_script(CHECK_SCRIPT_PATH, "nkyel_check_script_old_node")
     monkeypatch.setattr(check_script.shutil, "which", lambda name: f"/fake/{name}")
     monkeypatch.setattr(
         check_script,

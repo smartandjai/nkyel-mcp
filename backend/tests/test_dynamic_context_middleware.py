@@ -13,11 +13,11 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, SystemMessage
 from langgraph.graph.message import add_messages
 
-from deerflow.agents.middlewares.dynamic_context_middleware import (
+from nkyel.agents.middlewares.dynamic_context_middleware import (
     _DYNAMIC_CONTEXT_REMINDER_KEY,
     DynamicContextMiddleware,
 )
-from deerflow.runtime.context_keys import CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY
+from nkyel.runtime.context_keys import CURRENT_RUN_PRE_EXISTING_MESSAGE_IDS_KEY
 
 _SYSTEM_REMINDER_TAG = "<system-reminder>"
 
@@ -95,7 +95,7 @@ def test_injects_system_reminder_into_first_human_message():
     mw = _make_middleware()
     state = {"messages": [HumanMessage(content="Hello", id="msg-1")]}
 
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -123,10 +123,10 @@ def test_memory_included_when_present():
 
     with (
         mock.patch(
-            "deerflow.agents.lead_agent.prompt._get_memory_context",
+            "nkyel.agents.lead_agent.prompt._get_memory_context",
             return_value="<memory>\nUser prefers Python.\n</memory>",
         ),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
@@ -151,10 +151,10 @@ def test_memory_opt_out_keeps_date_reminder_without_reading_memory():
 
     with (
         mock.patch(
-            "deerflow.agents.lead_agent.prompt._get_memory_context",
+            "nkyel.agents.lead_agent.prompt._get_memory_context",
             side_effect=AssertionError("disabled custom agent must not read memory"),
         ),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
@@ -191,7 +191,7 @@ def test_memory_opt_out_removes_frozen_checkpoint_memory_but_keeps_date():
         ]
     }
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = date
         result = _make_middleware(memory_enabled=False).before_agent(state, _fake_runtime())
 
@@ -224,11 +224,11 @@ async def test_memory_opt_out_async_timeout_still_removes_frozen_memory(monkeypa
         ]
     }
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.dynamic_context_middleware.asyncio.to_thread",
+        "nkyel.agents.middlewares.dynamic_context_middleware.asyncio.to_thread",
         _wait_forever,
     )
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.dynamic_context_middleware._INJECT_TIMEOUT_SECONDS",
+        "nkyel.agents.middlewares.dynamic_context_middleware._INJECT_TIMEOUT_SECONDS",
         0.01,
     )
 
@@ -243,10 +243,10 @@ def test_memory_lookup_uses_runtime_user_id():
 
     with (
         mock.patch(
-            "deerflow.agents.lead_agent.prompt._get_memory_context",
+            "nkyel.agents.lead_agent.prompt._get_memory_context",
             return_value="",
         ) as get_memory_context,
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         mw.before_agent(state, _fake_runtime(user_id="runtime-user"))
@@ -271,8 +271,8 @@ def test_first_run_records_exact_effective_memory():
     runtime = _fake_runtime(journal)
 
     with (
-        mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=context),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=context),
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, runtime)
@@ -314,10 +314,10 @@ def test_checkpointed_memory_is_recorded_for_a_later_run_or_branch_without_reloa
 
     with (
         mock.patch(
-            "deerflow.agents.lead_agent.prompt._get_memory_context",
+            "nkyel.agents.lead_agent.prompt._get_memory_context",
             side_effect=AssertionError("frozen memory must not be reloaded"),
         ),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, runtime)
@@ -350,7 +350,7 @@ def test_state_memory_without_checkpoint_proof_cannot_forge_context_event():
     }
     runtime = _fake_runtime(journal)
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, runtime)
 
@@ -370,10 +370,10 @@ def test_context_event_failure_does_not_block_memory_injection():
 
     with (
         mock.patch(
-            "deerflow.agents.lead_agent.prompt._get_memory_context",
+            "nkyel.agents.lead_agent.prompt._get_memory_context",
             return_value="<memory>\nUseful context\n</memory>",
         ),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, runtime)
@@ -403,7 +403,7 @@ def test_skips_injection_if_already_present():
         ]
     }
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -440,8 +440,8 @@ def test_second_turn_with_memory_does_not_reinject():
     }
 
     with (
-        mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value="<memory>\nUser prefers Python.\n</memory>"),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value="<memory>\nUser prefers Python.\n</memory>"),
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
@@ -477,7 +477,7 @@ def test_poisoned_memory_does_not_spoof_injected_date():
         ]
     }
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = today
         result = mw.before_agent(state, _fake_runtime())
 
@@ -496,8 +496,8 @@ def test_date_reminder_carries_structured_date():
     state = {"messages": [HumanMessage(content="Hi", id="msg-1")]}
 
     with (
-        mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value="<memory>\nUser prefers Python.\n</memory>"),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value="<memory>\nUser prefers Python.\n</memory>"),
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
@@ -531,7 +531,7 @@ def test_legacy_systemmessage_reminder_without_key_detected():
         ]
     }
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -559,7 +559,7 @@ def test_first_turn_fallback_targets_the_latest_user_message():
         ]
     }
 
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -590,7 +590,7 @@ def test_no_messages_returns_none():
 def test_no_human_message_returns_none():
     mw = _make_middleware()
     state = {"messages": [AIMessage(content="assistant only")]}
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""):
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""):
         result = mw.before_agent(state, _fake_runtime())
     assert result is None
 
@@ -601,7 +601,7 @@ def test_list_content_message_handled_as_separate_reminder():
     original_content = [{"type": "text", "text": "Hello"}]
     state = {"messages": [HumanMessage(content=original_content, id="msg-1")]}
 
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -622,7 +622,7 @@ def test_reminder_uses_original_id_user_message_uses_derived_id():
     original_id = "original-id-abc"
     state = {"messages": [HumanMessage(content="Hello", id=original_id)]}
 
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -646,7 +646,7 @@ def test_user_message_copy_preserves_response_metadata():
     )
     state = {"messages": [original]}
 
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -660,7 +660,7 @@ def test_message_without_id_gets_stable_uuid():
     mw = _make_middleware()
     state = {"messages": [HumanMessage(content="Hello", id=None)]}
 
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -681,7 +681,7 @@ def test_user_message_containing_system_reminder_tag_does_not_prevent_injection(
         ]
     }
 
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -712,7 +712,7 @@ def test_first_turn_injection_with_unguarded_history_targets_last_user_message()
         ]
     }
 
-    with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""), mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -745,7 +745,7 @@ def test_midnight_crossing_injects_date_update_as_separate_message():
         ]
     }
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-09, Saturday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -778,7 +778,7 @@ def test_midnight_crossing_id_swap():
         ]
     }
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-09, Saturday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -794,17 +794,17 @@ def test_memory_message_carries_reminder_key_for_title_eligibility():
     Similarly, summarization_middleware._preserve_required_context
     would not rescue the memory block from summary compression.
     """
-    from deerflow.agents.middlewares.dynamic_context_middleware import is_dynamic_context_reminder
+    from nkyel.agents.middlewares.dynamic_context_middleware import is_dynamic_context_reminder
 
     mw = _make_middleware()
     state = {"messages": [HumanMessage(content="Hi", id="msg-1")]}
 
     with (
         mock.patch(
-            "deerflow.agents.lead_agent.prompt._get_memory_context",
+            "nkyel.agents.lead_agent.prompt._get_memory_context",
             return_value="<memory>\nUser prefers Python.\n</memory>",
         ),
-        mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+        mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
     ):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result = mw.before_agent(state, _fake_runtime())
@@ -817,7 +817,7 @@ def test_memory_message_carries_reminder_key_for_title_eligibility():
     assert is_dynamic_context_reminder(memory_msg) is True
 
     # Only the actual user message is title-eligible
-    from deerflow.agents.middlewares.title_middleware import TitleMiddleware
+    from nkyel.agents.middlewares.title_middleware import TitleMiddleware
 
     title_eligible = [m for m in msgs if TitleMiddleware._is_user_message_for_title(m)]
     assert len(title_eligible) == 1
@@ -839,7 +839,7 @@ def test_no_second_midnight_injection_once_date_updated():
         ]
     }
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value.strftime.return_value = "2026-05-09, Saturday"
         result = mw.before_agent(state, _fake_runtime())
 
@@ -860,7 +860,7 @@ def test_user_suffix_message_is_not_injection_target():
     message again, it would perform another ID-swap → ``X__user__user`` → … →
     unbounded suffix growth and ghost-message re-execution (issue #3725).
     """
-    from deerflow.agents.middlewares.dynamic_context_middleware import _is_user_injection_target
+    from nkyel.agents.middlewares.dynamic_context_middleware import _is_user_injection_target
 
     # A __user-suffix message is NOT a valid injection target
     user_swap_msg = HumanMessage(content="Hello", id="msg-1__user")
@@ -880,7 +880,7 @@ def test_user_suffix_message_is_not_injection_target():
 
 
 def test_legacy_summary_message_is_not_injection_target():
-    from deerflow.agents.middlewares.dynamic_context_middleware import _is_user_injection_target
+    from nkyel.agents.middlewares.dynamic_context_middleware import _is_user_injection_target
 
     summary_msg = HumanMessage(content="Here is a summary of the conversation", name="summary")
 
@@ -893,7 +893,7 @@ def test_endswith_not_substring_prevents_false_positive():
 
     A substring check (``"__user" in id``) would incorrectly reject such IDs.
     """
-    from deerflow.agents.middlewares.dynamic_context_middleware import _is_user_injection_target
+    from nkyel.agents.middlewares.dynamic_context_middleware import _is_user_injection_target
 
     # ID contains "__user" in the middle — should NOT be rejected
     middle_match = HumanMessage(content="question", id="user__question-123")
@@ -928,7 +928,7 @@ def test_no_recursive_id_swap_in_full_middleware_flow():
     # First call: inject into HumanMessage(id="msg-1")
     state_v1 = {"messages": [HumanMessage(content="Hello", id="msg-1")]}
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt, mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""):
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt, mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result_v1 = mw.before_agent(state_v1, _fake_runtime())
 
@@ -957,7 +957,7 @@ def test_no_recursive_id_swap_in_full_middleware_flow():
     # Second call: _last_injected_date returns None (no parseable date),
     # so _inject enters first-turn path and must skip msg-1__user via the
     # endswith("__user") guard, then inject into msg-2.
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt, mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value=""):
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt, mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value=""):
         mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
         result_v2 = mw.before_agent(state_v2, _fake_runtime())
 
@@ -974,24 +974,24 @@ def test_no_recursive_id_swap_in_full_middleware_flow():
 
 
 def test_format_current_date_defaults_to_server_local_without_env(monkeypatch):
-    """Without DEER_FLOW_DATE_TIMEZONE the formatter keeps the legacy server-local behavior."""
+    """Without NKYEL_DATE_TIMEZONE the formatter keeps the legacy server-local behavior."""
     from datetime import datetime
 
-    from deerflow.agents.middlewares.dynamic_context_middleware import _format_current_date
+    from nkyel.agents.middlewares.dynamic_context_middleware import _format_current_date
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value = datetime(2026, 5, 8, 9, 0)
-        monkeypatch.delenv("DEER_FLOW_DATE_TIMEZONE", raising=False)
+        monkeypatch.delenv("NKYEL_DATE_TIMEZONE", raising=False)
 
         assert _format_current_date() == "2026-05-08, Friday"
         mock_dt.now.assert_called_once_with()
 
 
 def test_format_current_date_honors_configured_timezone(monkeypatch):
-    """A UTC instant must be rendered in the IANA zone named by DEER_FLOW_DATE_TIMEZONE."""
+    """A UTC instant must be rendered in the IANA zone named by NKYEL_DATE_TIMEZONE."""
     from datetime import UTC, datetime
 
-    from deerflow.agents.middlewares.dynamic_context_middleware import _format_current_date
+    from nkyel.agents.middlewares.dynamic_context_middleware import _format_current_date
 
     # 2026-09-02 20:30 UTC is 2026-09-03 04:30 in Asia/Shanghai: a UTC-only
     # formatter would report the wrong day for a Shanghai user.
@@ -1001,9 +1001,9 @@ def test_format_current_date_honors_configured_timezone(monkeypatch):
         # datetime.now(tz) semantics: the fixed instant expressed in *tz*.
         return fixed_utc.astimezone(tz) if tz is not None else fixed_utc.replace(tzinfo=None)
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.side_effect = fake_now
-        monkeypatch.setenv("DEER_FLOW_DATE_TIMEZONE", "Asia/Shanghai")
+        monkeypatch.setenv("NKYEL_DATE_TIMEZONE", "Asia/Shanghai")
 
         assert _format_current_date() == "2026-09-03, Thursday"
 
@@ -1012,18 +1012,18 @@ def test_format_current_date_invalid_timezone_falls_back(monkeypatch, caplog):
     """An unparseable IANA name must warn and degrade to the server-local timezone."""
     from datetime import datetime
 
-    from deerflow.agents.middlewares.dynamic_context_middleware import _format_current_date
+    from nkyel.agents.middlewares.dynamic_context_middleware import _format_current_date
 
-    with mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
+    with mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt:
         mock_dt.now.return_value = datetime(2026, 5, 8, 9, 0)
-        monkeypatch.setenv("DEER_FLOW_DATE_TIMEZONE", "Not/A_Zone")
+        monkeypatch.setenv("NKYEL_DATE_TIMEZONE", "Not/A_Zone")
 
         assert _format_current_date() == "2026-05-08, Friday"
-    assert "DEER_FLOW_DATE_TIMEZONE" in caplog.text
+    assert "NKYEL_DATE_TIMEZONE" in caplog.text
 
 
 def _declared_date_timezone_policies():
-    from deerflow.agents.middlewares.dynamic_context_middleware import (
+    from nkyel.agents.middlewares.dynamic_context_middleware import (
         DynamicContextMiddleware,
         SubagentDateContextMiddleware,
     )
@@ -1047,7 +1047,7 @@ def _expected_policies(tz_name: str):
     """The DynamicContext declaration also carries the shelf index's effective
     rendering caps (no app config here ⇒ ProjectsConfig defaults); the
     SubagentDateContext declaration is the timezone alone."""
-    from deerflow.config.projects_config import ProjectsConfig
+    from nkyel.config.projects_config import ProjectsConfig
 
     defaults = ProjectsConfig()
     return [
@@ -1064,21 +1064,21 @@ def _expected_policies(tz_name: str):
 
 def test_date_middlewares_declare_configured_timezone(monkeypatch):
     """Assembly identity must reflect the zone the injected date follows."""
-    monkeypatch.setenv("DEER_FLOW_DATE_TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("NKYEL_DATE_TIMEZONE", "Asia/Shanghai")
     assert _declared_date_timezone_policies() == _expected_policies("Asia/Shanghai")
 
 
 def test_date_middlewares_declare_utc_timezone(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_DATE_TIMEZONE", "UTC")
+    monkeypatch.setenv("NKYEL_DATE_TIMEZONE", "UTC")
     assert _declared_date_timezone_policies() == _expected_policies("UTC")
 
 
 def test_dynamic_context_release_policy_includes_memory_opt_out(monkeypatch):
-    from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+    from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
 
-    monkeypatch.setenv("DEER_FLOW_DATE_TIMEZONE", "UTC")
+    monkeypatch.setenv("NKYEL_DATE_TIMEZONE", "UTC")
 
-    from deerflow.config.projects_config import ProjectsConfig
+    from nkyel.config.projects_config import ProjectsConfig
 
     defaults = ProjectsConfig()
     assert DynamicContextMiddleware(memory_enabled=False).release_policy_parameters() == {
@@ -1093,9 +1093,9 @@ def test_dynamic_context_release_policy_includes_memory_opt_out(monkeypatch):
 def test_date_middlewares_declare_resolved_local_zone_without_env(monkeypatch):
     """Without the knob the declaration resolves the actual local zone, so two
     hosts that render different dates still get different assembly fingerprints."""
-    from deerflow.agents.middlewares.dynamic_context_middleware import _effective_date_timezone_name
+    from nkyel.agents.middlewares.dynamic_context_middleware import _effective_date_timezone_name
 
-    monkeypatch.delenv("DEER_FLOW_DATE_TIMEZONE", raising=False)
+    monkeypatch.delenv("NKYEL_DATE_TIMEZONE", raising=False)
     expected_zone = _effective_date_timezone_name()
     assert expected_zone
 
@@ -1104,16 +1104,16 @@ def test_date_middlewares_declare_resolved_local_zone_without_env(monkeypatch):
 
 def test_date_middlewares_declare_resolved_local_zone_for_invalid_env(monkeypatch, caplog):
     """An invalid IANA name degrades to server-local and is declared as such."""
-    from deerflow.agents.middlewares.dynamic_context_middleware import _effective_date_timezone_name
+    from nkyel.agents.middlewares.dynamic_context_middleware import _effective_date_timezone_name
 
-    monkeypatch.setenv("DEER_FLOW_DATE_TIMEZONE", "Not/A_Zone")
+    monkeypatch.setenv("NKYEL_DATE_TIMEZONE", "Not/A_Zone")
     assert _declared_date_timezone_policies() == _expected_policies(_effective_date_timezone_name())
-    assert "DEER_FLOW_DATE_TIMEZONE" in caplog.text
+    assert "NKYEL_DATE_TIMEZONE" in caplog.text
 
 
 def test_server_local_timezone_name_reads_tz_env(monkeypatch):
     """A POSIX TZ env var naming a real zone resolves to its IANA key."""
-    from deerflow.agents.middlewares.dynamic_context_middleware import _server_local_timezone_name
+    from nkyel.agents.middlewares.dynamic_context_middleware import _server_local_timezone_name
 
     monkeypatch.setenv("TZ", "Asia/Shanghai")
     assert _server_local_timezone_name() == "Asia/Shanghai"
@@ -1122,7 +1122,7 @@ def test_server_local_timezone_name_reads_tz_env(monkeypatch):
 def test_server_local_timezone_name_reads_direct_macos_symlink_target(monkeypatch):
     """macOS /etc/localtime points at the unversioned zoneinfo dir; the direct
     symlink target must be read instead of a fully resolved path."""
-    import deerflow.agents.middlewares.dynamic_context_middleware as module
+    import nkyel.agents.middlewares.dynamic_context_middleware as module
 
     monkeypatch.delenv("TZ", raising=False)
     monkeypatch.setattr(module.os, "readlink", lambda _path: "/var/db/timezone/zoneinfo/Asia/Shanghai")
@@ -1132,7 +1132,7 @@ def test_server_local_timezone_name_reads_direct_macos_symlink_target(monkeypatc
 
 def test_server_local_timezone_name_reads_apple_versioned_symlink_target(monkeypatch):
     """Apple's canonical versioned zoneinfo path must still yield the zone key."""
-    import deerflow.agents.middlewares.dynamic_context_middleware as module
+    import nkyel.agents.middlewares.dynamic_context_middleware as module
 
     monkeypatch.delenv("TZ", raising=False)
     monkeypatch.setattr(
@@ -1146,7 +1146,7 @@ def test_server_local_timezone_name_reads_apple_versioned_symlink_target(monkeyp
 
 def test_server_local_timezone_name_normalizes_relative_symlink_target(monkeypatch):
     """A relative /etc/localtime target is resolved against /etc."""
-    import deerflow.agents.middlewares.dynamic_context_middleware as module
+    import nkyel.agents.middlewares.dynamic_context_middleware as module
 
     monkeypatch.delenv("TZ", raising=False)
     monkeypatch.setattr(module.os, "readlink", lambda _path: "../usr/share/zoneinfo/Etc/UTC")
@@ -1156,11 +1156,11 @@ def test_server_local_timezone_name_normalizes_relative_symlink_target(monkeypat
 
 def test_effective_timezone_sentinel_uses_offset_when_local_zone_is_not_resolvable(monkeypatch):
     """Without a recoverable IANA key the declaration pins a stable sentinel."""
-    import deerflow.agents.middlewares.dynamic_context_middleware as module
+    import nkyel.agents.middlewares.dynamic_context_middleware as module
 
     monkeypatch.setattr(module, "_server_local_timezone_name", lambda: None)
     monkeypatch.setattr(module, "_server_local_utc_offset_minutes", lambda: 8 * 60)
-    monkeypatch.delenv("DEER_FLOW_DATE_TIMEZONE", raising=False)
+    monkeypatch.delenv("NKYEL_DATE_TIMEZONE", raising=False)
 
     assert module._effective_date_timezone_name() == "server-local(+08:00)"
 

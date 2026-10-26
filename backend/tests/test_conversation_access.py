@@ -16,10 +16,10 @@ from pydantic import ValidationError
 
 from app.gateway.authz import AuthContext
 from app.gateway.run_models import RunCreateRequest
-from deerflow.config.app_config import AppConfig
-from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.manager import EditReplayVisibility
+from nkyel.config.app_config import AppConfig
+from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.manager import EditReplayVisibility
 
 
 def _setup(*, user_id="alice", permissions=("runs:read",), enabled=True, tool_output=None):
@@ -27,13 +27,13 @@ def _setup(*, user_id="alice", permissions=("runs:read",), enabled=True, tool_ou
 
     config = AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
-            "tools": [{"name": "read_conversation", "group": "conversation", "use": "deerflow.tools.conversation:read_conversation"}] if enabled else [],
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
+            "tools": [{"name": "read_conversation", "group": "conversation", "use": "nkyel.tools.conversation:read_conversation"}] if enabled else [],
             **({"tool_output": tool_output} if tool_output is not None else {}),
         }
     )
     user = SimpleNamespace(id=user_id, system_role="admin")
-    request = SimpleNamespace(state=SimpleNamespace(auth=AuthContext(user, list(permissions))), url="https://deerflow.example/api/threads/current/runs")
+    request = SimpleNamespace(state=SimpleNamespace(auth=AuthContext(user, list(permissions))), url="https://nkyel.example/api/threads/current/runs")
     events = MemoryRunEventStore()
     threads = MemoryThreadMetaStore(InMemoryStore())
     manager = AsyncMock()
@@ -69,10 +69,10 @@ def test_reference_field_is_explicit_and_bounded():
 def test_only_explicit_references_grant_access_and_urls_are_local_selectors():
     prepare, _, _, _, _ = _setup()
     assert prepare([]) is None
-    reader, ids = prepare(["https://deerflow.example/workspace/chats/source", "source"])
+    reader, ids = prepare(["https://nkyel.example/workspace/chats/source", "source"])
     assert callable(reader)
     assert ids == ("source",)
-    for bad in ("../source", "https://other.example/workspace/chats/source", "https://deerflow.example/not-a-chat/source", "file:///workspace/chats/source"):
+    for bad in ("../source", "https://other.example/workspace/chats/source", "https://nkyel.example/not-a-chat/source", "file:///workspace/chats/source"):
         with pytest.raises(HTTPException) as exc:
             prepare([bad])
         assert exc.value.status_code == 422
@@ -99,7 +99,7 @@ async def test_scheduled_reader_uses_explicit_owner_without_http_authority():
     from app.gateway.conversation_access import prepare_scheduled_conversation_reader
 
     _, events, threads, manager, _ = _setup()
-    config = AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "tools": [{"name": "read_conversation", "group": "conversation", "use": "deerflow.tools.conversation:read_conversation"}]})
+    config = AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "tools": [{"name": "read_conversation", "group": "conversation", "use": "nkyel.tools.conversation:read_conversation"}]})
     context = SimpleNamespace(event_store=events, thread_store=threads)
     await threads.create("owned", user_id="alice")
     await threads.create("foreign", user_id="bob")
@@ -119,7 +119,7 @@ async def test_scheduled_reader_uses_explicit_owner_without_http_authority():
 def test_scheduled_reader_rejects_urls_and_missing_owner():
     from app.gateway.conversation_access import prepare_scheduled_conversation_reader
 
-    config = AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "tools": [{"name": "read_conversation", "group": "conversation", "use": "deerflow.tools.conversation:read_conversation"}]})
+    config = AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "tools": [{"name": "read_conversation", "group": "conversation", "use": "nkyel.tools.conversation:read_conversation"}]})
     for references, owner in ((["https://example.com/workspace/chats/source"], "alice"), (["source"], "")):
         with pytest.raises(ValueError):
             prepare_scheduled_conversation_reader(references, owner_user_id=owner, run_context=SimpleNamespace(), run_manager=AsyncMock(), app_config=config)
@@ -193,8 +193,8 @@ def test_start_run_installs_fresh_capability_without_persisting_it(monkeypatch):
     from test_gateway_services import _make_start_run_persistence_context
 
     from app.gateway import services
-    from deerflow.config.app_config import reset_app_config, set_app_config
-    from deerflow.runtime.user_context import reset_current_user, set_current_user
+    from nkyel.config.app_config import reset_app_config, set_app_config
+    from nkyel.runtime.user_context import reset_current_user, set_current_user
 
     async def exercise():
         request, _, threads = _make_start_run_persistence_context()
@@ -202,7 +202,7 @@ def test_start_run_installs_fresh_capability_without_persisting_it(monkeypatch):
         request.state.user = user
         request.state.auth = AuthContext(user, ["runs:create", "runs:read"])
         request.state.auth_source = "session"
-        request.url = "https://deerflow.example/api/threads/current/runs"
+        request.url = "https://nkyel.example/api/threads/current/runs"
         await threads.create("source", user_id="alice")
         captured = []
 
@@ -239,7 +239,7 @@ def test_start_run_installs_fresh_capability_without_persisting_it(monkeypatch):
             await services.start_run(body, "idempotent", request, idempotency_key="ref-key")
         assert conflict.value.status_code == 409
 
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "tools": [{"name": "read_conversation", "group": "conversation", "use": "deerflow.tools.conversation:read_conversation"}]}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "tools": [{"name": "read_conversation", "group": "conversation", "use": "nkyel.tools.conversation:read_conversation"}]}))
     user_token = set_current_user(SimpleNamespace(id="alice"))
     try:
         asyncio.run(exercise())

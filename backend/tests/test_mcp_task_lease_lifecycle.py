@@ -9,11 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.mcp_tasks.service as service_module
 from app.mcp_tasks.service import McpTaskService
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.mcp.tasks import McpTaskConnectionUnavailableError, McpTaskDriverRegistry, TaskSnapshot, TaskStatus
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.mcp_tasks import McpTaskRepository
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.mcp.tasks import McpTaskConnectionUnavailableError, McpTaskDriverRegistry, TaskSnapshot, TaskStatus
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.mcp_tasks import McpTaskRepository
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
 
 
 class Clock(datetime):
@@ -212,7 +212,7 @@ async def test_renewal_cannot_revive_or_change_an_ineligible_claim(task_repo, ph
     row = (await claim(now=initial, lease_owner="worker", lease_seconds=5, limit=1))[0]
     from sqlalchemy import update
 
-    from deerflow.persistence.mcp_tasks.model import McpTaskRow
+    from nkyel.persistence.mcp_tasks.model import McpTaskRow
 
     if drift in {"other_phase", "terminal"}:
         values = {"status": "completed"} if drift == "terminal" else {"cancel_requested_at": initial if phase == "poll" else None}
@@ -247,7 +247,7 @@ async def test_renewal_extends_only_lease_and_never_moves_expiry_backwards(task_
     for seconds in (4, 2):
         assert await repo.renew_control_claim("task-1", phase=phase, lease_owner="worker", lease_token=row["lease_token"], now=initial + timedelta(seconds=seconds), lease_seconds=5)
     assert await claim(now=initial + timedelta(seconds=6), lease_owner="peer", lease_seconds=5, limit=1) == []
-    from deerflow.persistence.mcp_tasks.model import McpTaskRow
+    from nkyel.persistence.mcp_tasks.model import McpTaskRow
 
     async with repo._sf() as session:
         stored = await session.get(McpTaskRow, "task-1")

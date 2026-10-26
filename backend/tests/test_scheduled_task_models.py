@@ -1,5 +1,5 @@
-from deerflow.config.app_config import AppConfig
-from deerflow.persistence.models import ScheduledTaskRow, ScheduledTaskRunRow
+from nkyel.config.app_config import AppConfig
+from nkyel.persistence.models import ScheduledTaskRow, ScheduledTaskRunRow
 
 
 def test_app_config_exposes_scheduler_section():

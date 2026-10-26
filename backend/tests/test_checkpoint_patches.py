@@ -16,8 +16,8 @@ from langgraph.channels.binop import BinaryOperatorAggregate
 from langgraph.errors import InvalidUpdateError
 from langgraph.types import Overwrite
 
-import deerflow.agents.thread_state  # noqa: F401 - applies checkpoint patches at import
-from deerflow import checkpoint_patches
+import nkyel.agents.thread_state  # noqa: F401 - applies checkpoint patches at import
+from nkyel import checkpoint_patches
 
 
 def _replace(existing, new):

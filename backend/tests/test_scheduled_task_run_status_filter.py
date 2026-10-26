@@ -10,11 +10,11 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.gateway.authz import AuthContext
 from app.gateway.routers import scheduled_tasks
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import (
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import (
     ACTIVE_RUN_STATUSES,
     TERMINAL_RUN_STATUSES,
     ScheduledTaskRow,

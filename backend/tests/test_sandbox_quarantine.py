@@ -2,8 +2,8 @@
 
 import pytest
 
-from deerflow.community.aio_sandbox.quarantine import SandboxQuarantine
-from deerflow.community.aio_sandbox.sandbox_info import SandboxInfo
+from nkyel.community.aio_sandbox.quarantine import SandboxQuarantine
+from nkyel.community.aio_sandbox.sandbox_info import SandboxInfo
 
 
 def test_quarantine_survives_restart_and_does_not_taint_replacement(tmp_path):

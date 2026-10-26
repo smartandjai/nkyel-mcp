@@ -1,4 +1,4 @@
-"""Tests for deerflow.skills.installer — shared skill installation logic."""
+"""Tests for nkyel.skills.installer — shared skill installation logic."""
 
 import asyncio
 import shutil
@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.skills.installer import (
+from nkyel.skills.installer import (
     SkillSecurityScanError,
     is_symlink_member,
     is_unsafe_zip_member,
@@ -17,9 +17,9 @@ from deerflow.skills.installer import (
     safe_extract_skill_archive,
     should_ignore_archive_entry,
 )
-from deerflow.skills.security_scanner import ScanResult
-from deerflow.skills.security_static_scanner import StaticScannerError
-from deerflow.skills.storage import get_or_new_skill_storage
+from nkyel.skills.security_scanner import ScanResult
+from nkyel.skills.security_static_scanner import StaticScannerError
+from nkyel.skills.storage import get_or_new_skill_storage
 
 # ---------------------------------------------------------------------------
 # is_unsafe_zip_member
@@ -122,8 +122,8 @@ class TestCodeFileClassification:
         ],
     )
     def test_installer_applies_the_shared_code_file_rule(self, tmp_path, rel_path, content, expected):
-        import deerflow.skills.installer as installer_module
-        from deerflow.skills.package_files import is_code_file
+        import nkyel.skills.installer as installer_module
+        from nkyel.skills.package_files import is_code_file
 
         path = tmp_path / rel_path
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -379,12 +379,12 @@ class TestEntryCountCapAppliesRegardlessOfSkillScan:
         async def _scan(*args, **kwargs):
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
     def _make_storage(self, skills_root: Path, *, skill_scan_enabled: bool):
         from types import SimpleNamespace
 
-        from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+        from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
         return LocalSkillStorage(
             host_path=str(skills_root),
@@ -418,7 +418,7 @@ class TestEntryCountCapAppliesRegardlessOfSkillScan:
     def test_scan_archive_preflight_independently_flags_the_same_archive(self, tmp_path):
         """Cross-check tying the two protections together: the pre-existing optional
         scanner also flags this exact archive by member count when it does run."""
-        from deerflow.skills.skillscan.orchestrator import scan_archive_preflight
+        from nkyel.skills.skillscan.orchestrator import scan_archive_preflight
 
         zip_path = self._make_many_entry_zip(tmp_path, entry_count=50_000)
 
@@ -451,7 +451,7 @@ class TestInstallSkillFromArchive:
         async def _scan(*args, **kwargs):
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
     def _make_skill_zip(self, tmp_path: Path, skill_name: str = "test-skill") -> Path:
         """Create a valid .skill archive."""
@@ -473,7 +473,7 @@ class TestInstallSkillFromArchive:
         assert (skills_root / "custom" / "test-skill" / "SKILL.md").exists()
 
     def test_install_with_warning_findings_succeeds_and_writes_only_the_skill(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "runtime-home"))
+        monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "runtime-home"))
         zip_path = tmp_path / "warning-skill.skill"
         with zipfile.ZipFile(zip_path, "w") as zf:
             zf.writestr(
@@ -520,7 +520,7 @@ class TestInstallSkillFromArchive:
             calls.append({"content": content, "executable": executable, "location": location})
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
 
@@ -550,7 +550,7 @@ class TestInstallSkillFromArchive:
             calls.append({"content": content, "executable": executable, "location": location})
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
 
@@ -595,7 +595,7 @@ class TestInstallSkillFromArchive:
             calls.append({"executable": executable, "location": location})
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
 
@@ -608,7 +608,7 @@ class TestInstallSkillFromArchive:
 
     def test_shebang_sniff_only_reads_extensionless_files(self, tmp_path, monkeypatch):
         """Suffix/scripts classification is name-based; only extensionless files are opened."""
-        import deerflow.skills.installer as installer_module
+        import nkyel.skills.installer as installer_module
 
         zip_path = tmp_path / "test-skill.skill"
         with zipfile.ZipFile(zip_path, "w") as zf:
@@ -650,7 +650,7 @@ class TestInstallSkillFromArchive:
                 return ScanResult(decision="warn", reason="code needs review")
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         with pytest.raises(SkillSecurityScanError, match="rejected executable.*code needs review"):
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
@@ -712,7 +712,7 @@ class TestInstallSkillFromArchive:
             llm_calls.append({"args": args, "kwargs": kwargs})
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         with pytest.raises(SkillSecurityScanError) as excinfo:
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
@@ -754,7 +754,7 @@ class TestInstallSkillFromArchive:
                 return ScanResult(decision="warn", reason="script needs review")
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         with pytest.raises(SkillSecurityScanError, match="rejected executable.*script needs review"):
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
@@ -769,7 +769,7 @@ class TestInstallSkillFromArchive:
         async def _scan(*args, **kwargs):
             return ScanResult(decision="block", reason="prompt injection")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         with pytest.raises(SkillSecurityScanError, match="Security scan blocked.*prompt injection"):
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
@@ -791,7 +791,7 @@ class TestInstallSkillFromArchive:
             llm_calls.append({"args": args, "kwargs": kwargs})
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         with pytest.raises(SkillSecurityScanError) as excinfo:
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
@@ -816,8 +816,8 @@ class TestInstallSkillFromArchive:
             llm_calls.append({"args": args, "kwargs": kwargs})
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.enforce_static_scan", _broken_static_scan)
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.enforce_static_scan", _broken_static_scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         with pytest.raises(SkillSecurityScanError, match="Static security scan failed.*native scanner unavailable") as excinfo:
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
@@ -841,8 +841,8 @@ class TestInstallSkillFromArchive:
         async def _scan(*args, **kwargs):
             return ScanResult(decision="allow", reason="ok")
 
-        monkeypatch.setattr("deerflow.skills.installer.enforce_static_scan", _static_scan)
-        monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _scan)
+        monkeypatch.setattr("nkyel.skills.installer.enforce_static_scan", _static_scan)
+        monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _scan)
 
         async def _install():
             return await get_or_new_skill_storage(skills_path=skills_root).ainstall_skill_from_archive(zip_path)
@@ -857,7 +857,7 @@ class TestInstallSkillFromArchive:
         zip_path = self._make_skill_zip(tmp_path)
         skills_root = tmp_path / "skills"
         skills_root.mkdir()
-        monkeypatch.setattr("deerflow.skills.installer.enforce_static_scan", lambda skill_dir, *, skill_name=None, app_config=None: [])
+        monkeypatch.setattr("nkyel.skills.installer.enforce_static_scan", lambda skill_dir, *, skill_name=None, app_config=None: [])
 
         def _copytree(src, dst):
             partial = Path(dst)
@@ -865,7 +865,7 @@ class TestInstallSkillFromArchive:
             (partial / "partial.txt").write_text("partial", encoding="utf-8")
             raise OSError("copy failed")
 
-        monkeypatch.setattr("deerflow.skills.installer.shutil.copytree", _copytree)
+        monkeypatch.setattr("nkyel.skills.installer.shutil.copytree", _copytree)
 
         with pytest.raises(OSError, match="copy failed"):
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
@@ -880,14 +880,14 @@ class TestInstallSkillFromArchive:
         skills_root.mkdir()
         target = skills_root / "custom" / "test-skill"
         original_copytree = shutil.copytree
-        monkeypatch.setattr("deerflow.skills.installer.enforce_static_scan", lambda skill_dir, *, skill_name=None, app_config=None: [])
+        monkeypatch.setattr("nkyel.skills.installer.enforce_static_scan", lambda skill_dir, *, skill_name=None, app_config=None: [])
 
         def _copytree(src, dst):
             target.mkdir(parents=True)
             (target / "marker.txt").write_text("external", encoding="utf-8")
             return original_copytree(src, dst)
 
-        monkeypatch.setattr("deerflow.skills.installer.shutil.copytree", _copytree)
+        monkeypatch.setattr("nkyel.skills.installer.shutil.copytree", _copytree)
 
         with pytest.raises(ValueError, match="already exists"):
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)
@@ -904,7 +904,7 @@ class TestInstallSkillFromArchive:
             Path(dst).write_text("partial", encoding="utf-8")
             raise OSError("move failed")
 
-        monkeypatch.setattr("deerflow.skills.installer.shutil.move", _move)
+        monkeypatch.setattr("nkyel.skills.installer.shutil.move", _move)
 
         with pytest.raises(OSError, match="move failed"):
             get_or_new_skill_storage(skills_path=skills_root).install_skill_from_archive(zip_path)

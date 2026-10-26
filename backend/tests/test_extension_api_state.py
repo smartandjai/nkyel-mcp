@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from threading import Thread
 
-from deerflow_extension_api import ExtensionData
+from nkyel_extension_api import ExtensionData
 
 
 @dataclass
@@ -94,20 +94,20 @@ def test_stores_are_independent():
     assert b.get(_Counter) is None
 
 
-def test_api_package_does_not_import_deerflow():
+def test_api_package_does_not_import_nkyel():
     """The API package must stay independent of the host so extensions can
-    depend on it alone. A `deerflow` import here would silently couple every
+    depend on it alone. A `nkyel` import here would silently couple every
     extension to the harness release cadence."""
     import pathlib
 
-    import deerflow_extension_api
+    import nkyel_extension_api
 
-    root = pathlib.Path(deerflow_extension_api.__file__).parent
+    root = pathlib.Path(nkyel_extension_api.__file__).parent
     offenders = []
     for path in root.rglob("*.py"):
         text = path.read_text(encoding="utf-8")
         for lineno, line in enumerate(text.splitlines(), start=1):
             stripped = line.strip()
-            if stripped.startswith(("import deerflow", "from deerflow")) and not stripped.startswith(("import deerflow_extension_api", "from deerflow_extension_api")):
+            if stripped.startswith(("import nkyel", "from nkyel")) and not stripped.startswith(("import nkyel_extension_api", "from nkyel_extension_api")):
                 offenders.append(f"{path.name}:{lineno}: {stripped}")
-    assert offenders == [], "deerflow-extension-api must not import deerflow: " + "; ".join(offenders)
+    assert offenders == [], "nkyel-extension-api must not import nkyel: " + "; ".join(offenders)

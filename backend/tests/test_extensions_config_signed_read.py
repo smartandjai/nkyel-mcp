@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-import deerflow.config.extensions_config as extensions
-from deerflow.config.file_signature import read_config_with_signature
+import nkyel.config.extensions_config as extensions
+from nkyel.config.file_signature import read_config_with_signature
 
 
 def payload(argument):
@@ -19,7 +19,7 @@ def payload(argument):
 def test_cache_signature_identifies_the_parsed_revision(tmp_path: Path, monkeypatch, load_mode, race_phase):
     path = tmp_path / "extensions.json"
     backup = tmp_path / "backup.json"
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(path))
     extensions.reset_extensions_config()
     try:
         if load_mode == "automatic-reload":

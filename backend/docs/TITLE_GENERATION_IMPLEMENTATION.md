@@ -4,27 +4,27 @@
 
 ### 1. 核心实现文件
 
-#### [`packages/harness/deerflow/agents/thread_state.py`](../packages/harness/deerflow/agents/thread_state.py)
+#### [`packages/harness/nkyel/agents/thread_state.py`](../packages/harness/nkyel/agents/thread_state.py)
 - ✅ 添加 `title: str | None = None` 字段到 `ThreadState`
 
-#### [`packages/harness/deerflow/config/title_config.py`](../packages/harness/deerflow/config/title_config.py) (新建)
+#### [`packages/harness/nkyel/config/title_config.py`](../packages/harness/nkyel/config/title_config.py) (新建)
 - ✅ 创建 `TitleConfig` 配置类
 - ✅ 支持配置：enabled, max_words, max_chars, model_name, prompt_template
 - ✅ 提供 `get_title_config()` 和 `set_title_config()` 函数
 - ✅ 提供 `load_title_config_from_dict()` 从配置文件加载
 
-#### [`packages/harness/deerflow/agents/middlewares/title_middleware.py`](../packages/harness/deerflow/agents/middlewares/title_middleware.py) (新建)
+#### [`packages/harness/nkyel/agents/middlewares/title_middleware.py`](../packages/harness/nkyel/agents/middlewares/title_middleware.py) (新建)
 - ✅ 创建 `TitleMiddleware` 类
 - ✅ 实现 `_should_generate_title()` 检查是否需要生成
 - ✅ 默认使用本地 fallback 生成标题，避免流式回复结束前等待额外 LLM 调用；显式配置 `model_name` 时可使用 LLM 标题
 - ✅ 实现 `after_model()` / `aafter_model()` 钩子，在首次对话后自动触发
 - ✅ 包含 fallback 策略（LLM 未配置或失败时使用用户消息前几个字符）
 
-#### [`packages/harness/deerflow/config/app_config.py`](../packages/harness/deerflow/config/app_config.py)
+#### [`packages/harness/nkyel/config/app_config.py`](../packages/harness/nkyel/config/app_config.py)
 - ✅ 导入 `load_title_config_from_dict`
 - ✅ 在 `from_file()` 中加载 title 配置
 
-#### [`packages/harness/deerflow/agents/lead_agent/agent.py`](../packages/harness/deerflow/agents/lead_agent/agent.py)
+#### [`packages/harness/nkyel/agents/lead_agent/agent.py`](../packages/harness/nkyel/agents/lead_agent/agent.py)
 - ✅ 导入 `TitleMiddleware`
 - ✅ 注册到 `middleware` 列表：`[SandboxMiddleware(), TitleMiddleware()]`
 
@@ -126,14 +126,14 @@ title:
 # checkpointer.py
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-checkpointer = SqliteSaver.from_conn_string("deerflow.db")
+checkpointer = SqliteSaver.from_conn_string("nkyel.db")
 ```
 
 ```json
 // langgraph.json
 {
   "graphs": {
-    "lead_agent": "deerflow.agents:lead_agent"
+    "lead_agent": "nkyel.agents:lead_agent"
   },
   "checkpointer": "checkpointer:checkpointer"
 }

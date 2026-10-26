@@ -8,10 +8,10 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.gateway.authz import require_permission
 from app.gateway.deps import get_config, get_project_repo, get_thread_store
-from deerflow.config.app_config import AppConfig, get_app_config
-from deerflow.config.projects_config import ProjectsConfig
-from deerflow.runtime.secret_context import redact_metadata_secrets
-from deerflow.utils.time import coerce_iso
+from nkyel.config.app_config import AppConfig, get_app_config
+from nkyel.config.projects_config import ProjectsConfig
+from nkyel.runtime.secret_context import redact_metadata_secrets
+from nkyel.utils.time import coerce_iso
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/projects", tags=["projects"])

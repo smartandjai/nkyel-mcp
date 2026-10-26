@@ -7,16 +7,16 @@ from pathlib import Path
 
 import httpx
 import pytest
-from deerflow_extension_api.auth import ExtensionPrincipal
-from deerflow_extension_api.plugins import ActionContext, ToolContext
+from nkyel_extension_api.auth import ExtensionPrincipal
+from nkyel_extension_api.plugins import ActionContext, ToolContext
 from langchain_core.messages import AIMessage
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
-from deerflow.extensions.plugin_tools import build_plugin_tools, plugin_tool_name
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.plugin_tools import build_plugin_tools, plugin_tool_name
 
-EXAMPLE = Path(__file__).resolve().parents[2] / "examples/deerflow-extension-jev-classify"
+EXAMPLE = Path(__file__).resolve().parents[2] / "examples/nkyel-extension-jev-classify"
 REAL_ASYNC_CLIENT = httpx.AsyncClient
 KEY = "test-only-not-a-real-key"
 CATEGORIES = [{"name": "billing", "description": "Payments, invoices and refunds."}, {"name": "technical", "description": "Product bugs and integration failures."}]
@@ -30,7 +30,7 @@ def load(monkeypatch):
     monkeypatch.setenv("CLASSIFY_LLM_API_KEY", KEY)
 
     def _load(**config):
-        loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_jev_classify:install", config={"enabled": True, **config})])
+        loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_jev_classify:install", config={"enabled": True, **config})])
         assert not diagnostics, diagnostics
         return loaded
 
@@ -192,7 +192,7 @@ async def test_packing_uses_compact_utf8_wire_size_for_non_ascii_text(load, monk
 @pytest.mark.parametrize("value", [{"text": "plain"}, {"text": "中文🙂"}, {"message": 'quote"\\\n\t'}], ids=["ascii", "unicode", "escapes"])
 def test_wire_size_matches_httpx_json_encoding(load, value):
     load()
-    from deerflow_extension_jev_classify.classify import _wire_size
+    from nkyel_extension_jev_classify.classify import _wire_size
 
     request = httpx.Request("POST", "https://classifier.example", json=value)
     assert _wire_size(value) == len(request.content)
@@ -381,7 +381,7 @@ async def test_cancellation_propagates_and_closes_the_client(load, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_a_backend_bug_fails_its_batch_not_the_call(load, monkeypatch, caplog):
-    import deerflow_extension_jev_classify.classify as module
+    import nkyel_extension_jev_classify.classify as module
 
     async def boom(self, client, texts):
         raise RuntimeError("private detail " + texts[0])
@@ -609,6 +609,6 @@ async def test_status_action_reports_configuration_only(load, monkeypatch):
 )
 def test_invalid_deployment_options_are_rejected_at_install(monkeypatch, config):
     monkeypatch.syspath_prepend(str(EXAMPLE))
-    loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_jev_classify:install", config={"enabled": True, **config})])
+    loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_jev_classify:install", config={"enabled": True, **config})])
     assert diagnostics and not loaded.plugins
     assert "never-accept-inline-secrets" not in " ".join(str(d) for d in diagnostics)

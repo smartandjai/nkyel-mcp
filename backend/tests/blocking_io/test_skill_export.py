@@ -6,8 +6,8 @@ import pytest
 from support.skill_export_platform import requires_safe_capture
 
 from app.gateway.skill_export import SkillExportResponse, run_export_work
-from deerflow.skills.export import build_skill_export, export_manifest
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.skills.export import build_skill_export, export_manifest
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
 
 
 @pytest.fixture

@@ -9,8 +9,8 @@ from langchain_core.messages import AIMessage, HumanMessage, RemoveMessage, Tool
 from langchain_core.outputs import ChatGeneration, ChatResult
 from langchain_core.tools import tool
 
-from deerflow.agents.middlewares.terminal_response_middleware import TerminalResponseMiddleware
-from deerflow.runtime.runs.worker import _extract_llm_error_fallback_message
+from nkyel.agents.middlewares.terminal_response_middleware import TerminalResponseMiddleware
+from nkyel.runtime.runs.worker import _extract_llm_error_fallback_message
 
 
 @tool
@@ -70,7 +70,7 @@ def test_empty_post_tool_response_becomes_fallback_without_graph_retry():
     final = result["messages"][-1]
     assert isinstance(final, AIMessage)
     assert "returned no final response" in str(final.content)
-    assert final.additional_kwargs["deerflow_error_fallback"] is True
+    assert final.additional_kwargs["nkyel_error_fallback"] is True
     assert _extract_llm_error_fallback_message(result) == "Model returned an empty terminal response"
     assert not any(isinstance(message, RemoveMessage) for message in result["messages"])
 
@@ -85,7 +85,7 @@ async def test_async_empty_post_tool_response_becomes_fallback_without_graph_ret
     )
 
     assert model.call_count == 2
-    assert result["messages"][-1].additional_kwargs["deerflow_error_fallback"] is True
+    assert result["messages"][-1].additional_kwargs["nkyel_error_fallback"] is True
 
 
 def test_direct_fallback_replaces_same_message_without_remove_or_jump():
@@ -107,7 +107,7 @@ def test_direct_fallback_replaces_same_message_without_remove_or_jump():
     replacement = result["messages"][0]
     assert isinstance(replacement, AIMessage)
     assert replacement.id == "empty-1"
-    assert replacement.additional_kwargs["deerflow_error_fallback"] is True
+    assert replacement.additional_kwargs["nkyel_error_fallback"] is True
     assert not isinstance(replacement, RemoveMessage)
 
 
@@ -164,7 +164,7 @@ def test_nonvisible_post_tool_response_becomes_terminal_fallback(message: AIMess
     assert result is not None
     replacement = result["messages"][0]
     assert "returned no final response" in str(replacement.content)
-    assert replacement.additional_kwargs["deerflow_error_fallback"] is True
+    assert replacement.additional_kwargs["nkyel_error_fallback"] is True
     if "reasoning_content" in message.additional_kwargs:
         assert replacement.additional_kwargs["reasoning_content"] == "thinking"
 

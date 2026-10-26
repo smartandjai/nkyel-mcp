@@ -22,10 +22,10 @@ from app.channels.commands import is_known_channel_command, strip_leading_mentio
 from app.channels.connection_identity import attach_connection_identity
 from app.channels.message_bus import InboundMessage, InboundMessageType, InboundReservation, MessageBus, OutboundMessage, ResolvedAttachment
 from app.channels.sandbox_files import sync_file_to_thread_sandbox
-from deerflow.config.paths import VIRTUAL_PATH_PREFIX, get_paths
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.sandbox.sandbox_provider import get_sandbox_provider
-from deerflow.uploads.manager import (
+from nkyel.config.paths import VIRTUAL_PATH_PREFIX, get_paths
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.sandbox.sandbox_provider import get_sandbox_provider
+from nkyel.uploads.manager import (
     UnsafeUploadPathError,
     apply_upload_sandbox_permits,
     claim_unique_filename,
@@ -1046,7 +1046,7 @@ class DingTalkChannel(Channel):
             conversation_type,
             sender_staff_id,
             conversation_id,
-            "DingTalk connected to DeerFlow.",
+            "DingTalk connected to nkyel.",
         )
         return True
 
@@ -1180,7 +1180,7 @@ class DingTalkChannel(Channel):
                 headers=self._api_headers(token),
                 json={
                     "msgKey": "sampleMarkdown",
-                    "msgParam": json.dumps({"title": "DeerFlow", "text": text}),
+                    "msgParam": json.dumps({"title": "nkyel", "text": text}),
                     "robotCode": robot_code,
                     "userIds": [user_id],
                 },
@@ -1211,7 +1211,7 @@ class DingTalkChannel(Channel):
                 headers=self._api_headers(token),
                 json={
                     "msgKey": "sampleMarkdown",
-                    "msgParam": json.dumps({"title": "DeerFlow", "text": text}),
+                    "msgParam": json.dumps({"title": "nkyel", "text": text}),
                     "robotCode": robot_code,
                     "openConversationId": conversation_id,
                 },

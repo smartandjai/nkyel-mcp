@@ -2,7 +2,7 @@
 
 from langchain_core.messages import AIMessage
 
-from deerflow.agents.middlewares.model_response import has_visible_content
+from nkyel.agents.middlewares.model_response import has_visible_content
 
 
 def test_has_visible_content_reads_plain_string_content() -> None:

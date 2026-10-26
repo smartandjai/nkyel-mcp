@@ -7,7 +7,7 @@ import threading
 
 import pytest
 
-from deerflow.sandbox.sandbox_provider import SandboxProvider
+from nkyel.sandbox.sandbox_provider import SandboxProvider
 
 
 class _BlockingPolicyProvider(SandboxProvider):

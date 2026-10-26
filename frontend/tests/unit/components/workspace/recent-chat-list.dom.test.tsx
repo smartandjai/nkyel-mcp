@@ -56,7 +56,7 @@ const THREADS: AgentThread[] = [
   thread(
     RUN_THREAD,
     "Release checklist reminder · 10-05 20:21",
-    { deerflow_origin: { kind: "schedule" }, scheduled_task_id: "task-1" },
+    { nkyel_origin: { kind: "schedule" }, scheduled_task_id: "task-1" },
     true,
   ),
   thread(
@@ -69,7 +69,7 @@ const THREADS: AgentThread[] = [
     GITHUB_THREAD,
     "Review the docs PR",
     {
-      deerflow_origin: { kind: "github", provider: "github" },
+      nkyel_origin: { kind: "github", provider: "github" },
       channel_source: { type: "im_channel", provider: "github" },
     },
     false,

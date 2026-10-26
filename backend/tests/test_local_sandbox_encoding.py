@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import pytest
 from support.shell import require_posix_sh
 
-import deerflow.sandbox.local.local_sandbox as local_sandbox
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping, _BoundedPipeCapture
+import nkyel.sandbox.local.local_sandbox as local_sandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping, _BoundedPipeCapture
 
 
 def _open(base, file, mode="r", *args, **kwargs):
@@ -163,8 +163,8 @@ def test_windows_powershell_cjk_roundtrip(shell_name, no_console):
         pytest.skip(f"{shell_name} is not installed")
     probe = r"""
 import sys
-import deerflow.sandbox.local.local_sandbox as local_sandbox
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
+import nkyel.sandbox.local.local_sandbox as local_sandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
 # Keep this regression effective even on an English or UTF-8 Windows runner.
 local_sandbox.locale.getencoding = lambda: "cp936"
@@ -200,8 +200,8 @@ def test_windows_msys_cjk_roundtrip():
         pytest.skip(f"{shell} is not recognised as a Git Bash/MSYS shell")
     probe = r"""
 import sys
-import deerflow.sandbox.local.local_sandbox as local_sandbox
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
+import nkyel.sandbox.local.local_sandbox as local_sandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
 # Keep this regression effective even on an English or UTF-8 Windows runner.
 local_sandbox.locale.getencoding = lambda: "cp936"
@@ -237,8 +237,8 @@ def test_windows_msys_native_child_cjk_roundtrip():
         pytest.skip(f"{shell} is not recognised as a Git Bash/MSYS shell")
     probe = r"""
 import sys
-import deerflow.sandbox.local.local_sandbox as local_sandbox
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
+import nkyel.sandbox.local.local_sandbox as local_sandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
 # Pin the fallback code page so the regression holds on non-zh-CN runners.
 local_sandbox.locale.getencoding = lambda: "cp936"
@@ -280,8 +280,8 @@ def test_windows_powershell_native_child_cjk_roundtrip(shell_name):
         pytest.skip(f"{shell_name} is not installed")
     probe = r"""
 import sys
-import deerflow.sandbox.local.local_sandbox as local_sandbox
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
+import nkyel.sandbox.local.local_sandbox as local_sandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
 # Pin the fallback code page so the regression holds on non-zh-CN runners.
 local_sandbox.locale.getencoding = lambda: "cp936"
@@ -348,7 +348,7 @@ def test_windows_capture_matches_subprocess_text_mode_encoding(python_args, pyth
 import subprocess
 import sys
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
 reference = subprocess.Popen([sys.executable, "-c", ""], stdout=subprocess.PIPE, text=True)
 encoding = reference.stdout.encoding
@@ -779,8 +779,8 @@ def test_execute_command_cmd_branch_roundtrip_with_console_code_page(code_page):
 import ctypes
 import os
 import sys
-import deerflow.sandbox.local.local_sandbox as local_sandbox
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
+import nkyel.sandbox.local.local_sandbox as local_sandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
 code_page = int(sys.argv[1])
 assert ctypes.windll.kernel32.SetConsoleOutputCP(code_page)

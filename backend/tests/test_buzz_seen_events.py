@@ -21,7 +21,7 @@ OWNER = buzz_nostr.parse_private_key(SK_OWNER).pubkey_hex
 CHANNEL = "136852ee-63e1-49c2-8927-413b5ee8e5f7"
 
 
-def _event(*, sk=SK_OWNER, kind=9, content="@DeerFlow hello", channel=CHANNEL, mentions=(PK3_HEX,), reply_to=None, created_at=1700000100):
+def _event(*, sk=SK_OWNER, kind=9, content="@nkyel hello", channel=CHANNEL, mentions=(PK3_HEX,), reply_to=None, created_at=1700000100):
     tags = [["h", channel]]
     if reply_to:
         tags.append(["e", reply_to])
@@ -141,16 +141,16 @@ def test_redelivered_event_is_dropped_across_restart(tmp_path):
 def test_new_event_at_same_created_at_is_still_processed(tmp_path):
     """Dedupe is by id only: a same-second new event must never be skipped."""
     ch, captured = _started_with_store(BuzzSeenEventStore(tmp_path / "seen.json"))
-    _dispatch(ch, _event(content="@DeerFlow first", created_at=1700000100))
-    _dispatch(ch, _event(content="@DeerFlow second", created_at=1700000100))
+    _dispatch(ch, _event(content="@nkyel first", created_at=1700000100))
+    _dispatch(ch, _event(content="@nkyel second", created_at=1700000100))
     assert len(captured) == 2
 
 
 def test_older_created_at_new_event_is_still_processed(tmp_path):
     """A clock-skewed author's new event (older timestamp) must never be skipped."""
     ch, captured = _started_with_store(BuzzSeenEventStore(tmp_path / "seen.json"))
-    _dispatch(ch, _event(content="@DeerFlow newer", created_at=1700000200))
-    _dispatch(ch, _event(content="@DeerFlow older-clock", created_at=1700000100))
+    _dispatch(ch, _event(content="@nkyel newer", created_at=1700000200))
+    _dispatch(ch, _event(content="@nkyel older-clock", created_at=1700000100))
     assert len(captured) == 2
 
 
@@ -310,8 +310,8 @@ def test_service_wiring_injects_persistent_store_path(tmp_path, monkeypatch, cus
     class StubPaths:
         base_dir = str(tmp_path)
 
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: StubPaths())
-    monkeypatch.setattr("deerflow.reflection.resolve_class", lambda path, base_class=None: StubChannel)
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: StubPaths())
+    monkeypatch.setattr("nkyel.reflection.resolve_class", lambda path, base_class=None: StubChannel)
 
     service = ChannelService(channels_config={})
     service._running = True  # _start_channel is admitted only by a running service

@@ -7,8 +7,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config.paths import Paths
-from deerflow.utils import host_paths
+from nkyel.config.paths import Paths
+from nkyel.utils import host_paths
 
 
 @pytest.mark.parametrize(
@@ -24,7 +24,7 @@ from deerflow.utils import host_paths
         (r"\\?\C:\shelf", r"\\?\C:\shelf"),
         (r"\\?\UNC\server\share\shelf", r"\\?\UNC\server\share\shelf"),
         (r"\\.\C:\shelf", r"\\.\C:\shelf"),
-        (r"\\.\pipe\deerflow", r"\\.\pipe\deerflow"),
+        (r"\\.\pipe\nkyel", r"\\.\pipe\nkyel"),
         (r"\\?\C:\shelf\..\documents", r"\\?\C:\shelf\..\documents"),
     ],
 )

@@ -5,10 +5,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.agents.memory import tools
-from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
-from deerflow.agents.memory.backends.noop.noop_manager import NoopMemoryManager
-from deerflow.agents.memory.manager import MemoryManager
+from nkyel.agents.memory import tools
+from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
+from nkyel.agents.memory.backends.noop.noop_manager import NoopMemoryManager
+from nkyel.agents.memory.manager import MemoryManager
 
 
 def _get(runtime, fact_id):

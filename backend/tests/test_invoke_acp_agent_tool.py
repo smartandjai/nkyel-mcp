@@ -11,10 +11,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config.acp_config import ACPAgentConfig
-from deerflow.config.app_config import AppConfig
-from deerflow.config.extensions_config import ExtensionsConfig, McpServerConfig, reset_extensions_config, set_extensions_config
-from deerflow.tools.builtins.invoke_acp_agent_tool import (
+from nkyel.config.acp_config import ACPAgentConfig
+from nkyel.config.app_config import AppConfig
+from nkyel.config.extensions_config import ExtensionsConfig, McpServerConfig, reset_extensions_config, set_extensions_config
+from nkyel.tools.builtins.invoke_acp_agent_tool import (
     _agent_path,
     _build_acp_mcp_servers,
     _build_mcp_servers,
@@ -24,7 +24,7 @@ from deerflow.tools.builtins.invoke_acp_agent_tool import (
     _resolve_agent_command,
     build_invoke_acp_agent_tool,
 )
-from deerflow.tools.tools import get_available_tools
+from nkyel.tools.tools import get_available_tools
 
 
 class _LiveAgentProcess:
@@ -49,7 +49,7 @@ def test_build_mcp_servers_filters_disabled_and_maps_transports():
     )
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: fresh_config),
     )
 
@@ -75,7 +75,7 @@ def test_build_acp_mcp_servers_formats_list_payload():
     )
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: fresh_config),
     )
 
@@ -144,7 +144,7 @@ def test_missing_mcode_command_returns_install_and_login_guidance():
 
     assert "npm install --global @minimax-ai/code" in result
     assert "mcode login" in result
-    assert "restart DeerFlow" in result
+    assert "restart nkyel" in result
 
 
 @pytest.mark.anyio
@@ -168,7 +168,7 @@ async def test_build_invoke_tool_description_and_unknown_agent_error():
 
 def test_get_work_dir_uses_base_dir_when_no_thread_id(monkeypatch, tmp_path):
     """_get_work_dir(None) uses {base_dir}/acp-workspace/ (global fallback)."""
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     result = _get_work_dir(None)
@@ -179,8 +179,8 @@ def test_get_work_dir_uses_base_dir_when_no_thread_id(monkeypatch, tmp_path):
 
 def test_get_work_dir_uses_per_thread_path_when_thread_id_given(monkeypatch, tmp_path):
     """P1.1: _get_work_dir(thread_id) uses {base_dir}/threads/{thread_id}/acp-workspace/."""
-    from deerflow.config import paths as paths_module
-    from deerflow.runtime import user_context as uc_module
+    from nkyel.config import paths as paths_module
+    from nkyel.runtime import user_context as uc_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(uc_module, "get_effective_user_id", lambda: None)
@@ -192,7 +192,7 @@ def test_get_work_dir_uses_per_thread_path_when_thread_id_given(monkeypatch, tmp
 
 def test_get_work_dir_falls_back_to_global_for_invalid_thread_id(monkeypatch, tmp_path):
     """P1.1: Invalid thread_id (e.g. path traversal chars) falls back to global workspace."""
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     result = _get_work_dir("../../evil")
@@ -204,7 +204,7 @@ def test_get_work_dir_falls_back_to_global_for_invalid_thread_id(monkeypatch, tm
 @pytest.mark.anyio
 async def test_invoke_acp_agent_uses_fixed_acp_workspace(monkeypatch, tmp_path):
     """ACP agent uses {base_dir}/acp-workspace/ when no thread_id is available (no config)."""
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     # An empty PATH directory keeps the configured command unresolvable, so the
     # spawn assertion below checks the configuration rather than the host PATH.
@@ -212,7 +212,7 @@ async def test_invoke_acp_agent_uses_fixed_acp_workspace(monkeypatch, tmp_path):
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
 
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(
             lambda cls: ExtensionsConfig(
                 mcp_servers={"github": McpServerConfig(enabled=True, type="stdio", command="npx", args=["github-mcp"])},
@@ -352,14 +352,14 @@ async def test_invoke_acp_agent_uses_fixed_acp_workspace(monkeypatch, tmp_path):
 @pytest.mark.anyio
 async def test_invoke_acp_agent_uses_per_thread_workspace_when_thread_id_in_config(monkeypatch, tmp_path):
     """P1.1: When thread_id is in the RunnableConfig, ACP agent uses per-thread workspace."""
-    from deerflow.config import paths as paths_module
-    from deerflow.runtime import user_context as uc_module
+    from nkyel.config import paths as paths_module
+    from nkyel.runtime import user_context as uc_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(uc_module, "get_effective_user_id", lambda: None)
 
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
 
@@ -447,11 +447,11 @@ async def test_invoke_acp_agent_uses_per_thread_workspace_when_thread_id_in_conf
 @pytest.mark.anyio
 async def test_invoke_acp_agent_passes_env_to_spawn(monkeypatch, tmp_path):
     """env map in ACPAgentConfig reaches spawn_agent_process exactly as AppConfig resolved it."""
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
     # A resolved secret that itself starts with $ must not be resolved again.
@@ -541,11 +541,11 @@ async def test_invoke_acp_agent_passes_env_to_spawn(monkeypatch, tmp_path):
 @pytest.mark.anyio
 async def test_invoke_acp_agent_skips_invalid_mcp_servers(monkeypatch, tmp_path, caplog):
     """Invalid MCP config should be logged and skipped instead of failing ACP invocation."""
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.tools.builtins.invoke_acp_agent_tool._build_acp_mcp_servers",
+        "nkyel.tools.builtins.invoke_acp_agent_tool._build_acp_mcp_servers",
         lambda: (_ for _ in ()).throw(ValueError("missing command")),
     )
 
@@ -629,11 +629,11 @@ async def test_invoke_acp_agent_skips_invalid_mcp_servers(monkeypatch, tmp_path,
 @pytest.mark.anyio
 async def test_invoke_acp_agent_passes_none_env_when_not_configured(monkeypatch, tmp_path):
     """When env is empty, None is passed to spawn_agent_process (subprocess inherits parent env)."""
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
 
@@ -711,7 +711,7 @@ async def test_invoke_acp_agent_passes_none_env_when_not_configured(monkeypatch,
 
 
 def test_get_available_tools_includes_invoke_acp_agent_when_agents_configured(monkeypatch):
-    from deerflow.config.acp_config import load_acp_config_from_dict
+    from nkyel.config.acp_config import load_acp_config_from_dict
 
     load_acp_config_from_dict(
         {
@@ -729,9 +729,9 @@ def test_get_available_tools_includes_invoke_acp_agent_when_agents_configured(mo
         tool_search=SimpleNamespace(enabled=False),
         get_model_config=lambda name: None,
     )
-    monkeypatch.setattr("deerflow.tools.tools.get_app_config", lambda: fake_config)
+    monkeypatch.setattr("nkyel.tools.tools.get_app_config", lambda: fake_config)
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
 
@@ -742,16 +742,16 @@ def test_get_available_tools_includes_invoke_acp_agent_when_agents_configured(mo
 
 
 def test_get_available_tools_sync_invoke_acp_agent_preserves_thread_workspace(monkeypatch, tmp_path):
-    from deerflow.config import paths as paths_module
-    from deerflow.runtime import user_context as uc_module
+    from nkyel.config import paths as paths_module
+    from nkyel.runtime import user_context as uc_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(uc_module, "get_effective_user_id", lambda: None)
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
-    monkeypatch.setattr("deerflow.tools.tools.is_host_bash_allowed", lambda config=None: True)
+    monkeypatch.setattr("nkyel.tools.tools.is_host_bash_allowed", lambda config=None: True)
 
     captured: dict[str, object] = {}
 
@@ -847,9 +847,9 @@ def test_get_available_tools_uses_explicit_app_config_for_acp_agents(monkeypatch
         captured["agents"] = agents
         return sentinel_tool
 
-    monkeypatch.setattr("deerflow.tools.tools.is_host_bash_allowed", lambda config=None: True)
-    monkeypatch.setattr("deerflow.config.acp_config.get_acp_agents", fail_get_acp_agents)
-    monkeypatch.setattr("deerflow.tools.builtins.invoke_acp_agent_tool.build_invoke_acp_agent_tool", fake_build_invoke_acp_agent_tool)
+    monkeypatch.setattr("nkyel.tools.tools.is_host_bash_allowed", lambda config=None: True)
+    monkeypatch.setattr("nkyel.config.acp_config.get_acp_agents", fail_get_acp_agents)
+    monkeypatch.setattr("nkyel.tools.builtins.invoke_acp_agent_tool.build_invoke_acp_agent_tool", fake_build_invoke_acp_agent_tool)
 
     tools = get_available_tools(include_mcp=False, subagent_enabled=False, app_config=explicit_config)
 
@@ -903,11 +903,11 @@ asyncio.run(acp.run_agent(_TestAgent()))
 def acp_subprocess_tool(monkeypatch, tmp_path):
     import acp as acp_module
 
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
     script_path = tmp_path / "test_acp_agent.py"
@@ -1064,11 +1064,11 @@ asyncio.run(acp.run_agent(_TestAgent()))
 
 @pytest.fixture
 def acp_stderr_tool(monkeypatch, tmp_path):
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
     script_path = tmp_path / "stderr_acp_agent.py"
@@ -1096,7 +1096,7 @@ async def test_invoke_acp_agent_reports_an_agent_that_exits_mid_invocation(acp_s
     # only logged if the tail keeps the end of the stream rather than its start.
     tool = acp_stderr_tool(stop_phase=phase, stderr_bytes=40 * 1024)
     start = time.monotonic()
-    with caplog.at_level(logging.ERROR, logger="deerflow.tools.builtins.invoke_acp_agent_tool"):
+    with caplog.at_level(logging.ERROR, logger="nkyel.tools.builtins.invoke_acp_agent_tool"):
         # The tool's own 60s budget must not be what ends the call.
         result = await asyncio.wait_for(tool.coroutine(agent="test", prompt="do work"), timeout=30)
     assert time.monotonic() - start < 15
@@ -1110,7 +1110,7 @@ async def test_invoke_acp_agent_reports_an_agent_that_exits_mid_invocation(acp_s
 @pytest.mark.anyio
 async def test_invoke_acp_agent_logs_the_stderr_of_a_stalled_agent(acp_stderr_tool, caplog):
     tool = acp_stderr_tool(stop_phase="prompt", stderr_bytes=40 * 1024, stop="hang", timeout_seconds=3)
-    with caplog.at_level(logging.ERROR, logger="deerflow.tools.builtins.invoke_acp_agent_tool"):
+    with caplog.at_level(logging.ERROR, logger="nkyel.tools.builtins.invoke_acp_agent_tool"):
         result = await asyncio.wait_for(tool.coroutine(agent="test", prompt="do work"), timeout=30)
     assert "timed out after 3 seconds" in result
     # The last line the agent wrote before stalling is the one an operator needs.
@@ -1149,18 +1149,18 @@ async def test_invoke_acp_agent_spawns_the_path_resolved_command(monkeypatch, tm
     """
     import acp as acp_module
 
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
     script_path = tmp_path / "test_acp_agent.py"
     script_path.write_text(_ACP_AGENT_SCRIPT, encoding="utf-8")
     phase_path = tmp_path / "phase.txt"
 
-    shim_name = "deerflow-acp-probe"
+    shim_name = "nkyel-acp-probe"
     shim = _write_launcher_shim(tmp_path / "bin", shim_name, f'"{sys.executable}" "{script_path}" "" 0 "{phase_path}"')
     monkeypatch.setenv("PATH", str(shim.parent))
 
@@ -1195,18 +1195,18 @@ async def test_invoke_acp_agent_spawns_an_absolute_command_without_an_extension(
     """
     import acp as acp_module
 
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
     script_path = tmp_path / "test_acp_agent.py"
     script_path.write_text(_ACP_AGENT_SCRIPT, encoding="utf-8")
     phase_path = tmp_path / "phase.txt"
 
-    shim_name = "deerflow-acp-probe"
+    shim_name = "nkyel-acp-probe"
     shim = _write_launcher_shim(tmp_path / "npm", shim_name, f'"{sys.executable}" "{script_path}" "" 0 "{phase_path}"')
     if sys.platform == "win32":
         # npm also drops an extensionless shell script next to the .cmd shim.
@@ -1238,18 +1238,18 @@ async def test_invoke_acp_agent_reports_guidance_for_an_unresolvable_command(mon
     ``_resolve_agent_command`` falls back to the configured value when nothing
     matches, so the not-found guidance must name what the user configured.
     """
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
 
-    tool = build_invoke_acp_agent_tool({"probe": ACPAgentConfig(command="deerflow-missing-acp-agent", description="Probe", timeout_seconds=30)})
+    tool = build_invoke_acp_agent_tool({"probe": ACPAgentConfig(command="nkyel-missing-acp-agent", description="Probe", timeout_seconds=30)})
     result = await asyncio.wait_for(tool.coroutine(agent="probe", prompt="do work"), timeout=20)
 
-    assert "Command 'deerflow-missing-acp-agent' was not found on PATH" in result
+    assert "Command 'nkyel-missing-acp-agent' was not found on PATH" in result
     assert "acp_agents.probe.command" in result
 
 
@@ -1266,7 +1266,7 @@ def test_resolve_agent_command_leaves_relative_paths_to_the_spawn(monkeypatch, t
     """A relative configured path is left to the spawn, which runs in the ACP workspace."""
     resolved_dir = tmp_path / "resolved"
     monkeypatch.setattr(
-        "deerflow.tools.builtins.invoke_acp_agent_tool.shutil.which",
+        "nkyel.tools.builtins.invoke_acp_agent_tool.shutil.which",
         lambda command, path=None: str(resolved_dir / command),
     )
 
@@ -1283,7 +1283,7 @@ def test_resolve_agent_command_resolves_absolute_paths_through_the_lookup(monkey
         seen.append((command, path))
         return command + ".CMD"
 
-    monkeypatch.setattr("deerflow.tools.builtins.invoke_acp_agent_tool.shutil.which", _which)
+    monkeypatch.setattr("nkyel.tools.builtins.invoke_acp_agent_tool.shutil.which", _which)
 
     absolute = str(tmp_path / "npm" / "mcode")
     assert _resolve_agent_command(absolute, str(tmp_path / "agent-bin")) == absolute + ".CMD"
@@ -1299,7 +1299,7 @@ def test_resolve_agent_command_keeps_an_absolute_lookup_result_as_returned(monke
     """
     literal = str(tmp_path / "current" / ".." / "shared" / "agent")
     monkeypatch.setattr(
-        "deerflow.tools.builtins.invoke_acp_agent_tool.shutil.which",
+        "nkyel.tools.builtins.invoke_acp_agent_tool.shutil.which",
         lambda command, path=None: command,
     )
 
@@ -1367,7 +1367,7 @@ def test_resolve_agent_command_hands_the_effective_path_to_the_lookup(monkeypatc
         seen.append(path)
         return str(tmp_path / (path or "gateway-bin") / command)
 
-    monkeypatch.setattr("deerflow.tools.builtins.invoke_acp_agent_tool.shutil.which", _which)
+    monkeypatch.setattr("nkyel.tools.builtins.invoke_acp_agent_tool.shutil.which", _which)
 
     assert _resolve_agent_command("npx", str(tmp_path / "agent-bin")) == str(tmp_path / "agent-bin" / "npx")
     assert _resolve_agent_command("npx") == str(tmp_path / "gateway-bin" / "npx")
@@ -1383,11 +1383,11 @@ async def test_invoke_acp_agent_reports_the_configured_command_when_spawn_fails(
     """
     import acp as acp_module
 
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
     shim_dir = tmp_path / "bin"
@@ -1432,17 +1432,17 @@ async def test_invoke_acp_agent_resolves_against_the_agent_configured_path(monke
     """
     import acp as acp_module
 
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
     script_path = tmp_path / "test_acp_agent.py"
     script_path.write_text(_ACP_AGENT_SCRIPT, encoding="utf-8")
     phase_path = tmp_path / "phase.txt"
-    shim_name = "deerflow-acp-probe"
+    shim_name = "nkyel-acp-probe"
     launch = f'"{sys.executable}" "{script_path}" "" 0 "{phase_path}"'
 
     gateway_marker = tmp_path / "gateway-ran.txt"
@@ -1490,11 +1490,11 @@ async def test_invoke_acp_agent_spawns_an_absolute_path_for_a_relative_path_entr
     """
     import acp as acp_module
 
-    from deerflow.config import paths as paths_module
+    from nkyel.config import paths as paths_module
 
     monkeypatch.setattr(paths_module, "get_paths", lambda: paths_module.Paths(base_dir=tmp_path))
     monkeypatch.setattr(
-        "deerflow.config.extensions_config.ExtensionsConfig.from_file",
+        "nkyel.config.extensions_config.ExtensionsConfig.from_file",
         classmethod(lambda cls: ExtensionsConfig(mcp_servers={}, skills={})),
     )
     script_path = tmp_path / "test_acp_agent.py"
@@ -1504,7 +1504,7 @@ async def test_invoke_acp_agent_spawns_an_absolute_path_for_a_relative_path_entr
     # Pin the process cwd so the relative PATH entry below points at a shim
     # beside the ACP workspace rather than inside it.
     monkeypatch.chdir(tmp_path)
-    shim_name = "deerflow-acp-probe"
+    shim_name = "nkyel-acp-probe"
     shim = _write_launcher_shim(tmp_path / "bin", shim_name, f'"{sys.executable}" "{script_path}" "" 0 "{phase_path}"')
     monkeypatch.setenv("PATH", "bin")
 

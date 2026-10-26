@@ -20,8 +20,8 @@ from fastapi.testclient import TestClient
 
 from app.gateway.routers import runs, thread_runs
 from app.gateway.sse_headers import SSE_CACHE_CONTROL, sse_response_headers
-from deerflow.runtime import RunManager, RunStatus
-from deerflow.runtime.stream_bridge import MemoryStreamBridge
+from nkyel.runtime import RunManager, RunStatus
+from nkyel.runtime.stream_bridge import MemoryStreamBridge
 
 THREAD_ID = "thread-sse-headers"
 ROUTERS_DIR = Path(__file__).resolve().parents[1] / "app" / "gateway" / "routers"

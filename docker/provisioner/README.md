@@ -1,6 +1,6 @@
-# DeerFlow Sandbox Provisioner
+# nkyel Sandbox Provisioner
 
-The **Sandbox Provisioner** is a FastAPI service that dynamically manages sandbox Pods in Kubernetes. It provides a REST API for the DeerFlow backend to create, monitor, and destroy isolated sandbox environments for code execution.
+The **Sandbox Provisioner** is a FastAPI service that dynamically manages sandbox Pods in Kubernetes. It provides a REST API for the nkyel backend to create, monitor, and destroy isolated sandbox environments for code execution.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ The **Sandbox Provisioner** is a FastAPI service that dynamically manages sandbo
 
 1. **Backend Request**: When the backend needs to execute code, it sends a `POST /api/sandboxes` request with a `sandbox_id`, `thread_id`, optional `user_id`, and the configured `skills_container_path` (default: `/mnt/skills`).
 
-2. **Pod Creation**: The provisioner creates a dedicated Pod in the `deer-flow` namespace with:
+2. **Pod Creation**: The provisioner creates a dedicated Pod in the `nkyel` namespace with:
    - The sandbox container image (all-in-one-sandbox)
    - HostPath volumes mounted for:
      - `{skills_container_path}/{public,custom,legacy}` → Default read-only skill projections
@@ -85,7 +85,7 @@ Create a new sandbox Pod + Service.
 
 `user_id` is optional for backwards compatibility and defaults to `default`. When `USERDATA_PVC_NAME` is set, the provisioner uses it to isolate PVC-backed user-data directories.
 
-When the Gateway mounts that same storage at its DeerFlow home and the PVC
+When the Gateway mounts that same storage at its nkyel home and the PVC
 subpaths align, set `sandbox.thread_data_mounts: true` in the Gateway's
 `config.yaml` to skip redundant upload-time sandbox acquire/sync. Leave the
 field unset when using unrelated storage or when the mount relationship is
@@ -161,15 +161,15 @@ The provisioner is configured via environment variables (set in [docker-compose-
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `K8S_NAMESPACE` | `deer-flow` | Kubernetes namespace for sandbox resources |
+| `K8S_NAMESPACE` | `nkyel` | Kubernetes namespace for sandbox resources |
 | `SANDBOX_IMAGE` | `enterprise-public-cn-beijing.cr.volces.com/vefaas-public/all-in-one-sandbox:latest` | AIO-compatible container image for sandbox Pods |
 | `LARK_CLI_INIT_IMAGE` | empty (feature off) | Optional lark-cli init image (Pattern A). When set, sandbox Pods requesting the lark-cli runtime get an init container + shared `emptyDir` that provisions `lark-cli`, instead of a hostPath/PVC runtime mount. See [`docker/lark-cli-init`](../lark-cli-init/README.md) |
 | `LARK_CLI_BROKER_IMAGE` | empty (feature off) | Optional lark-cli broker image (Pattern B, issue #4338). When set, sandbox Pods requesting the broker get a shim init container + a `lark-cli-broker` sidecar that holds the credentials; the plaintext `config`/`data` are mounted into the **sidecar only**, never the sandbox. Supersedes `LARK_CLI_INIT_IMAGE` when both are set. See [`docker/lark-cli-broker`](../lark-cli-broker/README.md) |
 | `THREADS_HOST_PATH` | - | **Host machine** path to threads data directory (must be absolute) |
-| `DEER_FLOW_HOST_BASE_DIR` | `/.deer-flow` | **Host machine** DeerFlow data root containing global and per-user `skills_view` projections |
+| `NKYEL_HOST_BASE_DIR` | `/.nkyel` | **Host machine** nkyel data root containing global and per-user `skills_view` projections |
 | `SKILLS_PVC_NAME` | empty (use hostPath) | PVC name for skills volume; when set, sandbox Pods use PVC instead of hostPath |
 | `SKILLS_PVC_SUBPATH_TEMPLATE` | empty | Optional `subPath` template for `SKILLS_PVC_NAME`. Supports `{user_id}` and `{thread_id}`. When empty, the skills PVC root is mounted unchanged |
-| `USERDATA_PVC_NAME` | empty (use hostPath) | PVC name for user-data volume; when set, uses PVC with `subPath: deer-flow/users/{user_id}/threads/{thread_id}/user-data` |
+| `USERDATA_PVC_NAME` | empty (use hostPath) | PVC name for user-data volume; when set, uses PVC with `subPath: nkyel/users/{user_id}/threads/{thread_id}/user-data` |
 | `KUBECONFIG_PATH` | `/root/.kube/config` | Path to kubeconfig **inside** the provisioner container |
 | `SANDBOX_SERVICE_TYPE` | `NodePort` | Service type for sandbox access. Use `ClusterIP` when backend and provisioner run inside the same Kubernetes cluster |
 | `NODE_HOST` | `host.docker.internal` | Hostname that backend containers use to reach host NodePorts; ignored when `SANDBOX_SERVICE_TYPE=ClusterIP` |
@@ -219,9 +219,9 @@ Gateway can surface a sandbox-runtime readiness signal in
 
 ### PVC User-Data Upgrade Note
 
-Older provisioner versions mounted PVC user-data from `threads/{thread_id}/user-data`. The user-scoped layout mounts from `deer-flow/users/{user_id}/threads/{thread_id}/user-data`.
+Older provisioner versions mounted PVC user-data from `threads/{thread_id}/user-data`. The user-scoped layout mounts from `nkyel/users/{user_id}/threads/{thread_id}/user-data`.
 
-If an existing deployment already has PVC-backed user-data under the legacy layout, migrate the DeerFlow data directory before relying on the new PVC subPath. Mount the same PVC path that the gateway uses as its DeerFlow base directory, then run the existing user-isolation migration script:
+If an existing deployment already has PVC-backed user-data under the legacy layout, migrate the nkyel data directory before relying on the new PVC subPath. Mount the same PVC path that the gateway uses as its nkyel base directory, then run the existing user-isolation migration script:
 
 ```bash
 cd backend
@@ -229,7 +229,7 @@ PYTHONPATH=. python scripts/migrate_user_isolation.py --dry-run
 PYTHONPATH=. python scripts/migrate_user_isolation.py --user-id <target-user-id>
 ```
 
-This moves legacy `threads/{thread_id}/user-data` data under `users/<owner>/threads/{thread_id}/user-data`, which matches the new provisioner PVC subPath when the gateway base directory is mounted at `deer-flow/` on the PVC. `<owner>` is the thread's `user_id` in the `threads_meta` table of the gateway's configured database (`default` when none is recorded), so run the script with the gateway's `config.yaml` and database settings; if that table cannot be read, it stops without moving anything. Pass `--allow-missing-thread-owners` only when the install never recorded thread owners. `--user-id` picks who inherits un-owned global data (memory, `USER.md`, legacy custom agents). Run the migration while no gateway or sandbox Pods are writing to those paths.
+This moves legacy `threads/{thread_id}/user-data` data under `users/<owner>/threads/{thread_id}/user-data`, which matches the new provisioner PVC subPath when the gateway base directory is mounted at `nkyel/` on the PVC. `<owner>` is the thread's `user_id` in the `threads_meta` table of the gateway's configured database (`default` when none is recorded), so run the script with the gateway's `config.yaml` and database settings; if that table cannot be read, it stops without moving anything. Pass `--allow-missing-thread-owners` only when the install never recorded thread owners. `--user-id` picks who inherits un-owned global data (memory, `USER.md`, legacy custom agents). Run the migration while no gateway or sandbox Pods are writing to those paths.
 
 Before this fix, the script never found the database and moved every legacy thread to `users/default/threads/`. Re-running it does nothing then, because `threads/` is gone. To recover, stop the gateway and list the threads with a real owner:
 
@@ -239,9 +239,9 @@ SELECT thread_id, user_id FROM threads_meta WHERE user_id IS NOT NULL AND user_i
 
 Move each listed `users/default/threads/{thread_id}` that exists back to `threads/{thread_id}`, then run the script again (dry run first). Threads whose owner is `default` or not recorded stay where they are. If an owner has used the thread since, `users/<owner>/threads/{thread_id}` already exists; the script never overwrites it and sets the old copy aside in `migration-conflicts/{thread_id}` for you to merge by hand.
 
-In hostPath mode, the gateway materializes enabled-only views under `skills_view/public` and `users/{user_id}/skills_view/{custom,legacy}` beneath `DEER_FLOW_HOST_BASE_DIR`; the provisioner mounts those stable directories. A lead Agent with an explicit skills policy supplies all four category mounts from `users/{user_id}/threads/{thread_id}/skills_view`; those overrides replace the default hostPath or root skills-PVC mount. When `USERDATA_PVC_NAME` is configured, the provisioner mounts these thread categories from that PVC using `deer-flow/users/{user_id}/threads/{thread_id}/skills_view/{category}` subpaths. For unrestricted threads, operators can still set `SKILLS_PVC_NAME` and optionally configure `SKILLS_PVC_SUBPATH_TEMPLATE`; leaving the template empty mounts the skills PVC root unchanged. The gateway does not populate the unrestricted `SKILLS_PVC_SUBPATH_TEMPLATE` layout dynamically.
+In hostPath mode, the gateway materializes enabled-only views under `skills_view/public` and `users/{user_id}/skills_view/{custom,legacy}` beneath `NKYEL_HOST_BASE_DIR`; the provisioner mounts those stable directories. A lead Agent with an explicit skills policy supplies all four category mounts from `users/{user_id}/threads/{thread_id}/skills_view`; those overrides replace the default hostPath or root skills-PVC mount. When `USERDATA_PVC_NAME` is configured, the provisioner mounts these thread categories from that PVC using `nkyel/users/{user_id}/threads/{thread_id}/skills_view/{category}` subpaths. For unrestricted threads, operators can still set `SKILLS_PVC_NAME` and optionally configure `SKILLS_PVC_SUBPATH_TEMPLATE`; leaving the template empty mounts the skills PVC root unchanged. The gateway does not populate the unrestricted `SKILLS_PVC_SUBPATH_TEMPLATE` layout dynamically.
 
-**hostPath skills volumes require the gateway and the K8s node to see the same `DEER_FLOW_HOST_BASE_DIR`** (single-node deployment, or NFS/shared storage mounted at that path on every node). The gateway writes the projection there before every sandbox acquire, so as long as that path is shared, the directory the provisioner mounts always exists by the time the Pod is scheduled — even a boot-time rebuild failure for one user self-heals on their next acquire, before the provisioner is called. `skills-custom` and `skills-legacy` use hostPath type `Directory` (not `DirectoryOrCreate`): if the shared-storage assumption is violated — the gateway wrote to a different node than the one the Pod lands on — Pod creation now fails visibly instead of silently mounting an empty directory. Use `SKILLS_PVC_NAME` instead of hostPath for genuinely multi-node clusters without shared storage.
+**hostPath skills volumes require the gateway and the K8s node to see the same `NKYEL_HOST_BASE_DIR`** (single-node deployment, or NFS/shared storage mounted at that path on every node). The gateway writes the projection there before every sandbox acquire, so as long as that path is shared, the directory the provisioner mounts always exists by the time the Pod is scheduled — even a boot-time rebuild failure for one user self-heals on their next acquire, before the provisioner is called. `skills-custom` and `skills-legacy` use hostPath type `Directory` (not `DirectoryOrCreate`): if the shared-storage assumption is violated — the gateway wrote to a different node than the one the Pod lands on — Pod creation now fails visibly instead of silently mounting an empty directory. Use `SKILLS_PVC_NAME` instead of hostPath for genuinely multi-node clusters without shared storage.
 
 ### Important: K8S_API_SERVER Override
 
@@ -276,12 +276,12 @@ kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'
 
 3. **Kubernetes Access**:
    - The provisioner needs permissions to:
-     - Create/read/delete Pods in the `deer-flow` namespace
-     - Create/read/delete Services in the `deer-flow` namespace
-     - Read Namespaces (to create `deer-flow` if missing)
+     - Create/read/delete Pods in the `nkyel` namespace
+     - Create/read/delete Services in the `nkyel` namespace
+     - Read Namespaces (to create `nkyel` if missing)
 
 4. **Host Paths**:
-   - `DEER_FLOW_HOST_BASE_DIR` and `THREADS_HOST_PATH` must be **absolute paths on the host machine**
+   - `NKYEL_HOST_BASE_DIR` and `THREADS_HOST_PATH` must be **absolute paths on the host machine**
    - These paths are mounted into sandbox Pods via K8s HostPath volumes
    - The paths must exist and be readable by the K8s node
 
@@ -294,7 +294,7 @@ The provisioner runs as part of the docker-compose-dev stack:
 make docker-start
 
 # Or start just the provisioner
-docker compose -p deer-flow-dev -f docker/docker-compose-dev.yaml up -d provisioner
+docker compose -p nkyel-dev -f docker/docker-compose-dev.yaml up -d provisioner
 ```
 
 The compose file:
@@ -311,21 +311,21 @@ The compose file:
 curl http://localhost:8002/health
 
 # Create a sandbox (via provisioner container for internal DNS)
-docker exec deer-flow-provisioner curl -X POST http://localhost:8002/api/sandboxes \
+docker exec nkyel-provisioner curl -X POST http://localhost:8002/api/sandboxes \
   -H "Content-Type: application/json" \
   -d '{"sandbox_id":"test-001","thread_id":"thread-001","user_id":"user-001"}'
 
 # Check sandbox status
-docker exec deer-flow-provisioner curl http://localhost:8002/api/sandboxes/test-001
+docker exec nkyel-provisioner curl http://localhost:8002/api/sandboxes/test-001
 
 # List all sandboxes
-docker exec deer-flow-provisioner curl http://localhost:8002/api/sandboxes
+docker exec nkyel-provisioner curl http://localhost:8002/api/sandboxes
 
 # Verify Pod and Service in K8s
-kubectl get pod,svc -n deer-flow -l sandbox-id=test-001
+kubectl get pod,svc -n nkyel -l sandbox-id=test-001
 
 # Delete sandbox
-docker exec deer-flow-provisioner curl -X DELETE http://localhost:8002/api/sandboxes/test-001
+docker exec nkyel-provisioner curl -X DELETE http://localhost:8002/api/sandboxes/test-001
 ```
 
 ### Verify from Backend Containers
@@ -334,10 +334,10 @@ Once a sandbox is created, the backend containers (gateway, langgraph) can acces
 
 ```bash
 # Get sandbox URL from provisioner
-SANDBOX_URL=$(docker exec deer-flow-provisioner curl -s http://localhost:8002/api/sandboxes/test-001 | jq -r .sandbox_url)
+SANDBOX_URL=$(docker exec nkyel-provisioner curl -s http://localhost:8002/api/sandboxes/test-001 | jq -r .sandbox_url)
 
 # Test from gateway container
-docker exec deer-flow-gateway curl -s $SANDBOX_URL/v1/sandbox
+docker exec nkyel-gateway curl -s $SANDBOX_URL/v1/sandbox
 ```
 
 ## Troubleshooting
@@ -359,7 +359,7 @@ docker exec deer-flow-gateway curl -s $SANDBOX_URL/v1/sandbox
 - Ensure the compose mount source is a file (e.g., `~/.kube/config`) not a directory
 - Verify inside container:
   ```bash
-  docker exec deer-flow-provisioner ls -ld /root/.kube/config
+  docker exec nkyel-provisioner ls -ld /root/.kube/config
   ```
 - Expected output should indicate a regular file (`-`), not a directory (`d`)
 
@@ -383,11 +383,11 @@ docker exec deer-flow-gateway curl -s $SANDBOX_URL/v1/sandbox
 **Cause**: HostPath volumes contain invalid paths (e.g., relative paths with `..`).
 
 **Solution**: 
-- Use absolute paths for `DEER_FLOW_HOST_BASE_DIR` and `THREADS_HOST_PATH`
+- Use absolute paths for `NKYEL_HOST_BASE_DIR` and `THREADS_HOST_PATH`
 - Verify the paths exist on your host machine:
   ```bash
   ls -la /path/to/skills
-  ls -la /path/to/backend/.deer-flow/threads
+  ls -la /path/to/backend/.nkyel/threads
   ```
 
 ### Issue: Pod stuck in "ContainerCreating"
@@ -396,7 +396,7 @@ docker exec deer-flow-gateway curl -s $SANDBOX_URL/v1/sandbox
 
 **Solution**:
 - Pre-pull the image: `make docker-init`
-- Check Pod events: `kubectl describe pod sandbox-XXX -n deer-flow`
+- Check Pod events: `kubectl describe pod sandbox-XXX -n nkyel`
 - Check node: `kubectl get nodes`
 
 ### Issue: Cannot access sandbox URL from backend
@@ -404,9 +404,9 @@ docker exec deer-flow-gateway curl -s $SANDBOX_URL/v1/sandbox
 **Cause**: The backend cannot resolve or reach the sandbox ClusterIP Service DNS. This usually means the backend is not running inside the same Kubernetes cluster/network or cluster DNS/network policy is blocking access.
 
 **Solution**:
-- Verify the Service exists: `kubectl get svc -n deer-flow`
+- Verify the Service exists: `kubectl get svc -n nkyel`
 - In NodePort mode, test from the backend container: `curl http://$NODE_HOST:NODE_PORT/v1/sandbox`
-- In ClusterIP mode, test from the backend Pod: `curl http://sandbox-XXX-svc.deer-flow.svc.cluster.local:8080/v1/sandbox`
+- In ClusterIP mode, test from the backend Pod: `curl http://sandbox-XXX-svc.nkyel.svc.cluster.local:8080/v1/sandbox`
 - Check `NODE_HOST` for NodePort deployments, or cluster DNS / NetworkPolicy / service mesh rules for ClusterIP deployments
 
 ## Running several replicas
@@ -416,7 +416,7 @@ replicas can serve the same backend behind one load-balanced Service (the Helm
 chart's `provisioner.replicas`; compose runs a single container):
 
 - The sandbox Pods and Services it creates carry the labels it later queries
-  (`app=deer-flow-sandbox`, `sandbox-id`). They are the only registry: create,
+  (`app=nkyel-sandbox`, `sandbox-id`). They are the only registry: create,
   status, list and delete all read the Kubernetes API, never a process-local
   table, so any replica can answer for a sandbox another replica created.
 - `POST /api/sandboxes` is idempotent across replicas. Two creates for the same

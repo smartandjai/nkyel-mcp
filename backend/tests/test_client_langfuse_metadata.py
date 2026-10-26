@@ -1,8 +1,8 @@
-"""Tests for DeerFlowClient's graph-root tracing wiring.
+"""Tests for NkyelClient's graph-root tracing wiring.
 
 Regression coverage for the Copilot review on PR #2944: when the title
 and summarization middlewares request ``attach_tracing=False`` we must
-make sure ``DeerFlowClient`` injects the tracing callbacks at the graph
+make sure ``NkyelClient`` injects the tracing callbacks at the graph
 invocation root instead, otherwise those middlewares produce untraced
 LLM calls.
 """
@@ -14,9 +14,9 @@ from typing import Any
 
 import pytest
 
-from deerflow.client import DeerFlowClient
-from deerflow.config.authorization_config import AuthorizationConfig
-from deerflow.trace_context import DEERFLOW_TRACE_METADATA_KEY, request_trace_context
+from nkyel.client import NkyelClient
+from nkyel.config.authorization_config import AuthorizationConfig
+from nkyel.trace_context import NKYEL_TRACE_METADATA_KEY, request_trace_context
 
 
 class _FakeAgent:
@@ -34,7 +34,7 @@ class _FakeAgent:
 
 @pytest.fixture(autouse=True)
 def _clear_langfuse_env(monkeypatch):
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     for name in ("LANGFUSE_TRACING", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL"):
         monkeypatch.delenv(name, raising=False)
@@ -56,11 +56,11 @@ def _stub_agent_creation(monkeypatch, fake_agent: _FakeAgent) -> dict[str, Any]:
         self._agent = fake_agent
         self._agent_config_key = ("stub",)
 
-    monkeypatch.setattr(DeerFlowClient, "_ensure_agent", _stub_ensure_agent)
+    monkeypatch.setattr(NkyelClient, "_ensure_agent", _stub_ensure_agent)
     return captured
 
 
-def _make_client(_monkeypatch) -> DeerFlowClient:
+def _make_client(_monkeypatch) -> NkyelClient:
     """Build a client without going through ``__init__`` so we never load
     config.yaml or perform any other side-effectful startup work.
     """
@@ -68,7 +68,7 @@ def _make_client(_monkeypatch) -> DeerFlowClient:
         models=[SimpleNamespace(name="stub-model")],
         authorization=AuthorizationConfig(enabled=False),
     )
-    client = DeerFlowClient.__new__(DeerFlowClient)
+    client = NkyelClient.__new__(NkyelClient)
     client._app_config = fake_app_config
     client._checkpoint_channel_mode = "full"
     client._extensions_config = None
@@ -90,7 +90,7 @@ def test_stream_injects_langfuse_metadata_when_enabled(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
 
@@ -98,7 +98,7 @@ def test_stream_injects_langfuse_metadata_when_enabled(monkeypatch):
         pass
 
     sentinel = _SentinelHandler()
-    monkeypatch.setattr("deerflow.client.build_tracing_callbacks", lambda: [sentinel])
+    monkeypatch.setattr("nkyel.client.build_tracing_callbacks", lambda: [sentinel])
 
     fake_agent = _FakeAgent()
     captured = _stub_agent_creation(monkeypatch, fake_agent)
@@ -110,7 +110,7 @@ def test_stream_injects_langfuse_metadata_when_enabled(monkeypatch):
     metadata = config.get("metadata") or {}
     assert metadata.get("langfuse_session_id") == "thread-client-1"
     assert metadata.get("langfuse_trace_name") == "lead-agent"
-    assert metadata.get(DEERFLOW_TRACE_METADATA_KEY)
+    assert metadata.get(NKYEL_TRACE_METADATA_KEY)
     # Default no-auth context falls back to ``"default"`` user.
     assert metadata.get("langfuse_user_id") in {"default", "test-user-autouse"}
     callbacks = config.get("callbacks") or []
@@ -121,7 +121,7 @@ def test_stream_tags_the_effective_default_model(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
     fake_agent = _FakeAgent()
@@ -130,7 +130,7 @@ def test_stream_tags_the_effective_default_model(monkeypatch):
         self._effective_model_name = "stub-model"
         self._agent = fake_agent
 
-    monkeypatch.setattr(DeerFlowClient, "_ensure_agent", ensure_agent)
+    monkeypatch.setattr(NkyelClient, "_ensure_agent", ensure_agent)
     client = _make_client(monkeypatch)
     client._model_name = None
 
@@ -140,7 +140,7 @@ def test_stream_tags_the_effective_default_model(monkeypatch):
 
 
 def test_stream_is_inert_when_langfuse_disabled(monkeypatch):
-    monkeypatch.setattr("deerflow.client.build_tracing_callbacks", lambda: [])
+    monkeypatch.setattr("nkyel.client.build_tracing_callbacks", lambda: [])
 
     fake_agent = _FakeAgent()
     captured = _stub_agent_creation(monkeypatch, fake_agent)
@@ -159,10 +159,10 @@ def test_stream_preserves_caller_metadata_overrides(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
-    monkeypatch.setattr("deerflow.client.build_tracing_callbacks", lambda: [])
+    monkeypatch.setattr("nkyel.client.build_tracing_callbacks", lambda: [])
 
     fake_agent = _FakeAgent()
     captured = _stub_agent_creation(monkeypatch, fake_agent)
@@ -170,25 +170,25 @@ def test_stream_preserves_caller_metadata_overrides(monkeypatch):
 
     # Drive stream with a pre-populated metadata so the worker-equivalent
     # ``setdefault`` semantics are exercised.
-    original_get_config = DeerFlowClient._get_runnable_config
+    original_get_config = NkyelClient._get_runnable_config
 
     def patched_get_runnable_config(self, thread_id, **overrides):
         cfg = original_get_config(self, thread_id, **overrides)
         cfg["metadata"] = {
-            DEERFLOW_TRACE_METADATA_KEY: "explicit-client-trace",
+            NKYEL_TRACE_METADATA_KEY: "explicit-client-trace",
             "langfuse_session_id": "explicit-session-override",
             "langfuse_user_id": "explicit-user",
         }
         return cfg
 
-    monkeypatch.setattr(DeerFlowClient, "_get_runnable_config", patched_get_runnable_config)
+    monkeypatch.setattr(NkyelClient, "_get_runnable_config", patched_get_runnable_config)
     with request_trace_context("client-trace-3"):
         list(client.stream("hi", thread_id="thread-client-3"))
 
     metadata = captured["config"].get("metadata") or {}
     assert metadata["langfuse_session_id"] == "explicit-session-override"
     assert metadata["langfuse_user_id"] == "explicit-user"
-    assert metadata[DEERFLOW_TRACE_METADATA_KEY] == "explicit-client-trace"
+    assert metadata[NKYEL_TRACE_METADATA_KEY] == "explicit-client-trace"
     # ``trace_name`` was not supplied by caller so the worker still fills it.
     assert metadata["langfuse_trace_name"] == "lead-agent"
 
@@ -201,10 +201,10 @@ def test_stream_always_binds_a_trace_id(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
-    monkeypatch.setattr("deerflow.client.build_tracing_callbacks", lambda: [])
+    monkeypatch.setattr("nkyel.client.build_tracing_callbacks", lambda: [])
 
     fake_agent = _FakeAgent()
     captured = _stub_agent_creation(monkeypatch, fake_agent)
@@ -214,10 +214,10 @@ def test_stream_always_binds_a_trace_id(monkeypatch):
 
     metadata = captured["config"].get("metadata") or {}
     assert metadata.get("langfuse_session_id") == "thread-client-bound"
-    assert metadata[DEERFLOW_TRACE_METADATA_KEY]
+    assert metadata[NKYEL_TRACE_METADATA_KEY]
     # The same id reaches the runtime context, which is what carries it across
     # the boundaries the ContextVar does not survive.
-    assert captured["context"][DEERFLOW_TRACE_METADATA_KEY] == metadata[DEERFLOW_TRACE_METADATA_KEY]
+    assert captured["context"][NKYEL_TRACE_METADATA_KEY] == metadata[NKYEL_TRACE_METADATA_KEY]
 
 
 def test_stream_keeps_a_caller_bound_trace(monkeypatch):
@@ -227,10 +227,10 @@ def test_stream_keeps_a_caller_bound_trace(monkeypatch):
     monkeypatch.setenv("LANGFUSE_TRACING", "true")
     monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
-    from deerflow.config.tracing_config import reset_tracing_config
+    from nkyel.config.tracing_config import reset_tracing_config
 
     reset_tracing_config()
-    monkeypatch.setattr("deerflow.client.build_tracing_callbacks", lambda: [])
+    monkeypatch.setattr("nkyel.client.build_tracing_callbacks", lambda: [])
 
     fake_agent = _FakeAgent()
     captured = _stub_agent_creation(monkeypatch, fake_agent)
@@ -240,7 +240,7 @@ def test_stream_keeps_a_caller_bound_trace(monkeypatch):
         list(client.stream("hi", thread_id="thread-client-pinned"))
 
     metadata = captured["config"].get("metadata") or {}
-    assert metadata.get(DEERFLOW_TRACE_METADATA_KEY) == "caller-pinned"
+    assert metadata.get(NKYEL_TRACE_METADATA_KEY) == "caller-pinned"
 
 
 def test_stream_does_not_leak_trace_id_to_caller_context_between_yields(monkeypatch):
@@ -254,7 +254,7 @@ def test_stream_does_not_leak_trace_id_to_caller_context_between_yields(monkeypa
     state. Per-step set/reset keeps the caller's context clean at every
     yield boundary.
     """
-    monkeypatch.setattr("deerflow.client.build_tracing_callbacks", lambda: [])
+    monkeypatch.setattr("nkyel.client.build_tracing_callbacks", lambda: [])
 
     class _TwoEventAgent:
         def __init__(self) -> None:
@@ -268,7 +268,7 @@ def test_stream_does_not_leak_trace_id_to_caller_context_between_yields(monkeypa
     _stub_agent_creation(monkeypatch, _TwoEventAgent())
     client = _make_client(monkeypatch)
 
-    from deerflow.trace_context import get_current_trace_id
+    from nkyel.trace_context import get_current_trace_id
 
     # Caller's context starts with no trace id bound.
     assert get_current_trace_id() is None
@@ -296,7 +296,7 @@ def test_stream_abandoned_generator_close_does_not_raise_cross_context(monkeypat
     with a cross-context reset. Per-step set/reset never leaves a Token
     outstanding across yield boundaries.
     """
-    monkeypatch.setattr("deerflow.client.build_tracing_callbacks", lambda: [])
+    monkeypatch.setattr("nkyel.client.build_tracing_callbacks", lambda: [])
 
     class _InfiniteAgent:
         def __init__(self) -> None:
@@ -332,9 +332,9 @@ def test_stream_abandoned_generator_cleanup_stays_inside_trace_binding(monkeypat
     unrelated ambient one) and its records would not correlate with the turn
     they belong to.
     """
-    monkeypatch.setattr("deerflow.client.build_tracing_callbacks", lambda: [])
+    monkeypatch.setattr("nkyel.client.build_tracing_callbacks", lambda: [])
 
-    from deerflow.trace_context import get_current_trace_id
+    from nkyel.trace_context import get_current_trace_id
 
     observed: dict[str, str | None] = {}
 

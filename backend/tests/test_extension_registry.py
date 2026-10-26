@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from deerflow.extensions.registry import EMPTY_EXTENSIONS, ExtensionRegistry
+from nkyel.extensions.registry import EMPTY_EXTENSIONS, ExtensionRegistry
 
 
 class _Contributor:

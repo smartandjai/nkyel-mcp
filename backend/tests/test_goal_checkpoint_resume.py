@@ -11,12 +11,12 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import StateGraph
 from langgraph.types import Command, Overwrite, interrupt
 
-from deerflow.agents.thread_state import get_thread_state_schema
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.goal import build_goal_outcome, build_goal_state, write_thread_goal
-from deerflow.runtime.runs import worker
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.schemas import RunStatus
+from nkyel.agents.thread_state import get_thread_state_schema
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.goal import build_goal_outcome, build_goal_state, write_thread_goal
+from nkyel.runtime.runs import worker
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.schemas import RunStatus
 
 pytestmark = pytest.mark.asyncio
 

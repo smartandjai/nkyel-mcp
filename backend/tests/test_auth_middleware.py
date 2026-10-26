@@ -5,7 +5,7 @@ from starlette.testclient import TestClient
 
 from app.gateway.auth_middleware import AuthMiddleware, _is_public
 from app.gateway.csrf_middleware import CSRFMiddleware
-from deerflow.config.authorization_config import AuthorizationConfig
+from nkyel.config.authorization_config import AuthorizationConfig
 
 
 @pytest.fixture(autouse=True)
@@ -105,7 +105,7 @@ def _make_app():
     """Create a minimal FastAPI app with AuthMiddleware for testing."""
     from fastapi import FastAPI, Request
 
-    from deerflow.runtime.user_context import get_effective_user_id
+    from nkyel.runtime.user_context import get_effective_user_id
 
     app = FastAPI()
     app.add_middleware(AuthMiddleware)
@@ -201,7 +201,7 @@ def _make_auth_csrf_app():
 
 @pytest.fixture
 def client(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "")
     return TestClient(_make_app())
 
 
@@ -232,7 +232,7 @@ def test_url_reconstruction_cannot_turn_a_protected_route_path_public(
 ):
     from fastapi import FastAPI
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "")
     app = FastAPI()
     app.add_middleware(AuthMiddleware)
 
@@ -252,7 +252,7 @@ def test_url_reconstruction_cannot_turn_a_protected_route_path_public(
 def test_auth_uses_the_same_root_path_projection_as_the_router(monkeypatch):
     from fastapi import FastAPI
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "")
     child = FastAPI()
     child.add_middleware(AuthMiddleware)
 
@@ -282,7 +282,7 @@ def test_protected_path_no_cookie_returns_401(client):
 
 
 def test_auth_disabled_allows_protected_path_without_cookie(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     client = TestClient(_make_app())
 
     res = client.get("/api/models")
@@ -292,7 +292,7 @@ def test_auth_disabled_allows_protected_path_without_cookie(monkeypatch):
 
 
 def test_auth_disabled_stamps_default_admin_user_without_cookie(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     client = TestClient(_make_app())
 
     res = client.get("/api/whoami")
@@ -307,7 +307,7 @@ def test_auth_disabled_stamps_default_admin_user_without_cookie(monkeypatch):
 
 
 def test_auth_disabled_auth_me_reuses_middleware_user_without_cookie(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     client = TestClient(_make_app())
 
     res = client.get("/api/v1/auth/me")
@@ -332,7 +332,7 @@ def test_auth_disabled_does_not_clobber_valid_session_cookie(monkeypatch):
             needs_setup=False,
         )
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     monkeypatch.setattr("app.gateway.deps.get_current_user_from_request", fake_current_user)
     client = TestClient(_make_app())
 
@@ -349,9 +349,9 @@ def test_auth_disabled_does_not_clobber_valid_session_cookie(monkeypatch):
 
 def test_auth_disabled_does_not_clobber_internal_auth_identity(monkeypatch):
     from app.gateway.internal_auth import create_internal_auth_headers
-    from deerflow.runtime.user_context import DEFAULT_USER_ID
+    from nkyel.runtime.user_context import DEFAULT_USER_ID
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     client = TestClient(_make_app())
 
     res = client.get(
@@ -369,7 +369,7 @@ def test_auth_disabled_does_not_clobber_internal_auth_identity(monkeypatch):
 
 
 def test_auth_disabled_skips_csrf_for_state_changing_requests(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     client = TestClient(_make_auth_csrf_app())
 
     res = client.post("/api/threads/abc/runs/stream")
@@ -379,8 +379,8 @@ def test_auth_disabled_skips_csrf_for_state_changing_requests(monkeypatch):
 
 
 def test_auth_disabled_is_ignored_in_explicit_production_env(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
-    monkeypatch.setenv("DEER_FLOW_ENV", "production")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_ENV", "production")
     client = TestClient(_make_app())
 
     res = client.get("/api/models")
@@ -391,8 +391,8 @@ def test_auth_disabled_is_ignored_in_explicit_production_env(monkeypatch):
 def test_auth_disabled_startup_warning_when_effective(monkeypatch, caplog):
     from app.gateway.auth_disabled import warn_if_auth_disabled_enabled
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
-    monkeypatch.delenv("DEER_FLOW_ENV", raising=False)
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
+    monkeypatch.delenv("NKYEL_ENV", raising=False)
     monkeypatch.delenv("ENVIRONMENT", raising=False)
 
     with caplog.at_level("WARNING", logger="app.gateway.auth_disabled"):
@@ -405,7 +405,7 @@ def test_auth_disabled_startup_warning_when_effective(monkeypatch, caplog):
 def test_auth_disabled_startup_warning_suppressed_in_explicit_production_env(monkeypatch, caplog):
     from app.gateway.auth_disabled import warn_if_auth_disabled_enabled
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
     monkeypatch.setenv("ENVIRONMENT", "production")
 
     with caplog.at_level("WARNING", logger="app.gateway.auth_disabled"):
@@ -462,7 +462,7 @@ def test_internal_auth_owner_header_of_suspended_account_rejected(tmp_path):
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
     from app.gateway.auth_middleware import AuthMiddleware
     from app.gateway.internal_auth import create_internal_auth_headers
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     async def _dispatch(owner_user_id: str):
         headers = create_internal_auth_headers(owner_user_id=owner_user_id)
@@ -530,7 +530,7 @@ def test_internal_auth_owner_gate_skipped_in_auth_disabled_mode(monkeypatch):
     from app.gateway.auth_middleware import AuthMiddleware
     from app.gateway.internal_auth import create_internal_auth_headers
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
 
     async def _run():
         headers = create_internal_auth_headers(owner_user_id=AUTH_DISABLED_USER_ID)

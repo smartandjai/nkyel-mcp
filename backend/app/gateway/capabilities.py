@@ -10,12 +10,12 @@ from pydantic import BaseModel, Field, ValidationError
 
 from app.gateway.deps import get_current_user_from_request, is_admin_user
 from app.gateway.routers import integrations, mcp, skills
-from deerflow.capabilities.business import connection_config
-from deerflow.capabilities.catalog import PluginManifest
-from deerflow.capabilities.runtime import ambiguous_installation_ids, installation_id
-from deerflow.config.app_config import AppConfig
-from deerflow.integrations.lark_cli import get_lark_integration_status
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.capabilities.business import connection_config
+from nkyel.capabilities.catalog import PluginManifest
+from nkyel.capabilities.runtime import ambiguous_installation_ids, installation_id
+from nkyel.config.app_config import AppConfig
+from nkyel.integrations.lark_cli import get_lark_integration_status
+from nkyel.runtime.user_context import get_effective_user_id
 
 
 class CapabilityInstallation(BaseModel):
@@ -89,7 +89,7 @@ def validate_mcp_connection(configuration: dict[str, Any]) -> None:
 class MCPAdapter:
     async def list_installations(self, context: AdapterContext) -> list[CapabilityInstallation]:
         if context.scope == "user":
-            from deerflow.mcp.user_config import read_user_mcp_config
+            from nkyel.mcp.user_config import read_user_mcp_config
 
             try:
                 raw_config = await asyncio.to_thread(read_user_mcp_config, context.user_id)
@@ -157,7 +157,7 @@ class BusinessAdapter(MCPAdapter):
     """Build only bundled providers; reuse the MCP store, lifecycle and discovery."""
 
     async def list_installations(self, context: AdapterContext) -> list[CapabilityInstallation]:
-        from deerflow.capabilities.business import CREDENTIALS
+        from nkyel.capabilities.business import CREDENTIALS
 
         return [item for item in await super().list_installations(context) if item.plugin_id in CREDENTIALS]
 

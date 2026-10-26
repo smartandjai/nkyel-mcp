@@ -28,7 +28,7 @@ PAGE_TWO = {**PAGE_ONE, "row_count": 1, "has_more": False, "next_offset": None, 
 @pytest.fixture
 def public_dns():
     with patch(
-        "deerflow.community.url_safety.resolve_host_addresses",
+        "nkyel.community.url_safety.resolve_host_addresses",
         return_value=[ipaddress.ip_address("93.184.216.34")],
     ):
         yield
@@ -57,12 +57,12 @@ def _client_with(responses: list[httpx.Response]) -> MagicMock:
 @pytest.mark.anyio
 @pytest.mark.usefixtures("public_dns")
 async def test_reads_pages_strips_system_columns_and_pins_version():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = _client_with([_response(PAGE_ONE), _response(PAGE_TWO)])
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = json.loads(await dataset_rows_tool.ainvoke({"dataset": "pricing", "filters": {"provider": "Anthropic"}, "columns": ["provider", "model"], "limit": 10}))
 
@@ -80,12 +80,12 @@ async def test_reads_pages_strips_system_columns_and_pins_version():
 @pytest.mark.anyio
 @pytest.mark.usefixtures("public_dns")
 async def test_limit_is_capped_by_configured_max_rows():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = _client_with([_response(PAGE_ONE)])
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}, "max_rows": 1})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}, "max_rows": 1})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = json.loads(await dataset_rows_tool.ainvoke({"dataset": "pricing", "limit": 500}))
 
@@ -95,9 +95,9 @@ async def test_limit_is_capped_by_configured_max_rows():
 
 @pytest.mark.anyio
 async def test_unknown_dataset_lists_available_names():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
-    with patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL, "releases": SERVE_URL + "0"}})):
+    with patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL, "releases": SERVE_URL + "0"}})):
         result = await dataset_rows_tool.ainvoke({"dataset": "nope"})
 
     assert result == "Error: Unknown dataset 'nope'. Available datasets: pricing, releases"
@@ -105,11 +105,11 @@ async def test_unknown_dataset_lists_available_names():
 
 @pytest.mark.anyio
 async def test_unconfigured_tool_returns_error_without_request():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config(None)),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient") as client_cls,
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config(None)),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient") as client_cls,
     ):
         result = await dataset_rows_tool.ainvoke({"dataset": "pricing"})
 
@@ -119,21 +119,21 @@ async def test_unconfigured_tool_returns_error_without_request():
 
 @pytest.mark.anyio
 async def test_rejects_http_serve_url_and_userinfo():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     for bad in ("http://factory.jsonify.com/api/serve/abc", "https://user:pw@factory.jsonify.com/api/serve/abc"):
-        with patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": bad}})):
+        with patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": bad}})):
             result = await dataset_rows_tool.ainvoke({"dataset": "pricing"})
         assert result.startswith("Error: jsonify_dataset_rows is not configured")
 
 
 @pytest.mark.anyio
 async def test_private_address_blocked_before_request():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"meta": "https://169.254.169.254/latest/meta-data"}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient") as client_cls,
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"meta": "https://169.254.169.254/latest/meta-data"}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient") as client_cls,
     ):
         result = await dataset_rows_tool.ainvoke({"dataset": "meta"})
 
@@ -144,12 +144,12 @@ async def test_private_address_blocked_before_request():
 @pytest.mark.anyio
 @pytest.mark.usefixtures("public_dns")
 async def test_http_error_is_redacted():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = _client_with([_response({"error": "nope"}, status=404)])
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = await dataset_rows_tool.ainvoke({"dataset": "pricing"})
 
@@ -160,12 +160,12 @@ async def test_http_error_is_redacted():
 @pytest.mark.anyio
 @pytest.mark.usefixtures("public_dns")
 async def test_truncated_flag_when_more_rows_match():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = _client_with([_response(PAGE_ONE)])
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = json.loads(await dataset_rows_tool.ainvoke({"dataset": "pricing", "limit": 2}))
 
@@ -176,12 +176,12 @@ async def test_truncated_flag_when_more_rows_match():
 @pytest.mark.anyio
 @pytest.mark.usefixtures("public_dns")
 async def test_complete_read_is_not_truncated():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = _client_with([_response(PAGE_TWO)])
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = json.loads(await dataset_rows_tool.ainvoke({"dataset": "pricing"}))
 
@@ -199,12 +199,12 @@ async def test_complete_read_is_not_truncated():
     ],
 )
 async def test_stops_when_cursor_does_not_advance_or_page_is_empty(page):
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = _client_with([_response(page), _response(PAGE_TWO)])
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = json.loads(await dataset_rows_tool.ainvoke({"dataset": "pricing", "limit": 100}))
 
@@ -216,15 +216,15 @@ async def test_stops_when_cursor_does_not_advance_or_page_is_empty(page):
 @pytest.mark.usefixtures("public_dns")
 @pytest.mark.parametrize("payload", [["not", "a", "page"], {"rows": "nope"}, {"rows": ["r1"]}, {"has_more": False}])
 async def test_malformed_page_returns_redacted_error(payload):
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = MagicMock()
     client.get = AsyncMock(return_value=httpx.Response(200, json=payload, request=httpx.Request("GET", SERVE_URL)))
     client.__aenter__ = AsyncMock(return_value=client)
     client.__aexit__ = AsyncMock(return_value=None)
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = await dataset_rows_tool.ainvoke({"dataset": "pricing"})
 
@@ -234,12 +234,12 @@ async def test_malformed_page_returns_redacted_error(payload):
 @pytest.mark.anyio
 @pytest.mark.usefixtures("public_dns")
 async def test_non_json_page_returns_error():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = _client_with([httpx.Response(200, text="<html>", request=httpx.Request("GET", SERVE_URL))])
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = await dataset_rows_tool.ainvoke({"dataset": "pricing"})
 
@@ -247,10 +247,10 @@ async def test_non_json_page_returns_error():
 
 
 def test_invalid_config_warning_omits_serve_url(caplog):
-    from deerflow.community.jsonify.tools import _load_settings
+    from nkyel.community.jsonify.tools import _load_settings
 
     secret = "http://factory.jsonify.com/api/serve/supersecret"
-    with patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": secret}})):
+    with patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": secret}})):
         result = _load_settings()
 
     assert isinstance(result, str)
@@ -261,15 +261,15 @@ def test_invalid_config_warning_omits_serve_url(caplog):
 @pytest.mark.anyio
 @pytest.mark.usefixtures("public_dns")
 async def test_transport_error_omits_url():
-    from deerflow.community.jsonify.tools import dataset_rows_tool
+    from nkyel.community.jsonify.tools import dataset_rows_tool
 
     client = MagicMock()
     client.get = AsyncMock(side_effect=httpx.ConnectError(f"failed to connect to {SERVE_URL}"))
     client.__aenter__ = AsyncMock(return_value=client)
     client.__aexit__ = AsyncMock(return_value=None)
     with (
-        patch("deerflow.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
-        patch("deerflow.community.jsonify.tools.httpx.AsyncClient", return_value=client),
+        patch("nkyel.community.jsonify.tools.get_app_config", return_value=_config({"datasets": {"pricing": SERVE_URL}})),
+        patch("nkyel.community.jsonify.tools.httpx.AsyncClient", return_value=client),
     ):
         result = await dataset_rows_tool.ainvoke({"dataset": "pricing"})
 

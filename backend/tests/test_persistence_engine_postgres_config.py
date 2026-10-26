@@ -12,8 +12,8 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence import engine as engine_mod
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence import engine as engine_mod
 
 
 class _PostgresError(Exception):
@@ -124,7 +124,7 @@ def test_database_pool_settings_reject_booleans_and_non_positive_integers(field:
 async def test_configured_command_timeout_ends_stalled_command(monkeypatch) -> None:
     config = DatabaseConfig(
         backend="postgres",
-        postgres_url="postgresql://user:password@localhost/deerflow",
+        postgres_url="postgresql://user:password@localhost/nkyel",
         command_timeout=0.01,
     )
 
@@ -150,7 +150,7 @@ async def test_configured_command_timeout_ends_stalled_command(monkeypatch) -> N
     with (
         patch.object(engine_mod, "create_async_engine", side_effect=_create_engine),
         patch.object(engine_mod, "async_sessionmaker", return_value=MagicMock()),
-        patch("deerflow.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
+        patch("nkyel.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
     ):
         try:
             await engine_mod.init_engine_from_config(config)
@@ -171,7 +171,7 @@ async def test_configured_command_timeout_ends_stalled_command(monkeypatch) -> N
 async def test_init_engine_from_config_preserves_longer_command_timeout_override(monkeypatch) -> None:
     config = DatabaseConfig(
         backend="postgres",
-        postgres_url="postgresql://user:password@localhost/deerflow",
+        postgres_url="postgresql://user:password@localhost/nkyel",
         pool_recycle=120,
         command_timeout=90,
     )
@@ -183,7 +183,7 @@ async def test_init_engine_from_config_preserves_longer_command_timeout_override
     with (
         patch.object(engine_mod, "create_async_engine", return_value=mock_engine) as create_engine,
         patch.object(engine_mod, "async_sessionmaker", return_value=MagicMock()),
-        patch("deerflow.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
+        patch("nkyel.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
     ):
         try:
             await engine_mod.init_engine_from_config(config)
@@ -197,7 +197,7 @@ async def test_init_engine_from_config_preserves_longer_command_timeout_override
 
 @pytest.mark.asyncio
 async def test_init_engine_postgres_uses_hardened_kwargs(monkeypatch) -> None:
-    url = "postgresql+asyncpg://user:password@localhost/deerflow"
+    url = "postgresql+asyncpg://user:password@localhost/nkyel"
     mock_engine = MagicMock()
     mock_engine.dispose = AsyncMock()
     bootstrap_schema = AsyncMock()
@@ -206,7 +206,7 @@ async def test_init_engine_postgres_uses_hardened_kwargs(monkeypatch) -> None:
     with (
         patch.object(engine_mod, "create_async_engine", return_value=mock_engine) as create_engine,
         patch.object(engine_mod, "async_sessionmaker", return_value=MagicMock()),
-        patch("deerflow.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
+        patch("nkyel.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
     ):
         try:
             await engine_mod.init_engine(backend="postgres", url=url, echo=True, pool_size=12)
@@ -219,12 +219,12 @@ async def test_init_engine_postgres_uses_hardened_kwargs(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_init_engine_postgres_retry_uses_hardened_kwargs(monkeypatch) -> None:
-    url = "postgresql+asyncpg://user:password@localhost/deerflow"
+    url = "postgresql+asyncpg://user:password@localhost/nkyel"
     initial_engine = MagicMock()
     initial_engine.dispose = AsyncMock()
     retry_engine = MagicMock()
     retry_engine.dispose = AsyncMock()
-    bootstrap_schema = AsyncMock(side_effect=[_PostgresError("3D000", 'database "deerflow" does not exist'), None])
+    bootstrap_schema = AsyncMock(side_effect=[_PostgresError("3D000", 'database "nkyel" does not exist'), None])
     auto_create = AsyncMock()
 
     monkeypatch.setitem(sys.modules, "asyncpg", ModuleType("asyncpg"))
@@ -232,7 +232,7 @@ async def test_init_engine_postgres_retry_uses_hardened_kwargs(monkeypatch) -> N
         patch.object(engine_mod, "create_async_engine", side_effect=[initial_engine, retry_engine]) as create_engine,
         patch.object(engine_mod, "async_sessionmaker", return_value=MagicMock()),
         patch.object(engine_mod, "_auto_create_postgres_db", new=auto_create),
-        patch("deerflow.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
+        patch("nkyel.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
     ):
         try:
             await engine_mod.init_engine(backend="postgres", url=url, echo=False, pool_size=8)
@@ -270,10 +270,10 @@ def _wrapped_by_context(missing: BaseException) -> BaseException:
 @pytest.mark.asyncio
 @pytest.mark.parametrize("wrap", [_wrapped_by_orig, _wrapped_by_cause, _wrapped_by_context], ids=["orig", "cause", "context"])
 async def test_init_engine_postgres_retries_a_wrapped_missing_database_error(monkeypatch, wrap) -> None:
-    url = "postgresql+asyncpg://user:password@localhost/deerflow"
+    url = "postgresql+asyncpg://user:password@localhost/nkyel"
     engine = MagicMock()
     engine.dispose = AsyncMock()
-    wrapped = wrap(_PostgresError("3D000", 'database "deerflow" does not exist'))
+    wrapped = wrap(_PostgresError("3D000", 'database "nkyel" does not exist'))
     bootstrap_schema = AsyncMock(side_effect=[wrapped, None])
     auto_create = AsyncMock()
 
@@ -282,7 +282,7 @@ async def test_init_engine_postgres_retries_a_wrapped_missing_database_error(mon
         patch.object(engine_mod, "create_async_engine", return_value=engine),
         patch.object(engine_mod, "async_sessionmaker", return_value=MagicMock()),
         patch.object(engine_mod, "_auto_create_postgres_db", new=auto_create),
-        patch("deerflow.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
+        patch("nkyel.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
     ):
         try:
             await engine_mod.init_engine(backend="postgres", url=url)
@@ -309,8 +309,8 @@ def _cyclic_chain() -> BaseException:
         pytest.param(_PostgresError("42703", 'column "updated_at" does not exist'), id="undefined-column"),
         pytest.param(_PostgresError("42P01", 'relation "runs" does not exist'), id="undefined-table"),
         pytest.param(_PostgresError("42883", "function gen_random_uuid() does not exist"), id="undefined-function"),
-        pytest.param(_PostgresError("28000", 'role "deerflow" does not exist'), id="undefined-role"),
-        pytest.param(Exception('database "deerflow" does not exist'), id="no-sqlstate"),
+        pytest.param(_PostgresError("28000", 'role "nkyel" does not exist'), id="undefined-role"),
+        pytest.param(Exception('database "nkyel" does not exist'), id="no-sqlstate"),
         pytest.param(_cyclic_chain(), id="cyclic-chain"),
     ],
 )
@@ -318,7 +318,7 @@ async def test_init_engine_postgres_reraises_other_does_not_exist_errors(monkeyp
     # Postgres words all of these "does not exist". Only a missing database
     # may trigger CREATE DATABASE; anything else must surface unchanged
     # instead of as "already exists" or "permission denied to create database".
-    url = "postgresql+asyncpg://user:password@localhost/deerflow"
+    url = "postgresql+asyncpg://user:password@localhost/nkyel"
     engine = MagicMock()
     engine.dispose = AsyncMock()
     bootstrap_schema = AsyncMock(side_effect=error)
@@ -329,7 +329,7 @@ async def test_init_engine_postgres_reraises_other_does_not_exist_errors(monkeyp
         patch.object(engine_mod, "create_async_engine", return_value=engine) as create_engine,
         patch.object(engine_mod, "async_sessionmaker", return_value=MagicMock()),
         patch.object(engine_mod, "_auto_create_postgres_db", new=auto_create),
-        patch("deerflow.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
+        patch("nkyel.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
     ):
         try:
             with pytest.raises(type(error)) as raised:
@@ -345,7 +345,7 @@ async def test_init_engine_postgres_reraises_other_does_not_exist_errors(monkeyp
 
 @pytest.mark.asyncio
 async def test_init_engine_sqlite_omits_postgres_kwargs_and_keeps_wal_listener(tmp_path) -> None:
-    url = f"sqlite+aiosqlite:///{tmp_path / 'deerflow.db'}"
+    url = f"sqlite+aiosqlite:///{tmp_path / 'nkyel.db'}"
     mock_engine = MagicMock()
     mock_engine.sync_engine = object()
     mock_engine.dispose = AsyncMock()
@@ -366,7 +366,7 @@ async def test_init_engine_sqlite_omits_postgres_kwargs_and_keeps_wal_listener(t
         patch.object(engine_mod, "create_async_engine", return_value=mock_engine) as create_engine,
         patch.object(engine_mod, "async_sessionmaker", return_value=MagicMock()),
         patch("sqlalchemy.event.listens_for", new=_capture_listener),
-        patch("deerflow.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
+        patch("nkyel.persistence.bootstrap.bootstrap_schema", new=bootstrap_schema),
     ):
         try:
             await engine_mod.init_engine(backend="sqlite", url=url, echo=True, sqlite_dir=str(tmp_path))

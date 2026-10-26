@@ -1,9 +1,9 @@
-"""Strict Blockbuster runtime context scoped to DeerFlow business code.
+"""Strict Blockbuster runtime context scoped to nkyel business code.
 
-Creates a `BlockBuster` instance with `scanned_modules=("app", "deerflow")`
+Creates a `BlockBuster` instance with `scanned_modules=("app", "nkyel")`
 so that test infrastructure (pytest, langchain, importlib, third-party libs)
 is out of scope and does not produce false positives. Only loop-blocking
-sync IO whose caller stack passes through `app.*` or `deerflow.*` raises
+sync IO whose caller stack passes through `app.*` or `nkyel.*` raises
 `BlockingError`.
 
 Used by `backend/tests/blocking_io/conftest.py` to gate the regression suite.
@@ -16,14 +16,14 @@ from contextlib import contextmanager
 
 from blockbuster import BlockBuster, BlockBusterFunction, BlockingError
 
-_SCANNED_MODULES: tuple[str, ...] = ("app", "deerflow")
+_SCANNED_MODULES: tuple[str, ...] = ("app", "nkyel")
 
-# Add DeerFlow-local rules here only when Blockbuster's default rule set misses
+# Add nkyel-local rules here only when Blockbuster's default rule set misses
 # a generic blocking primitive used by production code. If a path is invisible
 # because no test exercises it, add a production-path runtime anchor instead.
 _PROJECT_BLOCKING_RULES: tuple[tuple[str, BlockBusterFunction], ...] = (
     # Blockbuster wraps socket.socket methods but not the module-level resolver,
-    # and the SSRF guard in deerflow.community.url_safety resolves hostnames.
+    # and the SSRF guard in nkyel.community.url_safety resolves hostnames.
     ("socket.getaddrinfo", BlockBusterFunction(None, "socket.getaddrinfo", scanned_modules=list(_SCANNED_MODULES))),
 )
 
@@ -35,7 +35,7 @@ def _install_project_rules(bb: BlockBuster) -> None:
 
 @contextmanager
 def detect_blocking_io_strict() -> Iterator[BlockBuster]:
-    """Activate Blockbuster scoped to app.* and deerflow.* callers only."""
+    """Activate Blockbuster scoped to app.* and nkyel.* callers only."""
     bb = BlockBuster(scanned_modules=list(_SCANNED_MODULES))
     _install_project_rules(bb)
     try:

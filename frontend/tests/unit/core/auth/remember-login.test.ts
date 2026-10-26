@@ -43,8 +43,8 @@ describe("remember login helpers", () => {
       rememberMe: true,
     });
 
-    expect(storage.values.get("deerflow.auth.remember_login")).toBe("1");
-    expect(storage.values.get("deerflow.auth.remembered_email")).toBe(
+    expect(storage.values.get("nkyel.auth.remember_login")).toBe("1");
+    expect(storage.values.get("nkyel.auth.remembered_email")).toBe(
       "admin@example.com",
     );
     expect([...storage.values.values()]).not.toContain("password");
@@ -52,8 +52,8 @@ describe("remember login helpers", () => {
 
   test("clears saved email when disabled", () => {
     const storage = makeStorage({
-      "deerflow.auth.remember_login": "1",
-      "deerflow.auth.remembered_email": "admin@example.com",
+      "nkyel.auth.remember_login": "1",
+      "nkyel.auth.remembered_email": "admin@example.com",
     });
     rs.stubGlobal("localStorage", storage);
 
@@ -62,8 +62,8 @@ describe("remember login helpers", () => {
       rememberMe: false,
     });
 
-    expect(storage.values.get("deerflow.auth.remember_login")).toBe("0");
-    expect(storage.values.has("deerflow.auth.remembered_email")).toBe(false);
+    expect(storage.values.get("nkyel.auth.remember_login")).toBe("0");
+    expect(storage.values.has("nkyel.auth.remembered_email")).toBe(false);
   });
 
   test("falls back safely when localStorage is unavailable", () => {

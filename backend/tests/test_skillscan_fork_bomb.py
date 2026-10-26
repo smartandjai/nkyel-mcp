@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.skills.skillscan import scan_skill_dir
+from nkyel.skills.skillscan import scan_skill_dir
 
 # The canonical rendering plus the renamed/respaced payloads from the report.
 FORK_BOMB_VARIANTS = {

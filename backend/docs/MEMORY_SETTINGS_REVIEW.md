@@ -4,7 +4,7 @@ Use this when reviewing the Memory Settings add/edit flow locally with the fewes
 
 ## Quick Review
 
-1. Start DeerFlow locally using any working development setup you already use.
+1. Start nkyel locally using any working development setup you already use.
 
    Examples:
 
@@ -18,7 +18,7 @@ Use this when reviewing the Memory Settings add/edit flow locally with the fewes
    make docker-start
    ```
 
-   If you already have DeerFlow running locally, you can reuse that existing setup.
+   If you already have nkyel running locally, you can reuse that existing setup.
 
 2. Open `Settings > Memory`.
 
@@ -46,7 +46,7 @@ uv run python ../scripts/load_memory_sample.py --all-users
 This command:
 
 - supports SQLite and PostgreSQL registered-user databases;
-- creates a unique timestamped backup directory under `.deer-flow/memory-sample-backups/` before replacing memory, even when imports start in the same second;
+- creates a unique timestamped backup directory under `.nkyel/memory-sample-backups/` before replacing memory, even when imports start in the same second;
 - imports through the configured memory storage provider; and
 - rejects `database.backend: memory`, which has no persistent user registry.
 
@@ -78,7 +78,7 @@ Bulk loading replaces every registered user's memory. Do not run it against an e
 ## Fixture Files
 
 - Sample fixture: `backend/docs/memory-settings-sample.json`
-- Per-user file-storage target: `backend/.deer-flow/users/{user_id}/memory.json`
-- Bulk backups: `backend/.deer-flow/memory-sample-backups/{timestamp}-{unique-suffix}/{user_id}.json`
+- Per-user file-storage target: `backend/.nkyel/users/{user_id}/memory.json`
+- Bulk backups: `backend/.nkyel/memory-sample-backups/{timestamp}-{unique-suffix}/{user_id}.json`
 
 For an explicit one-file copy, pass `--target PATH` to the loader. Its sidecar backup is `{target.name}.bak-{timestamp}-{unique-suffix}` beside the target; repeated imports never reuse a backup path. There is no implicit target because authenticated sessions use different per-user paths.

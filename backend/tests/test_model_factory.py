@@ -1,4 +1,4 @@
-"""Tests for deerflow.models.factory.create_chat_model."""
+"""Tests for nkyel.models.factory.create_chat_model."""
 
 from __future__ import annotations
 
@@ -8,13 +8,13 @@ import pytest
 from langchain.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.models import factory as factory_module
-from deerflow.models import openai_codex_provider as codex_provider_module
-from deerflow.models.reasoning import resolve_reasoning_contract
-from deerflow.reflection import resolve_class
+from nkyel.config.app_config import AppConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.models import factory as factory_module
+from nkyel.models import openai_codex_provider as codex_provider_module
+from nkyel.models.reasoning import resolve_reasoning_contract
+from nkyel.reflection import resolve_class
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -24,7 +24,7 @@ from deerflow.reflection import resolve_class
 def _make_app_config(models: list[ModelConfig]) -> AppConfig:
     return AppConfig(
         models=models,
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
     )
 
 
@@ -146,7 +146,7 @@ def test_pricing_metadata_never_reaches_the_provider_client(monkeypatch):
 
 
 def test_context_window_never_reaches_the_provider_client(monkeypatch):
-    """Context sizing metadata belongs to DeerFlow, not the provider SDK."""
+    """Context sizing metadata belongs to nkyel, not the provider SDK."""
     model = _make_model("large-context")
     model.context_window = 200_000
     cfg = _make_app_config([model])
@@ -514,14 +514,14 @@ def test_legacy_when_thinking_enabled_merges_nested_mappings_recursively(monkeyp
 
 def _effective_vllm_switch(captured: dict) -> dict:
     """What vLLM receives: the provider normalizes the legacy ``thinking`` alias just before sending."""
-    from deerflow.models.vllm_provider import _normalize_vllm_chat_template_kwargs
+    from nkyel.models.vllm_provider import _normalize_vllm_chat_template_kwargs
 
     payload = {"extra_body": dict(captured["extra_body"])}
     _normalize_vllm_chat_template_kwargs(payload)
     return payload["extra_body"]["chat_template_kwargs"]
 
 
-def _vllm_switch_profile(*, base_key: str, template_key: str, base_value: bool, reasoning: dict | None, use: str = "deerflow.models.vllm_provider:VllmChatModel") -> ModelConfig:
+def _vllm_switch_profile(*, base_key: str, template_key: str, base_value: bool, reasoning: dict | None, use: str = "nkyel.models.vllm_provider:VllmChatModel") -> ModelConfig:
     kwargs: dict = dict(
         name="qwen",
         display_name="qwen",
@@ -545,7 +545,7 @@ def test_vllm_switch_spelled_by_the_template_wins_over_the_profile_alias(monkeyp
     provider maps the alias only when ``enable_thinking`` is absent. A profile that spells the
     switch differently from its template must not be able to pin the switch after the merge:
     the template's (or synthesized) spelling decides, in both directions, on both paths."""
-    from deerflow.models.vllm_provider import VllmChatModel
+    from nkyel.models.vllm_provider import VllmChatModel
 
     model = _vllm_switch_profile(base_key=base_key, template_key=template_key, base_value=not thinking_enabled, reasoning=reasoning)
     captured: dict = {}
@@ -711,13 +711,13 @@ def test_required_thinking_profile_keeps_base_payload_when_runtime_requests_disa
     Required-thinking models such as GLM-5.3-Flash intentionally declare no
     conditional thinking settings.  A runtime ``thinking_enabled=False`` must
     therefore leave the profile's unconditional ``extra_body.thinking`` block
-    untouched, while the capability guard drops DeerFlow's generic effort value.
+    untouched, while the capability guard drops nkyel's generic effort value.
     """
     model = ModelConfig(
         name="glm-5.3-flash",
         display_name="GLM-5.3-Flash",
         description=None,
-        use="deerflow.models.patched_deepseek:PatchedChatDeepSeek",
+        use="nkyel.models.patched_deepseek:PatchedChatDeepSeek",
         model="glm-5.3-flash",
         api_base="https://api.z.ai/api/paas/v4",
         api_key="test-key",
@@ -1245,7 +1245,7 @@ def test_codex_provider_disables_reasoning_when_thinking_disabled(monkeypatch):
         [
             _make_model(
                 "codex",
-                use="deerflow.models.openai_codex_provider:CodexChatModel",
+                use="nkyel.models.openai_codex_provider:CodexChatModel",
                 supports_thinking=True,
                 supports_reasoning_effort=True,
             )
@@ -1265,7 +1265,7 @@ def test_codex_provider_preserves_explicit_reasoning_effort(monkeypatch):
         [
             _make_model(
                 "codex",
-                use="deerflow.models.openai_codex_provider:CodexChatModel",
+                use="nkyel.models.openai_codex_provider:CodexChatModel",
                 supports_thinking=True,
                 supports_reasoning_effort=True,
             )
@@ -1285,7 +1285,7 @@ def test_codex_provider_defaults_reasoning_effort_to_medium(monkeypatch):
         [
             _make_model(
                 "codex",
-                use="deerflow.models.openai_codex_provider:CodexChatModel",
+                use="nkyel.models.openai_codex_provider:CodexChatModel",
                 supports_thinking=True,
                 supports_reasoning_effort=True,
             )
@@ -1314,7 +1314,7 @@ def test_codex_provider_falls_back_to_medium_for_request_it_cannot_honor(monkeyp
         [
             _make_model(
                 "codex",
-                use="deerflow.models.openai_codex_provider:CodexChatModel",
+                use="nkyel.models.openai_codex_provider:CodexChatModel",
                 supports_thinking=True,
                 supports_reasoning_effort=supports_reasoning_effort,
             )
@@ -1334,7 +1334,7 @@ def test_codex_provider_strips_unsupported_max_tokens(monkeypatch):
         [
             _make_model(
                 "codex",
-                use="deerflow.models.openai_codex_provider:CodexChatModel",
+                use="nkyel.models.openai_codex_provider:CodexChatModel",
                 supports_thinking=True,
                 supports_reasoning_effort=True,
                 max_tokens=4096,
@@ -1354,7 +1354,7 @@ def test_thinking_disabled_vllm_chat_template_format(monkeypatch):
     wte = {"extra_body": {"chat_template_kwargs": {"thinking": True}}}
     model = _make_model(
         "vllm-qwen",
-        use="deerflow.models.vllm_provider:VllmChatModel",
+        use="nkyel.models.vllm_provider:VllmChatModel",
         supports_thinking=True,
         when_thinking_enabled=wte,
     )
@@ -1381,7 +1381,7 @@ def test_thinking_disabled_vllm_enable_thinking_format(monkeypatch):
     wte = {"extra_body": {"chat_template_kwargs": {"enable_thinking": True}}}
     model = _make_model(
         "vllm-qwen-enable",
-        use="deerflow.models.vllm_provider:VllmChatModel",
+        use="nkyel.models.vllm_provider:VllmChatModel",
         supports_thinking=True,
         when_thinking_enabled=wte,
     )
@@ -1523,13 +1523,13 @@ def test_openai_responses_api_settings_are_passed_to_chatopenai(monkeypatch):
 
 @pytest.mark.parametrize("model_id", ["mimo-v2.5-pro", "mimo-v2.5", "mimo-v2-flash"])
 def test_create_chat_model_resolves_patched_mimo_provider(model_id):
-    from deerflow.models.patched_mimo import PatchedChatMiMo
+    from nkyel.models.patched_mimo import PatchedChatMiMo
 
     model = ModelConfig(
         name=f"{model_id}-thinking",
         display_name=f"{model_id} Thinking",
         description=None,
-        use="deerflow.models.patched_mimo:PatchedChatMiMo",
+        use="nkyel.models.patched_mimo:PatchedChatMiMo",
         model=model_id,
         api_key="test-key",
         base_url="https://api.xiaomimimo.com/v1",
@@ -1566,7 +1566,7 @@ def test_no_duplicate_kwarg_when_reasoning_effort_in_config_and_thinking_disable
         name="doubao-model",
         display_name="Doubao 1.8",
         description=None,
-        use="deerflow.models.patched_deepseek:PatchedChatDeepSeek",
+        use="nkyel.models.patched_deepseek:PatchedChatDeepSeek",
         model="doubao-seed-1-8-250315",
         reasoning_effort="high",  # user-set extra field in config.yaml
         supports_thinking=True,
@@ -1608,7 +1608,7 @@ def test_runtime_reasoning_effort_merges_with_profile_without_duplicate_kwarg(
         name="deepseek-reasoner",
         display_name="DeepSeek Reasoner",
         description=None,
-        use="deerflow.models.patched_deepseek:PatchedChatDeepSeek",
+        use="nkyel.models.patched_deepseek:PatchedChatDeepSeek",
         model="deepseek-reasoner",
         reasoning_effort="high",
         supports_thinking=True,
@@ -1782,12 +1782,12 @@ def test_stream_chunk_timeout_popped_for_non_openai_provider_when_user_set_it(mo
 # stream_chunk_timeout mechanism) but was NOT in the original ChatOpenAI /
 # PatchedChatOpenAI allowlist.
 _STREAM_TIMEOUT_OPENAI_SUBCLASS_USE_PATHS = [
-    "deerflow.models.vllm_provider:VllmChatModel",
-    "deerflow.models.mindie_provider:MindIEChatModel",
-    "deerflow.models.patched_deepseek:PatchedChatDeepSeek",
-    "deerflow.models.patched_mimo:PatchedChatMiMo",
-    "deerflow.models.patched_stepfun:PatchedChatStepFun",
-    "deerflow.models.patched_minimax:PatchedChatMiniMax",
+    "nkyel.models.vllm_provider:VllmChatModel",
+    "nkyel.models.mindie_provider:MindIEChatModel",
+    "nkyel.models.patched_deepseek:PatchedChatDeepSeek",
+    "nkyel.models.patched_mimo:PatchedChatMiMo",
+    "nkyel.models.patched_stepfun:PatchedChatStepFun",
+    "nkyel.models.patched_minimax:PatchedChatMiniMax",
 ]
 
 
@@ -1842,7 +1842,7 @@ def test_stream_chunk_timeout_240_reaches_real_mimo_constructor(monkeypatch):
     """
     model = _make_model_with_extras(
         "mimo",
-        use="deerflow.models.patched_mimo:PatchedChatMiMo",
+        use="nkyel.models.patched_mimo:PatchedChatMiMo",
         api_key="sk-dummy",
         base_url="http://localhost:8000/v1",
     )
@@ -1913,9 +1913,9 @@ def test_api_base_preserved_for_provider_that_declares_it(monkeypatch):
     ``base_url`` and break every Doubao / Kimi config in ``config.example.yaml``, which document
     ``api_base`` for exactly this class.
     """
-    from deerflow.models.patched_deepseek import PatchedChatDeepSeek
+    from nkyel.models.patched_deepseek import PatchedChatDeepSeek
 
-    cfg = _make_app_config([_make_model_with_extras("ds", use="deerflow.models.patched_deepseek:PatchedChatDeepSeek", api_base="http://ds/v3")])
+    cfg = _make_app_config([_make_model_with_extras("ds", use="nkyel.models.patched_deepseek:PatchedChatDeepSeek", api_base="http://ds/v3")])
     captured: dict = {}
     _patch_factory(monkeypatch, cfg, model_class=_capturing_class(PatchedChatDeepSeek, captured))
 
@@ -1973,9 +1973,9 @@ def test_known_config_keys_emit_no_warning(monkeypatch, caplog):
 
 def test_api_base_normalized_for_patched_chatopenai(monkeypatch):
     """The PatchedChatOpenAI subclass is in the OpenAI-compatible family and must normalize too."""
-    from deerflow.models.patched_openai import PatchedChatOpenAI
+    from nkyel.models.patched_openai import PatchedChatOpenAI
 
-    cfg = _make_app_config([_make_model_with_extras("patched", use="deerflow.models.patched_openai:PatchedChatOpenAI", api_base="http://localhost:4001/v1")])
+    cfg = _make_app_config([_make_model_with_extras("patched", use="nkyel.models.patched_openai:PatchedChatOpenAI", api_base="http://localhost:4001/v1")])
     captured: dict = {}
     _patch_factory(monkeypatch, cfg, model_class=_capturing_class(PatchedChatOpenAI, captured))
 
@@ -2036,11 +2036,11 @@ def test_no_unknown_key_warning_for_non_openai_class(monkeypatch, caplog):
 # and was NOT in the original ChatOpenAI / PatchedChatOpenAI allowlist. PatchedChatDeepSeek is
 # deliberately absent: it declares `api_base` itself and is covered by the preservation test above.
 _OPENAI_SUBCLASS_USE_PATHS_WITHOUT_API_BASE = [
-    "deerflow.models.vllm_provider:VllmChatModel",
-    "deerflow.models.mindie_provider:MindIEChatModel",
-    "deerflow.models.patched_mimo:PatchedChatMiMo",
-    "deerflow.models.patched_stepfun:PatchedChatStepFun",
-    "deerflow.models.patched_minimax:PatchedChatMiniMax",
+    "nkyel.models.vllm_provider:VllmChatModel",
+    "nkyel.models.mindie_provider:MindIEChatModel",
+    "nkyel.models.patched_mimo:PatchedChatMiMo",
+    "nkyel.models.patched_stepfun:PatchedChatStepFun",
+    "nkyel.models.patched_minimax:PatchedChatMiniMax",
 ]
 
 
@@ -2098,7 +2098,7 @@ def test_api_base_reaches_real_minimax_constructor_as_base_url(monkeypatch):
         [
             _make_model_with_extras(
                 "minimax",
-                use="deerflow.models.patched_minimax:PatchedChatMiniMax",
+                use="nkyel.models.patched_minimax:PatchedChatMiniMax",
                 api_key="sk-dummy",
                 api_base="https://api.minimax.io/v1",
             )
@@ -2157,7 +2157,7 @@ def test_model_overrides_none_is_a_noop(monkeypatch):
 def test_codex_still_strips_overridden_max_tokens(monkeypatch):
     """Codex drops max_tokens even when it arrived via an override, so the
     provider-specific normalization still governs the merged value."""
-    cfg = _make_app_config([_make_model("codex", use="deerflow.models.openai_codex_provider:CodexChatModel")])
+    cfg = _make_app_config([_make_model("codex", use="nkyel.models.openai_codex_provider:CodexChatModel")])
     captured: dict = {}
     monkeypatch.setattr(factory_module, "get_app_config", lambda: cfg)
     monkeypatch.setattr(factory_module, "resolve_class", lambda path, base: _capturing_class(codex_provider_module.CodexChatModel, captured))
@@ -2251,7 +2251,7 @@ def test_contract_required_thinking_never_receives_a_disable_payload():
     synthesized ``thinking.type=disabled`` + ``reasoning_effort=minimal`` pair."""
     model = _contract_model(
         "glm-5.3-flash",
-        use="deerflow.models.patched_deepseek:PatchedChatDeepSeek",
+        use="nkyel.models.patched_deepseek:PatchedChatDeepSeek",
         reasoning={"thinking": "required", "dialect": "openai_extra_body", "history": "clear", "effort": _glm_effort()},
         api_base="https://api.z.ai/api/paas/v4",
         stream_usage=False,
@@ -2277,7 +2277,7 @@ def test_contract_required_thinking_never_receives_a_disable_payload():
 def test_contract_required_thinking_uses_the_default_effort_for_background_callers():
     model = _contract_model(
         "glm-5.3-flash",
-        use="deerflow.models.patched_deepseek:PatchedChatDeepSeek",
+        use="nkyel.models.patched_deepseek:PatchedChatDeepSeek",
         reasoning={"thinking": "required", "dialect": "openai_extra_body", "effort": _glm_effort()},
         api_base="https://api.z.ai/api/paas/v4",
     )
@@ -2325,7 +2325,7 @@ def test_contract_custom_effort_path_drops_generic_override(monkeypatch):
 def test_contract_custom_effort_path_stays_canonical_for_codex(monkeypatch):
     model = _contract_model(
         "codex-model",
-        use="deerflow.models.openai_codex_provider:CodexChatModel",
+        use="nkyel.models.openai_codex_provider:CodexChatModel",
         reasoning={"thinking": "optional", "effort": {"values": ["low", "high"], "default": "high", "path": "extra_body.thinking.effort"}},
     )
     _patch_factory(monkeypatch, _make_app_config([model]), model_class=FakeCodexChatModel)
@@ -2562,7 +2562,7 @@ def test_contract_reject_policy_fails_before_the_provider_is_built(monkeypatch):
 def test_contract_codex_maps_aliases_before_codex_validation(monkeypatch):
     model = _contract_model(
         "codex-model",
-        use="deerflow.models.openai_codex_provider:CodexChatModel",
+        use="nkyel.models.openai_codex_provider:CodexChatModel",
         reasoning={"thinking": "optional", "dialect": "none", "effort": {"values": ["low", "medium", "high", "xhigh"], "aliases": {"minimal": "low"}}},
     )
     _patch_factory(monkeypatch, _make_app_config([model]), model_class=FakeCodexChatModel)

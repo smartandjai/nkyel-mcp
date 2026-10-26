@@ -6,9 +6,9 @@ from types import SimpleNamespace
 import pytest
 from support.symlinks import symlink_or_skip
 
-from deerflow.config.paths import Paths, make_safe_user_id
-from deerflow.skills.storage.local_skill_storage import LocalSkillStorage
-from deerflow.tools.builtins.review_skill_package_tool import review_skill_package
+from nkyel.config.paths import Paths, make_safe_user_id
+from nkyel.skills.storage.local_skill_storage import LocalSkillStorage
+from nkyel.tools.builtins.review_skill_package_tool import review_skill_package
 
 
 def _runtime(user_id: str = "default") -> SimpleNamespace:
@@ -39,7 +39,7 @@ def test_review_skill_package_inline_returns_review_subject_metadata():
     assert "review_subject_entry" in message.additional_kwargs
     assert "skill_context_entry" not in message.additional_kwargs
     assert payload["artifacts"][0]["untrusted_review_data"] is True
-    assert message.artifact["facts"]["schema_version"] == "deerflow.skill-review.facts.v1"
+    assert message.artifact["facts"]["schema_version"] == "nkyel.skill-review.facts.v1"
     assert "markdown" not in payload
     assert "markdown" in message.artifact
 
@@ -50,7 +50,7 @@ def test_review_skill_package_installed_skill_uses_storage_without_activation(mo
     (public_dir / "SKILL.md").write_text(_skill_content(), encoding="utf-8")
     storage = LocalSkillStorage(host_path=str(tmp_path), container_path="/mnt/skills")
 
-    monkeypatch.setattr("deerflow.tools.builtins.review_skill_package_tool.get_or_new_user_skill_storage", lambda user_id: storage)
+    monkeypatch.setattr("nkyel.tools.builtins.review_skill_package_tool.get_or_new_user_skill_storage", lambda user_id: storage)
 
     command = review_skill_package.func(
         target="skill://public/demo-skill",
@@ -100,12 +100,12 @@ def test_review_skill_package_rejects_unsafe_local_path():
 
 @pytest.fixture
 def deployment(tmp_path, monkeypatch):
-    """Mirror documented deployments: DEER_FLOW_HOME and the skills root sit under the Gateway cwd."""
+    """Mirror documented deployments: NKYEL_HOME and the skills root sit under the Gateway cwd."""
     monkeypatch.chdir(tmp_path)
-    paths = Paths(tmp_path / ".deer-flow")
+    paths = Paths(tmp_path / ".nkyel")
     storage = LocalSkillStorage(host_path=str(tmp_path / "skills"), container_path="/mnt/skills")
-    monkeypatch.setattr("deerflow.tools.builtins.review_skill_package_tool.get_paths", lambda: paths)
-    monkeypatch.setattr("deerflow.tools.builtins.review_skill_package_tool.get_or_new_skill_storage", lambda: storage)
+    monkeypatch.setattr("nkyel.tools.builtins.review_skill_package_tool.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.tools.builtins.review_skill_package_tool.get_or_new_skill_storage", lambda: storage)
     return paths
 
 
@@ -149,7 +149,7 @@ def test_review_skill_package_allows_shared_skills_root_package(deployment, tmp_
     [
         pytest.param(lambda paths, victim: str(victim), id="absolute"),
         pytest.param(lambda paths, victim: f"{paths.user_dir('alice')}/../bob/skills/custom/{victim.name}", id="dot-dot"),
-        pytest.param(lambda paths, victim: ".deer-flow/users/bob/skills/custom/secret-skill", id="cwd-relative"),
+        pytest.param(lambda paths, victim: ".nkyel/users/bob/skills/custom/secret-skill", id="cwd-relative"),
     ],
 )
 def test_review_skill_package_rejects_another_users_package(deployment, target_for):
@@ -168,14 +168,14 @@ def test_review_skill_package_rejects_another_users_package(deployment, target_f
     assert "BOB_PRIVATE_BODY" not in message.content
 
 
-@pytest.mark.parametrize("skills_root_for", [lambda home: home, lambda home: home.parent], ids=["deer-flow-home", "ancestor"])
+@pytest.mark.parametrize("skills_root_for", [lambda home: home, lambda home: home.parent], ids=["nkyel-home", "ancestor"])
 def test_review_skill_package_ignores_skills_root_that_contains_user_dirs(deployment, monkeypatch, caplog, skills_root_for):
     storage = LocalSkillStorage(host_path=str(skills_root_for(deployment.base_dir)), container_path="/mnt/skills")
-    monkeypatch.setattr("deerflow.tools.builtins.review_skill_package_tool.get_or_new_skill_storage", lambda: storage)
+    monkeypatch.setattr("nkyel.tools.builtins.review_skill_package_tool.get_or_new_skill_storage", lambda: storage)
     package = deployment.user_custom_skills_dir("bob") / "secret-skill"
     _write_package(package, _skill_content("secret-skill"))
 
-    with caplog.at_level("WARNING", logger="deerflow.tools.builtins.review_skill_package_tool"):
+    with caplog.at_level("WARNING", logger="nkyel.tools.builtins.review_skill_package_tool"):
         command = review_skill_package.func(
             target=str(package),
             runtime=_runtime("alice"),

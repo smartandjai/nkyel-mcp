@@ -50,7 +50,7 @@ async def test_restart_approval_reuses_outputs_and_exact_version(plugin):
 
 
 async def test_recovery_rejects_changed_config_and_revoked_permission(plugin):
-    from deerflow_extension_api import AgentRunError
+    from nkyel_extension_api import AgentRunError
 
     _, actions, service, runs = plugin
     run_id = (await launch(plugin, "await pause({stepId:'p'}); return 1;"))["run_id"]
@@ -168,7 +168,7 @@ async def test_real_process_kill_during_review(plugin):
     root = Path(__file__).resolve().parents[2]
     program = r"""
 import asyncio,json,sys
-from deerflow_extension_workflows.service import Workflows
+from nkyel_extension_workflows.service import Workflows
 from test_workflow_plugin import Runs,context
 async def main():
     service=Workflows(json.loads(sys.argv[1]));await service.start(None)
@@ -183,7 +183,7 @@ async def main():
     await asyncio.Event().wait()
 asyncio.run(main())
 """
-    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(root / "backend/tests"), str(root / "backend"), str(root / "examples/deerflow-extension-workflows")])}
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join([str(root / "backend/tests"), str(root / "backend"), str(root / "examples/nkyel-extension-workflows")])}
     child = await asyncio.create_subprocess_exec(sys.executable, "-c", program, json.dumps(service.config), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env)
     try:
         async with asyncio.timeout(30):
@@ -224,8 +224,8 @@ async def test_graceful_shutdown_pause_and_cancel_recovery(plugin):
 
 @pytest.mark.parametrize("change", ["runtime", "journal", "expiry", "owner", "tool"])
 async def test_recovery_guards_prevent_new_dispatch(plugin, change):
-    from deerflow_extension_api import ExtensionPrincipal
-    from deerflow_extension_api.plugins import ToolContext
+    from nkyel_extension_api import ExtensionPrincipal
+    from nkyel_extension_api.plugins import ToolContext
 
     _, actions, service, runs = plugin
     run_id = (await launch(plugin, "await pause({stepId:'p'}); return await agent({stepId:'a',agentRef:'lead_agent',task:1});"))["run_id"]
@@ -279,7 +279,7 @@ async def test_file_capture_commit_before_metadata_reuses_original_bytes(plugin,
 
 
 async def test_recovered_interrupted_child_cannot_dispatch_even_when_script_catches(plugin, monkeypatch):
-    from deerflow_extension_api import AgentRun
+    from nkyel_extension_api import AgentRun
 
     _, actions, service, runs = plugin
     snapshots = []

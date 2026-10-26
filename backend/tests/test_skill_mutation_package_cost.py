@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from deerflow.skills.mutations.assets import capture_package
+from nkyel.skills.mutations.assets import capture_package
 
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="package capture requires POSIX filesystem primitives")
 

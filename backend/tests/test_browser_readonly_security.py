@@ -19,9 +19,9 @@ from starlette.websockets import WebSocketDisconnect
 from app.gateway.auth_disabled import get_auth_disabled_user
 from app.gateway.auth_middleware import AuthMiddleware
 from app.gateway.routers import browser
-from deerflow.authz.provider import AuthzDecision
-from deerflow.authz.rbac import RbacAuthorizationProvider
-from deerflow.config.authorization_config import AuthorizationConfig
+from nkyel.authz.provider import AuthzDecision
+from nkyel.authz.rbac import RbacAuthorizationProvider
+from nkyel.config.authorization_config import AuthorizationConfig
 
 
 @pytest.mark.parametrize("role", ["admin", "user"])
@@ -47,7 +47,7 @@ def test_browser_stream_enforces_write_permission(monkeypatch, role, writable, b
     monkeypatch.setattr("app.gateway.deps.get_current_user_from_request", AsyncMock(return_value=user))
     monkeypatch.setattr(browser, "_authenticate_ws", AsyncMock(return_value=user))
     monkeypatch.setattr(browser, "_browser_tools_enabled", lambda: True)
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: SimpleNamespace(get_tool_config=lambda _: None))
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: SimpleNamespace(get_tool_config=lambda _: None))
 
     received = threading.Event()
     frame_sent = threading.Event()
@@ -84,7 +84,7 @@ def test_browser_stream_enforces_write_permission(monkeypatch, role, writable, b
         yield session
 
     monkeypatch.setattr(
-        "deerflow.community.browser_automation.get_browser_session_manager",
+        "nkyel.community.browser_automation.get_browser_session_manager",
         lambda: SimpleNamespace(acquire_session=acquire_session),
     )
     app = FastAPI()
@@ -232,7 +232,7 @@ async def test_browser_stream_cancellation_during_disconnect_cleanup_releases_se
     user = get_auth_disabled_user()
     monkeypatch.setattr(browser, "_authenticate_ws", AsyncMock(return_value=user))
     monkeypatch.setattr(browser, "_browser_tools_enabled", lambda: True)
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: SimpleNamespace(get_tool_config=lambda _: None))
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: SimpleNamespace(get_tool_config=lambda _: None))
     monkeypatch.setattr(browser, "_negotiate_browser_frame_format", AsyncMock(return_value=False))
 
     stop_entered = asyncio.Event()
@@ -259,7 +259,7 @@ async def test_browser_stream_cancellation_during_disconnect_cleanup_releases_se
             lease_released.set()
 
     monkeypatch.setattr(
-        "deerflow.community.browser_automation.get_browser_session_manager",
+        "nkyel.community.browser_automation.get_browser_session_manager",
         lambda: SimpleNamespace(acquire_session=acquire_session),
     )
 
@@ -298,7 +298,7 @@ async def test_browser_stream_preserves_first_cancellation_across_cleanup_cancel
     user = get_auth_disabled_user()
     monkeypatch.setattr(browser, "_authenticate_ws", AsyncMock(return_value=user))
     monkeypatch.setattr(browser, "_browser_tools_enabled", lambda: True)
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: SimpleNamespace(get_tool_config=lambda _: None))
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: SimpleNamespace(get_tool_config=lambda _: None))
     monkeypatch.setattr(browser, "_negotiate_browser_frame_format", AsyncMock(return_value=False))
 
     start_entered = asyncio.Event()
@@ -330,7 +330,7 @@ async def test_browser_stream_preserves_first_cancellation_across_cleanup_cancel
             lease_released.set()
 
     monkeypatch.setattr(
-        "deerflow.community.browser_automation.get_browser_session_manager",
+        "nkyel.community.browser_automation.get_browser_session_manager",
         lambda: SimpleNamespace(acquire_session=acquire_session),
     )
 

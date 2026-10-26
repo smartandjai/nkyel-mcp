@@ -15,7 +15,7 @@ filesystem**, so a compromised or prompt-injected agent can no longer
 Dispatched by the first CLI argument:
 
 - `install-shim <dest>` — **init container**: writes the launcher + Python shim +
-  `.deerflow-lark-cli-runtime.json` (`kind: "shim"`) into the shared `emptyDir`
+  `.nkyel-lark-cli-runtime.json` (`kind: "shim"`) into the shared `emptyDir`
   at `<dest>` (default `/mnt/integrations/lark-cli/runtime`), then exits `0`. The
   sandbox then finds `bin/lark-cli` exactly where
   `lark_cli_env_overlay(sandbox_paths=True)` points `PATH` — same layout the
@@ -29,11 +29,11 @@ resolves a Python 3 interpreter and execs the **shim body** (`bin/lark-cli-shim.
 beside it (by its baked-in absolute path, since `$0` is the bare command name
 when run off `PATH`); both are written from the in-process
 `LARK_CLI_BROKER_LAUNCHER_TEMPLATE` / `LARK_CLI_BROKER_SHIM_SCRIPT`
-(`deerflow.integrations.lark_broker`), so the image's copies can never drift from
+(`nkyel.integrations.lark_broker`), so the image's copies can never drift from
 the Gateway's. Splitting the sh launcher from the Python body means broker mode
 does **not** hard-depend on `python3` resolving via a `#!/usr/bin/env python3`
 shebang: if no `python3`/`python` is on the sandbox `PATH`, the launcher exits
-`127` with an actionable message (set `DEERFLOW_LARK_BROKER_PYTHON` to a known
+`127` with an actionable message (set `NKYEL_LARK_BROKER_PYTHON` to a known
 interpreter path) instead of an opaque ENOEXEC. The stock `all-in-one-sandbox`
 image ships Python 3, so the default path needs no configuration.
 
@@ -42,7 +42,7 @@ image ships Python 3, so the default path needs no configuration.
 Build context is the **repo root** (the broker module lives under `backend/`):
 
 ```bash
-docker build -t deer-flow/lark-cli-broker:v1.0.65 \
+docker build -t nkyel/lark-cli-broker:v1.0.65 \
   --build-arg LARK_CLI_VERSION=v1.0.65 \
   -f docker/lark-cli-broker/Dockerfile .
 ```
@@ -51,9 +51,9 @@ The tag should encode the lark-cli version so it can be bumped independently of
 the upstream `all-in-one-sandbox` image.
 
 CI publishes multi-arch (`linux/amd64,linux/arm64`) images to
-`ghcr.io/<owner>/deer-flow-lark-cli-broker:<lark-cli-version>` via
+`ghcr.io/<owner>/nkyel-lark-cli-broker:<lark-cli-version>` via
 `.github/workflows/lark-cli-images.yaml` (run it with a `lark_cli_version` input,
-or push a `lark-cli-v*` tag). This is decoupled from the DeerFlow `v*` release
+or push a `lark-cli-v*` tag). This is decoupled from the nkyel `v*` release
 because the image tracks the upstream `larksuite/cli` version.
 
 ## Wiring it into the provisioner
@@ -69,7 +69,7 @@ and pointing the provisioner at it:
   - a `lark-cli-shim-init` init container (`install-shim`) that stages the shim;
   - a `lark-cli-broker` **sidecar** (`serve`) with the per-user `config` (RO) /
     `data` (RW) credential mounts — **into the sidecar only**;
-  - the sandbox container gets the runtime RO mount + `DEERFLOW_LARK_BROKER_URL`
+  - the sandbox container gets the runtime RO mount + `NKYEL_LARK_BROKER_URL`
     and **no** `config`/`data` mounts.
 - Broker mode **supersedes** Pattern A when both are configured.
 - The provisioner reports it via `GET /api/capabilities`
@@ -104,8 +104,8 @@ after EOF; a pipe that exceeds its idle budget exits `124` before contacting
 the broker, so incomplete input cannot execute a partial write.
 
 The sandbox process can override the first-byte budget with
-`DEERFLOW_LARK_BROKER_STDIN_GRACE_SECONDS` and the between-chunk idle budget with
-`DEERFLOW_LARK_BROKER_STDIN_TAIL_SECONDS`. Both default to 2 seconds and accept
+`NKYEL_LARK_BROKER_STDIN_GRACE_SECONDS` and the between-chunk idle budget with
+`NKYEL_LARK_BROKER_STDIN_TAIL_SECONDS`. Both default to 2 seconds and accept
 finite values in `(0, 600]`; invalid values fall back to the default. Increase the
 appropriate budget when an explicit input producer needs longer startup or pauses.
 These settings belong on the sandbox invocation, not the broker sidecar.
@@ -128,9 +128,9 @@ paths still refer to the sidecar's filesystem, not the sandbox's.
 
 The broker removes the credential *files* from the sandbox, but the full
 `lark-cli` command surface stays reachable, so any subcommand that prints/exports
-tokens could still exfiltrate them. Set `DEERFLOW_LARK_BROKER_DENY_SUBCOMMANDS`
+tokens could still exfiltrate them. Set `NKYEL_LARK_BROKER_DENY_SUBCOMMANDS`
 on the sidecar to a comma-separated list of command paths the broker should
-refuse, e.g. `DEERFLOW_LARK_BROKER_DENY_SUBCOMMANDS="config show, auth token"`.
+refuse, e.g. `NKYEL_LARK_BROKER_DENY_SUBCOMMANDS="config show, auth token"`.
 Denied calls return exit `126` with a `subcommand ... is disabled` message and
 never spawn the binary. The broker does not know which options take a value, so
 a rule matches when its tokens appear in order among the request's non-flag

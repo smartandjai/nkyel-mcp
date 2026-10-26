@@ -16,7 +16,7 @@ import {
 
 const original = {
   thread_id: "chat",
-  metadata: { deerflow_project_id: "project-a", deerflow_pinned: true },
+  metadata: { nkyel_project_id: "project-a", nkyel_pinned: true },
 };
 
 afterEach(() => {
@@ -29,7 +29,7 @@ test("move updates only affiliation and marks inactive metadata stale", async ()
   const key = ["thread", "metadata", "chat", false];
   client.setQueryData(key, original);
   mocks.fetch.mockResolvedValue(
-    new Response(JSON.stringify({ metadata: { deerflow_pinned: false } })),
+    new Response(JSON.stringify({ metadata: { nkyel_pinned: false } })),
   );
   const wrapper = ({ children }: PropsWithChildren) => (
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -46,7 +46,7 @@ test("move updates only affiliation and marks inactive metadata stale", async ()
     });
     expect(client.getQueryData(key)).toEqual({
       ...original,
-      metadata: { ...original.metadata, deerflow_project_id: "project-b" },
+      metadata: { ...original.metadata, nkyel_project_id: "project-b" },
     });
     expect(client.getQueryState(key)?.isInvalidated).toBe(true);
   } finally {
@@ -65,7 +65,7 @@ for (const cached of [false, true]) {
       if (cached) client.setQueryData(key, original);
       const moved = {
         ...original,
-        metadata: { ...original.metadata, deerflow_project_id: projectId },
+        metadata: { ...original.metadata, nkyel_project_id: projectId },
       };
       let finishOldRead!: (value: typeof original) => void;
       const oldRead = new Promise<typeof original>((resolve) => {

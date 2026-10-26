@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.subagents.capacity import (
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.subagents.capacity import (
     SubagentCapacityRejected,
     SubagentCapacityTimeout,
     configure_subagent_execution_capacity,

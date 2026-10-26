@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from deerflow.authz.provider import AuthorizationProvider
-from deerflow.authz.runtime import resolve_authorization_provider
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.authz.provider import AuthorizationProvider
+from nkyel.authz.runtime import resolve_authorization_provider
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
 
 
 class TestDisabled:
@@ -42,7 +42,7 @@ class TestValidProvider:
             enabled=True,
             default_role="admin",
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"admin": {"tools": {"allow": "*"}}}},
             ),
         )
@@ -56,7 +56,7 @@ class TestValidProvider:
         config = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"tools": {"allow": ["web_search"]}}}},
             ),
         )
@@ -78,7 +78,7 @@ class TestInvalidClassPath:
     def test_nonexistent_attribute_raises_with_path(self):
         config = AuthorizationConfig(
             enabled=True,
-            provider=AuthorizationProviderConfig(use="deerflow.authz.rbac:NonexistentProvider"),
+            provider=AuthorizationProviderConfig(use="nkyel.authz.rbac:NonexistentProvider"),
         )
         with pytest.raises(ValueError, match="NonexistentProvider"):
             resolve_authorization_provider(config)
@@ -123,7 +123,7 @@ class TestRbacErrorPropagation:
         config = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {}}, "bogus": True},
             ),
         )
@@ -137,7 +137,7 @@ class TestRbacErrorPropagation:
         config = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": "not a dict"},
             ),
         )
@@ -149,7 +149,7 @@ class TestRbacErrorPropagation:
         config = AuthorizationConfig(
             enabled=True,
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"tools": {"allow": 42}}}},
             ),
         )
@@ -166,7 +166,7 @@ class TestRbacErrorPropagation:
             enabled=True,
             default_role="missing",
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"user": {"tools": {"allow": "*"}}}},
             ),
         )
@@ -186,7 +186,7 @@ class TestNoFactoryInjection:
             fail_closed=False,
             default_role="guest",
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"guest": {"tools": {"allow": "*"}}}},
             ),
         )
@@ -203,7 +203,7 @@ class TestNoCaching:
             enabled=True,
             default_role="admin",
             provider=AuthorizationProviderConfig(
-                use="deerflow.authz.rbac:RbacAuthorizationProvider",
+                use="nkyel.authz.rbac:RbacAuthorizationProvider",
                 config={"roles": {"admin": {"tools": {"allow": "*"}}}},
             ),
         )

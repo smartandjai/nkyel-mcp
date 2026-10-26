@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.models import credential_loader
-from deerflow.models.claude_provider import ClaudeChatModel
+from nkyel.models import credential_loader
+from nkyel.models.claude_provider import ClaudeChatModel
 
 
 @pytest.fixture(autouse=True)

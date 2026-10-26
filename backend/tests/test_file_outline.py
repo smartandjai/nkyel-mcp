@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.utils.file_outline import MAX_OUTLINE_ENTRIES, extract_outline
+from nkyel.utils.file_outline import MAX_OUTLINE_ENTRIES, extract_outline
 
 
 @pytest.mark.parametrize("fence", ["```", "~~~"])

@@ -78,7 +78,7 @@ def test_configure_help_prints_usage_without_generating_files(config_checkout: P
 
     assert result.returncode == 0, result.stderr
     assert "usage: configure.py" in result.stdout
-    assert "Cross-platform config bootstrap script for DeerFlow." in result.stdout
+    assert "Cross-platform config bootstrap script for nkyel." in result.stdout
     assert not (config_checkout / "config.yaml").exists()
     assert not (config_checkout / ".env").exists()
     assert not (config_checkout / "frontend" / ".env").exists()

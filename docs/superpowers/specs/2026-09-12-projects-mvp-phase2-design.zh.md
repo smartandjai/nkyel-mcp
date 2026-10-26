@@ -1,4 +1,4 @@
-# DeerFlow 项目 MVP —— Phase 2 设计（项目说明、文档、提升、回收站）
+# nkyel 项目 MVP —— Phase 2 设计（项目说明、文档、提升、回收站）
 
 **日期**: 2026-09-12
 **状态**: 评审草案（RFC v2，[issue #5160](https://github.com/bytedance/deer-flow/issues/5160)）
@@ -16,9 +16,9 @@ Phase 1 给了项目三样能装的东西：会话、名称和一个 `status`。
 - `projects.instructions` 会被存储、可 PATCH、会被返回——但**零消费者**：`persistence/projects/model.py:6` 写着 "Phase 1 stores and PATCHes it, Phase 2 injects it"，而在 `ProjectRepository` 之外不存在任何对 `ProjectRow.instructions` 的读取。今天写项目背景的用户，是在往虚空里写。
 - **不存在项目文档实体**：没有 `project_documents` 表、没有 `users/{user_id}/projects/` 文件系统布局、没有 `Paths` helper、没有 `trash_retention_days` 配置键、没有 `/api/trash/*`、没有 documents/from-thread/attach-to-thread/thread-files 路由。这项设计唯一的文字痕迹是
   `persistence/projects/sql.py:6-9` 的一句前瞻性注释。
-- **运行时不具备项目感知**：在 `deerflow/runtime/**` 与 `deerflow/agents/**` 下穷尽搜索 `project_id|deerflow_project_id|ProjectRow|ProjectRepository` 零命中；`runtime_ctx` 就是 `{"thread_id", "run_id"}` 加上调用方键（`runtime/runs/worker.py:542`）。run 无法知道自己属于哪个项目，因此既收不到说明，也
+- **运行时不具备项目感知**：在 `nkyel/runtime/**` 与 `nkyel/agents/**` 下穷尽搜索 `project_id|nkyel_project_id|ProjectRow|ProjectRepository` 零命中；`runtime_ctx` 就是 `{"thread_id", "run_id"}` 加上调用方键（`runtime/runs/worker.py:542`）。run 无法知道自己属于哪个项目，因此既收不到说明，也
   拿不到文档访问。
-- 运行准入会**剥离**保留键 `deerflow_project_id`，且从不写 membership（`app/gateway/services.py:207-218`，由 `tests/test_thread_meta_repo.py:598-623` 钉住）。membership 只由 `POST /api/threads`、分支创建和 `POST /api/threads/{id}/move` 写入（`app/gateway/AGENTS.md:13-19`）。
+- 运行准入会**剥离**保留键 `nkyel_project_id`，且从不写 membership（`app/gateway/services.py:207-218`，由 `tests/test_thread_meta_repo.py:598-623` 钉住）。membership 只由 `POST /api/threads`、分支创建和 `POST /api/threads/{id}/move` 写入（`app/gateway/AGENTS.md:13-19`）。
 
 用户可见的后果：项目就是一个名字好听的文件夹。成员会话仍然要手工重新交代背景，"这个话题的文档"依旧无处安放——项目页的 Documents 与 Instructions 区块并不存在（`frontend/src/app/workspace/projects/[id]/page.tsx:86-93` 只渲染 header + Chats + Settings）。
 
@@ -226,8 +226,8 @@ PAT 默认拒绝：每条新路由都必须加入 `auth/pat.py` 的允许清单�
 3. 构建 pinned 快照，写在一个新的服务端所有的键下：
 
 ```python
-# deerflow/runtime/context_keys.py
-PROJECT_CONTEXT_KEY: Final[str] = "__deerflow_project_context"
+# nkyel/runtime/context_keys.py
+PROJECT_CONTEXT_KEY: Final[str] = "__nkyel_project_context"
 ```
 
 ```python
@@ -246,7 +246,7 @@ PROJECT_CONTEXT_KEY: Final[str] = "__deerflow_project_context"
 
 ### 7.2 只注入最新版本的说明与文档架索引
 
-**统一投递方式。** 说明和文档架索引都只存在于装配后的模型请求中。`DynamicContextMiddleware` 新增 `wrap_model_call` / `awrap_model_call` 钩子，调用 `deerflow/projects/context.py` 中的纯渲染 helper；既有 `_build_full_reminder`、`_inject`、日期修正和 `__memory` 持久化行为保持不变。项目渲染不依赖 memory 读取成功，也不执行数据库或文件系统 I/O。
+**统一投递方式。** 说明和文档架索引都只存在于装配后的模型请求中。`DynamicContextMiddleware` 新增 `wrap_model_call` / `awrap_model_call` 钩子，调用 `nkyel/projects/context.py` 中的纯渲染 helper；既有 `_build_full_reminder`、`_inject`、日期修正和 `__memory` 持久化行为保持不变。项目渲染不依赖 memory 读取成功，也不执行数据库或文件系统 I/O。
 
 ```
 Persisted history (existing behavior unchanged):
@@ -267,7 +267,7 @@ HumanMessage   <project id="…" name="Roadmap">
 
 - **每 run 一份快照，每次模型调用一个当前块。** 同一 run 的全部调用和重试使用准入时固定的快照（§7.1），自动压缩后也一样；下一 run 重新解析快照。工具仍在 pinned 项目 ID 下读取实时行。
 - **仅最新版本语义。** 重命名、说明编辑或项目移动在下一 run 替换所注入的配置。说明为空时省略说明正文，保留当前项目身份；文档架为空时省略 `<documents>`。未分配项目的 run 不注入任一块，也不注册项目工具。不再有 `__project` 修正、移出通知或与历史 revision 的比较。
-- **幂等请求装配。** 用保留消息 ID 前缀、服务端所有的 `deerflow_project_context` 标记及 provenance 共同识别本 middleware 的临时消息；Gateway 准入剥离客户端提供的同名标记。每次装配只从请求副本中移除本 middleware 可确认属于自身的临时消息，再插入至多一条新渲染消息。不能仅按文本或 ID 前缀删除用户消息。设置 `hide_from_ui`，但不设置 `dynamic_context_reminder`；绝不作为 state 更新返回，也不写入 checkpoint。
+- **幂等请求装配。** 用保留消息 ID 前缀、服务端所有的 `nkyel_project_context` 标记及 provenance 共同识别本 middleware 的临时消息；Gateway 准入剥离客户端提供的同名标记。每次装配只从请求副本中移除本 middleware 可确认属于自身的临时消息，再插入至多一条新渲染消息。不能仅按文本或 ID 前缀删除用户消息。设置 `hide_from_ui`，但不设置 `dynamic_context_reminder`；绝不作为 state 更新返回，也不写入 checkpoint。
 - **插入位置。** 放在当前 run 的真实用户消息之前，通过服务端所有的 run/message 身份识别，不能把最后任意一条 HumanMessage 当成用户。工具循环内保持锚点稳定，不在每次工具结果之后追加新上下文，不拆开 assistant 工具调用及结果序列。恢复/内部 run 没有保留下来的当前用户锚点时，使用前导 SystemMessage 之后的协议安全位置。压缩后根据当前请求重新定位有效锚点。既有前置插入共享 helper 不变，项目专用定位由项目渲染器负责。正常、恢复、内部和压缩后的 run 均需断言实际请求顺序。
 - **不改写历史。** 用户/assistant 过去讨论旧说明的内容仍是历史会话，不是当前项目配置。静态信任声明明确：运行时提供的当前块是有效项目设置的来源，缺席时不提供项目说明。这不会抹除已经讨论过的事实，也不改变用户全局 memory 语义。
 - **压缩。** 现有 summarizer 会救回所有标记 `dynamic_context_reminder` 的消息（`summarization_middleware.py::_preserve_dynamic_context_reminders`）。项目消息不进入该路径：state 中没有项目块，没有受保护的修正累积，也不需要项目专用保留规则。下一次模型请求直接重新渲染 pinned 快照。撤回旧稿中“正常压缩会丢掉这些 reminder”的描述。
@@ -296,13 +296,13 @@ content={"content_sha256": <hex | None>, "project_context_revision": <str | None
 1. **文档架索引（发现）** —— 每个 run 都按 §7.2 从 pinned 快照把 `<documents>` 块渲染进该 run 的请求里，受 `shelf_index_max_entries` / `shelf_index_max_bytes` 限制，按 `updated_at DESC` 排序，条目渲染为 `- id={document_id} | {name} ({size}, modified {date})`。稳定 ID 可以直接传给 `read_project_document`，也能区分同名文档，并计入字节上限和渲染哈希。仅元数据。因为它是每 run 重新渲染的，唯一的陈旧窗口就是**一
    次 run 之内**——用户在某次 run 的准入之后移入回收站、purge、重命名或新增的文档不在这次 run 的块里——而且它从不累积：文档架相关的任何东西都没有被持久化，因此对话后面不会有陈旧清单。这个窗口永远到不了内容层：每次读取都会按实时状态重新校验（§7.3 第 2 层），并以明确的错误失败（§11），而不是提供过期字
    节。
-2. **按需读取（内容）** —— 新模块 `deerflow/projects/tools.py` 里两个 harness 侧工具，用 `get_project_document_tools()` 注册，并经同一个跳过重名的 helper（由 `_append_memory_tools_without_name_conflicts` 泛化而来）追加到 lead agent 的工具列表里 memory 工具旁边
+2. **按需读取（内容）** —— 新模块 `nkyel/projects/tools.py` 里两个 harness 侧工具，用 `get_project_document_tools()` 注册，并经同一个跳过重名的 helper（由 `_append_memory_tools_without_name_conflicts` 泛化而来）追加到 lead agent 的工具列表里 memory 工具旁边
    （`agents/lead_agent/agent.py:182-192, 1024-1030`）。**注册以 run 的 pinned 项目上下文为条件**：只有当 `PROJECT_CONTEXT_KEY` 存在时才追加这两个工具，因此没有项目的 run 永远不付它们的 schema token，也永远看不到它们。这很便宜，因为装配本来就是每 run 一次——`make_lead_agent(config)`
    →`assemble_lead_agent(config)`（`agents/lead_agent/agent.py:758-801, 878+`）今天就从 run 作用域的 config（`agent_name`、模型覆盖、`should_use_memory_tools`）算出工具列表，而且没有任何 run-graph 缓存依赖它（`_state_accessor_graph_cache` 只缓存 state-accessor 图，键
    为`(assistant_id, mode, snapshot_frequency)`——`app/gateway/services.py:916-951`）。判据只读**服务端所有的 pinned 键**，绝不读客户端可影响的字段，而且即使该键在调用时因某种原因缺失，两个工具仍然 fail closed（双保险）。准入解析并保存快照（§7.1）后，middleware 与工具注册共享一个只读服务端 pinned 键的判据。解析过程不能在该键尚不存在时依赖这一判据。说明或文档架为空时可以省略渲染文本，但不能禁用工具；准入解析失败时键缺失，两个工具均不注册。
    - `list_project_documents(offset: int = 0, limit: int = 50) -> str` —— live 文档架行的 JSON 列表（分页，`limit ≤ 200`），按索引自己的 `updated_at DESC, id ASC` 顺序，并返回 `total` 与 `next_offset`，让模型可以走完被索引截断的文档架；用于超出注入索引上限的架子。
    - `read_project_document(document_id: str, offset: int = 0, limit: int = 8000) -> str` —— 文档文本的有界切片。`limit ≤ 20000` 个字符；响应携带 `{name, total_chars, offset, returned_chars, truncated, content}`。文本检测用现有 `is_text_file_by_content` helper（`routers/artifacts.py:235`）采样文件头
-     部，该 helper 被抽到一个共享的 `deerflow/utils/` 模块，让 router 与工具用同一份实现。可转换类型（`CONVERTIBLE_EXTENSIONS`，`utils/file_conversion.py:32`）在首次读取时用 `convert_file_to_markdown` 转换，之后从该文档独占的 `derived/converted.md` 伴生文件提供；`uploads.auto_convert_documents` 关闭时跳过转换并拒绝该
+     部，该 helper 被抽到一个共享的 `nkyel/utils/` 模块，让 router 与工具用同一份实现。可转换类型（`CONVERTIBLE_EXTENSIONS`，`utils/file_conversion.py:32`）在首次读取时用 `convert_file_to_markdown` 转换，之后从该文档独占的 `derived/converted.md` 伴生文件提供；`uploads.auto_convert_documents` 关闭时跳过转换并拒绝该
      调用。不可转换的二进制会被拒绝，错误指明 attach-to-thread 这条路线。
    - 两个工具都从 `runtime.context[PROJECT_CONTEXT_KEY]` 取 `project_id`，从 `resolve_runtime_user_id(runtime)`（`runtime/user_context.py:178-219`）取 `user_id`，沿用 `list_uploaded_files_tool.py:42-63` 的做法。缺失项目上下文或缺失 session factory ⇒ 工具错误，绝不是一个空的成功。
    - **子 agent 在 Phase 2 拿不到这些工具。** 子 agent runtime 有自己的 middleware 集合（只有日期，不做 memory 查找）和自己的工具列表；lead agent 自己读取所需内容，并在任务 prompt 里把内容传下去。把文档架访问扩展到子 agent 是一个独立决策，有自己的消费者，而不是 lead 注册的副作用。
@@ -422,7 +422,7 @@ RFC §5.1 说恢复"在目标目录不同时物理移动文件"。因为 `stored
 
 ### 10.7 准入不翻译保留键（Phase-1 偏差，为 Phase 2 重述）
 
-RFC §6 说首次运行准入会校验 `deerflow_project_id` 并写入 membership 列。它没有：准入剥离该键，且从不写 membership（`services.py:207-218`，由 `tests/test_thread_meta_repo.py:598-623` 钉住），客户端侧的缺口由前端预先带 `project_id` 建会话补上（`chat-page.tsx:213-230`）。因此 Phase 2 在运行开始时从
+RFC §6 说首次运行准入会校验 `nkyel_project_id` 并写入 membership 列。它没有：准入剥离该键，且从不写 membership（`services.py:207-218`，由 `tests/test_thread_meta_repo.py:598-623` 钉住），客户端侧的缺口由前端预先带 `project_id` 建会话补上（`chat-page.tsx:213-230`）。因此 Phase 2 在运行开始时从
 `threads_meta` 解析项目上下文（§7.1），而不是从 run metadata 解析，并且对准入键路径不加任何东西。
 
 ### 10.8 原子性使用已落地的锁惯用法
@@ -500,7 +500,7 @@ purge 端点不携带确认参数："此操作不可撤销"这一步是 UI 契�
 ## 12. 安全与隔离
 
 - 每次查询都经按 ContextVar 用户自动过滤的 repository；没有任何路由或工具接受 `user_id`。
-- pinned 项目上下文是服务端所有的 runtime-context 键，准入时从调用者 config/context 剥离，worker 合并时也拒绝。独立的 `deerflow_project_context` 消息标记同样从客户端消息元数据中剥离；请求注入时连同 provenance 和保留 ID 前缀一起盖章（§7.2）。
+- pinned 项目上下文是服务端所有的 runtime-context 键，准入时从调用者 config/context 剥离，worker 合并时也拒绝。独立的 `nkyel_project_context` 消息标记同样从客户端消息元数据中剥离；请求注入时连同 provenance 和保留 ID 前缀一起盖章（§7.2）。
 - 文档读取在 `users/{user_id}/projects/` 下解析并复查 `relative_to`，与 `resolve_virtual_path` 同一纪律；`stored_relpath` 值只来自服务端生成的内容地址，绝不来自请求文本。
 - 说明和文档名是不可信文本：渲染前针对被禁 tag 做中性化（§7.2），并在输入净化器中列入拒绝名单，使用户消息无法伪造 `<project>` 块。
 - trashed 文档对文档架索引、工具和列表 API 都不可见；只经用户自己的回收站端点可见。
@@ -568,7 +568,7 @@ purge 端点不携带确认参数："此操作不可撤销"这一步是 UI 契�
 - `README.md`——用户可见的项目说明、文档架、归档读取语义和回收站保留期。
 - `backend/docs/API.md`——Phase-2 路由参考（documents、thread-files、trash）。
 - `backend/docs/ARCHITECTURE.md`——项目文档架布局、运行开始时 pin、角色权威划分、回收站层。
-- `backend/packages/harness/deerflow/persistence/migrations/AGENTS.md`——链头挪到 `0024_project_documents`（`0023_user_preferences` → `0024_project_documents`），并注明前向兼容下限不变。
+- `backend/packages/harness/nkyel/persistence/migrations/AGENTS.md`——链头挪到 `0024_project_documents`（`0023_user_preferences` → `0024_project_documents`），并注明前向兼容下限不变。
 - `backend/app/gateway/AGENTS.md`——membership-writer 契约增加"运行准入以只读方式 pin 项目上下文；它仍然从不写 membership"。
 - `config.example.yaml`——`projects:` 块（§6.4）。
 - `frontend` 的 i18n 词典——所有新键（§9）。
@@ -603,8 +603,8 @@ purge 端点不携带确认参数："此操作不可撤销"这一步是 UI 契�
 
 五个切片，各自在前置依赖落地后可合并。回滚按依赖逆序执行，不支持移除前置依赖却保留其消费者。每个切片按 §13/§14 自带测试与文档。
 
-- **切片 A —— 说明注入。** `ProjectsConfig` + 写入时上限 + 422；`deerflow/projects/context.py`、准入身份/说明 pin（`PROJECT_CONTEXT_KEY`、两个服务端所有的集合）；通过 DynamicContext 模型调用钩子进行请求作用域 `<project>` 渲染和幂等定位；服务端临时标记剥离、provenance 及前端隐藏；后端/前端标记词表中的 `project` 和漂移守卫；静态信任段落；可空 memory 哈希及仅审计使用的项目指纹；Instructions 标签页。不依赖文档 repository，不建立身份修正链，不改变 memory/日期持久化。先回滚依赖它的切片，再回滚 A。
-- **切片 B —— 文档架存储、投递与读取。** `ProjectDocumentRow` + `0023` 迁移 + repository；`Paths` helper；`deerflow/projects/documents.py` 与 `tools.py`；用有界文档架快照扩展 A 的 pinned 上下文；upload/list/content/delete-to-trash 路由；项目删除时的文档 trash 转换和删除确认文案，含 `trash_origin` 快照；**请求作用域 `<documents>` 块**（每 run 从 pinned 快照渲染，永不持久化）；journal payload 的 `project_shelf_revision`；两个工具与 `is_text_file_by_content` 抽取。依赖 A，因为它扩展 A 的请求作用域项目渲染器；将 `documents` 加入两侧标记词表及漂移守卫。
+- **切片 A —— 说明注入。** `ProjectsConfig` + 写入时上限 + 422；`nkyel/projects/context.py`、准入身份/说明 pin（`PROJECT_CONTEXT_KEY`、两个服务端所有的集合）；通过 DynamicContext 模型调用钩子进行请求作用域 `<project>` 渲染和幂等定位；服务端临时标记剥离、provenance 及前端隐藏；后端/前端标记词表中的 `project` 和漂移守卫；静态信任段落；可空 memory 哈希及仅审计使用的项目指纹；Instructions 标签页。不依赖文档 repository，不建立身份修正链，不改变 memory/日期持久化。先回滚依赖它的切片，再回滚 A。
+- **切片 B —— 文档架存储、投递与读取。** `ProjectDocumentRow` + `0023` 迁移 + repository；`Paths` helper；`nkyel/projects/documents.py` 与 `tools.py`；用有界文档架快照扩展 A 的 pinned 上下文；upload/list/content/delete-to-trash 路由；项目删除时的文档 trash 转换和删除确认文案，含 `trash_origin` 快照；**请求作用域 `<documents>` 块**（每 run 从 pinned 快照渲染，永不持久化）；journal payload 的 `project_shelf_revision`；两个工具与 `is_text_file_by_content` 抽取。依赖 A，因为它扩展 A 的请求作用域项目渲染器；将 `documents` 加入两侧标记词表及漂移守卫。
 - **切片 C —— 提升与文件浏览器。** `from-thread`、`attach-to-thread`、`thread-files`（含新增 outputs 列表 helper）及前端界面。依赖 B。
 - **切片 D —— 回收站收尾。** Restore/purge/empty-trash 路由、`trash_origin` 展示字段、保留期清扫与启动钩子、孤儿对账。`DELETE …/documents/{id}` 路由在 B 落地（删除即入回收站），且 B 必须已支持删除项目时将全部 active 文档行移入回收站；restore/purge 与清扫属于 D。依赖 B。
 - **切片 E —— 前端收尾与文案。** Documents 标签页（文档架与会话文件浏览器）、回收站路由、侧边栏入口、过渡期记忆提示、i18n 与文案更新、e2e/mocks。B/C/D 路由契约冻结后可开始。

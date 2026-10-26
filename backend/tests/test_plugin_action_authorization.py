@@ -11,8 +11,8 @@ import sys
 from types import ModuleType, SimpleNamespace
 
 import pytest
-from deerflow_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
-from deerflow_extension_api.plugins import BackendAction, PluginContribution
+from nkyel_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
+from nkyel_extension_api.plugins import BackendAction, PluginContribution
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -20,14 +20,14 @@ from app.gateway import authz as gateway_authz
 from app.gateway.auth_disabled import AUTH_SOURCE_INTERNAL, AUTH_SOURCE_SESSION
 from app.gateway.internal_auth import INTERNAL_SYSTEM_ROLE
 from app.gateway.routers.plugins import router
-from deerflow.authz.provider import AuthzDecision, AuthzReason
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.authz.provider import AuthzDecision, AuthzReason
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.authorization_config import AuthorizationConfig, AuthorizationProviderConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.extensions.registry import ExtensionRegistry
 
-RBAC = "deerflow.authz.rbac:RbacAuthorizationProvider"
+RBAC = "nkyel.authz.rbac:RbacAuthorizationProvider"
 NAMESPACE = "community.check"
 ACTION_URL = f"/api/plugins/{NAMESPACE}/actions/check"
 
@@ -121,7 +121,7 @@ def _use_authorization(*, roles: dict | None = None, enabled: bool = True, fail_
     set_app_config(
         AppConfig(
             models=[ModelConfig(name="gpt-4", model="gpt-4", use="langchain_openai:ChatOpenAI")],
-            sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+            sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
             authorization=authorization,
         )
     )
@@ -261,7 +261,7 @@ def test_unknown_namespace_stays_a_404(plugin_app):
 def test_disabled_plugin_is_refused_before_any_decision(plugin_app):
     http, calls, _ = plugin_app
     http.app.state.extensions = _extensions(enabled=False)
-    _use_authorization(provider_use="deerflow.authz.rbac:RbacAuthorizationProvider", provider_config={"roles": {"user": {"plugin_actions": {"allow": "*"}}}})
+    _use_authorization(provider_use="nkyel.authz.rbac:RbacAuthorizationProvider", provider_config={"roles": {"user": {"plugin_actions": {"allow": "*"}}}})
 
     response = http.post(ACTION_URL, json={"text": "hello"})
 
@@ -304,8 +304,8 @@ def test_unreadable_config_denies_the_action(plugin_app, monkeypatch):
     def broken_config():
         raise RuntimeError("config is being rewritten")
 
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", broken_config)
-    monkeypatch.setattr("deerflow.config.get_app_config", broken_config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", broken_config)
+    monkeypatch.setattr("nkyel.config.get_app_config", broken_config)
 
     response = http.post(ACTION_URL, json={"text": "hello"})
 
@@ -335,8 +335,8 @@ def test_a_lost_config_follows_the_running_policy(plugin_app, monkeypatch, fail_
         raise FileNotFoundError("`config.yaml` file not found")
 
     _use_authorization(fail_closed=fail_closed, roles={"user": {"plugin_actions": {"allow": "*"}}})
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", absent_config)
-    monkeypatch.setattr("deerflow.config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", absent_config)
+    monkeypatch.setattr("nkyel.config.get_app_config", absent_config)
 
     http, calls, _ = plugin_app
     response = http.post(ACTION_URL, json={"text": "hello"})

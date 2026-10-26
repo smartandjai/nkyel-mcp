@@ -10,13 +10,13 @@ from _agent_e2e_helpers import FakeToolCallingModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.runtime import Runtime
 
-from deerflow.agents.factory import create_deerflow_agent
-from deerflow.agents.middlewares.thread_data_middleware import ThreadDataMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.paths import Paths
-from deerflow.tools.builtins.present_file_tool import present_file_tool
+from nkyel.agents.factory import create_nkyel_agent
+from nkyel.agents.middlewares.thread_data_middleware import ThreadDataMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.paths import Paths
+from nkyel.tools.builtins.present_file_tool import present_file_tool
 
-present_file_tool_module = importlib.import_module("deerflow.tools.builtins.present_file_tool")
+present_file_tool_module = importlib.import_module("nkyel.tools.builtins.present_file_tool")
 
 
 def _build_present_files_graph(tmp_path: Path):
@@ -36,7 +36,7 @@ def _build_present_files_graph(tmp_path: Path):
             AIMessage(content="Presented the report."),
         ]
     )
-    return create_deerflow_agent(
+    return create_nkyel_agent(
         model,
         tools=[present_file_tool],
         middleware=[ThreadDataMiddleware(base_dir=str(tmp_path), lazy_init=True)],

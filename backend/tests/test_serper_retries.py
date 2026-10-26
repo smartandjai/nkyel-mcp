@@ -9,7 +9,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from deerflow.community.serper import tools
+from nkyel.community.serper import tools
 
 
 @pytest.fixture(params=["web_search", "image_search"])

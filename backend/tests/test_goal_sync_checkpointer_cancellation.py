@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import pytest
 from _thread_checkpoint_helpers import make_saver
 
-from deerflow.agents.goal_state import GoalEvaluation
-from deerflow.runtime.goal import build_goal_outcome, build_goal_state, read_thread_goal, write_thread_goal
+from nkyel.agents.goal_state import GoalEvaluation
+from nkyel.runtime.goal import build_goal_outcome, build_goal_state, read_thread_goal, write_thread_goal
 
 
 class _BlockingSyncCheckpointer:
@@ -87,7 +87,7 @@ async def test_sync_goal_checkpoint_write_drains_across_repeated_cancellation(ch
 async def test_goal_sync_fallback_is_logged(caplog) -> None:
     checkpointer = _AsyncUnsupportedBlockingCheckpointer()
 
-    with caplog.at_level(logging.DEBUG, logger="deerflow.runtime.goal"):
+    with caplog.at_level(logging.DEBUG, logger="nkyel.runtime.goal"):
         await read_thread_goal(checkpointer, "thread-1")
 
     assert "_AsyncUnsupportedBlockingCheckpointer.aget_tuple is not implemented; falling back to get_tuple" in caplog.text

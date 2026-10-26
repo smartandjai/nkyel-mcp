@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp.tasks.runtime import (
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp.tasks.runtime import (
     McpTaskConfigurationError,
     set_mcp_task_config_snapshot,
     validate_mcp_task_config_snapshot,

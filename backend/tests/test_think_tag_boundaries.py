@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.gateway.routers import input_polish, suggestions
-from deerflow.utils.llm_text import strip_leading_think_blocks, strip_think_blocks
+from nkyel.utils.llm_text import strip_leading_think_blocks, strip_think_blocks
 
 
 @pytest.mark.parametrize("name", ["think-tank", "think:note", "think.note", "think/other", "think=note", "THINK-card"])

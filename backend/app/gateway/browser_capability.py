@@ -6,8 +6,8 @@ import importlib.util
 from dataclasses import dataclass
 from typing import Any
 
-from deerflow.community.browser_automation.session import browser_multi_worker_error
-from deerflow.config.app_config import AppConfig
+from nkyel.community.browser_automation.session import browser_multi_worker_error
+from nkyel.config.app_config import AppConfig
 
 
 @dataclass(frozen=True)
@@ -51,7 +51,7 @@ def browser_capability(config: AppConfig) -> BrowserCapability:
         return BrowserCapability(
             configured=True,
             available=False,
-            reason="cdp_url requires allow_unguarded_cdp: true because DeerFlow cannot enforce the SSRF request guard on a CDP-attached browser",
+            reason="cdp_url requires allow_unguarded_cdp: true because nkyel cannot enforce the SSRF request guard on a CDP-attached browser",
         )
 
     if importlib.util.find_spec("playwright") is None or importlib.util.find_spec("playwright.async_api") is None:

@@ -66,8 +66,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from deerflow.guardrails.provider import GuardrailRequest
-from deerflow.guardrails.typesafe import (
+from nkyel.guardrails.provider import GuardrailRequest
+from nkyel.guardrails.typesafe import (
     DEFAULT_API_KEY_ENV,
     DEFAULT_BASE_URL,
     DEFAULT_CRITERIA_FALSE,

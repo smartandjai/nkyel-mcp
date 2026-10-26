@@ -3,10 +3,10 @@
 import os
 import stat
 
-from deerflow_extension_api import AgentRunError
+from nkyel_extension_api import AgentRunError
 
 from app.gateway.path_utils import normalize_outputs_virtual_path
-from deerflow.config.paths import get_paths
+from nkyel.config.paths import get_paths
 
 MAX_BYTES = 2 * 1024 * 1024
 

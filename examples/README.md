@@ -1,30 +1,30 @@
 # Develop an extension from an existing example
 
 Start with the smallest example that covers your extension. Each directory is an
-independent Python package using the public `deerflow-extension-api` contract.
+independent Python package using the public `nkyel-extension-api` contract.
 
 | Start here                                                       | What it demonstrates                                                                                                           |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| [Extension example](deerflow-extension-example/README.md)        | Middleware, task lifecycle, model observations, services, and HTTP routes. Start here for backend extensions.                  |
-| [Conversation bookmarks](deerflow-extension-bookmarks/README.md) | A browser page, conversation action, backend actions, packaged resources, and a model tool. Start here for full-stack plugins. |
-| [Agent teams](deerflow-extension-agent-teams/README.md)          | Full Agent orchestration. Use this after the basic contribution and lifecycle patterns are familiar.                           |
+| [Extension example](nkyel-extension-example/README.md)        | Middleware, task lifecycle, model observations, services, and HTTP routes. Start here for backend extensions.                  |
+| [Conversation bookmarks](nkyel-extension-bookmarks/README.md) | A browser page, conversation action, backend actions, packaged resources, and a model tool. Start here for full-stack plugins. |
+| [Agent teams](nkyel-extension-agent-teams/README.md)          | Full Agent orchestration. Use this after the basic contribution and lifecycle patterns are familiar.                           |
 
-Additional examples cover [text-list classification](deerflow-extension-jev-classify/README.md),
-[context pruning](deerflow-extension-jev-context/README.md),
-[advisory screening of fetched content](deerflow-extension-jev-screening/README.md), and
-[sectioned long-form report writing](deerflow-extension-report-sections/README.md).
+Additional examples cover [text-list classification](nkyel-extension-jev-classify/README.md),
+[context pruning](nkyel-extension-jev-context/README.md),
+[advisory screening of fetched content](nkyel-extension-jev-screening/README.md), and
+[sectioned long-form report writing](nkyel-extension-report-sections/README.md).
 
 ## Edit, test, check, then install
 
-1. Copy the selected example outside the DeerFlow checkout. Rename its Python
-   package, distribution and `deerflow.extensions` entry point. For a full-stack
+1. Copy the selected example outside the nkyel checkout. Rename its Python
+   package, distribution and `nkyel.extensions` entry point. For a full-stack
    plugin, also choose its own namespace and browser module name.
 2. Follow the example's README to configure its dependencies and run its tests.
    Keep package behavior tests alongside the extension. For a bundled example
    with a `tests/` directory, CI installs the package with its `dev` extra next
-   to this checkout's `deerflow-extension-api`, then runs `pytest`, `ruff check`
+   to this checkout's `nkyel-extension-api`, then runs `pytest`, `ruff check`
    and `ruff format --check`.
-3. From the DeerFlow checkout root, prepare the backend environment with
+3. From the nkyel checkout root, prepare the backend environment with
    `make -C backend install`, then check the package:
 
    ```bash
@@ -34,7 +34,7 @@ Additional examples cover [text-list classification](deerflow-extension-jev-clas
    To try the checker on an unchanged example:
 
    ```bash
-   uv run --project backend --no-sync python scripts/check_extension.py examples/deerflow-extension-bookmarks
+   uv run --project backend --no-sync python scripts/check_extension.py examples/nkyel-extension-bookmarks
    ```
 
 4. Follow that example's deployment and try-it instructions. Restart Gateway,

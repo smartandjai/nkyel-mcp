@@ -19,11 +19,11 @@ import pytest
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CHART = REPO_ROOT / "deploy" / "helm" / "deer-flow"
+CHART = REPO_ROOT / "deploy" / "helm" / "nkyel"
 VALUES = CHART / "values.yaml"
 
-INIT_IMAGE = "registry.example.com/deer-flow/lark-cli-init:v1.0.65"
-BROKER_IMAGE = "registry.example.com/deer-flow/lark-cli-broker:v1.0.65"
+INIT_IMAGE = "registry.example.com/nkyel/lark-cli-init:v1.0.65"
+BROKER_IMAGE = "registry.example.com/nkyel/lark-cli-broker:v1.0.65"
 
 LARK_CLI_ENV_VARS = ("LARK_CLI_INIT_IMAGE", "LARK_CLI_BROKER_IMAGE")
 
@@ -32,7 +32,7 @@ def _render_chart(*settings: str) -> list[dict]:
     helm = shutil.which("helm")
     if helm is None:
         pytest.skip("helm is unavailable")
-    command = [helm, "template", "deer-flow", str(CHART)]
+    command = [helm, "template", "nkyel", str(CHART)]
     for setting in settings:
         command.extend(["--set", setting])
     rendered = subprocess.run(command, check=True, capture_output=True, text=True).stdout

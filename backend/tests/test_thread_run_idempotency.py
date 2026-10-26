@@ -16,10 +16,10 @@ from app.gateway import services
 from app.gateway.auth.models import User
 from app.gateway.routers import thread_runs
 from app.gateway.run_models import RunCreateRequest
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.runtime import DisconnectMode, RunManager, RunRecord, RunStatus
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.runtime import DisconnectMode, RunManager, RunRecord, RunStatus
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 def _user(email: str) -> User:
@@ -289,7 +289,7 @@ def test_wait_reused_completed_run_does_not_return_later_checkpoint(monkeypatch)
 @pytest.mark.anyio
 async def test_wait_original_request_keeps_checkpoint_when_retry_overlaps():
     """An overlapping retry must not suppress the original creating /wait result."""
-    from deerflow.runtime.stream_bridge.memory import MemoryStreamBridge
+    from nkyel.runtime.stream_bridge.memory import MemoryStreamBridge
 
     bridge = MemoryStreamBridge()
     record = RunRecord(
@@ -351,7 +351,7 @@ async def test_wait_original_request_keeps_checkpoint_when_retry_overlaps():
 @pytest.mark.anyio
 async def test_wait_peer_refreshes_status_after_owner_completes():
     """A cross-worker reuse must not keep admission-time running after END."""
-    from deerflow.runtime.stream_bridge.memory import MemoryStreamBridge
+    from nkyel.runtime.stream_bridge.memory import MemoryStreamBridge
 
     store = MemoryRunStore()
     owner = RunManager(store=store, worker_id="worker-a")
@@ -645,7 +645,7 @@ def _make_start_run_request(run_manager):
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.store.memory import InMemoryStore
 
-    from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
+    from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
 
     store = InMemoryStore()
     return SimpleNamespace(
@@ -667,7 +667,7 @@ def _make_start_run_request(run_manager):
 
 @pytest.fixture
 def _stub_app_config():
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     yield
     reset_app_config()
 
@@ -871,7 +871,7 @@ def test_run_response_never_contains_internal_idempotency_fingerprint():
 def test_run_response_sanitizes_legacy_resume_idempotency_fence():
     record = _run("run-1", "thread-1")
     record.kwargs = {
-        "input": ["deerflow-resume-idempotency", 1, "a" * 64],
+        "input": ["nkyel-resume-idempotency", 1, "a" * 64],
         "idempotency_request": {
             "version": 1,
             "kind": "resume",
@@ -928,7 +928,7 @@ async def test_start_run_reuses_matching_legacy_writer_resume_fingerprint(_stub_
         user_id=None,
         idempotency_key="http-run:same",
         kwargs={
-            "input": ["deerflow-resume-idempotency", 1, "a" * 64],
+            "input": ["nkyel-resume-idempotency", 1, "a" * 64],
             "idempotency_request": _run_idempotency_request(approved),
             "config": None,
         },
@@ -1058,8 +1058,8 @@ async def _pre_6499_resume_retry(session_factory, body, idempotency_key):
 @pytest.mark.parametrize("writer_version", ["pre-6499", "current"])
 async def test_mixed_version_resume_admission_requires_upgraded_routing(tmp_path, _stub_app_config, writer_version):
     """Read compatibility does not make old workers safe keyed-resume retry targets."""
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.persistence.run import RunRepository
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.run import RunRepository
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'mixed-resume.db'}", sqlite_dir=str(tmp_path))
     try:
@@ -1152,7 +1152,7 @@ async def test_start_run_rejects_input_resume_kind_collision(_stub_app_config, s
 @pytest.mark.anyio
 @pytest.mark.parametrize("strategy", ["interrupt", "rollback"])
 async def test_memory_store_reuses_live_idempotency_key_before_foreign_lease_conflict(strategy):
-    from deerflow.config.run_ownership_config import RunOwnershipConfig
+    from nkyel.config.run_ownership_config import RunOwnershipConfig
 
     store = MemoryRunStore()
     ownership = RunOwnershipConfig(
@@ -1193,7 +1193,7 @@ async def test_memory_store_reuses_live_idempotency_key_before_foreign_lease_con
 
 @pytest.mark.anyio
 async def test_keyed_input_remains_compatible_with_legacy_explicit_atomic_signature():
-    from deerflow.runtime import RunIdempotencyUnsupported
+    from nkyel.runtime import RunIdempotencyUnsupported
 
     class LegacyAtomicMemoryStore(MemoryRunStore):
         async def create_thread_operation_atomic(
@@ -1262,7 +1262,7 @@ async def test_keyed_input_remains_compatible_with_legacy_explicit_atomic_signat
 
 @pytest.mark.anyio
 async def test_keyed_resume_rejects_ambiguous_kwargs_store_before_admission():
-    from deerflow.runtime import RunIdempotencyUnsupported
+    from nkyel.runtime import RunIdempotencyUnsupported
 
     class DroppingKwargsStore(MemoryRunStore):
         async def create_thread_operation_atomic(self, run_id, **kwargs):
@@ -1316,7 +1316,7 @@ async def test_keyed_resume_allows_explicit_kwargs_store_capability():
 @pytest.mark.anyio
 @pytest.mark.parametrize("multitask_strategy", ["reject", "interrupt", "rollback"])
 async def test_keyed_input_rejects_ambiguous_kwargs_store_before_admission(multitask_strategy):
-    from deerflow.runtime import RunIdempotencyUnsupported
+    from nkyel.runtime import RunIdempotencyUnsupported
 
     class DroppingKwargsStore(MemoryRunStore):
         atomic_called = False
@@ -1344,7 +1344,7 @@ async def test_keyed_input_rejects_ambiguous_kwargs_store_before_admission(multi
 @pytest.mark.anyio
 @pytest.mark.parametrize("with_resume_identity", [False, True])
 async def test_explicit_resume_parameter_does_not_imply_key_support(with_resume_identity):
-    from deerflow.runtime import RunIdempotencyUnsupported
+    from nkyel.runtime import RunIdempotencyUnsupported
 
     class DroppingKeyStore(MemoryRunStore):
         async def create_thread_operation_atomic(self, run_id, *, idempotency_request=None, **kwargs):
@@ -1366,7 +1366,7 @@ async def test_explicit_resume_parameter_does_not_imply_key_support(with_resume_
 @pytest.mark.parametrize("with_resume_identity", [False, True])
 @pytest.mark.parametrize("declaration", ["replaced_parent_method", "child_flag", "mixin_flag"])
 async def test_kwargs_store_capability_must_belong_to_implementation_owner(declaration, with_resume_identity):
-    from deerflow.runtime import RunIdempotencyUnsupported
+    from nkyel.runtime import RunIdempotencyUnsupported
 
     class OptedInParent(MemoryRunStore):
         supports_idempotency_request_kwargs = True

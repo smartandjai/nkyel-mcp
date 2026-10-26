@@ -16,18 +16,18 @@ from fastapi.testclient import TestClient
 from app.channels.runtime_config_store import ChannelRuntimeConfigStore, merge_runtime_channel_configs
 from app.gateway.auth.models import User
 from app.gateway.routers import channel_connections
-from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-from deerflow.config.channel_connections_config import ChannelConnectionsConfig
+from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+from nkyel.config.channel_connections_config import ChannelConnectionsConfig
 
 
 @pytest.fixture(autouse=True)
 def _stub_app_config(monkeypatch):
     """Keep router tests independent from a developer-local config.yaml."""
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "0")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "0")
     monkeypatch.delenv("GATEWAY_WORKERS", raising=False)
     monkeypatch.delenv("WEB_CONCURRENCY", raising=False)
-    monkeypatch.delenv("DEER_FLOW_MULTI_INSTANCE", raising=False)
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    monkeypatch.delenv("NKYEL_MULTI_INSTANCE", raising=False)
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     yield
     reset_app_config()
 
@@ -51,8 +51,8 @@ def _non_admin_user() -> User:
 
 
 async def _make_repo(tmp_path):
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository
-    from deerflow.persistence.engine import get_session_factory, init_engine
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository
+    from nkyel.persistence.engine import get_session_factory, init_engine
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'router.db'}", sqlite_dir=str(tmp_path))
     return ChannelConnectionRepository(get_session_factory())
@@ -71,7 +71,7 @@ def _make_app(
     app.state.channel_connection_repo = repo
     if set_channels_config_state:
         # The ``channels`` blocks of config.yaml; the router overlays the runtime store on every request.
-        set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "channels": channels_config or {}}))
+        set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "channels": channels_config or {}}))
     if runtime_config_store is None:
         runtime_config_dir = TemporaryDirectory()
         app.state.channel_runtime_config_tmpdir = runtime_config_dir
@@ -83,7 +83,7 @@ def _make_app(
 
 def _channels(app) -> dict:
     """The channel configs the router serves now: config.yaml ``channels`` with the runtime store overlaid."""
-    from deerflow.config.app_config import get_app_config
+    from nkyel.config.app_config import get_app_config
 
     result = dict((get_app_config().model_extra or {}).get("channels") or {})
     merge_runtime_channel_configs(result, app.state.channel_connections_config, store=app.state.channel_runtime_config_store)
@@ -94,7 +94,7 @@ def _enabled_connections_config() -> ChannelConnectionsConfig:
     return ChannelConnectionsConfig.model_validate(
         {
             "enabled": True,
-            "telegram": {"enabled": True, "bot_username": "deerflow_bot"},
+            "telegram": {"enabled": True, "bot_username": "nkyel_bot"},
             "slack": {"enabled": True},
             "discord": {"enabled": True},
             "feishu": {"enabled": True},
@@ -175,7 +175,7 @@ def test_get_providers_uses_existing_channels_config(tmp_path):
     assert by_provider["telegram"]["auth_mode"] == "deep_link"
     assert by_provider["telegram"]["credential_values"] == {
         "bot_token": "********",
-        "bot_username": "deerflow_bot",
+        "bot_username": "nkyel_bot",
     }
     assert by_provider["slack"]["configured"] is True
     assert by_provider["slack"]["auth_mode"] == "binding_code"
@@ -241,8 +241,8 @@ def test_get_providers_degrades_when_persistence_is_unavailable(monkeypatch):
 def test_get_providers_reports_connected_without_binding_in_auth_disabled_mode(tmp_path, monkeypatch):
     import anyio
 
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
-    monkeypatch.delenv("DEER_FLOW_ENV", raising=False)
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
+    monkeypatch.delenv("NKYEL_ENV", raising=False)
     monkeypatch.delenv("ENVIRONMENT", raising=False)
     repo = anyio.run(_make_repo, tmp_path)
     app = _make_app(_enabled_connections_config(), repo, _channels_config())
@@ -493,7 +493,7 @@ def test_connect_telegram_returns_deep_link_and_persists_state(tmp_path):
     body = response.json()
     assert body["provider"] == "telegram"
     assert body["mode"] == "deep_link"
-    assert body["url"].startswith("https://t.me/deerflow_bot?start=")
+    assert body["url"].startswith("https://t.me/nkyel_bot?start=")
     assert body["code"]
     assert "/start" in body["instruction"]
 
@@ -520,7 +520,7 @@ def test_connect_slack_returns_binding_command_and_persists_state(tmp_path):
     assert body["mode"] == "binding_code"
     assert body["url"] is None
     assert len(body["code"]) >= 22
-    assert body["instruction"] == f"Send /connect {body['code']} to the DeerFlow Slack bot."
+    assert body["instruction"] == f"Send /connect {body['code']} to the nkyel Slack bot."
 
     async def count_states():
         return await repo.count_oauth_states(owner_user_id=str(_user().id), provider="slack")
@@ -566,7 +566,7 @@ def test_connect_discord_returns_binding_command_and_persists_state(tmp_path):
     assert body["mode"] == "binding_code"
     assert body["url"] is None
     assert body["code"]
-    assert body["instruction"] == f"Send /connect {body['code']} to the DeerFlow Discord bot."
+    assert body["instruction"] == f"Send /connect {body['code']} to the nkyel Discord bot."
 
     async def count_states():
         return await repo.count_oauth_states(owner_user_id=str(_user().id), provider="discord")
@@ -599,7 +599,7 @@ def test_connect_existing_binding_code_channels_return_command_and_persist_state
         assert body["mode"] == "binding_code"
         assert body["url"] is None
         assert len(body["code"]) >= 22
-        assert body["instruction"] == f"Send /connect {body['code']} to the DeerFlow {expected_display_name} bot."
+        assert body["instruction"] == f"Send /connect {body['code']} to the nkyel {expected_display_name} bot."
 
         async def count_states(provider=provider):
             return await repo.count_oauth_states(owner_user_id=str(_user().id), provider=provider)
@@ -1123,7 +1123,7 @@ def test_disconnect_provider_runtime_config_suppresses_file_config_and_stops_cha
     set_app_config(
         AppConfig.model_validate(
             {
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "channels": {
                     "feishu": {
                         "enabled": True,
@@ -1287,7 +1287,7 @@ def test_configure_provider_runtime_does_not_clobber_concurrent_config_update(tm
         {
             "enabled": True,
             "slack": {"enabled": True},
-            "telegram": {"enabled": True, "bot_username": "deerflow_bot"},
+            "telegram": {"enabled": True, "bot_username": "nkyel_bot"},
         }
     )
     runtime_config_store = ChannelRuntimeConfigStore(tmp_path / "channels" / "runtime-config.json")
@@ -1565,7 +1565,7 @@ def test_wechat_qr_confirmation_preserves_bot_id_unless_replaced(monkeypatch, re
         # A blank GATEWAY_WORKERS is unset, so WEB_CONCURRENCY still decides.
         {"GATEWAY_WORKERS": "", "WEB_CONCURRENCY": "2"},
         # Kubernetes replicas run one worker each and declare their peers instead.
-        {"GATEWAY_WORKERS": "1", "DEER_FLOW_MULTI_INSTANCE": "1"},
+        {"GATEWAY_WORKERS": "1", "NKYEL_MULTI_INSTANCE": "1"},
     ],
 )
 @pytest.mark.parametrize("method,suffix", [("POST", ""), ("POST", "/session/poll"), ("DELETE", "/session")])
@@ -1644,7 +1644,7 @@ def test_qq_provider_exposes_binding_flow_and_masks_secret(tmp_path):
             body = connected.json()
             assert body["mode"] == "binding_code"
             assert body["url"] is None
-            assert body["instruction"] == f"Send /connect {body['code']} to the DeerFlow QQ bot."
+            assert body["instruction"] == f"Send /connect {body['code']} to the nkyel QQ bot."
 
         async def consume():
             return await repo.consume_oauth_state(provider="qq", state=body["code"])

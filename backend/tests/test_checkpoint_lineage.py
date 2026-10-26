@@ -425,7 +425,7 @@ async def _seed_lineage(mode: str):
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.types import Overwrite
 
-    from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+    from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
 
     saver = InMemorySaver()
     accessor = CheckpointStateAccessor.bind(build_state_mutation_graph("seed", mode), saver, mode=mode)
@@ -435,7 +435,7 @@ async def _seed_lineage(mode: str):
 
 
 async def _stamp_duration(saver, accessor, config):
-    from deerflow.runtime.runs.worker import persist_run_history_metadata
+    from nkyel.runtime.runs.worker import persist_run_history_metadata
 
     await persist_run_history_metadata(checkpointer=saver, thread_id=THREAD_ID, durations={"run-1": 12}, message_run_ids={"ai-1": "run-1"})
 
@@ -481,7 +481,7 @@ def test_goal_leaf_stays_addressable_with_accessor_snapshots() -> None:
         saver, accessor, config = await _seed_lineage("full")
         await _stamp_duration(saver, accessor, config)
 
-        from deerflow.runtime.goal import write_thread_goal
+        from nkyel.runtime.goal import write_thread_goal
 
         await write_thread_goal(saver, THREAD_ID, {"objective": "ship", "continuation_count": 0, "no_progress_count": 0, "updated_at": "2026-10-08T00:00:00Z"})
         goal_tup = await saver.aget_tuple(config)

@@ -8,11 +8,11 @@ from unittest.mock import MagicMock, patch
 
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage
 
-from deerflow.client import DeerFlowClient, StreamEvent
-from deerflow.config.authorization_config import AuthorizationConfig
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.tui.runtime import stream_actions, translate
-from deerflow.tui.view_state import (
+from nkyel.client import NkyelClient, StreamEvent
+from nkyel.config.authorization_config import AuthorizationConfig
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.tui.runtime import stream_actions, translate
+from nkyel.tui.view_state import (
     AssistantDelta,
     AssistantError,
     RunEnded,
@@ -185,7 +185,7 @@ def test_stream_actions_two_turns_with_none_ids_produce_separate_rows():
 
 
 def test_real_client_stream_renders_the_streamed_answer_verbatim():
-    """Drive the real ``DeerFlowClient.stream`` into the reducer: its token
+    """Drive the real ``NkyelClient.stream`` into the reducer: its token
     deltas, including ones that repeat or extend earlier text, plus the
     closing values snapshot, must render exactly the model's answer."""
     chunks = ["**", "Note", "**", ": ", "ha", "ha", " ", "1", "10", " apples"]
@@ -203,8 +203,8 @@ def test_real_client_stream_renders_the_streamed_answer_verbatim():
     config.token_usage.enabled = False
     config.database = DatabaseConfig(backend="memory")
     config.authorization = AuthorizationConfig(enabled=False)
-    with patch("deerflow.client.get_app_config", return_value=config):
-        client = DeerFlowClient()
+    with patch("nkyel.client.get_app_config", return_value=config):
+        client = NkyelClient()
     agent = MagicMock()
     agent.stream.side_effect = stream_turn
 

@@ -12,7 +12,7 @@ import pytest
 from ddgs.ddgs import DDGS
 from ddgs.exceptions import DDGSException, RatelimitException, TimeoutException
 
-from deerflow.community.image_search import tools
+from nkyel.community.image_search import tools
 
 pytestmark = pytest.mark.asyncio
 

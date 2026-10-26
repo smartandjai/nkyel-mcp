@@ -8,10 +8,10 @@ from unittest.mock import MagicMock
 import pytest
 from langgraph.errors import GraphBubbleUp
 
-from deerflow.authz.outcome import pop_authorization_outcome
-from deerflow.guardrails.builtin import AllowlistProvider
-from deerflow.guardrails.middleware import GuardrailMiddleware
-from deerflow.guardrails.provider import GuardrailDecision, GuardrailReason, GuardrailRequest
+from nkyel.authz.outcome import pop_authorization_outcome
+from nkyel.guardrails.builtin import AllowlistProvider
+from nkyel.guardrails.middleware import GuardrailMiddleware
+from nkyel.guardrails.provider import GuardrailDecision, GuardrailReason, GuardrailRequest
 
 # --- Helpers ---
 
@@ -97,7 +97,7 @@ class TestAllowlistProvider:
             "fail_closed": True,
             "passport": "ops-policy",
             "policy": {
-                "id": "deerflow.guardrails.allowlist",
+                "id": "nkyel.guardrails.allowlist",
                 "version": "1.0.0",
             },
             "provider_parameters": {
@@ -259,7 +259,7 @@ class TestGuardrailMiddleware:
 
     def test_protocol_isinstance_check(self):
         """AllowlistProvider satisfies GuardrailProvider protocol at runtime."""
-        from deerflow.guardrails.provider import GuardrailProvider
+        from nkyel.guardrails.provider import GuardrailProvider
 
         assert isinstance(AllowlistProvider(), GuardrailProvider)
 
@@ -689,7 +689,7 @@ class TestGuardrailRequestAttribution:
 
 class TestGuardrailsConfig:
     def test_config_defaults(self):
-        from deerflow.config.guardrails_config import GuardrailsConfig
+        from nkyel.config.guardrails_config import GuardrailsConfig
 
         config = GuardrailsConfig()
         assert config.enabled is False
@@ -698,7 +698,7 @@ class TestGuardrailsConfig:
         assert config.provider is None
 
     def test_config_from_dict(self):
-        from deerflow.config.guardrails_config import GuardrailsConfig
+        from nkyel.config.guardrails_config import GuardrailsConfig
 
         config = GuardrailsConfig.model_validate(
             {
@@ -706,7 +706,7 @@ class TestGuardrailsConfig:
                 "fail_closed": False,
                 "passport": "./guardrails/passport.json",
                 "provider": {
-                    "use": "deerflow.guardrails.builtin:AllowlistProvider",
+                    "use": "nkyel.guardrails.builtin:AllowlistProvider",
                     "config": {"denied_tools": ["bash"]},
                 },
             }
@@ -714,11 +714,11 @@ class TestGuardrailsConfig:
         assert config.enabled is True
         assert config.fail_closed is False
         assert config.passport == "./guardrails/passport.json"
-        assert config.provider.use == "deerflow.guardrails.builtin:AllowlistProvider"
+        assert config.provider.use == "nkyel.guardrails.builtin:AllowlistProvider"
         assert config.provider.config == {"denied_tools": ["bash"]}
 
     def test_singleton_load_and_get(self):
-        from deerflow.config.guardrails_config import get_guardrails_config, load_guardrails_config_from_dict, reset_guardrails_config
+        from nkyel.config.guardrails_config import get_guardrails_config, load_guardrails_config_from_dict, reset_guardrails_config
 
         try:
             load_guardrails_config_from_dict({"enabled": True, "provider": {"use": "test:Foo"}})
@@ -795,7 +795,7 @@ class TestGuardrailWritesAuthorizationOutcome:
 
     def test_the_outcome_store_is_bounded_so_an_unpopped_run_cannot_grow_forever(self):
         """No production caller pops outcomes today, so the store must self-limit."""
-        from deerflow.authz.outcome import _MAX_TRACKED_OUTCOMES
+        from nkyel.authz.outcome import _MAX_TRACKED_OUTCOMES
 
         mw = GuardrailMiddleware(_AllowAllProvider())
         # Seeded non-empty: _FakeRuntime's ``context or {}`` fallback would

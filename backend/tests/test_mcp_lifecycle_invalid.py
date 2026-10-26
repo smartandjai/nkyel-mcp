@@ -27,19 +27,19 @@ _INVALID_PROGRAM = textwrap.dedent(
     import os
     from pathlib import Path
 
-    import deerflow.mcp.tools as tools_module
-    from deerflow.mcp import cache as cache_module
-    from deerflow.mcp import session_pool as session_pool_module
+    import nkyel.mcp.tools as tools_module
+    from nkyel.mcp import cache as cache_module
+    from nkyel.mcp import session_pool as session_pool_module
 
-    cfg = Path(os.environ["DEER_FLOW_EXTENSIONS_CONFIG_PATH"])
+    cfg = Path(os.environ["NKYEL_EXTENSIONS_CONFIG_PATH"])
     pool = session_pool_module.get_session_pool()
     pool.ensure_binding("A", "durable-fp", domain="deployment")
 
     calls = {"n": 0}
 
-    from deerflow.mcp.client import build_servers_config
-    from deerflow.mcp.session_pool import normalized_connection_fingerprint
-    from deerflow.mcp.tools import ServerDiscoveryResult
+    from nkyel.mcp.client import build_servers_config
+    from nkyel.mcp.session_pool import normalized_connection_fingerprint
+    from nkyel.mcp.tools import ServerDiscoveryResult
 
     async def _fake_by_server(*, extensions_config, server_names=None, session_pool=None, personal_user_id=None):
         calls["n"] += 1
@@ -70,15 +70,15 @@ _RECOVERY_PROGRAM = textwrap.dedent(
     import os
     from pathlib import Path
 
-    import deerflow.mcp.tools as tools_module
-    from deerflow.mcp import cache as cache_module
+    import nkyel.mcp.tools as tools_module
+    from nkyel.mcp import cache as cache_module
 
-    cfg = Path(os.environ["DEER_FLOW_EXTENSIONS_CONFIG_PATH"])
+    cfg = Path(os.environ["NKYEL_EXTENSIONS_CONFIG_PATH"])
     calls = {"n": 0}
 
-    from deerflow.mcp.client import build_servers_config
-    from deerflow.mcp.session_pool import normalized_connection_fingerprint
-    from deerflow.mcp.tools import ServerDiscoveryResult
+    from nkyel.mcp.client import build_servers_config
+    from nkyel.mcp.session_pool import normalized_connection_fingerprint
+    from nkyel.mcp.tools import ServerDiscoveryResult
 
     async def _fake_by_server(*, extensions_config, server_names=None, session_pool=None, personal_user_id=None):
         calls["n"] += 1
@@ -95,7 +95,7 @@ _RECOVERY_PROGRAM = textwrap.dedent(
     first = cache_module.get_cached_mcp_tools()
     first_calls = calls["n"]
 
-    cfg.write_text(os.environ["DEER_FLOW_VALID_CONFIG"], encoding="utf-8")
+    cfg.write_text(os.environ["NKYEL_VALID_CONFIG"], encoding="utf-8")
     second = cache_module.get_cached_mcp_tools()
 
     print(json.dumps({
@@ -110,8 +110,8 @@ _RECOVERY_PROGRAM = textwrap.dedent(
 
 def _run_program(program: str, cfg: Path) -> dict:
     env = os.environ.copy()
-    env["DEER_FLOW_EXTENSIONS_CONFIG_PATH"] = str(cfg)
-    env["DEER_FLOW_VALID_CONFIG"] = json.dumps(_CONFIG)
+    env["NKYEL_EXTENSIONS_CONFIG_PATH"] = str(cfg)
+    env["NKYEL_VALID_CONFIG"] = json.dumps(_CONFIG)
     try:
         completed = subprocess.run(
             [sys.executable, "-c", program],

@@ -3,7 +3,7 @@
 The rule's own message is "Shell script dumps the environment", so only a command
 that actually dumps it counts. The word `env` also appears as a path component in
 the portable shebang (`#!/usr/bin/env bash`, used by this repository's own
-`skills/public/claude-to-deerflow/scripts/*.sh`), in host labels
+`skills/public/claude-to-nkyel/scripts/*.sh`), in host labels
 (`https://env.example.com`), in dotted file names and in option names
 (`--env`), as a plain command argument (`echo env`), as a variable (`${env}`) and
 inside comments (`# export -p`); none of them dumps anything, so the command word
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from deerflow.skills.skillscan.orchestrator import scan_skill_dir
+from nkyel.skills.skillscan.orchestrator import scan_skill_dir
 
 
 def _write_script(skill_dir: Path, body: str) -> None:

@@ -9,7 +9,7 @@ from app.gateway.github.triggers import (
     _resolved_trigger,
     event_should_fire,
 )
-from deerflow.config.agents_config import GitHubTriggerConfig
+from nkyel.config.agents_config import GitHubTriggerConfig
 
 BOT = "coding-llm-gateway"
 
@@ -376,25 +376,25 @@ def test_pull_request_review_require_mention_skips_without_mention() -> None:
 
 
 # ---------------------------------------------------------------------------
-# @-mention boundary: ``@deerflow`` must NOT match ``@deerflow-bot``
+# @-mention boundary: ``@nkyel`` must NOT match ``@nkyel-bot``
 # ---------------------------------------------------------------------------
 
 
 def test_mention_prefix_does_not_match_longer_login() -> None:
-    # Agent with mention_login='deerflow' must NOT fire on a comment that
-    # addresses a different account, '@deerflow-bot'. Regression for the
+    # Agent with mention_login='nkyel' must NOT fire on a comment that
+    # addresses a different account, '@nkyel-bot'. Regression for the
     # naive substring ``f'@{login}' in body`` check.
-    trigger = _resolve("issue_comment", GitHubTriggerConfig(require_mention=True, mention_login="deerflow"))
+    trigger = _resolve("issue_comment", GitHubTriggerConfig(require_mention=True, mention_login="nkyel"))
     fire, reason = event_should_fire(
         "issue_comment",
         {
             "action": "created",
             "issue": {"number": 1, "user": {"login": "alice"}},
-            "comment": {"body": "Hey @deerflow-bot please review", "user": {"login": "alice"}},
+            "comment": {"body": "Hey @nkyel-bot please review", "user": {"login": "alice"}},
             "repository": {"full_name": "a/b"},
         },
         trigger,
-        "deerflow",
+        "nkyel",
     )
     assert fire is False
     assert "mention required" in reason

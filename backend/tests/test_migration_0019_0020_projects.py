@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 import sqlalchemy as sa
 
-from deerflow.persistence.engine import close_engine, init_engine
-from deerflow.persistence.migrations import _helpers  # noqa: F401  (ensures helpers importable)
+from nkyel.persistence.engine import close_engine, init_engine
+from nkyel.persistence.migrations import _helpers  # noqa: F401  (ensures helpers importable)
 
 pytestmark = pytest.mark.asyncio
 
@@ -20,7 +20,7 @@ async def _fresh_db(tmp_path):
 async def test_0019_creates_projects_table(tmp_path):
     await _fresh_db(tmp_path)
     try:
-        from deerflow.persistence.engine import get_engine
+        from nkyel.persistence.engine import get_engine
 
         engine = get_engine()
         async with engine.connect() as conn:
@@ -51,7 +51,7 @@ async def test_0019_creates_projects_table(tmp_path):
 async def test_0020_adds_project_id_column(tmp_path):
     await _fresh_db(tmp_path)
     try:
-        from deerflow.persistence.engine import get_engine
+        from nkyel.persistence.engine import get_engine
 
         engine = get_engine()
         async with engine.connect() as conn:

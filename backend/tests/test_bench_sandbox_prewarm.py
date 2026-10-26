@@ -9,10 +9,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.paths import Paths
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
+from nkyel.config.app_config import AppConfig
+from nkyel.config.paths import Paths
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
 from scripts.benchmark.sandbox import bench_prewarm as bench
 
 
@@ -77,12 +77,12 @@ class FakeSandbox:
 
 @pytest.fixture
 def setup(monkeypatch, tmp_path):
-    config = AppConfig(sandbox=SandboxConfig(use="deerflow.community.aio_sandbox:AioSandboxProvider"))
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", Paths(str(tmp_path)))
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", lambda: config)
-    monkeypatch.setattr("deerflow.sandbox.tools.get_app_config", lambda: config)
+    config = AppConfig(sandbox=SandboxConfig(use="nkyel.community.aio_sandbox:AioSandboxProvider"))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", Paths(str(tmp_path)))
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.sandbox.tools.get_app_config", lambda: config)
     provider = EventProvider()
     set_sandbox_provider(provider)
     yield provider, config
@@ -334,7 +334,7 @@ async def test_failed_batch_destroy_is_recorded_and_stops_matrix(setup, monkeypa
 
 
 def test_non_aio_config_rejected_before_provisioning(monkeypatch, tmp_path):
-    config = AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+    config = AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
     monkeypatch.setattr(bench, "get_app_config", lambda: config)
     monkeypatch.setattr(bench, "_make_aio_provider", lambda config: pytest.fail("must not provision for a mismatched treatment"))
     with pytest.raises(SystemExit) as exc:
@@ -344,7 +344,7 @@ def test_non_aio_config_rejected_before_provisioning(monkeypatch, tmp_path):
 
 def test_shutdown_failure_still_stops_sampler_and_propagates(monkeypatch, tmp_path):
     events = []
-    config = AppConfig(sandbox=SandboxConfig(use="deerflow.community.aio_sandbox:AioSandboxProvider"))
+    config = AppConfig(sandbox=SandboxConfig(use="nkyel.community.aio_sandbox:AioSandboxProvider"))
     monkeypatch.setattr(bench, "get_app_config", lambda: config)
     monkeypatch.setattr(bench, "_make_aio_provider", lambda config: (object(), {"image": "offline"}))
     monkeypatch.setattr(bench, "set_sandbox_provider", lambda provider: None)

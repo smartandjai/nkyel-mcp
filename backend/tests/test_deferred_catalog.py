@@ -2,7 +2,7 @@ import pytest
 from langchain_core.tools import StructuredTool
 from langchain_core.tools import tool as as_tool
 
-from deerflow.tools.builtins.tool_search import MAX_RESULTS, DeferredToolCatalog
+from nkyel.tools.builtins.tool_search import MAX_RESULTS, DeferredToolCatalog
 
 
 @as_tool

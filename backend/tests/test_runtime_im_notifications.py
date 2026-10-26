@@ -10,20 +10,20 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from sqlalchemy import event, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-import deerflow.persistence.models  # noqa: F401
+import nkyel.persistence.models  # noqa: F401
 from app.scheduler.notification_delivery import NotificationDeliveryWorker
 from app.scheduler.service import ScheduledTaskService
-from deerflow.agents.human_input import (
+from nkyel.agents.human_input import (
     HUMAN_INPUT_RESPONSE_KEY,
     extract_unanswered_human_input_request,
 )
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_connections.model import ChannelConnectionRow
-from deerflow.persistence.notification_deliveries import NotificationDeliveryRepository
-from deerflow.persistence.notification_deliveries.model import NotificationDeliveryRow
-from deerflow.persistence.user.im_notifications import ImNotificationPreferencesRepository
-from deerflow.persistence.user.model import UserRow
-from deerflow.runtime import DisconnectMode, RunRecord, RunStatus
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_connections.model import ChannelConnectionRow
+from nkyel.persistence.notification_deliveries import NotificationDeliveryRepository
+from nkyel.persistence.notification_deliveries.model import NotificationDeliveryRow
+from nkyel.persistence.user.im_notifications import ImNotificationPreferencesRepository
+from nkyel.persistence.user.model import UserRow
+from nkyel.runtime import DisconnectMode, RunRecord, RunStatus
 
 
 @pytest.fixture
@@ -280,7 +280,7 @@ async def test_interrupted_and_im_originated_runs_do_not_enqueue_runtime_notific
         _make_run(
             run_id="run-im",
             status=RunStatus.success,
-            metadata={"deerflow_origin": {"kind": "im_channel", "provider": "feishu"}},
+            metadata={"nkyel_origin": {"kind": "im_channel", "provider": "feishu"}},
         )
     )
     await service.handle_run_completion(
@@ -369,8 +369,8 @@ async def test_worker_rechecks_human_input_pending_and_drops_resolved_requests(e
 
 @pytest.mark.anyio
 async def test_unpersisted_terminal_status_does_not_emit_premature_success_notification(env):
-    from deerflow.persistence.run.model import RunRow
-    from deerflow.runtime.runs.manager import RunManager
+    from nkyel.persistence.run.model import RunRow
+    from nkyel.runtime.runs.manager import RunManager
 
     sessions, preferences, _, service = env
     await preferences.patch(
@@ -424,12 +424,12 @@ async def test_worker_notifies_only_after_terminal_status_is_confirmed(env, comp
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.graph import END, START, StateGraph
 
-    from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
-    from deerflow.agents.thread_state import ThreadState
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
-    from deerflow.runtime.runs.manager import RunManager
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
-    from deerflow.runtime.runs.worker import RunContext, run_agent
+    from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from nkyel.agents.thread_state import ThreadState
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.runs.manager import RunManager
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.worker import RunContext, run_agent
 
     sessions, preferences, _, service = env
     await preferences.patch(
@@ -497,7 +497,7 @@ async def test_worker_notifies_only_after_terminal_status_is_confirmed(env, comp
 async def test_sqlite_lock_owner_materializes_rows_and_serializes_opt_out(env):
     import asyncio
 
-    from deerflow.persistence.user.im_notifications import ImNotificationPreferenceRow
+    from nkyel.persistence.user.im_notifications import ImNotificationPreferenceRow
 
     sessions, preferences, _, service = env
     # Before any patch, get_in_session(lock_owner=True) on SQLite materializes the 4 provider rows
@@ -552,9 +552,9 @@ async def test_gateway_notification_delivery_human_input_closure_works_in_both_c
     import app.gateway.app as gateway_app_mod
     import app.gateway.deps as gateway_deps
     import app.gateway.services as gateway_services
-    from deerflow.agents.thread_state import get_thread_state_schema
-    from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-    from deerflow.runtime.checkpoint_mode import inject_checkpoint_mode
+    from nkyel.agents.thread_state import get_thread_state_schema
+    from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+    from nkyel.runtime.checkpoint_mode import inject_checkpoint_mode
 
     sessions, preferences, deliveries, service = env
     await preferences.patch(
@@ -631,7 +631,7 @@ async def test_gateway_notification_delivery_human_input_closure_works_in_both_c
         notification_excluded_providers=lambda: frozenset(),
     )
     monkeypatch.setattr(channel_service_mod, "get_channel_service", lambda: fake_channel_service)
-    monkeypatch.setattr("deerflow.persistence.engine.get_session_factory", lambda: sessions)
+    monkeypatch.setattr("nkyel.persistence.engine.get_session_factory", lambda: sessions)
 
     app = FastAPI()
     app.state.scheduled_task_service = service

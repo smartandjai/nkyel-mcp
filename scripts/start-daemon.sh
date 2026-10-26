@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# start-daemon.sh — Start DeerFlow in daemon (background) mode
+# start-daemon.sh — Start nkyel in daemon (background) mode
 #
 # Thin wrapper around serve.sh --prod --daemon.
 # Kept for backward compatibility.

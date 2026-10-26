@@ -3,11 +3,11 @@
 import pytest
 from pydantic import ValidationError
 
-from deerflow.config.sandbox_config import SandboxConfig
+from nkyel.config.sandbox_config import SandboxConfig
 
 
 def test_prewarm_defaults_are_opt_in_and_bounded():
-    config = SandboxConfig(use="deerflow.community.aio_sandbox:AioSandboxProvider")
+    config = SandboxConfig(use="nkyel.community.aio_sandbox:AioSandboxProvider")
     assert config.prewarm is False
     assert config.prewarm_max_concurrent == 1
 

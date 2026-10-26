@@ -6,15 +6,15 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from deerflow.config.tool_config import ToolConfig
-from deerflow.tools.conversation import CONVERSATION_READER_CONTEXT_KEY, read_conversation
-from deerflow.tools.tools import get_available_tools
-from deerflow.tools.types import Runtime
+from nkyel.config.tool_config import ToolConfig
+from nkyel.tools.conversation import CONVERSATION_READER_CONTEXT_KEY, read_conversation
+from nkyel.tools.tools import get_available_tools
+from nkyel.tools.types import Runtime
 
 
 def _config(*, configured=True, name="read_conversation"):
     return SimpleNamespace(
-        tools=[ToolConfig(name=name, group="conversation", use="deerflow.tools.conversation:read_conversation")] if configured else [],
+        tools=[ToolConfig(name=name, group="conversation", use="nkyel.tools.conversation:read_conversation")] if configured else [],
         sandbox=SimpleNamespace(use="example.remote:Sandbox"),
         skill_evolution=SimpleNamespace(enabled=False),
         models=[],
@@ -118,14 +118,14 @@ def test_limit_description_says_continuations_ignore_it():
 
 def test_tool_name_constant_matches_the_registered_tool():
     # The Gateway sizes pages by this name's tool-output budget; a rename must move both.
-    from deerflow.constants import CONVERSATION_TOOL_NAME
+    from nkyel.constants import CONVERSATION_TOOL_NAME
 
     assert read_conversation.name == CONVERSATION_TOOL_NAME
 
 
 @pytest.mark.parametrize("name", ["read_conversation", "renamed_reader"])
 def test_conversation_reader_is_not_loaded_by_default(monkeypatch, name):
-    monkeypatch.setattr("deerflow.tools.tools.resolve_variable", lambda *_: pytest.fail("disabled reader must not be imported"))
+    monkeypatch.setattr("nkyel.tools.tools.resolve_variable", lambda *_: pytest.fail("disabled reader must not be imported"))
 
     tools = get_available_tools(include_mcp=False, app_config=_config(name=name))
 

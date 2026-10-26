@@ -30,8 +30,8 @@ from pathlib import Path
 
 from support.symlinks import symlink_or_skip
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
-from deerflow.sandbox.tools import replace_virtual_paths_in_command
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.sandbox.tools import replace_virtual_paths_in_command
 
 _COLON_LIST_COMMAND = 'export PATH="/mnt/user-data/workspace/bin:/mnt/user-data/outputs/bin"'
 _COLON_FILENAME_COMMAND = "cat '/mnt/user-data/workspace/cache:old.txt'"

@@ -27,7 +27,7 @@ from app.gateway.auth.jwt import create_access_token, decode_token
 from app.gateway.auth.models import User
 from app.gateway.auth_disabled import AUTH_DISABLED_USER_ID
 from app.gateway.langgraph_auth import add_owner_filter, authenticate
-from deerflow.mcp_scope import (
+from nkyel.mcp_scope import (
     THREAD_INCARNATION_CONTEXT_KEY,
     THREAD_INCARNATION_METADATA_GUARD_KEY,
 )
@@ -69,7 +69,7 @@ def test_no_cookie_raises_401():
 
 
 def test_auth_disabled_skips_csrf_and_authenticates_e2e_user(monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "1")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "1")
 
     identity = asyncio.run(authenticate(_req(method="POST")))
 

@@ -1,6 +1,6 @@
-# Contributing to DeerFlow Backend
+# Contributing to nkyel Backend
 
-Thank you for your interest in contributing to DeerFlow! This document provides guidelines and instructions for contributing to the backend codebase.
+Thank you for your interest in contributing to nkyel! This document provides guidelines and instructions for contributing to the backend codebase.
 
 ## Table of Contents
 
@@ -27,8 +27,8 @@ Thank you for your interest in contributing to DeerFlow! This document provides 
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/deer-flow.git
-   cd deer-flow
+   git clone https://github.com/YOUR_USERNAME/nkyel.git
+   cd nkyel
    ```
 
 ## Development Setup
@@ -64,7 +64,7 @@ make dev
 
 ```
 backend/
-├── packages/harness/deerflow/  # deerflow-harness package (import: deerflow.*)
+├── packages/harness/nkyel/  # nkyel-harness package (import: nkyel.*)
 │   ├── agents/                 # Agent system
 │   │   ├── lead_agent/         # Main agent (agent.py factory, prompt.py)
 │   │   ├── middlewares/        # Agent middleware chain
@@ -86,7 +86,7 @@ backend/
 │   ├── guardrails/             # Pre-tool-call authorization providers
 │   ├── tracing/                # Tracer factory & trace metadata
 │   ├── uploads/                # Uploads manager
-│   ├── tui/                    # Terminal UI (`deerflow` console script)
+│   ├── tui/                    # Terminal UI (`nkyel` console script)
 │   ├── community/              # Community tools (tavily/, jina_ai/, firecrawl/, …)
 │   ├── reflection/             # Dynamic module loading
 │   └── utils/                  # Utilities
@@ -200,7 +200,7 @@ Example test:
 
 ```python
 import pytest
-from deerflow.models.factory import create_chat_model
+from nkyel.models.factory import create_chat_model
 
 def test_create_chat_model_with_valid_name():
     """Test that a valid model name creates a model instance."""
@@ -242,10 +242,10 @@ Include in your PR description:
 
 ### Adding New Tools
 
-1. Create tool in `packages/harness/deerflow/tools/builtins/` or `packages/harness/deerflow/community/`:
+1. Create tool in `packages/harness/nkyel/tools/builtins/` or `packages/harness/nkyel/community/`:
 
 ```python
-# packages/harness/deerflow/tools/builtins/my_tool.py
+# packages/harness/nkyel/tools/builtins/my_tool.py
 from langchain_core.tools import tool
 
 @tool
@@ -267,15 +267,15 @@ def my_tool(param: str) -> str:
 tools:
   - name: my_tool
     group: my_group
-    use: deerflow.tools.builtins.my_tool:my_tool
+    use: nkyel.tools.builtins.my_tool:my_tool
 ```
 
 ### Adding New Middleware
 
-1. Create middleware in `packages/harness/deerflow/agents/middlewares/`:
+1. Create middleware in `packages/harness/nkyel/agents/middlewares/`:
 
 ```python
-# packages/harness/deerflow/agents/middlewares/my_middleware.py
+# packages/harness/nkyel/agents/middlewares/my_middleware.py
 from langchain.agents import AgentState
 from langchain.agents.middleware import AgentMiddleware
 from langgraph.runtime import Runtime
@@ -307,8 +307,8 @@ into the agent state, or `None` when they only observe state.
 ```yaml
 extensions:
   middlewares:
-    - deerflow.agents.middlewares.my_middleware:MyMiddleware
-    - class: deerflow.agents.middlewares.my_middleware:MyMiddleware
+    - nkyel.agents.middlewares.my_middleware:MyMiddleware
+    - class: nkyel.agents.middlewares.my_middleware:MyMiddleware
       kwargs:
         max_tool_calls: 5
 ```
@@ -321,10 +321,10 @@ by the model-length guard, the optional safety guard, `DurableContextMiddleware`
 `SummarizationMiddleware`, then `SubagentDateContextMiddleware` and
 `SystemMessageCoalescingMiddleware`. Treat middleware class paths as trusted
 operator configuration because loading one executes Python code.
-Embedded callers can instead use `DeerFlowClient(middlewares=[...])`, which
+Embedded callers can instead use `NkyelClient(middlewares=[...])`, which
 builds the full lead-agent chain and places middleware before its
 terminal-response, model-length, safety, and clarification tail.
-`create_deerflow_agent(extra_middleware=[...])` instead builds a smaller
+`create_nkyel_agent(extra_middleware=[...])` instead builds a smaller
 feature-based lead-agent chain; unanchored extras are placed immediately before
 `ClarificationMiddleware` (anchored extras follow their `@Next`/`@Prev`
 placement, but the anchor must be present in this smaller chain). Neither API
@@ -338,7 +338,7 @@ subagent pipelines. Packaged extensions registered through the top-level
 code that needs committed, programmatic lead-only wiring can use
 `build_middlewares(..., custom_middlewares=[MyMiddleware()])` at the
 `build_middlewares` call in
-`packages/harness/deerflow/agents/lead_agent/agent.py` (reached through
+`packages/harness/nkyel/agents/lead_agent/agent.py` (reached through
 `make_lead_agent`).
 
 ### Adding New API Endpoints
@@ -374,7 +374,7 @@ app.include_router(my_router.router)
 
 When adding new configuration options:
 
-1. Update `packages/harness/deerflow/config/app_config.py` with new fields
+1. Update `packages/harness/nkyel/config/app_config.py` with new fields
 2. Add default values in `config.example.yaml`
 3. Document in `docs/CONFIGURATION.md`
 
@@ -437,4 +437,4 @@ If you have questions about contributing:
 2. Look for similar issues or PRs on GitHub
 3. Open a discussion or issue on GitHub
 
-Thank you for contributing to DeerFlow!
+Thank you for contributing to nkyel!

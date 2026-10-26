@@ -21,25 +21,25 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 from sqlalchemy.orm import sessionmaker
 
-from deerflow.config.credentials_key import CredentialsCipher
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.config.paths import Paths
-from deerflow.mcp.cache import reset_mcp_tools_cache
-from deerflow.mcp.oauth import get_initial_oauth_headers
-from deerflow.mcp.oauth_store import McpOAuthTokenStore, set_mcp_oauth_token_store
-from deerflow.mcp.task_tool_caller import McpTaskToolCaller
-from deerflow.mcp.tasks import OrdinaryMcpTaskDriver, TaskReference, TaskStatus
-from deerflow.mcp.tasks import runtime as task_runtime
-from deerflow.mcp.tasks.runtime import (
+from nkyel.config.credentials_key import CredentialsCipher
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.config.paths import Paths
+from nkyel.mcp.cache import reset_mcp_tools_cache
+from nkyel.mcp.oauth import get_initial_oauth_headers
+from nkyel.mcp.oauth_store import McpOAuthTokenStore, set_mcp_oauth_token_store
+from nkyel.mcp.task_tool_caller import McpTaskToolCaller
+from nkyel.mcp.tasks import OrdinaryMcpTaskDriver, TaskReference, TaskStatus
+from nkyel.mcp.tasks import runtime as task_runtime
+from nkyel.mcp.tasks.runtime import (
     McpTaskConfigurationError,
     set_mcp_task_config_snapshot,
     set_mcp_task_submitter,
     validate_mcp_task_config_snapshot,
 )
-from deerflow.mcp.tools import get_mcp_tools
-from deerflow.mcp.user_config import load_user_mcp_config, personal_server_name, user_mcp_config_path
-from deerflow.persistence.base import Base
-from deerflow.persistence.mcp_oauth_tokens import McpOAuthTokenRow, SqlMcpOAuthTokenRepository
+from nkyel.mcp.tools import get_mcp_tools
+from nkyel.mcp.user_config import load_user_mcp_config, personal_server_name, user_mcp_config_path
+from nkyel.persistence.base import Base
+from nkyel.persistence.mcp_oauth_tokens import McpOAuthTokenRow, SqlMcpOAuthTokenRepository
 
 
 class _Clock:
@@ -115,7 +115,7 @@ def rotating_server(monkeypatch):
             super().__init__(*args, **kwargs)
 
     monkeypatch.setattr(httpx, "AsyncClient", OfflineClient)
-    monkeypatch.setattr("deerflow.mcp.oauth.datetime", _Clock)
+    monkeypatch.setattr("nkyel.mcp.oauth.datetime", _Clock)
     monkeypatch.setattr(_Clock, "current", datetime(2026, 1, 1, tzinfo=UTC))
     yield server
 
@@ -143,7 +143,7 @@ def task_config(tmp_path, monkeypatch):
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(path))
     startup = ExtensionsConfig.from_file()
     set_mcp_task_config_snapshot(startup)
     try:
@@ -264,7 +264,7 @@ async def test_changed_task_credentials_still_require_restart(task_config, rotat
         changed.mcp_servers["reports"].url = "https://other.example.invalid/mcp"
     else:
         setattr(changed.mcp_servers["reports"].oauth, field, "changed")
-    with pytest.raises(McpTaskConfigurationError, match="restart DeerFlow"):
+    with pytest.raises(McpTaskConfigurationError, match="restart nkyel"):
         await get_mcp_tools(changed)
     assert rotating_server.refresh_requests == ["refresh-0"]
 
@@ -471,7 +471,7 @@ async def test_snapshot_and_oauth_sharing_follow_the_same_server_selection(task_
 @pytest.mark.parametrize("operation", ["discovery", "durable_call"])
 async def test_personal_connection_cannot_reuse_same_named_deployment_oauth(task_config, rotating_server, tmp_path, monkeypatch, operation, token_persistence):
     _path, startup = task_config
-    monkeypatch.setattr("deerflow.mcp.user_config.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.mcp.user_config.get_paths", lambda: Paths(base_dir=tmp_path))
     personal = startup.mcp_servers["reports"].model_dump(mode="json")
     personal["oauth"]["refresh_token"] = "personal-seed"
     personal["personal_public_network"] = True
@@ -501,7 +501,7 @@ async def test_personal_connection_cannot_reuse_same_named_deployment_oauth(task
 @pytest.mark.asyncio
 async def test_personal_connection_continues_its_rotated_chain_on_the_next_run(task_config, rotating_server, tmp_path, monkeypatch, shared_token_store):
     _path, startup = task_config
-    monkeypatch.setattr("deerflow.mcp.user_config.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.mcp.user_config.get_paths", lambda: Paths(base_dir=tmp_path))
     personal = startup.mcp_servers["reports"].model_dump(mode="json")
     personal["oauth"]["refresh_token"] = "personal-seed"
     personal["personal_public_network"] = True

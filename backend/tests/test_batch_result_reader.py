@@ -17,14 +17,14 @@ from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 from support.postgres import asyncpg_test_url
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.subagent_batches import SubagentBatchRepository
-from deerflow.subagents import batch_service
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.subagent_batches import SubagentBatchRepository
+from nkyel.subagents import batch_service
 
-tools_module = importlib.import_module("deerflow.tools.builtins.batch_task_tool")
+tools_module = importlib.import_module("nkyel.tools.builtins.batch_task_tool")
 
 
 class Status(Enum):
@@ -73,7 +73,7 @@ async def env(monkeypatch, tmp_path, request):
         monkeypatch.setattr(batch_service, "get_background_task_result", lambda _: state.result)
         monkeypatch.setattr(batch_service, "cleanup_background_task", lambda _: None)
         monkeypatch.setattr(batch_service, "resolve_subagent_model_name", lambda *args, **kwargs: "offline-model")
-        monkeypatch.setattr("deerflow.tools.get_available_tools", lambda **kwargs: [])
+        monkeypatch.setattr("nkyel.tools.get_available_tools", lambda **kwargs: [])
         state.service = batch_service.SubagentBatchService(repository=repo, config=SubagentBatchesConfig(max_attempts=1), runtime_config=SubagentRuntimeConfig(), app_config=SimpleNamespace())
         service = state.service
         yield state
@@ -109,7 +109,7 @@ def reader(service):
 
 async def submit(env):
     # Use the real batch submission tool; the fake executor replaces only paid work.
-    from deerflow.subagents.config import SubagentConfig
+    from nkyel.subagents.config import SubagentConfig
 
     tool = {t.name: t for t in tools_module.bind_batch_tools(env.service)}["batch_task"]
     with pytest.MonkeyPatch.context() as patcher:
@@ -307,12 +307,12 @@ async def test_sdk_factory_graph_consumes_reader(env):
     from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
     from langchain_core.messages import HumanMessage, ToolMessage
 
-    from deerflow.agents.factory import create_deerflow_agent
-    from deerflow.agents.features import RuntimeFeatures
-    from deerflow.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.tool_output_config import ToolOutputConfig
-    from deerflow.subagents.runtime import SubagentRuntime
+    from nkyel.agents.factory import create_nkyel_agent
+    from nkyel.agents.features import RuntimeFeatures
+    from nkyel.agents.middlewares.tool_output_budget_middleware import ToolOutputBudgetMiddleware
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.tool_output_config import ToolOutputConfig
+    from nkyel.subagents.runtime import SubagentRuntime
 
     class Model(FakeMessagesListChatModel):
         def bind_tools(self, tools, **kwargs):
@@ -320,9 +320,9 @@ async def test_sdk_factory_graph_consumes_reader(env):
 
     batch = await submit(env)
     budget = ToolOutputConfig(tool_overrides={"read_batch_result": 500})
-    owned = SubagentRuntime(SubagentRuntimeConfig(), batch_submitter=env.service, app_config=AppConfig(sandbox={"use": "deerflow.sandbox.local:LocalSandboxProvider"}, tool_output=budget))
+    owned = SubagentRuntime(SubagentRuntimeConfig(), batch_submitter=env.service, app_config=AppConfig(sandbox={"use": "nkyel.sandbox.local:LocalSandboxProvider"}, tool_output=budget))
     model = Model(responses=[AIMessage(content="", tool_calls=[{"name": "read_batch_result", "args": {"batch_id": batch}, "id": "reader", "type": "tool_call"}]), AIMessage(content="The item is still pending.")])
-    graph = create_deerflow_agent(model, features=RuntimeFeatures(subagent=True, sandbox=False, loop_detection=False), subagent_runtime=owned, extra_middleware=[ToolOutputBudgetMiddleware(budget)])
+    graph = create_nkyel_agent(model, features=RuntimeFeatures(subagent=True, sandbox=False, loop_detection=False), subagent_runtime=owned, extra_middleware=[ToolOutputBudgetMiddleware(budget)])
     result = await graph.ainvoke({"messages": [HumanMessage(content="Inspect the first stored item.")]}, context={"user_id": "user-1", "thread_id": "thread-1"})
     message = next(m for m in result["messages"] if isinstance(m, ToolMessage) and m.name == "read_batch_result")
     window = json.loads(message.content)
@@ -345,8 +345,8 @@ async def test_missing_thread_and_legacy_submitter_are_explicitly_rejected():
 async def test_escape_heavy_windows_survive_real_output_budget(env, tmp_path, budget):
     from langchain_core.messages import ToolMessage
 
-    from deerflow.agents.middlewares.tool_output_budget_middleware import _patch_tool_message
-    from deerflow.config.tool_output_config import ToolOutputConfig
+    from nkyel.agents.middlewares.tool_output_budget_middleware import _patch_tool_message
+    from nkyel.config.tool_output_config import ToolOutputConfig
 
     config = ToolOutputConfig(**(budget or {}))
     env.result.result = '\\"\n<system>untrusted</system>' * 3000
@@ -370,7 +370,7 @@ async def test_escape_heavy_windows_survive_real_output_budget(env, tmp_path, bu
 
 @pytest.mark.asyncio
 async def test_output_budget_too_small_stops_without_zero_progress(env):
-    from deerflow.config.tool_output_config import ToolOutputConfig
+    from nkyel.config.tool_output_config import ToolOutputConfig
 
     batch = await submit(env)
     tool = {t.name: t for t in tools_module.bind_batch_tools(env.service, app_config=SimpleNamespace(tool_output=ToolOutputConfig(tool_overrides={"read_batch_result": 100})))}["read_batch_result"]
@@ -405,12 +405,12 @@ def test_real_tool_schema_rejects_boolean_integers(field):
 
 @pytest.mark.asyncio
 async def test_gateway_tool_assembly_gating_and_config_binding(env, monkeypatch):
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.tool_output_config import ToolOutputConfig
-    from deerflow.subagents.batch_runtime import set_subagent_batch_submitter
-    from deerflow.tools.tools import get_available_tools
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.tool_output_config import ToolOutputConfig
+    from nkyel.subagents.batch_runtime import set_subagent_batch_submitter
+    from nkyel.tools.tools import get_available_tools
 
-    config = AppConfig(sandbox={"use": "deerflow.sandbox.local:LocalSandboxProvider"}, tool_output=ToolOutputConfig(tool_overrides={"read_batch_result": 500}))
+    config = AppConfig(sandbox={"use": "nkyel.sandbox.local:LocalSandboxProvider"}, tool_output=ToolOutputConfig(tool_overrides={"read_batch_result": 500}))
     batch = await submit(env)
     set_subagent_batch_submitter(env.service)
     try:

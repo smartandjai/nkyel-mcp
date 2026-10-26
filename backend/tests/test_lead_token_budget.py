@@ -9,20 +9,20 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.agents.lead_agent.agent import build_middlewares
-from deerflow.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
-from deerflow.agents.middlewares.subagent_limit_middleware import SubagentLimitMiddleware
-from deerflow.agents.middlewares.token_budget_middleware import TokenBudgetMiddleware
-from deerflow.agents.middlewares.token_usage_middleware import TOKEN_USAGE_ATTRIBUTION_KEY, CompletedSubagentUsageMiddleware, TokenUsageMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.app_config import AppConfig
-from deerflow.config.loop_detection_config import LoopDetectionConfig
-from deerflow.config.memory_config import MemoryConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.summarization_config import SummarizationConfig
-from deerflow.config.token_budget_config import TokenBudgetConfig
-from deerflow.config.token_usage_config import TokenUsageConfig
-from deerflow.tools.builtins.task_tool import _task_result_command
+from nkyel.agents.lead_agent.agent import build_middlewares
+from nkyel.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
+from nkyel.agents.middlewares.subagent_limit_middleware import SubagentLimitMiddleware
+from nkyel.agents.middlewares.token_budget_middleware import TokenBudgetMiddleware
+from nkyel.agents.middlewares.token_usage_middleware import TOKEN_USAGE_ATTRIBUTION_KEY, CompletedSubagentUsageMiddleware, TokenUsageMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.app_config import AppConfig
+from nkyel.config.loop_detection_config import LoopDetectionConfig
+from nkyel.config.memory_config import MemoryConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.summarization_config import SummarizationConfig
+from nkyel.config.token_budget_config import TokenBudgetConfig
+from nkyel.config.token_usage_config import TokenUsageConfig
+from nkyel.tools.builtins.task_tool import _task_result_command
 
 _ACCOUNTING_MIDDLEWARE_TYPES = (TokenBudgetMiddleware, TokenUsageMiddleware, CompletedSubagentUsageMiddleware)
 
@@ -41,7 +41,7 @@ class _ToolCallingModel(FakeMessagesListChatModel):
 )
 async def test_lead_budget_counts_last_subagent_batch_across_same_run_continuation(async_graph, child_tokens, usage_enabled):
     app_config = AppConfig(
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         memory=MemoryConfig(enabled=False),
         summarization=SummarizationConfig(enabled=False),
         token_budget=TokenBudgetConfig(enabled=True, max_tokens=1000),
@@ -118,7 +118,7 @@ async def test_lead_budget_counts_last_subagent_batch_across_same_run_continuati
 def test_disabled_budget_preserves_attribution_after_subagent_call_limit():
     """Default tracking must describe the calls retained by the real limit."""
     app_config = AppConfig(
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         memory=MemoryConfig(enabled=False),
         summarization=SummarizationConfig(enabled=False),
         token_budget=TokenBudgetConfig(enabled=False),
@@ -159,7 +159,7 @@ def test_disabled_budget_preserves_attribution_after_subagent_call_limit():
 async def test_enabled_budget_attribution_matches_calls_retained_by_guards(async_graph, guard):
     """Enabled budgeting must preserve attribution after actual call guards."""
     app_config = AppConfig(
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         memory=MemoryConfig(enabled=False),
         summarization=SummarizationConfig(enabled=False),
         token_budget=TokenBudgetConfig(enabled=True, max_tokens=1000 if guard == "budget" else 10000),

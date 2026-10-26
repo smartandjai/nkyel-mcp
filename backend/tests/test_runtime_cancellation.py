@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-import deerflow.runtime.cancellation as cancellation
-from deerflow.runtime.cancellation import drained_async_context, wait_for_task_until
+import nkyel.runtime.cancellation as cancellation
+from nkyel.runtime.cancellation import drained_async_context, wait_for_task_until
 
 
 @pytest.mark.anyio

@@ -9,9 +9,9 @@ Module guides:
 - **[frontend/AGENTS.md](frontend/AGENTS.md)** — frontend depth: Next.js App Router layout,
   thread/streaming data flow, code style, commands.
 
-## What is DeerFlow
+## What is nkyel
 
-DeerFlow combines LangGraph and Next.js with thread-isolated sandbox execution,
+nkyel combines LangGraph and Next.js with thread-isolated sandbox execution,
 memory, subagents and extensible tools. IM channels connect through the Gateway.
 
 ## Service Topology
@@ -51,23 +51,23 @@ flags. Keep credential mounts broker-only and keep distinct volumes in hostPath 
 ## Repository Map
 
 ```
-deer-flow/
+nkyel/
 ├── Makefile  # Root orchestration: drives the full stack (dev/start/stop, docker, setup)
 ├── config.example.yaml  # Template → copy to config.yaml (gitignored) at repo root
 ├── extensions_config.example.json  # Template → copy to extensions_config.json (gitignored): MCP servers + skills
 ├── backend/  # Python backend — see backend/AGENTS.md
 │   ├── Makefile  # Per-module backend commands (dev, gateway, test, lint, migrate-rev)
 │   ├── extensions/sources/  # Deployable snapshots of locally installed Python extensions
-│   ├── packages/extension-api/  # deerflow-extension-api package (import: deerflow_extension_api.*) — public extension contract
-│   ├── packages/harness/  # deerflow-harness package (import: deerflow.*) — agent framework
+│   ├── packages/extension-api/  # nkyel-extension-api package (import: nkyel_extension_api.*) — public extension contract
+│   ├── packages/harness/  # nkyel-harness package (import: nkyel.*) — agent framework
 │   └── app/  # FastAPI Gateway + IM channels (import: app.*)
 ├── frontend/  # Next.js frontend (pnpm) — see frontend/AGENTS.md
 ├── docker/  # docker-compose files, nginx config, provisioner
 ├── skills/  # Agent skills: public/ (committed), custom/ (gitignored)
-│  # Managed integration skill packs are global at .deer-flow/integrations/skills/{provider}/
+│  # Managed integration skill packs are global at .nkyel/integrations/skills/{provider}/
 │  # Integration credentials and enabled state remain per-user
 ├── contracts/  # Cross-component JSON contracts (e.g. subagent status, skill review)
-├── examples/  # Extension examples: deerflow-extension-{example,bookmarks,agent-teams}
+├── examples/  # Extension examples: nkyel-extension-{example,bookmarks,agent-teams}
 ├── scripts/  # Root orchestration scripts invoked by the Makefile (check, configure, doctor, support_bundle, serve, nginx, docker, deploy, setup_wizard)
 ├── tests/  # Root-level tests (currently tests/skills/ — public skill tests)
 └── docs/  # Cross-cutting docs, plans, and design notes
@@ -77,11 +77,11 @@ Third-party extensions load from operator-controlled `config.yaml -> plugins:`.
 This imports code, so the list stays outside API-writable `extensions_config.json`.
 Extensions contribute middleware, lifecycle observers, Gateway services, FastAPI
 routers, and experimental full-stack plugins. Use
-`deerflow extensions install/upgrade/list/enable/disable/remove` or root
+`nkyel extensions install/upgrade/list/enable/disable/remove` or root
 `make extension-*` wrappers. Restart Gateway after every mutation. Build hooks
 and extension code run with Gateway privileges; use only trusted operator sources.
 Transactions, accepted source forms, locking, and contribution contracts:
-[extensions guide](backend/packages/harness/deerflow/extensions/AGENTS.md).
+[extensions guide](backend/packages/harness/nkyel/extensions/AGENTS.md).
 User manual: `frontend/src/content/{en,zh}/harness/extensions/`.
 
 **Extension-first evaluation** — before implementing a feature by editing core code,
@@ -90,12 +90,12 @@ above. Stay in core for bug fixes and for changes to the agent loop, memory, con
 compaction, or authentication. If existing hooks cannot express the feature, add a
 generic hook to the extension contract plus an extension that uses it — do not
 hard-code business logic into core. Working examples:
-`examples/deerflow-extension-{example,bookmarks,agent-teams}`.
-[Workflow guide](examples/deerflow-extension-workflows/AGENTS.md): public
+`examples/nkyel-extension-{example,bookmarks,agent-teams}`.
+[Workflow guide](examples/nkyel-extension-workflows/AGENTS.md): public
 AgentRuns; POSIX, one process/store; approval and session-authorized recovery; uncertain admissions need reconciliation;
 no multi-Gateway failover or hard currency budget.
 
-Knowledge management/space policy: `examples/deerflow-extension-knowledge-{management,platform}/`
+Knowledge management/space policy: `examples/nkyel-extension-knowledge-{management,platform}/`
 (scoped `AGENTS.md`, `CONTRACT.md`). Use existing plugin/router/principal contracts;
 retrieval stays independent. Space policy intersects administrator/resource/operation
 and upstream grants, never grants chat access. SQLite holds plugin-owned space policy.
@@ -156,7 +156,7 @@ Production uses image Python (`uv run --no-sync`) and `exec` for SIGTERM;
 Compose sets `init: true` (`backend/tests/test_gateway_sigterm_delivery.py`).
 `make up` waits for Gateway `/health`; failures show Compose status and Gateway logs.
 
-Docker logs/restarts resolve `DEER_FLOW_ROOT` from this checkout before Compose,
+Docker logs/restarts resolve `NKYEL_ROOT` from this checkout before Compose,
 as start/stop do.
 
 Full list: `make help`.
@@ -172,7 +172,7 @@ cd backend && make lint       # ruff check
 cd backend && make format     # ruff format
 
 # Frontend (see frontend/AGENTS.md for the full set)
-cd frontend && pnpm dev       # Dev server: Webpack by default (override with DEER_FLOW_DEV_BUNDLER=turbo)
+cd frontend && pnpm dev       # Dev server: Webpack by default (override with NKYEL_DEV_BUNDLER=turbo)
 cd frontend && pnpm check     # Lint + type check (run before committing)
 cd frontend && pnpm test      # Unit tests
 ```
@@ -237,7 +237,7 @@ Repo-wide conventions:
   Read `SKILL.md` with `encoding="utf-8-sig"` to strip a leading BOM; write with
   `encoding="utf-8"`. Never rely on the platform locale.
 - **Version sources must stay in lockstep** — a release version must match identically in
-  `backend/pyproject.toml`, `frontend/package.json`, and `deploy/helm/deer-flow/Chart.yaml`
+  `backend/pyproject.toml`, `frontend/package.json`, and `deploy/helm/nkyel/Chart.yaml`
   (`version` + `appVersion`), and `backend/uv.lock` must record the same version for the root
   package (uv stores its PEP 440 form, e.g. `2.1.0rc0`). Pushing a `v*` git tag triggers CI
   that runs `scripts/verify_versions.sh` and **blocks all publishing** if any source drifts.

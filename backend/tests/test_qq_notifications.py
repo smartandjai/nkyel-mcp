@@ -60,7 +60,7 @@ async def connected(handler=None, *, bindings=None):
         await channel.stop()
 
 
-async def notify(channel, *, owner="owner", target="user-openid", text="任务已完成。\nOpen DeerFlow for details."):
+async def notify(channel, *, owner="owner", target="user-openid", text="任务已完成。\nOpen nkyel for details."):
     await channel.send_notification_for_owner(owner_user_id=owner, target=target, text_markdown=text)
 
 
@@ -77,7 +77,7 @@ async def test_private_notification_serializes_without_passive_message_context()
         assert message.headers["Authorization"] == "QQBot fixture-token"
         assert message.headers["X-Union-Appid"] == "app1"
         assert message.extensions["timeout"] == {"connect": 15, "read": 15, "write": 15, "pool": 15}
-        assert json.loads(message.content) == {"msg_type": 0, "content": "任务已完成。\nOpen DeerFlow for details."}
+        assert json.loads(message.content) == {"msg_type": 0, "content": "任务已完成。\nOpen nkyel for details."}
         assert context.sequence == 4
         assert len(channel._replies) == 1
 
@@ -251,13 +251,13 @@ async def test_group_notification_serializes_to_group_endpoint_without_passive_c
         await channel.send_group_notification_for_owner(
             owner_user_id="owner",
             target="group-binding",
-            text_markdown="任务已完成。\nOpen DeerFlow for details.",
+            text_markdown="任务已完成。\nOpen nkyel for details.",
         )
         channel._connection_repo.list_connections.assert_awaited_once_with("owner")
         assert len(requests) == 2
         _token, message = requests
         assert str(message.url) == "https://api.sgroup.qq.com/v2/groups/group-openid/messages"
-        assert json.loads(message.content) == {"msg_type": 0, "content": "任务已完成。\nOpen DeerFlow for details."}
+        assert json.loads(message.content) == {"msg_type": 0, "content": "任务已完成。\nOpen nkyel for details."}
 
 
 @pytest.mark.parametrize(

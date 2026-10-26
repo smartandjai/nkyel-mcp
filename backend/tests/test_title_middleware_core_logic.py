@@ -8,11 +8,11 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 from langgraph.constants import TAG_NOSTREAM
 
-from deerflow.agents.middlewares import title_middleware as title_middleware_module
-from deerflow.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY
-from deerflow.agents.middlewares.title_middleware import TitleMiddleware
-from deerflow.config.title_config import TitleConfig, get_title_config, set_title_config
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+from nkyel.agents.middlewares import title_middleware as title_middleware_module
+from nkyel.agents.middlewares.dynamic_context_middleware import _DYNAMIC_CONTEXT_REMINDER_KEY
+from nkyel.agents.middlewares.title_middleware import TitleMiddleware
+from nkyel.config.title_config import TitleConfig, get_title_config, set_title_config
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
 
 def _clone_title_config(config: TitleConfig) -> TitleConfig:

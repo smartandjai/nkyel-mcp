@@ -16,9 +16,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from deerflow.community.browser_automation import session as session_mod
-from deerflow.community.browser_automation import tools
-from deerflow.community.browser_automation.session import (
+from nkyel.community.browser_automation import session as session_mod
+from nkyel.community.browser_automation import tools
+from nkyel.community.browser_automation.session import (
     _LIVE_FRAME_JPEG_QUALITY,
     BrowserLiveViewerError,
     BrowserSession,
@@ -46,7 +46,7 @@ def isolated_worker_env(monkeypatch):
 def public_dns():
     """Keep mocked tool calls offline while exercising the real URL safety check."""
     with patch(
-        "deerflow.community.browser_automation.tools._resolve_host_addresses",
+        "nkyel.community.browser_automation.tools._resolve_host_addresses",
         return_value=[ipaddress.ip_address("93.184.216.34")],
     ):
         yield

@@ -30,24 +30,24 @@ from app.gateway.auth.models import User
 from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
 from app.gateway.routers import scheduled_tasks, threads
 from app.scheduler.service import ScheduledTaskService
-from deerflow.config.paths import Paths
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_connections.model import ChannelConnectionRow
-from deerflow.persistence.notification_deliveries import NotificationDeliveryRepository, NotificationDeliveryRow
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_events import ScheduledTaskEventRepository, ScheduledTaskEventRow
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.finalization import LIFECYCLE_REASONS, lifecycle_anchor, lifecycle_reason
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
-from deerflow.persistence.user.im_notifications import ImNotificationPreferenceRow
-from deerflow.persistence.user.model import UserPreferenceRow, UserRow
-from deerflow.runtime import RunStatus
-from deerflow.runtime.runs.manager import RunRecord
-from deerflow.runtime.runs.schemas import DisconnectMode
+from nkyel.config.paths import Paths
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_connections.model import ChannelConnectionRow
+from nkyel.persistence.notification_deliveries import NotificationDeliveryRepository, NotificationDeliveryRow
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_events import ScheduledTaskEventRepository, ScheduledTaskEventRow
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.finalization import LIFECYCLE_REASONS, lifecycle_anchor, lifecycle_reason
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.persistence.user.im_notifications import ImNotificationPreferenceRow
+from nkyel.persistence.user.model import UserPreferenceRow, UserRow
+from nkyel.runtime import RunStatus
+from nkyel.runtime.runs.manager import RunRecord
+from nkyel.runtime.runs.schemas import DisconnectMode
 
 NOW = datetime(2026, 10, 6, 8, tzinfo=UTC)
 _OWNER = User(id=UUID("6c1f3d0e-8a8f-4a35-9a51-0d2f5d1b7c11"), email="events@example.com", password_hash="unused", system_role="user")

@@ -1,6 +1,6 @@
 # Architecture Overview
 
-This document provides a comprehensive overview of the DeerFlow backend architecture.
+This document provides a comprehensive overview of the nkyel backend architecture.
 
 ## System Architecture
 
@@ -54,7 +54,7 @@ This document provides a comprehensive overview of the DeerFlow backend architec
 
 The agent runtime is embedded in the FastAPI Gateway and built on LangGraph for robust multi-agent workflow orchestration. Nginx rewrites `/api/langgraph/*` to Gateway's native `/api/*` routes, so the public API remains compatible with LangGraph SDK clients without running a separate LangGraph server.
 
-**Entry Point**: `packages/harness/deerflow/agents/lead_agent/agent.py:make_lead_agent`
+**Entry Point**: `packages/harness/nkyel/agents/lead_agent/agent.py:make_lead_agent`
 
 **Key Responsibilities**:
 - Agent creation and configuration
@@ -70,7 +70,7 @@ It is not the default service entrypoint; scripts and Docker deployments run the
 {
   "agent": {
     "type": "agent",
-    "path": "deerflow.agents:make_lead_agent"
+    "path": "nkyel.agents:make_lead_agent"
   }
 }
 ```
@@ -88,14 +88,14 @@ FastAPI application providing REST endpoints plus the public LangGraph-compatibl
 - `mcp.py` - `/api/mcp` - MCP server configuration
 - `skills.py` - `/api/skills` - Skills management
 - `uploads.py` - `/api/threads/{id}/uploads` - File upload
-- `threads.py` - `/api/threads/{id}` - Local DeerFlow thread data cleanup after LangGraph deletion
+- `threads.py` - `/api/threads/{id}` - Local nkyel thread data cleanup after LangGraph deletion
 - `artifacts.py` - `/api/threads/{id}/artifacts` - Artifact serving
 - `suggestions.py` - `/api/threads/{id}/suggestions` - Follow-up suggestion generation
 - `projects.py` - `/api/projects` - Project CRUD, archive/restore, member threads
 - `project_documents.py` - `/api/projects/{id}/documents` - Project document shelf (upload, list, content, move-to-trash)
 - `trash.py` - `/api/trash` - Trash tier (list, restore, purge, empty-trash) for project shelf documents
 
-The web conversation delete flow first deletes Gateway-managed thread state through the LangGraph-compatible route, then the Gateway `threads.py` router removes DeerFlow-managed filesystem data via `Paths.delete_thread_dir()`.
+The web conversation delete flow first deletes Gateway-managed thread state through the LangGraph-compatible route, then the Gateway `threads.py` router removes nkyel-managed filesystem data via `Paths.delete_thread_dir()`.
 
 ### Projects: Pinned Context and the Document Shelf
 
@@ -153,7 +153,7 @@ class ThreadState(AgentState):
     # Core state from AgentState
     messages: list[BaseMessage]
 
-    # DeerFlow extensions
+    # nkyel extensions
     sandbox: dict             # Sandbox environment info
     artifacts: list[str]      # Generated file paths
     thread_data: dict         # {workspace, uploads, outputs} paths
@@ -181,7 +181,7 @@ class ThreadState(AgentState):
               ▼                                         ▼
 ┌─────────────────────────┐              ┌─────────────────────────┐
 │  LocalSandboxProvider   │              │  AioSandboxProvider     │
-│  (packages/harness/deerflow/sandbox/local/) │              │  (packages/harness/deerflow/community/)       │
+│  (packages/harness/nkyel/sandbox/local/) │              │  (packages/harness/nkyel/community/)       │
 │                         │              │                         │
 │  - Singleton instance   │              │  - Docker-based         │
 │  - Direct execution     │              │  - Isolated containers  │
@@ -201,10 +201,10 @@ class ThreadState(AgentState):
 
 | Virtual Path | Physical Path |
 |-------------|---------------|
-| `/mnt/user-data/workspace` | `backend/.deer-flow/threads/{thread_id}/user-data/workspace` |
-| `/mnt/user-data/uploads` | `backend/.deer-flow/threads/{thread_id}/user-data/uploads` |
-| `/mnt/user-data/outputs` | `backend/.deer-flow/threads/{thread_id}/user-data/outputs` |
-| `/mnt/skills` | `deer-flow/skills/` |
+| `/mnt/user-data/workspace` | `backend/.nkyel/threads/{thread_id}/user-data/workspace` |
+| `/mnt/user-data/uploads` | `backend/.nkyel/threads/{thread_id}/user-data/uploads` |
+| `/mnt/user-data/outputs` | `backend/.nkyel/threads/{thread_id}/user-data/outputs` |
+| `/mnt/skills` | `nkyel/skills/` |
 
 ### Tool System
 
@@ -215,7 +215,7 @@ class ThreadState(AgentState):
 
 ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
 │   Built-in Tools    │  │  Configured Tools   │  │     MCP Tools       │
-│  (packages/harness/deerflow/tools/)       │  │  (config.yaml)      │  │  (extensions.json)  │
+│  (packages/harness/nkyel/tools/)       │  │  (config.yaml)      │  │  (extensions.json)  │
 ├─────────────────────┤  ├─────────────────────┤  ├─────────────────────┤
 │ - present_files     │  │ - web_search        │  │ - github            │
 │ - ask_clarification │  │ - web_fetch         │  │ - filesystem        │
@@ -231,7 +231,7 @@ class ThreadState(AgentState):
                                    ▼
                       ┌─────────────────────────┐
                       │   get_available_tools() │
-                      │   (packages/harness/deerflow/tools/__init__.py)  │
+                      │   (packages/harness/nkyel/tools/__init__.py)  │
                       └─────────────────────────┘
 ```
 
@@ -240,7 +240,7 @@ class ThreadState(AgentState):
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          Model Factory                                   │
-│                     (packages/harness/deerflow/models/factory.py)                              │
+│                     (packages/harness/nkyel/models/factory.py)                              │
 └─────────────────────────────────────────────────────────────────────────┘
 
 config.yaml:
@@ -287,7 +287,7 @@ config.yaml:
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          MCP Integration                                 │
-│                        (packages/harness/deerflow/mcp/)                              │
+│                        (packages/harness/nkyel/mcp/)                              │
 └─────────────────────────────────────────────────────────────────────────┘
 
 extensions_config.json:
@@ -325,7 +325,7 @@ extensions_config.json:
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          Skills System                                   │
-│                       (packages/harness/deerflow/skills/)                             │
+│                       (packages/harness/nkyel/skills/)                             │
 └─────────────────────────────────────────────────────────────────────────┘
 
 Directory Structure:
@@ -408,14 +408,14 @@ SKILL.md Format:
 
 2. Gateway receives file
    - Validates file
-   - Stores in .deer-flow/threads/{thread_id}/user-data/uploads/
+   - Stores in .nkyel/threads/{thread_id}/user-data/uploads/
    - If document: converts to Markdown via markitdown
 
 3. Returns response
    {
      "files": [{
        "filename": "doc.pdf",
-       "path": ".deer-flow/.../uploads/doc.pdf",
+       "path": ".nkyel/.../uploads/doc.pdf",
        "virtual_path": "/mnt/user-data/uploads/doc.pdf",
        "artifact_url": "/api/threads/.../artifacts/mnt/.../doc.pdf"
      }]
@@ -436,8 +436,8 @@ SKILL.md Format:
 2. Web UI follows up with Gateway cleanup
    DELETE /api/threads/{thread_id}
 
-3. Gateway removes local DeerFlow-managed files
-   - Deletes .deer-flow/threads/{thread_id}/ recursively
+3. Gateway removes local nkyel-managed files
+   - Deletes .nkyel/threads/{thread_id}/ recursively
    - Missing directories are treated as a no-op
    - Invalid thread IDs are rejected before filesystem access
 ```

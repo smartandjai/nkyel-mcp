@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
-from deerflow_extension_api.agent_runs import AgentRunError, require_agent_runs, resolve_agent_runs
+from nkyel_extension_api.agent_runs import AgentRunError, require_agent_runs, resolve_agent_runs
 from fastapi import FastAPI, Request
 
 from app.gateway.auth.models import User
@@ -87,10 +87,10 @@ async def test_permissions_are_intersected_with_original_grant_and_current_polic
 
 
 def test_runtime_handle_is_host_owned_redacted_and_released():
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
 
-    from deerflow.runtime.runs.worker import _build_runtime_context, _install_runtime_context, _release_run_scoped_references
-    from deerflow.runtime.secret_context import redact_config_secrets
+    from nkyel.runtime.runs.worker import _build_runtime_context, _install_runtime_context, _release_run_scoped_references
+    from nkyel.runtime.secret_context import redact_config_secrets
 
     key = AGENT_RUNS_CONTEXT_KEY
     assert key not in _build_runtime_context("thread", "run", {key: "forged"})
@@ -110,7 +110,7 @@ def test_runtime_handle_is_host_owned_redacted_and_released():
 async def runtime(host, monkeypatch, tmp_path):
     import asyncio
 
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_CONTEXT_KEY
     from langchain_core.messages import AIMessage
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.graph import MessagesState, StateGraph
@@ -118,12 +118,12 @@ async def runtime(host, monkeypatch, tmp_path):
     from langgraph.store.memory import InMemoryStore
     from langgraph.types import interrupt
 
-    from deerflow.config.app_config import AppConfig, reset_app_config, set_app_config
-    from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-    from deerflow.runtime import RunManager
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
-    from deerflow.runtime.stream_bridge.memory import MemoryStreamBridge
+    from nkyel.config.app_config import AppConfig, reset_app_config, set_app_config
+    from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+    from nkyel.runtime import RunManager
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.stream_bridge.memory import MemoryStreamBridge
 
     control, request, _ = host
     state = request.app.state
@@ -135,8 +135,8 @@ async def runtime(host, monkeypatch, tmp_path):
     state.run_manager = RunManager(store=state.run_store)
     state.run_event_store = MemoryRunEventStore()
     state.stream_bridge = MemoryStreamBridge()
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    set_app_config(AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    set_app_config(AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     entered = asyncio.Event()
     handles = []
 
@@ -155,9 +155,9 @@ async def runtime(host, monkeypatch, tmp_path):
         builder.add_node("answer", answer)
         builder.set_entry_point("answer")
         builder.set_finish_point("answer")
-        from deerflow_extension_api import AgentAssemblyDescriptor
+        from nkyel_extension_api import AgentAssemblyDescriptor
 
-        from deerflow.agents.lead_agent.agent import LeadAgentAssembly
+        from nkyel.agents.lead_agent.agent import LeadAgentAssembly
 
         descriptor = AgentAssemblyDescriptor(
             namespace="fixture",
@@ -230,12 +230,12 @@ async def test_internal_launchers_work_with_installed_host_without_delegation(ru
 async def test_plugin_actions_isolate_same_local_idempotency_key(runtime):
     import json
 
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_RESOLVER_KEY
-    from deerflow_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
-    from deerflow_extension_api.plugins import BackendAction, PluginContribution
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_RESOLVER_KEY
+    from nkyel_extension_api.auth import EXTENSION_PRINCIPAL_RESOLVER_KEY, ExtensionPrincipal
+    from nkyel_extension_api.plugins import BackendAction, PluginContribution
 
     from app.gateway.routers.plugins import invoke_plugin_action
-    from deerflow.extensions.registry import ExtensionRegistry
+    from nkyel.extensions.registry import ExtensionRegistry
 
     runs, state, request, _, _ = runtime
     thread = await runs.create_thread(thread_id="plugin-keys")
@@ -286,7 +286,7 @@ async def test_plugin_scoping_preserves_key_validation_and_authorization(host):
 
 @pytest.mark.asyncio
 async def test_wait_uses_capped_backoff_and_returns_terminal_status(host, monkeypatch):
-    from deerflow_extension_api.agent_runs import AgentRun
+    from nkyel_extension_api.agent_runs import AgentRun
 
     control, request, _ = host
     runs = control.bind(request)
@@ -354,7 +354,7 @@ async def test_create_thread_rejects_an_assistant_id_that_names_no_agent(runtime
 @pytest.mark.asyncio
 async def test_custom_agent_binding_and_permission_rechecks_use_current_user(runtime, monkeypatch):
     from app.gateway.routers.thread_runs import RunResponse
-    from deerflow.runtime.user_context import get_effective_user_id
+    from nkyel.runtime.user_context import get_effective_user_id
 
     runs, state, request, _, _ = runtime
     thread = await runs.create_thread(assistant_id="researcher", thread_id="custom-agent")
@@ -380,14 +380,14 @@ async def test_auth_disabled_handle_cannot_outlive_auth_disabled_mode(host, monk
     request.state.auth = AuthContext(user, ["threads:write"])
     request.state.auth_source = "auth_disabled"
     runs = control.bind(request)
-    monkeypatch.delenv("DEER_FLOW_AUTH_DISABLED", raising=False)
+    monkeypatch.delenv("NKYEL_AUTH_DISABLED", raising=False)
     with pytest.raises(AgentRunError) as denied:
         await runs.create_thread()
     assert denied.value.status_code == 403
 
 
 def test_action_and_tool_context_keep_positional_compatibility():
-    from deerflow_extension_api import ActionContext, ExtensionPrincipal, ToolContext
+    from nkyel_extension_api import ActionContext, ExtensionPrincipal, ToolContext
 
     principal = ExtensionPrincipal("owner")
     assert ActionContext(principal, {}).agent_runs is None
@@ -403,10 +403,10 @@ async def test_configuration_revision_is_private_scoped_and_detects_changes(host
     app_config = {"models": [{"api_key": "secret", "name": "a"}]}
     agent_config = {"name": "reviewer", "model": "a"}
     soul = Mock(return_value="review carefully")
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", lambda: SimpleNamespace(model_dump=lambda **kw: app_config))
-    monkeypatch.setattr("deerflow.config.extensions_config.get_extensions_config", lambda: SimpleNamespace(model_dump=lambda **kw: {}))
-    monkeypatch.setattr("deerflow.config.agents_config.load_agent_config", lambda *a, **kw: SimpleNamespace(model_dump=lambda **kw: agent_config))
-    monkeypatch.setattr("deerflow.config.agents_config.load_agent_soul", soul)
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", lambda: SimpleNamespace(model_dump=lambda **kw: app_config))
+    monkeypatch.setattr("nkyel.config.extensions_config.get_extensions_config", lambda: SimpleNamespace(model_dump=lambda **kw: {}))
+    monkeypatch.setattr("nkyel.config.agents_config.load_agent_config", lambda *a, **kw: SimpleNamespace(model_dump=lambda **kw: agent_config))
+    monkeypatch.setattr("nkyel.config.agents_config.load_agent_soul", soul)
     runs = control.bind(request)
     before = await runs.configuration_revision(assistant_ids=["reviewer", "lead_agent"])
     assert len(before) == 64 and "secret" not in before
@@ -459,8 +459,8 @@ async def test_evidence_persistence_failure_prevents_execution(runtime, monkeypa
 @pytest.mark.asyncio
 async def test_durable_configuration_revision_survives_host_replacement_and_rotation(host, monkeypatch):
     control, request, load_user = host
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", lambda: SimpleNamespace(model_dump=lambda **kw: {"model": "test"}))
-    monkeypatch.setattr("deerflow.config.extensions_config.get_extensions_config", lambda: SimpleNamespace(model_dump=lambda **kw: {}))
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", lambda: SimpleNamespace(model_dump=lambda **kw: {"model": "test"}))
+    monkeypatch.setattr("nkyel.config.extensions_config.get_extensions_config", lambda: SimpleNamespace(model_dump=lambda **kw: {}))
     secret = SimpleNamespace(jwt_secret="stable-test-signing-key")
     monkeypatch.setattr("app.gateway.auth.config.get_auth_config", lambda: secret)
     first = control.bind(request)
@@ -479,7 +479,7 @@ async def test_durable_configuration_revision_survives_host_replacement_and_rota
 
 @pytest.mark.asyncio
 async def test_execution_fence_namespace_and_host_prerequisites(runtime):
-    from deerflow_extension_api import ExecutionFence
+    from nkyel_extension_api import ExecutionFence
 
     runs, state, request, _, _ = runtime
     runs = runs.for_plugin("test.fenced")
@@ -492,13 +492,13 @@ async def test_execution_fence_namespace_and_host_prerequisites(runtime):
 
 @pytest.mark.asyncio
 async def test_host_forwards_fence_to_atomic_admission(runtime, monkeypatch, tmp_path):
-    from deerflow_extension_api import ExecutionFence
+    from nkyel_extension_api import ExecutionFence
     from sqlalchemy import insert
     from test_run_repository import _cleanup, _make_repo
 
-    from deerflow.config.run_ownership_config import RunOwnershipConfig
-    from deerflow.persistence.extension_leases.model import ExtensionExecutionLeaseRow
-    from deerflow.runtime import RunManager
+    from nkyel.config.run_ownership_config import RunOwnershipConfig
+    from nkyel.persistence.extension_leases.model import ExtensionExecutionLeaseRow
+    from nkyel.runtime import RunManager
 
     runs, state, request, _, _ = runtime
     repository = await _make_repo(tmp_path)
@@ -541,8 +541,8 @@ async def test_configuration_revision_canonicalizes_sets_but_preserves_list_orde
     def dump(**kwargs):
         return {**data, "exempt_tools": list(data["exempt_tools"])} if kwargs.get("mode") == "json" else data
 
-    monkeypatch.setattr("deerflow.config.app_config.get_app_config", lambda: SimpleNamespace(model_dump=dump))
-    monkeypatch.setattr("deerflow.config.extensions_config.get_extensions_config", lambda: SimpleNamespace(model_dump=lambda **kw: {}))
+    monkeypatch.setattr("nkyel.config.app_config.get_app_config", lambda: SimpleNamespace(model_dump=dump))
+    monkeypatch.setattr("nkyel.config.extensions_config.get_extensions_config", lambda: SimpleNamespace(model_dump=lambda **kw: {}))
     runs = control.bind(request)
     before = await runs.configuration_revision(assistant_ids=["lead_agent"], durable=True)
     data["exempt_tools"] = OrderedSet(["present_files", "task"])

@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.mcp.tasks import TaskReference, TaskStatus, TaskSubmitRequest
-from deerflow.mcp.tasks.ordinary import McpTaskProtocolError, OrdinaryMcpTaskDriver
+from nkyel.mcp.tasks import TaskReference, TaskStatus, TaskSubmitRequest
+from nkyel.mcp.tasks.ordinary import McpTaskProtocolError, OrdinaryMcpTaskDriver
 
 
 class FakeCaller:

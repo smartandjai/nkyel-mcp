@@ -18,14 +18,14 @@ import pytest
 from sqlalchemy import update
 
 from app.scheduler.service import ScheduledTaskService
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.runtime.runs.manager import RunRecord
-from deerflow.runtime.runs.schemas import DisconnectMode, RunStatus
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.runtime.runs.manager import RunRecord
+from nkyel.runtime.runs.schemas import DisconnectMode, RunStatus
 
 pytestmark = pytest.mark.asyncio
 
@@ -560,7 +560,7 @@ async def test_once_recovery_uses_occurrence_order_despite_clock_skew(tmp_path, 
         await _set_task_running(task_repo, "task-once-1")
         # Exercise normal repository insertion; only the worker's clock changes.
         # Descending UUID order must not break ties in favor of the old success.
-        with patch("deerflow.persistence.scheduled_task_runs.sql.datetime") as clock:
+        with patch("nkyel.persistence.scheduled_task_runs.sql.datetime") as clock:
             clock.now.return_value = _NOW + timedelta(seconds=older_clock_ahead_seconds)
             older = await run_repo.create(
                 run_record_id="ffffffff-ffff-4fff-8fff-ffffffffffff",

@@ -8,9 +8,9 @@ from unittest.mock import MagicMock
 import pytest
 from langchain_core.messages import HumanMessage, ToolMessage
 
-from deerflow.config.paths import Paths
-from deerflow.tools.builtins.list_uploaded_files_tool import _format_omitted_summary, _list_uploaded_files_impl, _resolve_thread_id
-from deerflow.uploads.companions import register_companion
+from nkyel.config.paths import Paths
+from nkyel.tools.builtins.list_uploaded_files_tool import _format_omitted_summary, _list_uploaded_files_impl, _resolve_thread_id
+from nkyel.uploads.companions import register_companion
 
 
 def _paths(tmp_path):
@@ -18,7 +18,7 @@ def _paths(tmp_path):
 
 
 def _uploads_dir(tmp_path: Path, thread_id: str = "thread-abc") -> Path:
-    from deerflow.runtime.user_context import get_effective_user_id
+    from nkyel.runtime.user_context import get_effective_user_id
 
     d = Paths(str(tmp_path)).sandbox_uploads_dir(thread_id, user_id=get_effective_user_id())
     d.mkdir(parents=True, exist_ok=True)
@@ -350,8 +350,8 @@ class TestListUploadedFiles:
 class TestMiddlewareToolStateBridge:
     def test_middleware_state_write_excludes_file_in_tool(self, tmp_path):
         """Middleware writes uploaded_files → tool reads and excludes them."""
-        from deerflow.agents.middlewares.uploads_middleware import UploadsMiddleware
-        from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+        from nkyel.agents.middlewares.uploads_middleware import UploadsMiddleware
+        from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
         # Setup: create uploads dir + file using the same thread_id the
         # middleware and tool will resolve.
@@ -395,7 +395,7 @@ class TestMiddlewareToolStateBridge:
 
     def test_empty_state_update_excludes_nothing(self, tmp_path):
         """When middleware clears state (no uploads), tool sees all files as historical."""
-        from deerflow.agents.middlewares.uploads_middleware import UploadsMiddleware
+        from nkyel.agents.middlewares.uploads_middleware import UploadsMiddleware
 
         empty_thread_id = "thread-bridge-empty"
         uploads_dir = _uploads_dir(tmp_path, thread_id=empty_thread_id)
@@ -444,10 +444,10 @@ def test_real_graph_state_propagation_to_list_uploaded_files(tmp_path):
     from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
     from langchain_core.messages import AIMessage, HumanMessage
 
-    from deerflow.agents.middlewares.uploads_middleware import UploadsMiddleware
-    from deerflow.agents.thread_state import ThreadState
-    from deerflow.tools.builtins.list_uploaded_files_tool import list_uploaded_files
-    from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+    from nkyel.agents.middlewares.uploads_middleware import UploadsMiddleware
+    from nkyel.agents.thread_state import ThreadState
+    from nkyel.tools.builtins.list_uploaded_files_tool import list_uploaded_files
+    from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
     thread_id = "test-graph-propagation"
     uploads_dir = _uploads_dir(tmp_path, thread_id=thread_id)
@@ -527,8 +527,8 @@ def test_files_in_additional_kwargs_reaches_middleware(tmp_path):
     This is the contract that IM channels rely on when passing files via
     ``_human_input_message(..., files=uploaded)``.
     """
-    from deerflow.agents.middlewares.uploads_middleware import UploadsMiddleware
-    from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+    from nkyel.agents.middlewares.uploads_middleware import UploadsMiddleware
+    from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
     thread_id = "test-im-files"
     uploads_dir = _uploads_dir(tmp_path, thread_id=thread_id)
@@ -569,7 +569,7 @@ def test_channel_message_single_upload_block_via_middleware(tmp_path):
     upload-context producer, so one attachment → one ``<current_uploads>``
     block → the filename appears exactly once in the model-facing content.
     """
-    from deerflow.agents.middlewares.uploads_middleware import UploadsMiddleware
+    from nkyel.agents.middlewares.uploads_middleware import UploadsMiddleware
 
     thread_id = "test-channel-single-block"
     uploads_dir = _uploads_dir(tmp_path, thread_id=thread_id)
@@ -1059,7 +1059,7 @@ class TestToolSchema:
     """
 
     def test_runtime_excluded_from_model_facing_args(self):
-        from deerflow.tools.builtins.list_uploaded_files_tool import list_uploaded_files
+        from nkyel.tools.builtins.list_uploaded_files_tool import list_uploaded_files
 
         assert set(list_uploaded_files.args) == {"include_outline", "max_results", "query", "extensions", "cursor"}
         assert "runtime" not in list_uploaded_files.args
@@ -1067,7 +1067,7 @@ class TestToolSchema:
     def test_openai_schema_generation_succeeds(self):
         from langchain_core.utils.function_calling import convert_to_openai_tool
 
-        from deerflow.tools.builtins.list_uploaded_files_tool import list_uploaded_files
+        from nkyel.tools.builtins.list_uploaded_files_tool import list_uploaded_files
 
         # This raised PydanticInvalidForJsonSchema before the fix.
         oai = convert_to_openai_tool(list_uploaded_files)
@@ -1181,12 +1181,12 @@ class TestUploadPagination:
         assert "next_cursor" not in last
 
     def test_tool_wrapper_passes_cursor(self, tmp_path, monkeypatch):
-        from deerflow.tools.builtins.list_uploaded_files_tool import list_uploaded_files
+        from nkyel.tools.builtins.list_uploaded_files_tool import list_uploaded_files
 
         directory = _uploads_dir(tmp_path)
         for name in ["a.txt", "b.txt"]:
             (directory / name).touch()
-        monkeypatch.setattr("deerflow.tools.builtins.list_uploaded_files_tool.get_paths", lambda: _paths(tmp_path))
+        monkeypatch.setattr("nkyel.tools.builtins.list_uploaded_files_tool.get_paths", lambda: _paths(tmp_path))
         kwargs = dict(runtime=_runtime(), max_results=1)
         first = list_uploaded_files.func(**kwargs)
         second = list_uploaded_files.func(**kwargs, cursor=first["next_cursor"])
@@ -1209,7 +1209,7 @@ class TestUploadPagination:
             (directory / name).touch()
         kwargs = dict(runtime=_runtime(), _paths=_paths(tmp_path), max_results=1)
         cursor = _list_uploaded_files_impl(**kwargs)["next_cursor"]
-        monkeypatch.setattr("deerflow.tools.builtins.list_uploaded_files_tool.os.scandir", MagicMock(side_effect=PermissionError(str(directory))))
+        monkeypatch.setattr("nkyel.tools.builtins.list_uploaded_files_tool.os.scandir", MagicMock(side_effect=PermissionError(str(directory))))
         result = _list_uploaded_files_impl(**kwargs, cursor=cursor)
         assert result["error"] == "stale_cursor"
         assert result["files"] == []
@@ -1245,7 +1245,7 @@ class TestUploadPagination:
         except OSError:
             pytest.skip("当前平台无法创建符号链接")
         outline = MagicMock(return_value=([{"title": "heading", "line": 1}], []))
-        monkeypatch.setattr("deerflow.tools.builtins.list_uploaded_files_tool.extract_outline_for_file", outline)
+        monkeypatch.setattr("nkyel.tools.builtins.list_uploaded_files_tool.extract_outline_for_file", outline)
         kwargs = dict(runtime=_runtime(state_uploaded=[{"filename": "fresh.txt"}]), _paths=_paths(tmp_path), max_results=1, include_outline=True)
         names = []
         cursor = None

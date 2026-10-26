@@ -7,13 +7,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from deerflow.models import credential_loader
-from deerflow.models.claude_provider import ClaudeChatModel
-from deerflow.models.credential_loader import (
+from nkyel.models import credential_loader
+from nkyel.models.claude_provider import ClaudeChatModel
+from nkyel.models.credential_loader import (
     load_claude_code_credential,
     load_codex_cli_credential,
 )
-from deerflow.models.openai_codex_provider import CodexChatModel
+from nkyel.models.openai_codex_provider import CodexChatModel
 
 
 @pytest.fixture(autouse=True)
@@ -418,7 +418,7 @@ def test_blank_env_token_is_logged_at_debug(monkeypatch, caplog):
     monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "   ")
     monkeypatch.setenv("ANTHROPIC_AUTH_TOKEN", "sk-ant-oat01-second")
 
-    with caplog.at_level(logging.DEBUG, logger="deerflow.models.credential_loader"):
+    with caplog.at_level(logging.DEBUG, logger="nkyel.models.credential_loader"):
         load_claude_code_credential()
 
     assert any(record.levelno == logging.DEBUG and "CLAUDE_CODE_OAUTH_TOKEN" in record.getMessage() for record in caplog.records)

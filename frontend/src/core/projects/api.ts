@@ -426,7 +426,7 @@ function isTextPreviewMediaType(contentType: string): boolean {
 
 /**
  * Active-content media types — mirror of the backend's
- * ``deerflow.utils.text_detection._is_active_content_mime_type``: any
+ * ``nkyel.utils.text_detection._is_active_content_mime_type``: any
  * WHATWG XML type (plus ``text/html``/``text/xsl``) can carry script, so the
  * content endpoint always serves them as an attachment. The preview must
  * never navigate its sandboxed iframe to one (the empty sandbox blocks the

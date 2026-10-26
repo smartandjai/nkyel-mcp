@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
-from deerflow.runtime.runs.worker import RollbackPoint, _rollback_to_pre_run_checkpoint
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.runtime.runs.worker import RollbackPoint, _rollback_to_pre_run_checkpoint
 
 
 class _BlockingSyncRollbackCheckpointer:
@@ -53,7 +53,7 @@ async def test_sync_rollback_mutations_drain_across_repeated_cancellation(monkey
     rollback_point = None
     if mutation == "put_writes":
         graph = SimpleNamespace(aupdate_state=AsyncMock(return_value={"configurable": {"thread_id": "thread-1", "checkpoint_ns": "", "checkpoint_id": "restored-1"}}))
-        monkeypatch.setattr("deerflow.runtime.runs.worker.build_state_mutation_graph", lambda *_args, **_kwargs: graph)
+        monkeypatch.setattr("nkyel.runtime.runs.worker.build_state_mutation_graph", lambda *_args, **_kwargs: graph)
         rollback_point = _rollback_point()
 
     accessor = CheckpointStateAccessor(graph=SimpleNamespace(), checkpointer=checkpointer, mode="full")

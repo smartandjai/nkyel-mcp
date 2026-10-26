@@ -15,7 +15,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
-      - 'backend/packages/harness/deerflow/community/aio_sandbox/**'
+      - 'backend/packages/harness/nkyel/community/aio_sandbox/**'
       - 'backend/tests/test_aio_sandbox_local_backend.py'
       - '.github/workflows/sandbox-image-smoke.yml'
 
@@ -57,8 +57,8 @@ jobs:
             printf '%s: `%s`\n' "$label" "$repo_digest" | tee -a "$GITHUB_STEP_SUMMARY"
           }
 
-          resolve_image "$SANDBOX_SMOKE_IMAGE_REF" DEER_FLOW_SANDBOX_SMOKE_IMAGE "Configured/default smoke image"
-          resolve_image "$FOWNER_SMOKE_IMAGE_REF" DEER_FLOW_SANDBOX_FOWNER_SMOKE_IMAGE "FOWNER regression image (1.11.0)"
+          resolve_image "$SANDBOX_SMOKE_IMAGE_REF" NKYEL_SANDBOX_SMOKE_IMAGE "Configured/default smoke image"
+          resolve_image "$FOWNER_SMOKE_IMAGE_REF" NKYEL_SANDBOX_FOWNER_SMOKE_IMAGE "FOWNER regression image (1.11.0)"
 
       - name: Set up Python
         uses: actions/setup-python@v6

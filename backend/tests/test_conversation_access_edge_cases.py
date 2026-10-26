@@ -13,8 +13,8 @@ from langchain_core.messages import ToolMessage
 from test_conversation_access import _put, _setup
 
 from app.gateway.conversation_access import _visible_text
-from deerflow.agents.middlewares.tool_output_budget_middleware import _tool_message_over_budget
-from deerflow.config.tool_output_config import ToolOutputConfig
+from nkyel.agents.middlewares.tool_output_budget_middleware import _tool_message_over_budget
+from nkyel.config.tool_output_config import ToolOutputConfig
 
 
 async def _read_all(reader, *, limit=50, max_pages=20):
@@ -100,7 +100,7 @@ def test_only_visible_text_blocks_cross_the_reader():
 def test_reference_accepts_both_frontend_conversation_routes(path):
     prepare, _, _, _, _ = _setup()
 
-    reader, ids = prepare([f"https://deerflow.example{path}"])
+    reader, ids = prepare([f"https://nkyel.example{path}"])
 
     assert callable(reader)
     assert ids == ("source",)
@@ -109,8 +109,8 @@ def test_reference_accepts_both_frontend_conversation_routes(path):
 @pytest.mark.parametrize(
     "url",
     [
-        "https://deerflow.example/workspace/agents/researcher/chats/source/extra",
-        "https://deerflow.example/workspace/agents/researcher/not-chats/source",
+        "https://nkyel.example/workspace/agents/researcher/chats/source/extra",
+        "https://nkyel.example/workspace/agents/researcher/not-chats/source",
         "https://other.example/workspace/agents/researcher/chats/source",
     ],
 )

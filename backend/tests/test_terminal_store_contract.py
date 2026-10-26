@@ -9,9 +9,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunChangeClockRow, RunRow
-from deerflow.runtime.runs.store.memory import MemoryRunStore
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunChangeClockRow, RunRow
+from nkyel.runtime.runs.store.memory import MemoryRunStore
 
 
 @pytest.fixture(params=["memory", "sqlite", "postgresql"])

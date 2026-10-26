@@ -45,7 +45,7 @@ export interface PortableAgentDefinition extends CreateAgentRequest {
 }
 
 export interface AgentPackage {
-  format: "deerflow.custom-agent";
+  format: "nkyel.custom-agent";
   version: 1;
   agent: PortableAgentDefinition;
 }

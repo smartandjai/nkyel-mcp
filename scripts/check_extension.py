@@ -17,18 +17,18 @@ from email.parser import Parser
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from zipfile import BadZipFile, ZipFile
 
-from deerflow_extension_api import API_VERSION, BrowserAssets
+from nkyel_extension_api import API_VERSION, BrowserAssets
 from packaging.requirements import Requirement
 from packaging.utils import canonicalize_name
 
-from deerflow.extensions.browser_assets import load_browser_assets
-from deerflow.extensions.manager import _validate_entry_point
+from nkyel.extensions.browser_assets import load_browser_assets
+from nkyel.extensions.manager import _validate_entry_point
 
 
 def check_wheel(source: Path, wheel: Path, *, manifests: Sequence[str] = ()) -> None:
     with (
         ZipFile(wheel) as archive,
-        tempfile.TemporaryDirectory(prefix="deerflow-extension-wheel-") as temporary,
+        tempfile.TemporaryDirectory(prefix="nkyel-extension-wheel-") as temporary,
     ):
         names = archive.namelist()
         if len(names) != len(set(names)):
@@ -55,7 +55,7 @@ def check_wheel(source: Path, wheel: Path, *, manifests: Sequence[str] = ()) -> 
         api = [
             requirement
             for requirement in requirements
-            if canonicalize_name(requirement.name) == "deerflow-extension-api"
+            if canonicalize_name(requirement.name) == "nkyel-extension-api"
             and (
                 requirement.marker is None or requirement.marker.evaluate({"extra": ""})
             )
@@ -64,7 +64,7 @@ def check_wheel(source: Path, wheel: Path, *, manifests: Sequence[str] = ()) -> 
             API_VERSION not in requirement.specifier for requirement in api
         ):
             raise ValueError(
-                f"Declare a deerflow-extension-api dependency compatible with this checkout ({API_VERSION})"
+                f"Declare a nkyel-extension-api dependency compatible with this checkout ({API_VERSION})"
             )
 
         entry_path = str(PurePosixPath(metadata_paths[0]).parent / "entry_points.txt")
@@ -73,11 +73,11 @@ def check_wheel(source: Path, wheel: Path, *, manifests: Sequence[str] = ()) -> 
         if entry_path in names:
             entries.read_string(archive.read(entry_path).decode("utf-8"))
         if (
-            not entries.has_section("deerflow.extensions")
-            or len(entries["deerflow.extensions"]) != 1
+            not entries.has_section("nkyel.extensions")
+            or len(entries["nkyel.extensions"]) != 1
         ):
-            raise ValueError("Declare exactly one deerflow.extensions entry point")
-        entry_name, target = next(iter(entries["deerflow.extensions"].items()))
+            raise ValueError("Declare exactly one nkyel.extensions entry point")
+        entry_name, target = next(iter(entries["nkyel.extensions"].items()))
         _validate_entry_point(entry_name, target)
         module, _ = target.rsplit(":", 1)
         module_path = module.replace(".", "/")
@@ -125,7 +125,7 @@ def check_wheel(source: Path, wheel: Path, *, manifests: Sequence[str] = ()) -> 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build and check a trusted Python extension package using the current DeerFlow contract."
+        description="Build and check a trusted Python extension package using the current nkyel contract."
     )
     parser.add_argument(
         "package", type=Path, help="directory containing pyproject.toml"
@@ -142,7 +142,7 @@ def main() -> int:
         if not (source / "pyproject.toml").is_file():
             raise ValueError("Package directory must contain pyproject.toml")
         with tempfile.TemporaryDirectory(
-            prefix="deerflow-extension-check-"
+            prefix="nkyel-extension-check-"
         ) as temporary:
             result = subprocess.run(
                 ["uv", "build", str(source), "--wheel", "--out-dir", temporary],

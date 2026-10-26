@@ -32,7 +32,7 @@ def _config(skills_root: Path) -> SimpleNamespace:
         skills=SimpleNamespace(
             get_skills_path=lambda: skills_root,
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         )
     )
 

@@ -17,10 +17,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
-from deerflow.projects.documents import add_staged_document, read_file_chunks, stage_document_bytes, stage_document_copy_for_attach
-from deerflow.utils.file_io import run_file_io as _real_run_file_io
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
+from nkyel.projects.documents import add_staged_document, read_file_chunks, stage_document_bytes, stage_document_copy_for_attach
+from nkyel.utils.file_io import run_file_io as _real_run_file_io
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -39,16 +39,16 @@ def _spy_offload(monkeypatch) -> list[str]:
         calls.append(getattr(target, "__name__", repr(target)))
         return await _real_run_file_io(func, *args, **kwargs)
 
-    monkeypatch.setattr("deerflow.projects.documents.run_file_io", spy)
+    monkeypatch.setattr("nkyel.projects.documents.run_file_io", spy)
     monkeypatch.setattr("app.gateway.routers.project_thread_files.run_file_io", spy)
     monkeypatch.setattr("app.gateway.upload_ingestion.run_file_io", spy)
     return calls
 
 
 async def _make_env(tmp_path, monkeypatch) -> SimpleNamespace:
-    import deerflow.config.paths as paths_mod
+    import nkyel.config.paths as paths_mod
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     monkeypatch.setattr(paths_mod, "_paths", None)
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}", sqlite_dir=str(tmp_path))
     sf = get_session_factory()

@@ -146,10 +146,10 @@ test("mergeMessages preserves historical run metadata on a live checkpoint repla
       ...checkpointAi,
       run_id: "run-1",
       // The replacement keeps the trusted feed position alongside the run
-      // metadata: dropping deerflow_seq here was defect R3.
+      // metadata: dropping nkyel_seq here was defect R3.
       additional_kwargs: {
         turn_duration: 114,
-        deerflow_seq: 1,
+        nkyel_seq: 1,
         skill_usages: skillUsages,
       },
     },
@@ -321,7 +321,7 @@ test("mergeMessages lets a visible live message replace overlapping hidden histo
   ]);
 });
 
-test("getSummarizationMiddlewareMessages matches DeerFlow summarization update keys", () => {
+test("getSummarizationMiddlewareMessages matches nkyel summarization update keys", () => {
   const removeAll = {
     id: "__remove_all__",
     type: "remove",
@@ -336,7 +336,7 @@ test("getSummarizationMiddlewareMessages matches DeerFlow summarization update k
 
   expect(
     getSummarizationMiddlewareMessages({
-      "DeerFlowSummarizationMiddleware.before_model": {
+      "NkyelSummarizationMiddleware.before_model": {
         messages: [removeAll, summary],
       },
     }),
@@ -898,8 +898,8 @@ test("buildVisibleHistoryMessages filters superseded runs but keeps regenerated 
   // run_id is carried onto each content message (#3779) so historical subtask
   // cards can fetch their persisted step history on expand.
   expect(buildVisibleHistoryMessages(rows, new Set(["run-old"]))).toEqual([
-    { ...newHuman, run_id: "run-new", additional_kwargs: { deerflow_seq: 3 } },
-    { ...newAi, run_id: "run-new", additional_kwargs: { deerflow_seq: 4 } },
+    { ...newHuman, run_id: "run-new", additional_kwargs: { nkyel_seq: 3 } },
+    { ...newAi, run_id: "run-new", additional_kwargs: { nkyel_seq: 4 } },
   ]);
 });
 
@@ -2131,7 +2131,7 @@ test("reconnected turn order moves same-run steps back behind the user message",
   const human = {
     id: "human-r",
     type: "human",
-    content: "Analyze deerflow",
+    content: "Analyze nkyel",
   } as Message;
   const stepB1 = {
     id: "step-b1",
@@ -2701,14 +2701,14 @@ test("a compacted checkpoint's protected user message survives a history page wi
 });
 
 test("a checkpoint message earlier than the loaded window is placed by its seq (#4666)", () => {
-  // With `deerflow_seq` on both sides, placement stops being a guess. Captured
+  // With `nkyel_seq` on both sides, placement stops being a guess. Captured
   // shape: after compaction the checkpoint still holds the turn's first user
   // message (seq=2) while the first history page starts at seq=29, so the only
   // anchor available to the old rule sat 25 rows into the window.
   const withSeq = (message: Message, seq: number) =>
     ({
       ...message,
-      additional_kwargs: { ...message.additional_kwargs, deerflow_seq: seq },
+      additional_kwargs: { ...message.additional_kwargs, nkyel_seq: seq },
     }) as Message;
 
   const firstUserMessage = withSeq(
@@ -2759,7 +2759,7 @@ test("buildVisibleHistoryMessages carries each row's seq onto the message", () =
 
   expect(
     buildVisibleHistoryMessages(rows, new Set())[0]!.additional_kwargs
-      ?.deerflow_seq,
+      ?.nkyel_seq,
   ).toBe(7);
 });
 
@@ -2774,7 +2774,7 @@ test("a checkpoint message earlier than the loaded window is placed by its seq e
   const withSeq = (message: Message, seq: number) =>
     ({
       ...message,
-      additional_kwargs: { ...message.additional_kwargs, deerflow_seq: seq },
+      additional_kwargs: { ...message.additional_kwargs, nkyel_seq: seq },
     }) as Message;
 
   const rescuedFirstTurn = withSeq(
@@ -3008,7 +3008,7 @@ test("mergeMessages preserves canonical seq when a live copy without seq replace
     "final answer",
   ]);
   expect(
-    merged.map((message) => message.additional_kwargs?.deerflow_seq),
+    merged.map((message) => message.additional_kwargs?.nkyel_seq),
   ).toEqual([1, 2]);
   expect(merged.map((message) => getMessageRunId(message))).toEqual([
     "run-1",
@@ -3024,7 +3024,7 @@ test("mergeMessages places a live message with seq inside the loaded window by p
   const withSeq = (message: Message, seq: number) =>
     ({
       ...message,
-      additional_kwargs: { ...message.additional_kwargs, deerflow_seq: seq },
+      additional_kwargs: { ...message.additional_kwargs, nkyel_seq: seq },
     }) as Message;
 
   const history = [
@@ -3043,6 +3043,6 @@ test("mergeMessages places a live message with seq inside the loaded window by p
   const merged = mergeMessages(history, live, []);
 
   expect(
-    merged.map((message) => message.additional_kwargs?.deerflow_seq),
+    merged.map((message) => message.additional_kwargs?.nkyel_seq),
   ).toEqual([1, 2, 3, 5]);
 });

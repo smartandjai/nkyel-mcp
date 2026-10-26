@@ -26,6 +26,6 @@ it("persists only the selected conversation without editing account preferences"
   expect(getBaseSettingsSnapshot()).toBe(before);
   expect(getThreadModelSnapshot("unrelated-test-thread")).toBeUndefined();
   expect(
-    localStorage.getItem("deerflow.thread-model.selection-test-thread"),
+    localStorage.getItem("nkyel.thread-model.selection-test-thread"),
   ).toBe("model-B");
 });

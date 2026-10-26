@@ -8,8 +8,8 @@ from types import SimpleNamespace
 import pytest
 
 from app.channels.service import ChannelService, enabled_transport_providers
-from deerflow.config.channel_connections_config import ChannelConnectionsConfig
-from deerflow.config.channel_leader_lease_config import ChannelLeaderLeaseConfig, ChannelLeaderLeaseConfigError
+from nkyel.config.channel_connections_config import ChannelConnectionsConfig
+from nkyel.config.channel_leader_lease_config import ChannelLeaderLeaseConfig, ChannelLeaderLeaseConfigError
 
 
 def test_leader_lease_block_is_stripped_and_exposed():
@@ -32,7 +32,7 @@ def test_malformed_block_raises_the_config_error():
 
 
 def test_from_app_config_strips_the_block(monkeypatch, tmp_path):
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
     app_config = SimpleNamespace(model_extra={"channels": {"leader_lease": {"enabled": "auto"}, "telegram": {"enabled": False}}})
 
     service = ChannelService.from_app_config(app_config)

@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from deerflow.community.browser_automation import tools
+from nkyel.community.browser_automation import tools
 
 _SHOT = b"\x89PNG\r\n\x1a\nscreenshot"
 

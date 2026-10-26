@@ -19,10 +19,10 @@ from langgraph.types import Overwrite
 from app.gateway import services as gateway_services
 from app.gateway.auth.models import User
 from app.gateway.routers import thread_runs, threads
-from deerflow.config.paths import Paths
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-from deerflow.persistence.projects import ProjectRepository
-from deerflow.persistence.thread_meta import (
+from nkyel.config.paths import Paths
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.projects import ProjectRepository
+from nkyel.persistence.thread_meta import (
     PROJECT_FILTER_UNSET,
     THREAD_PINNED_METADATA_KEY,
     THREAD_PROJECT_METADATA_KEY,
@@ -30,14 +30,14 @@ from deerflow.persistence.thread_meta import (
     ThreadMetaRepository,
     ThreadOwnershipConflictError,
 )
-from deerflow.persistence.thread_meta.memory import THREADS_NS, MemoryThreadMetaStore
-from deerflow.runtime import ConflictError, ThreadOperationKind
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
-from deerflow.runtime.context_keys import CHECKPOINT_AGENT_NAME_METADATA_KEY
-from deerflow.runtime.goal import build_goal_outcome, build_goal_state, write_thread_goal
-from deerflow.runtime.user_context import reset_current_user, set_current_user
-from deerflow.uploads.companions import companion_names, register_companion, resolve_companion
-from deerflow.utils.file_outline import extract_outline_for_file
+from nkyel.persistence.thread_meta.memory import THREADS_NS, MemoryThreadMetaStore
+from nkyel.runtime import ConflictError, ThreadOperationKind
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
+from nkyel.runtime.context_keys import CHECKPOINT_AGENT_NAME_METADATA_KEY
+from nkyel.runtime.goal import build_goal_outcome, build_goal_state, write_thread_goal
+from nkyel.runtime.user_context import reset_current_user, set_current_user
+from nkyel.uploads.companions import companion_names, register_companion, resolve_companion
+from nkyel.utils.file_outline import extract_outline_for_file
 
 _ISO_TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}")
 
@@ -117,8 +117,8 @@ def test_thread_response_excludes_internal_incarnation() -> None:
 
 def test_compact_rejects_run_owned_by_another_worker(monkeypatch) -> None:
     """The HTTP guard must consult the shared store, not only local run memory."""
-    from deerflow.runtime import RunManager, RunStatus
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime import RunManager, RunStatus
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     app, _store, _checkpointer = _build_thread_app()
     run_store = MemoryRunStore()
@@ -148,8 +148,8 @@ def test_compact_rejects_run_owned_by_another_worker(monkeypatch) -> None:
 
 def test_update_state_rejects_run_owned_by_another_worker(monkeypatch) -> None:
     """All out-of-run writes share the same durable thread-operation admission."""
-    from deerflow.runtime import RunManager, RunStatus
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime import RunManager, RunStatus
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     app, _store, _checkpointer = _build_thread_app()
     run_store = MemoryRunStore()
@@ -451,7 +451,7 @@ def test_delete_thread_route_closes_browser_session(tmp_path):
     with (
         patch("app.gateway.routers.threads.get_paths", return_value=paths),
         patch(
-            "deerflow.community.browser_automation.get_browser_session_manager",
+            "nkyel.community.browser_automation.get_browser_session_manager",
             return_value=manager,
         ),
     ):
@@ -477,7 +477,7 @@ def test_delete_thread_route_closes_mcp_sessions(tmp_path):
     pool = SimpleNamespace(close_thread_scope=AsyncMock(return_value=None))
     with (
         patch("app.gateway.routers.threads.get_paths", return_value=paths),
-        patch("deerflow.mcp.session_pool.get_session_pool", return_value=pool),
+        patch("nkyel.mcp.session_pool.get_session_pool", return_value=pool),
     ):
         with TestClient(app) as client:
             response = client.delete("/api/threads/thread-mcp")
@@ -505,7 +505,7 @@ def test_delete_thread_route_isolates_failing_mcp_cleanup(tmp_path):
     pool = SimpleNamespace(close_thread_scope=AsyncMock(side_effect=RuntimeError("simulated MCP teardown failure")))
     with (
         patch("app.gateway.routers.threads.get_paths", return_value=paths),
-        patch("deerflow.mcp.session_pool.get_session_pool", return_value=pool),
+        patch("nkyel.mcp.session_pool.get_session_pool", return_value=pool),
     ):
         with TestClient(app) as client:
             response = client.delete("/api/threads/thread-mcp-fail")
@@ -527,7 +527,7 @@ def _persistence_cleanup_app(tmp_path, *, run_store, event_store, feedback_repo)
 
 def test_delete_thread_route_cleans_persisted_records(tmp_path):
     """run_events, historical runs and feedback are cleaned under the reservation."""
-    from deerflow.runtime.user_context import get_effective_user_id
+    from nkyel.runtime.user_context import get_effective_user_id
 
     paths = Paths(tmp_path)
     user_id = get_effective_user_id()
@@ -1270,8 +1270,8 @@ def test_goal_status_and_clear_round_trip() -> None:
 
 def test_goal_mutations_reject_run_owned_by_another_worker() -> None:
     """PUT and DELETE goal writes share the durable thread-operation boundary."""
-    from deerflow.runtime import RunManager, RunStatus
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime import RunManager, RunStatus
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     app, _store, _checkpointer = _build_thread_app()
     run_store = MemoryRunStore()
@@ -1566,7 +1566,7 @@ def test_get_thread_preserves_metadata_status_without_checkpoint(stored_status: 
     assert response.json()["status"] == stored_status
 
 
-@pytest.mark.parametrize("key", [THREAD_PINNED_METADATA_KEY, "deerflow_archived"])
+@pytest.mark.parametrize("key", [THREAD_PINNED_METADATA_KEY, "nkyel_archived"])
 def test_patch_thread_pin_returns_iso_and_preserves_updated_at(key) -> None:
     """A pin/unpin PATCH must not bump ``updated_at``.
 
@@ -2041,7 +2041,7 @@ def test_get_thread_history_preserves_boundary_fallback_after_complete_partial_l
 
 def test_get_thread_history_removes_synthesized_boundary_when_exact_lookup_is_incomplete() -> None:
     """Unsafe pagination removes only attribution it cannot prove."""
-    from deerflow.runtime.events.store.base import IncompleteMessageRunLookupError
+    from nkyel.runtime.events.store.base import IncompleteMessageRunLookupError
 
     app, _store, checkpointer = _build_thread_app()
     thread_id = "history-incomplete-exact-attribution"
@@ -2458,7 +2458,7 @@ def test_get_thread_history_backfills_legacy_durations_with_exact_event_run_id()
 
 def test_get_thread_history_finds_ai_event_beyond_ten_thousand_newer_events() -> None:
     """#4949: no arbitrary page cap may turn an old exact run into a boundary run."""
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
     app, _store, checkpointer = _build_thread_app()
     thread_id = "legacy-history-run-id-paginated"
@@ -2641,7 +2641,7 @@ def test_get_thread_history_injects_turn_duration_once_per_run() -> None:
     messages."""
     from unittest.mock import AsyncMock, MagicMock
 
-    from deerflow.runtime import RunRecord
+    from nkyel.runtime import RunRecord
 
     def _run(run_id: str, seconds: int) -> RunRecord:
         return RunRecord(
@@ -3305,7 +3305,7 @@ def test_branch_thread_real_mutation_graph_finishes_without_scheduling(monkeypat
     branch_snapshot = asyncio.run(accessor.aget(config))
     assert [message.id for message in branch_snapshot.values["messages"]] == ["h1", "a1"]
     assert branch_snapshot.next == ()
-    assert branch_snapshot.metadata["deerflow_branch"] is True
+    assert branch_snapshot.metadata["nkyel_branch"] is True
     assert branch_snapshot.metadata["branch_parent_checkpoint_id"] == "ckpt-1"
 
 
@@ -3323,7 +3323,7 @@ def _wire_extension_agent(monkeypatch, app, checkpointer, mode):
     from langchain.agents.middleware import AgentMiddleware
     from langchain_core.language_models.fake_chat_models import FakeMessagesListChatModel
 
-    from deerflow.agents.thread_state import get_thread_state_schema
+    from nkyel.agents.thread_state import get_thread_state_schema
 
     class ExtensionState(TypedDict):
         ext_list: NotRequired[Annotated[list[str], operator.add]]
@@ -3547,7 +3547,7 @@ def test_branch_seeds_run_events_with_parent_history(monkeypatch, mode) -> None:
     message rows, so the inherited history vanishes from the UI as soon as
     the branch's first run refreshes the feed (#4380 problem 2).
     """
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
     app, _store, checkpointer = _build_thread_app()
     custom_factory = _wire_extension_agent(monkeypatch, app, checkpointer, mode)
@@ -3899,8 +3899,8 @@ def test_branch_does_not_take_an_older_met_goal_record_from_the_replay_base(monk
 @pytest.mark.parametrize("mode", ["full", "delta"])
 def test_update_thread_state_preserves_agent_binding_for_manual_compaction(monkeypatch, mode) -> None:
     """A manual state rewrite must retain the state-producing agent policy."""
-    import deerflow.config.agents_config as agents_config
-    from deerflow.runtime import context_compaction
+    import nkyel.config.agents_config as agents_config
+    from nkyel.runtime import context_compaction
 
     app, _store, checkpointer = _build_thread_app()
     custom_factory = _wire_extension_agent(monkeypatch, app, checkpointer, mode)
@@ -4053,7 +4053,7 @@ def test_branch_thread_rejects_sidecar_threads() -> None:
     with TestClient(app) as client:
         created = client.post(
             "/api/threads",
-            json={"thread_id": "sidecar-thread", "metadata": {"deerflow_sidecar": True}},
+            json={"thread_id": "sidecar-thread", "metadata": {"nkyel_sidecar": True}},
         )
         assert created.status_code == 200, created.text
 
@@ -4467,7 +4467,7 @@ def test_update_thread_state_forks_from_checkpoint_object(monkeypatch) -> None:
 def test_update_thread_state_in_persisted_subgraph_namespace(monkeypatch, mode, include_checkpoint_id) -> None:
     from langgraph.graph import StateGraph
 
-    from deerflow.agents.thread_state import get_thread_state_schema
+    from nkyel.agents.thread_state import get_thread_state_schema
 
     app, _store, checkpointer = _build_thread_app()
     app.state.checkpoint_channel_mode = mode
@@ -4534,7 +4534,7 @@ def test_update_thread_state_in_persisted_subgraph_namespace(monkeypatch, mode, 
 @pytest.mark.parametrize("mode", ["full", "delta"])
 @pytest.mark.parametrize("selector", ["omitted", "checkpoint", "checkpoint_id"])
 def test_update_thread_state_root_title_syncs_metadata(monkeypatch, mode, selector) -> None:
-    from deerflow.agents.thread_state import get_thread_state_schema
+    from nkyel.agents.thread_state import get_thread_state_schema
 
     app, _store, checkpointer = _build_thread_app()
     app.state.checkpoint_channel_mode = mode
@@ -4753,7 +4753,7 @@ class TestRestReadsCarryMessageSeq:
         asyncio.run(_seed())
 
     def _app_with_feed(self, thread_id: str):
-        from deerflow.runtime.events.store.memory import MemoryRunEventStore
+        from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
         app, _store, checkpointer = _build_thread_app()
         app.state.run_event_store = MemoryRunEventStore()
@@ -4768,7 +4768,7 @@ class TestRestReadsCarryMessageSeq:
 
         assert response.status_code == 200, response.text
         messages = response.json()["values"]["messages"]
-        assert messages[0]["additional_kwargs"]["deerflow_seq"] == 1
+        assert messages[0]["additional_kwargs"]["nkyel_seq"] == 1
 
     def test_history_carries_the_seq_of_a_persisted_message(self) -> None:
         app = self._app_with_feed("thread-seq-history")
@@ -4778,11 +4778,11 @@ class TestRestReadsCarryMessageSeq:
 
         assert response.status_code == 200, response.text
         messages = response.json()[0]["values"]["messages"]
-        assert messages[0]["additional_kwargs"]["deerflow_seq"] == 1
+        assert messages[0]["additional_kwargs"]["nkyel_seq"] == 1
 
     def test_a_message_the_feed_does_not_know_is_left_unstamped(self) -> None:
         """Only persisted messages get a seq; the rest keep the weaving path."""
-        from deerflow.runtime.events.store.memory import MemoryRunEventStore
+        from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
         app, _store, checkpointer = _build_thread_app()
         app.state.run_event_store = MemoryRunEventStore()
@@ -4793,14 +4793,14 @@ class TestRestReadsCarryMessageSeq:
 
         assert response.status_code == 200, response.text
         messages = response.json()["values"]["messages"]
-        assert "deerflow_seq" not in (messages[0].get("additional_kwargs") or {})
+        assert "nkyel_seq" not in (messages[0].get("additional_kwargs") or {})
 
 
 def test_archive_search_filter_and_restore_through_api():
     app, store, _ = _build_thread_app()
 
     async def seed():
-        for name, metadata in [("active", {}), ("archived", {"deerflow_archived": True})]:
+        for name, metadata in [("active", {}), ("archived", {"nkyel_archived": True})]:
             await store.aput(THREADS_NS, name, {"metadata": metadata, "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-01T00:00:00Z"})
 
     asyncio.run(seed())
@@ -4811,7 +4811,7 @@ def test_archive_search_filter_and_restore_through_api():
         archived = client.post("/api/threads/search", json={"archived": True})
         assert [r["thread_id"] for r in archived.json()] == ["archived"]
         assert len(client.post("/api/threads/search", json={}).json()) == 2
-        restored = client.patch("/api/threads/archived", json={"metadata": {"deerflow_archived": False}})
+        restored = client.patch("/api/threads/archived", json={"metadata": {"nkyel_archived": False}})
         assert restored.status_code == 200
         assert client.post("/api/threads/search", json={"archived": True}).json() == []
 
@@ -4820,7 +4820,7 @@ def test_archive_search_filter_and_restore_through_api():
 def test_archive_patch_rejects_non_boolean(value):
     app, _, _ = _build_thread_app()
     with TestClient(app) as client:
-        result = client.patch("/api/threads/invalid", json={"metadata": {"deerflow_archived": value}})
+        result = client.patch("/api/threads/invalid", json={"metadata": {"nkyel_archived": value}})
     assert result.status_code == 422
 
 
@@ -4838,7 +4838,7 @@ def test_archived_chat_keeps_original_link_and_artifact_download(tmp_path, monke
 
     asyncio.run(seed())
     with TestClient(app) as client:
-        response = client.patch("/api/threads/report", json={"metadata": {"deerflow_archived": True}})
+        response = client.patch("/api/threads/report", json={"metadata": {"nkyel_archived": True}})
         assert response.status_code == 200
         assert client.get("/api/threads/report").status_code == 200
         download = client.get("/api/threads/report/artifacts/mnt/user-data/outputs/report.txt?download=true")
@@ -4857,7 +4857,7 @@ def test_archive_patch_cannot_modify_another_users_thread():
 
     asyncio.run(seed())
     with TestClient(app) as client:
-        response = client.patch("/api/threads/private", json={"metadata": {"deerflow_archived": True}})
+        response = client.patch("/api/threads/private", json={"metadata": {"nkyel_archived": True}})
         assert response.status_code == 404
     assert asyncio.run(store.aget(THREADS_NS, "private")).value["metadata"] == {}
 
@@ -4937,7 +4937,7 @@ def test_create_thread_with_project_assigns(tmp_path):
 def test_create_thread_response_includes_persisted_project_membership(tmp_path):
     """The create response must echo the persisted record, not body.metadata.
 
-    The store stamps ``metadata.deerflow_project_id`` from the assigned
+    The store stamps ``metadata.nkyel_project_id`` from the assigned
     ``project_id`` column; a response built from ``body.metadata`` omits it
     and disagrees with the idempotent-retry response for the same thread.
     """
@@ -4995,7 +4995,7 @@ def test_create_thread_with_project_in_memory_mode_404():
         assert plain.status_code == 200, plain.text
 
 
-def test_create_and_patch_strip_deerflow_project_id_metadata_key(tmp_path):
+def test_create_and_patch_strip_nkyel_project_id_metadata_key(tmp_path):
     app = _build_project_threads_app(tmp_path)
     with TestClient(app) as client:
         created = client.post("/api/threads", json={"metadata": {THREAD_PROJECT_METADATA_KEY: "forged", "keep": "v"}})
@@ -5217,40 +5217,40 @@ def test_task_notes_state_write_normalizes_and_replaces(monkeypatch, mode, fallb
 
 
 # ---------------------------------------------------------------------------
-# Server-owned origin marker and per-user unread state (deerflow_origin)
+# Server-owned origin marker and per-user unread state (nkyel_origin)
 # ---------------------------------------------------------------------------
 
 
 def test_strip_reserved_metadata_drops_client_origin():
-    from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY
+    from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY
 
-    assert DEERFLOW_ORIGIN_KEY in threads._SERVER_RESERVED_METADATA_KEYS
-    assert threads._strip_reserved_metadata({DEERFLOW_ORIGIN_KEY: {"kind": "schedule"}, "keep": 1}) == {"keep": 1}
+    assert NKYEL_ORIGIN_KEY in threads._SERVER_RESERVED_METADATA_KEYS
+    assert threads._strip_reserved_metadata({NKYEL_ORIGIN_KEY: {"kind": "schedule"}, "keep": 1}) == {"keep": 1}
 
 
 def test_create_and_patch_strip_a_client_supplied_origin() -> None:
-    from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY
+    from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY
 
     app, _store, checkpointer = _build_thread_app()
-    forged = {DEERFLOW_ORIGIN_KEY: {"kind": "schedule"}, "title": "mine"}
+    forged = {NKYEL_ORIGIN_KEY: {"kind": "schedule"}, "title": "mine"}
 
     with TestClient(app) as client:
         created = client.post("/api/threads", json={"thread_id": "origin-forge", "metadata": forged})
         assert created.status_code == 200, created.text
         assert created.json()["metadata"] == {"title": "mine"}
-        patched = client.patch("/api/threads/origin-forge", json={"metadata": {DEERFLOW_ORIGIN_KEY: {"kind": "im_channel"}}})
+        patched = client.patch("/api/threads/origin-forge", json={"metadata": {NKYEL_ORIGIN_KEY: {"kind": "im_channel"}}})
         assert patched.status_code == 200, patched.text
-        assert DEERFLOW_ORIGIN_KEY not in patched.json()["metadata"]
+        assert NKYEL_ORIGIN_KEY not in patched.json()["metadata"]
         fetched = client.post("/api/threads/search", json={"limit": 10})
-        assert all(DEERFLOW_ORIGIN_KEY not in item["metadata"] for item in fetched.json())
+        assert all(NKYEL_ORIGIN_KEY not in item["metadata"] for item in fetched.json())
 
     checkpoint = asyncio.run(checkpointer.aget_tuple({"configurable": {"thread_id": "origin-forge", "checkpoint_ns": ""}}))
-    assert DEERFLOW_ORIGIN_KEY not in checkpoint.metadata
+    assert NKYEL_ORIGIN_KEY not in checkpoint.metadata
 
 
 def test_create_thread_marks_a_host_origin_from_request_state() -> None:
     """Only server code can set request.state.run_origin (an extension handle)."""
-    from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY
+    from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY
 
     app, _store, _checkpointer = _build_thread_app()
 
@@ -5262,7 +5262,7 @@ def test_create_thread_marks_a_host_origin_from_request_state() -> None:
     with TestClient(app) as client:
         response = client.post("/api/threads", json={"thread_id": "ext-thread", "metadata": {"title": "t"}})
     assert response.status_code == 200, response.text
-    assert response.json()["metadata"] == {"title": "t", DEERFLOW_ORIGIN_KEY: {"kind": "extension", "namespace": "community.teams"}}
+    assert response.json()["metadata"] == {"title": "t", NKYEL_ORIGIN_KEY: {"kind": "extension", "namespace": "community.teams"}}
 
 
 def _unread_app(tmp_path, *, owner_check_passes: bool = True):
@@ -5270,10 +5270,10 @@ def _unread_app(tmp_path, *, owner_check_passes: bool = True):
 
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-    from deerflow.persistence.base import Base
-    from deerflow.persistence.run import RunRepository
-    from deerflow.persistence.run.model import RunChangeClockRow, RunRow
-    from deerflow.persistence.thread_reads import ThreadReadMarkerRow, ThreadReadRepository, ThreadReadVersionRow
+    from nkyel.persistence.base import Base
+    from nkyel.persistence.run import RunRepository
+    from nkyel.persistence.run.model import RunChangeClockRow, RunRow
+    from nkyel.persistence.thread_reads import ThreadReadMarkerRow, ThreadReadRepository, ThreadReadVersionRow
 
     user = User(id=UUID("31f5a8c2-1d4e-4b6f-8a9c-0d1e2f3a4b5c"), email="unread@example.com", password_hash="x", system_role="user")
     app = make_authed_test_app(user_factory=lambda: user, owner_check_passes=owner_check_passes, bind_current_user=True)
@@ -5296,14 +5296,14 @@ def _unread_app(tmp_path, *, owner_check_passes: bool = True):
 
 
 def test_search_items_carry_unread_until_the_thread_is_read(tmp_path) -> None:
-    from deerflow.runtime.run_origin import DEERFLOW_ORIGIN_KEY
+    from nkyel.runtime.run_origin import NKYEL_ORIGIN_KEY
 
     app, store, runs, user_id, engine = _unread_app(tmp_path)
 
     async def _seed():
-        for thread_id, metadata in (("sched-thread", {DEERFLOW_ORIGIN_KEY: {"kind": "schedule"}}), ("chat-thread", {})):
+        for thread_id, metadata in (("sched-thread", {NKYEL_ORIGIN_KEY: {"kind": "schedule"}}), ("chat-thread", {})):
             await store.aput(THREADS_NS, thread_id, {"thread_id": thread_id, "status": "idle", "created_at": "2026-10-06T00:00:00+00:00", "updated_at": "2026-10-06T00:00:00+00:00", "metadata": metadata})
-        await runs.put("run-sched", thread_id="sched-thread", user_id=user_id, status="success", metadata={DEERFLOW_ORIGIN_KEY: {"kind": "schedule"}})
+        await runs.put("run-sched", thread_id="sched-thread", user_id=user_id, status="success", metadata={NKYEL_ORIGIN_KEY: {"kind": "schedule"}})
         await runs.put("run-chat", thread_id="chat-thread", user_id=user_id, status="success", metadata={})
 
     asyncio.run(_seed())
@@ -5345,7 +5345,7 @@ def test_delete_thread_route_removes_read_markers(tmp_path) -> None:
 
     async def _seed():
         await store.aput(THREADS_NS, "gone", {"thread_id": "gone", "status": "idle", "created_at": "2026-10-06T00:00:00+00:00", "updated_at": "2026-10-06T00:00:00+00:00", "metadata": {}})
-        await runs.put("run-gone", thread_id="gone", user_id=user_id, status="success", metadata={"deerflow_origin": {"kind": "schedule"}})
+        await runs.put("run-gone", thread_id="gone", user_id=user_id, status="success", metadata={"nkyel_origin": {"kind": "schedule"}})
         await app.state.thread_read_repo.mark_read(user_id=user_id, thread_id="gone")
 
     asyncio.run(_seed())
@@ -5354,7 +5354,7 @@ def test_delete_thread_route_removes_read_markers(tmp_path) -> None:
     try:
         with patch("app.gateway.routers.threads.get_paths", return_value=Paths(tmp_path)), TestClient(app) as client:
             assert client.delete("/api/threads/gone").status_code == 200
-        from deerflow.persistence.thread_reads import ThreadReadMarkerRow
+        from nkyel.persistence.thread_reads import ThreadReadMarkerRow
 
         async def _count():
             async with app.state.thread_read_repo._sf() as session:

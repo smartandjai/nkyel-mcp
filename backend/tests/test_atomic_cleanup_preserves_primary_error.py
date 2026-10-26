@@ -55,8 +55,8 @@ def _fail_unlink_on(monkeypatch, predicate, real_unlink):
 
 
 def _capture_atomic_write_warnings(monkeypatch):
-    """Point ``deerflow.utils.atomic_write`` diagnostics at a recording handler."""
-    from deerflow.utils import atomic_write
+    """Point ``nkyel.utils.atomic_write`` diagnostics at a recording handler."""
+    from nkyel.utils import atomic_write
 
     records = _Records()
     monkeypatch.setattr(atomic_write.logger, "handlers", [records])
@@ -85,7 +85,7 @@ def _is_temporary_of(target):
 
 
 def _publish_lark(target, content):
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     lark_cli._publish_bytes_atomically(target, content)
 
@@ -155,7 +155,7 @@ def test_lark_cli_publish_success_is_unchanged(tmp_path):
 
 
 def _write_broker_launcher(path, content):
-    from deerflow.integrations import lark_broker
+    from nkyel.integrations import lark_broker
 
     lark_broker._write_text_atomically(str(path), content, mode=0o755)
 
@@ -244,7 +244,7 @@ def _staged_predicate(uploads_dir):
 
 
 def test_companion_registration_preserves_error_when_staged_unlink_fails(tmp_path, monkeypatch, real_unlink):
-    from deerflow.uploads import companions
+    from nkyel.uploads import companions
 
     original, markdown = _prepare_companion(tmp_path)
     primary = _PrimaryError("json dump failed")
@@ -268,7 +268,7 @@ def test_companion_registration_preserves_error_when_staged_unlink_fails(tmp_pat
 
 
 def test_companion_registration_success_is_unchanged(tmp_path):
-    from deerflow.uploads import companions
+    from nkyel.uploads import companions
 
     original, markdown = _prepare_companion(tmp_path)
 
@@ -282,7 +282,7 @@ def test_companion_registration_success_is_unchanged(tmp_path):
 
 def test_companion_registration_still_succeeds_when_publish_cleanup_would_fail(tmp_path, monkeypatch, real_unlink):
     """The success path must stay silent: nothing to clean up after a good replace."""
-    from deerflow.uploads import companions
+    from nkyel.uploads import companions
 
     original, markdown = _prepare_companion(tmp_path)
     records = _capture_atomic_write_warnings(monkeypatch)
@@ -325,7 +325,7 @@ def _staged_archive_in(tmp_path):
 
 def test_lark_archive_too_large_keeps_its_error_when_cleanup_fails(tmp_path, monkeypatch, real_unlink):
     """The size guard's ValueError must survive a failing download cleanup."""
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     oversized = b"x" * (lark_cli.LARK_CLI_MAX_ARCHIVE_BYTES + 1)
     monkeypatch.setattr(
@@ -346,7 +346,7 @@ def test_lark_archive_download_error_keeps_its_message_when_cleanup_fails(tmp_pa
     def _offline(*_args, **_kwargs):
         raise OSError("network down")
 
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     monkeypatch.setattr(lark_cli.urllib.request, "urlopen", _offline)
     monkeypatch.setattr(lark_cli.tempfile, "mkstemp", _staged_archive_in(tmp_path))

@@ -25,31 +25,31 @@ import yaml
 from support.shell import require_script_bash
 
 from app.gateway.deps import _enforce_postgres_for_multi_worker, _validate_memory_retrieval_index
-from deerflow.config.app_config import AppConfig
-from deerflow.config.deployment_config import MULTI_INSTANCE_ENV_VAR, multi_instance_declaration
+from nkyel.config.app_config import AppConfig
+from nkyel.config.deployment_config import MULTI_INSTANCE_ENV_VAR, multi_instance_declaration
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HELPER_PATH = REPO_ROOT / "scripts" / "dev_multi_instance.py"
 SHELL_PATH = REPO_ROOT / "scripts" / "dev_multi_instance.sh"
 
-_spec = importlib.util.spec_from_file_location("deerflow_dev_multi_instance", HELPER_PATH)
+_spec = importlib.util.spec_from_file_location("nkyel_dev_multi_instance", HELPER_PATH)
 assert _spec is not None and _spec.loader is not None
 mi = importlib.util.module_from_spec(_spec)
 sys.modules[_spec.name] = mi  # dataclasses resolve string annotations through sys.modules
 _spec.loader.exec_module(mi)
 
-DATABASE_URL = "postgresql://deerflow:secret@127.0.0.1:55432/deerflow"
+DATABASE_URL = "postgresql://nkyel:secret@127.0.0.1:55432/nkyel"
 REDIS_URL = "redis://127.0.0.1:56379/0"
 
 
 @pytest.fixture(autouse=True)
 def _isolated_gate_env(monkeypatch):
     """The gate also reads worker-count and declaration variables from the shell."""
-    for name in ("GATEWAY_WORKERS", "WEB_CONCURRENCY", MULTI_INSTANCE_ENV_VAR, "DEER_FLOW_STREAM_BRIDGE_REDIS_URL", mi.RETRIEVAL_INDEX_ENV_VAR):
+    for name in ("GATEWAY_WORKERS", "WEB_CONCURRENCY", MULTI_INSTANCE_ENV_VAR, "NKYEL_STREAM_BRIDGE_REDIS_URL", mi.RETRIEVAL_INDEX_ENV_VAR):
         monkeypatch.delenv(name, raising=False)
 
 
-SANDBOX_PREFIX = "deer-flow-mi-0123456789-sandbox"
+SANDBOX_PREFIX = "nkyel-mi-0123456789-sandbox"
 
 
 def _overlay(base: dict, **kwargs):
@@ -78,8 +78,8 @@ def test_overlay_preserves_unrelated_base_sections_without_mutating_the_base():
     base = {
         "config_version": 57,
         "models": [{"name": "m1", "use": "langchain_openai:ChatOpenAI", "model": "gpt-x"}],
-        "tools": [{"name": "web_search", "use": "deerflow.community.ddg_search.tools:web_search_tool"}],
-        "database": {"backend": "sqlite", "sqlite_dir": ".deer-flow/data", "pool_recycle": 120},
+        "tools": [{"name": "web_search", "use": "nkyel.community.ddg_search.tools:web_search_tool"}],
+        "database": {"backend": "sqlite", "sqlite_dir": ".nkyel/data", "pool_recycle": 120},
         "run_ownership": {"lease_seconds": 15, "grace_seconds": 5, "heartbeat_enabled": False},
         "run_events": {"backend": "memory", "max_trace_content": 2048},
         "memory": {"enabled": True, "backend_config": {"debounce_seconds": 5, "storage_path": ""}},
@@ -105,11 +105,11 @@ def test_overlay_preserves_unrelated_base_sections_without_mutating_the_base():
 def test_overlay_neutralizes_settings_the_gate_refuses():
     base = {
         "tools": [
-            {"name": "web_search", "use": "deerflow.community.ddg_search.tools:web_search_tool"},
-            {"name": "browser_navigate", "use": "deerflow.community.browser_automation.tools:browser_navigate_tool"},
-            {"name": "browser_click", "use": "deerflow.community.browser_automation.tools:browser_click_tool"},
+            {"name": "web_search", "use": "nkyel.community.ddg_search.tools:web_search_tool"},
+            {"name": "browser_navigate", "use": "nkyel.community.browser_automation.tools:browser_navigate_tool"},
+            {"name": "browser_click", "use": "nkyel.community.browser_automation.tools:browser_click_tool"},
         ],
-        "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider", "ownership": {"type": "memory"}},
+        "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider", "ownership": {"type": "memory"}},
         "scheduler": {"enabled": True},
         "checkpointer": {"type": "sqlite", "connection_string": "checkpoints.db"},
         "channels": {
@@ -124,7 +124,7 @@ def test_overlay_neutralizes_settings_the_gate_refuses():
 
     assert [tool["name"] for tool in config["tools"]] == ["web_search"]
     assert config["sandbox"]["ownership"] == {"type": "redis", "redis_url": REDIS_URL}
-    assert config["sandbox"]["use"] == "deerflow.sandbox.local:LocalSandboxProvider"
+    assert config["sandbox"]["use"] == "nkyel.sandbox.local:LocalSandboxProvider"
     assert "container_prefix" not in config["sandbox"], "only the local AIO provider names containers"
     assert config["scheduler"] == {"enabled": True, "multi_instance": True}
     assert "checkpointer" not in config
@@ -190,7 +190,7 @@ def test_overlay_drops_a_postgres_checkpointer_pointing_at_the_developers_databa
 def test_overlay_points_explicit_sandbox_ownership_at_the_harness_redis():
     base = {
         "sandbox": {
-            "use": "deerflow.sandbox.local:LocalSandboxProvider",
+            "use": "nkyel.sandbox.local:LocalSandboxProvider",
             "ownership": {"type": "redis", "redis_url": "redis://prod-redis:6379/3", "renewal_interval_seconds": 7.5, "ttl_multiplier": 3},
         }
     }
@@ -202,19 +202,19 @@ def test_overlay_points_explicit_sandbox_ownership_at_the_harness_redis():
 
 
 def test_overlay_gives_local_aio_sandboxes_a_harness_container_prefix():
-    base = {"sandbox": {"use": "deerflow.community.aio_sandbox:AioSandboxProvider", "container_prefix": "deer-flow-sandbox"}}
+    base = {"sandbox": {"use": "nkyel.community.aio_sandbox:AioSandboxProvider", "container_prefix": "nkyel-sandbox"}}
 
     config, notes = _overlay(base)
 
     assert config["sandbox"]["container_prefix"] == SANDBOX_PREFIX
     assert any("container_prefix" in note for note in notes)
     # Omitted prefix (the provider default) is replaced too.
-    config, _notes = _overlay({"sandbox": {"use": "deerflow.community.aio_sandbox:AioSandboxProvider"}})
+    config, _notes = _overlay({"sandbox": {"use": "nkyel.community.aio_sandbox:AioSandboxProvider"}})
     assert config["sandbox"]["container_prefix"] == SANDBOX_PREFIX
 
 
 def test_overlay_leaves_provisioner_backed_aio_prefixes_alone():
-    base = {"sandbox": {"use": "deerflow.community.aio_sandbox:AioSandboxProvider", "provisioner_url": "http://provisioner:8002"}}
+    base = {"sandbox": {"use": "nkyel.community.aio_sandbox:AioSandboxProvider", "provisioner_url": "http://provisioner:8002"}}
 
     config, _notes = _overlay(base)
 
@@ -226,7 +226,7 @@ def test_sandbox_container_prefix_is_stable_per_state_dir(tmp_path):
 
     assert first == mi.sandbox_container_prefix(tmp_path / "a")
     assert first != mi.sandbox_container_prefix(tmp_path / "b")
-    assert first.startswith("deer-flow-mi-") and first.endswith("-sandbox")
+    assert first.startswith("nkyel-mi-") and first.endswith("-sandbox")
     assert all(ch.isalnum() or ch in "-_." for ch in first)
 
 
@@ -247,7 +247,7 @@ def test_overlay_keeps_deermem_data_inside_the_harness_home(memory):
 
 def test_overlay_keeps_other_data_roots_inside_the_harness():
     base = {
-        "blob_storage": {"enabled": True, "backend": "local_fs", "backend_config": {"root": "/mnt/shared/deerflow-blobs"}},
+        "blob_storage": {"enabled": True, "backend": "local_fs", "backend_config": {"root": "/mnt/shared/nkyel-blobs"}},
         "database": {"checkpoint_cache": {"type": "redis", "redis_url": "redis://prod-redis:6379/1", "max_entries": 64}},
     }
 
@@ -275,8 +275,8 @@ def _load_generated(tmp_path: Path, monkeypatch, base_path: Path, *, index_dir: 
     out = tmp_path / "state" / "config.yaml"
     extensions = tmp_path / "extensions_config.json"
     extensions.write_text('{"mcpServers": {}, "skills": {}}', encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(extensions))
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(extensions))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "home"))
     monkeypatch.setenv(mi.RETRIEVAL_INDEX_ENV_VAR, str(index_dir))
     mi.render_config(base_path, out, database_url=DATABASE_URL, redis_url=REDIS_URL, state_dir=tmp_path / "state")
     return AppConfig.from_file(str(out))
@@ -301,10 +301,10 @@ def test_generated_config_from_a_hostile_base_passes_the_real_startup_gate(tmp_p
             {
                 "config_version": 1,
                 "models": [],
-                "tools": [{"name": "browser_navigate", "use": "deerflow.community.browser_automation.tools:browser_navigate_tool", "group": "web"}],
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider", "ownership": {"type": "memory"}},
+                "tools": [{"name": "browser_navigate", "use": "nkyel.community.browser_automation.tools:browser_navigate_tool", "group": "web"}],
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider", "ownership": {"type": "memory"}},
                 "scheduler": {"enabled": True},
-                "database": {"backend": "sqlite", "sqlite_dir": ".deer-flow/data"},
+                "database": {"backend": "sqlite", "sqlite_dir": ".nkyel/data"},
                 "run_events": {"backend": "jsonl"},
                 "stream_bridge": {"type": "memory"},
             }
@@ -328,7 +328,7 @@ def test_generated_config_handles_ui_channels_with_disabled_lease(tmp_path, monk
     base = {
         "config_version": 1,
         "models": [],
-        "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+        "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
         "channels": {"leader_lease": {"enabled": False}, "telegram": {"enabled": yaml_channel_enabled, "bot_token": "test-token"}},
         "channel_connections": {"enabled": True, "telegram": {"enabled": True, "bot_username": "test_bot"}},
     }
@@ -388,8 +388,8 @@ def test_secrets_file_is_complete_and_stable(tmp_path):
     assert first == second, "an existing secrets file is reused, never regenerated"
     assert set(first) == set(mi.SHARED_SECRET_NAMES)
     assert all(value for value in first.values())
-    assert len(base64.urlsafe_b64decode(first["DEER_FLOW_CREDENTIALS_KEY"])) == 32, "must be a raw Fernet key"
-    assert first["AUTH_JWT_SECRET"] != first["DEER_FLOW_INTERNAL_AUTH_TOKEN"]
+    assert len(base64.urlsafe_b64decode(first["NKYEL_CREDENTIALS_KEY"])) == 32, "must be a raw Fernet key"
+    assert first["AUTH_JWT_SECRET"] != first["NKYEL_INTERNAL_AUTH_TOKEN"]
     # Shell-sourceable KEY=value lines.
     assert sorted(line.split("=", 1)[0] for line in path.read_text(encoding="utf-8").splitlines() if line and not line.startswith("#")) == sorted(mi.SHARED_SECRET_NAMES)
 
@@ -412,7 +412,7 @@ def test_nginx_conf_balances_both_gateways(tmp_path):
     assert "listen 127.0.0.1:2027;" in text
     assert "server 127.0.0.1:8001;" in text
     assert "server 127.0.0.1:8011;" in text
-    assert "X-DeerFlow-Upstream $upstream_addr" in text
+    assert "X-nkyel-Upstream $upstream_addr" in text
     assert f"pid {json.dumps(str(tmp_path / 'run' / 'nginx.pid'), ensure_ascii=False)};" in text
 
 
@@ -588,7 +588,7 @@ def test_shell_script_parses():
 
 @pytest.mark.parametrize("flag", ["--help", "help", "-h"])
 def test_shell_script_help_lists_every_command_without_side_effects(tmp_path, flag):
-    env = {**os.environ, "DEERFLOW_MI_STATE_DIR": str(tmp_path / "state"), "PATH": os.environ.get("PATH", "")}
+    env = {**os.environ, "NKYEL_MI_STATE_DIR": str(tmp_path / "state"), "PATH": os.environ.get("PATH", "")}
 
     result = subprocess.run([require_script_bash(), str(SHELL_PATH), flag], capture_output=True, text=True, timeout=30, env=env)
 
@@ -599,7 +599,7 @@ def test_shell_script_help_lists_every_command_without_side_effects(tmp_path, fl
 
 
 def test_shell_script_rejects_unknown_commands(tmp_path):
-    env = {**os.environ, "DEERFLOW_MI_STATE_DIR": str(tmp_path / "state")}
+    env = {**os.environ, "NKYEL_MI_STATE_DIR": str(tmp_path / "state")}
 
     result = subprocess.run([require_script_bash(), str(SHELL_PATH), "frobnicate"], capture_output=True, text=True, timeout=30, env=env)
 
@@ -633,8 +633,8 @@ case "$cmd" in
         if [ "$1" = "-f" ]; then fmt="$2"; shift 2; fi
         [ -d "$state/$1" ] || exit 1
         case "$fmt" in
-            *state-dir*) cat "$state/$1/deerflow.harness.state-dir" 2>/dev/null; echo ;;
-            *deerflow.harness*) cat "$state/$1/deerflow.harness" 2>/dev/null; echo ;;
+            *state-dir*) cat "$state/$1/nkyel.harness.state-dir" 2>/dev/null; echo ;;
+            *nkyel.harness*) cat "$state/$1/nkyel.harness" 2>/dev/null; echo ;;
             *) echo running ;;
         esac
         ;;
@@ -746,18 +746,18 @@ def stubbed_harness(tmp_path):
         path.chmod(0o755)
     state = tmp_path / "mi state"  # whitespace on purpose
     ports = {"a": _free_port(), "b": _free_port(), "pg": _free_port(), "redis": _free_port()}
-    env = {key: value for key, value in os.environ.items() if not key.startswith(("DEERFLOW_MI_", "DEER_FLOW_"))}
+    env = {key: value for key, value in os.environ.items() if not key.startswith(("NKYEL_MI_", "NKYEL_"))}
     env.update(
         PATH=f"{stubs}{os.pathsep}{os.environ.get('PATH', '')}",
         REAL_PYTHON=sys.executable,
         REAL_LSOF=shutil.which("lsof") or "",
-        DEERFLOW_MI_STATE_DIR=str(state),
-        DEERFLOW_MI_BASE_CONFIG=str(REPO_ROOT / "config.example.yaml"),
-        DEERFLOW_MI_GATEWAY_A_PORT=str(ports["a"]),
-        DEERFLOW_MI_GATEWAY_B_PORT=str(ports["b"]),
-        DEERFLOW_MI_POSTGRES_PORT=str(ports["pg"]),
-        DEERFLOW_MI_REDIS_PORT=str(ports["redis"]),
-        DEERFLOW_MI_HEALTH_TIMEOUT="20",
+        NKYEL_MI_STATE_DIR=str(state),
+        NKYEL_MI_BASE_CONFIG=str(REPO_ROOT / "config.example.yaml"),
+        NKYEL_MI_GATEWAY_A_PORT=str(ports["a"]),
+        NKYEL_MI_GATEWAY_B_PORT=str(ports["b"]),
+        NKYEL_MI_POSTGRES_PORT=str(ports["pg"]),
+        NKYEL_MI_REDIS_PORT=str(ports["redis"]),
+        NKYEL_MI_HEALTH_TIMEOUT="20",
     )
 
     def run(*args: str) -> subprocess.CompletedProcess:
@@ -784,8 +784,8 @@ def _port_open(port: int) -> bool:
 def _container(stubs: Path, name: str, *, state_dir: str) -> Path:
     path = stubs / "containers" / name
     path.mkdir(parents=True)
-    (path / "deerflow.harness").write_text("dev-multi-instance", encoding="utf-8")
-    (path / "deerflow.harness.state-dir").write_text(state_dir, encoding="utf-8")
+    (path / "nkyel.harness").write_text("dev-multi-instance", encoding="utf-8")
+    (path / "nkyel.harness.state-dir").write_text(state_dir, encoding="utf-8")
     return path
 
 
@@ -807,12 +807,12 @@ def test_up_tears_everything_down_when_b_loses_its_port_after_preflight(stubbed_
 
 def test_up_refuses_containers_owned_by_another_state_dir(stubbed_harness):
     stubs, state, _ports, run = stubbed_harness
-    foreign = _container(stubs, "deerflow-mi-postgres", state_dir="/elsewhere/.deer-flow/multi-instance")
+    foreign = _container(stubs, "nkyel-mi-postgres", state_dir="/elsewhere/.nkyel/multi-instance")
 
     result = run("up", "--skip-install", "--no-nginx")
 
     assert result.returncode != 0
-    assert "/elsewhere/.deer-flow/multi-instance" in result.stderr
+    assert "/elsewhere/.nkyel/multi-instance" in result.stderr
     assert foreign.is_dir()
     commands = (stubs / "docker.log").read_text()
     assert "docker rm" not in commands and "docker run" not in commands
@@ -825,16 +825,16 @@ def test_up_refuses_containers_owned_by_another_state_dir(stubbed_harness):
 
 def test_up_replaces_its_own_stale_containers_with_their_volumes(stubbed_harness):
     stubs, state, ports, run = stubbed_harness
-    _container(stubs, "deerflow-mi-redis", state_dir=str(state))
+    _container(stubs, "nkyel-mi-redis", state_dir=str(state))
     (stubs / f"busy-from-{ports['b']}").write_text("2", encoding="utf-8")  # stop after A so the test stays short
 
     run("up", "--skip-install", "--no-nginx")
 
     log = (stubs / "docker.log").read_text().splitlines()
     first_run = next(i for i, line in enumerate(log) if line.startswith("docker run"))
-    assert "docker rm -f -v deerflow-mi-redis" in log[:first_run]
+    assert "docker rm -f -v nkyel-mi-redis" in log[:first_run]
     labelled = [line for line in log if line.startswith("docker run")]
-    assert all(f"--label deerflow.harness.state-dir={state}" in line for line in labelled), labelled
+    assert all(f"--label nkyel.harness.state-dir={state}" in line for line in labelled), labelled
 
 
 def test_overlay_leaves_the_channel_leader_lease_block_alone():

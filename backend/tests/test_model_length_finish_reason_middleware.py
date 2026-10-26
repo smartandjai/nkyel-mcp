@@ -6,13 +6,13 @@ from unittest.mock import MagicMock
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.middlewares.dangling_tool_call_middleware import DanglingToolCallMiddleware
-from deerflow.agents.middlewares.model_length_finish_reason_middleware import (
+from nkyel.agents.middlewares.dangling_tool_call_middleware import DanglingToolCallMiddleware
+from nkyel.agents.middlewares.model_length_finish_reason_middleware import (
     MODEL_LENGTH_CAPPED_STOP_REASON,
     ModelLengthFinishReasonMiddleware,
 )
 
-_MW_LOGGER = "deerflow.agents.middlewares.model_length_finish_reason_middleware"
+_MW_LOGGER = "nkyel.agents.middlewares.model_length_finish_reason_middleware"
 
 
 def _runtime(run_id: str = "run-1"):

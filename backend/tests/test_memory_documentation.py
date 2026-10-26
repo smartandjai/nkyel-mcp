@@ -14,9 +14,9 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.paths import agent_facts_directory, memory_file_path
-from deerflow.config.memory_config import MemoryConfig
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.paths import agent_facts_directory, memory_file_path
+from nkyel.config.memory_config import MemoryConfig
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MEMORY_GUIDES = (
@@ -25,7 +25,7 @@ MEMORY_GUIDES = (
 )
 
 # A root that never collides with the placeholders the guides spell out.
-PROBE_ROOT = "/deer-flow-test-root"
+PROBE_ROOT = "/nkyel-test-root"
 PROBE_USER_ID = "probe-user"
 PROBE_AGENT_NAME = "Probe-Agent"
 

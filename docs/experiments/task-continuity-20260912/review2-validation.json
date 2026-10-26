@@ -66,10 +66,10 @@
     "No new live model, historical prototype, deployment or remote CI result is claimed for this local follow-up."
   ],
   "source_sha256": {
-    "backend/packages/harness/deerflow/agents/middlewares/AGENTS.md": "16d4165726e913534fd97d276b85d5e1797eb57d517a1dfa0c7e5ce5b789953b",
-    "backend/packages/harness/deerflow/agents/middlewares/durable_context_middleware.py": "0583f1c6ce59fb8c0aef0e98fb972ce817993ef7ed6f934090d433463583fd3c",
-    "backend/packages/harness/deerflow/agents/middlewares/summarization_middleware.py": "57677b96e9e8c49bb0c0c87906865baaa408f9aca00dacae8427261f9cb80197",
-    "backend/packages/harness/deerflow/agents/task_continuity/archive.py": "e65eeab0f4e94bf056b1dece40b981c50a9cd27a9f7a448e3318bea4c72f2ca4",
+    "backend/packages/harness/nkyel/agents/middlewares/AGENTS.md": "16d4165726e913534fd97d276b85d5e1797eb57d517a1dfa0c7e5ce5b789953b",
+    "backend/packages/harness/nkyel/agents/middlewares/durable_context_middleware.py": "0583f1c6ce59fb8c0aef0e98fb972ce817993ef7ed6f934090d433463583fd3c",
+    "backend/packages/harness/nkyel/agents/middlewares/summarization_middleware.py": "57677b96e9e8c49bb0c0c87906865baaa408f9aca00dacae8427261f9cb80197",
+    "backend/packages/harness/nkyel/agents/task_continuity/archive.py": "e65eeab0f4e94bf056b1dece40b981c50a9cd27a9f7a448e3318bea4c72f2ca4",
     "backend/tests/test_middleware_release_policy.py": "249d2171efc855e5223785f24b5925b5a18f1d0508ad2dceb5d78c2bf19a417f",
     "backend/tests/test_task_continuity.py": "98f360eb6b69d62fe3a06aaec2d50bcdcfd17403f3bd34cde7565820827c981e",
     "docs/task-continuity.md": "60c8839df7d0e3f0d0b6a6dfd0d198e531aec2b768f8cb0153ee1ad9b6f7aaf1"

@@ -14,8 +14,8 @@ from httpx import ASGITransport, AsyncClient
 
 from app.gateway import upload_ingestion
 from app.gateway.routers import uploads
-from deerflow.uploads import companions
-from deerflow.utils.file_io import run_file_io
+from nkyel.uploads import companions
+from nkyel.utils.file_io import run_file_io
 
 
 class _Upload:

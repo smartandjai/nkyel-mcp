@@ -1,7 +1,7 @@
 """Chat-to-thread binding store contract: the legacy JSON file and the shared SQL table.
 
 ``ChannelManager`` maps every unbound IM conversation (``channel_name:chat_id[:topic_id]``)
-to the DeerFlow thread it runs on. Both stores must implement the semantics the
+to the nkyel thread it runs on. Both stores must implement the semantics the
 manager relied on while the mapping was a JSON file: topic keys are independent of
 the base chat key, an overwrite keeps ``created_at`` and bumps ``updated_at``,
 ``remove`` without a topic clears the base mapping and every topic of that chat,
@@ -37,10 +37,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from support.postgres import asyncpg_test_url
 
 from app.channels.store import ChannelStore, JsonChannelStore, SqlChannelStore, resolve_channel_store
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_thread_bindings import ChannelThreadBinding, ChannelThreadBindingRow, SqlChannelThreadBindingRepository, binding_key, split_binding_key
-from deerflow.persistence.channel_thread_bindings.model import CHANNEL_NAME_LENGTH, CHAT_ID_LENGTH, TOPIC_ID_LENGTH, USER_ID_LENGTH
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_thread_bindings import ChannelThreadBinding, ChannelThreadBindingRow, SqlChannelThreadBindingRepository, binding_key, split_binding_key
+from nkyel.persistence.channel_thread_bindings.model import CHANNEL_NAME_LENGTH, CHAT_ID_LENGTH, TOPIC_ID_LENGTH, USER_ID_LENGTH
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
 
 pytestmark = pytest.mark.asyncio
 
@@ -566,7 +566,7 @@ async def test_resolve_channel_store_picks_json_for_memory_and_sql_for_a_databas
 
 
 async def test_resolve_channel_store_uses_the_process_engine_by_default(tmp_path, monkeypatch):
-    from deerflow.persistence import engine as engine_module
+    from nkyel.persistence import engine as engine_module
 
     path = tmp_path / "store.json"
     monkeypatch.setattr(engine_module, "get_session_factory", lambda: object())

@@ -2,9 +2,9 @@
 
 from langchain_core.messages import AIMessage, ToolMessage
 
-from deerflow.agents.middlewares.delegation_ledger import extract_delegations, render_delegation_ledger
-from deerflow.agents.thread_state import TERMINAL_STATUSES, merge_delegations
-from deerflow.subagents.status_contract import SUBAGENT_STATUS_VALUES
+from nkyel.agents.middlewares.delegation_ledger import extract_delegations, render_delegation_ledger
+from nkyel.agents.thread_state import TERMINAL_STATUSES, merge_delegations
+from nkyel.subagents.status_contract import SUBAGENT_STATUS_VALUES
 
 
 def _entry(entry_id: str, status: str, description: str = "d", subagent_type: str = "general-purpose"):
@@ -90,7 +90,7 @@ class TestMergeDelegations:
         assert merged[0]["status"] == "completed"
 
     def test_over_cap_keeps_most_recent_entries(self):
-        from deerflow.agents import thread_state as thread_state_module
+        from nkyel.agents import thread_state as thread_state_module
 
         cap = getattr(thread_state_module, "_DELEGATION_LEDGER_MAX_ENTRIES", None)
         assert isinstance(cap, int)
@@ -494,7 +494,7 @@ def _verdict(*, resolved=("r1",), failed=(), unknown=(), no_claims=False):
 
 
 def _completed_task_message(tool_call_id: str, verdict: dict | None) -> ToolMessage:
-    from deerflow.subagents.status_contract import make_subagent_additional_kwargs
+    from nkyel.subagents.status_contract import make_subagent_additional_kwargs
 
     receipts = [
         {
@@ -573,7 +573,7 @@ def _acceptance_verdict() -> dict:
 
 class TestAcceptanceVerdictRendering:
     def test_entry_carries_verdict_and_renders_segment(self):
-        from deerflow.subagents.status_contract import make_subagent_additional_kwargs
+        from nkyel.subagents.status_contract import make_subagent_additional_kwargs
 
         messages = [
             _ai_task_call("c1", "write report"),

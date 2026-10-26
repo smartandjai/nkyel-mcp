@@ -12,15 +12,15 @@ from collections.abc import Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
 from typing import Any
 
-from deerflow_extension_api.agent_runs import AgentRun, AgentRunError, ExecutionFence
+from nkyel_extension_api.agent_runs import AgentRun, AgentRunError, ExecutionFence
 from fastapi import HTTPException, Request
 from pydantic import TypeAdapter, ValidationError
 
 from app.gateway.auth_disabled import AUTH_SOURCE_AUTH_DISABLED, AUTH_SOURCE_SESSION, get_auth_disabled_user, is_auth_disabled
 from app.gateway.authz import AuthContext, resolve_route_permissions
-from deerflow.runtime.run_origin import make_origin
-from deerflow.runtime.user_context import reset_current_user, set_current_user
-from deerflow.utils.thread_id import ThreadId
+from nkyel.runtime.run_origin import make_origin
+from nkyel.runtime.user_context import reset_current_user, set_current_user
+from nkyel.utils.thread_id import ThreadId
 
 _THREAD_ID = TypeAdapter(ThreadId)
 
@@ -135,7 +135,7 @@ class _BoundAgentRuns:
         import copy
 
         from app.gateway.deps import get_run_manager
-        from deerflow.runtime.assembly_evidence import EVIDENCE_KEY
+        from nkyel.runtime.assembly_evidence import EVIDENCE_KEY
 
         async with self._request("runs:read", thread_id) as request:
             record = await get_run_manager(request).get(run_id, user_id=self._user_id)
@@ -155,9 +155,9 @@ class _BoundAgentRuns:
                 return await asyncio.to_thread(read_output_snapshot, self._user_id, thread_id, path)
 
     async def configuration_revision(self, *, assistant_ids: list[str], durable: bool = False) -> str:
-        from deerflow.config.agents_config import load_agent_config, load_agent_soul
-        from deerflow.config.app_config import get_app_config
-        from deerflow.config.extensions_config import get_extensions_config
+        from nkyel.config.agents_config import load_agent_config, load_agent_soul
+        from nkyel.config.app_config import get_app_config
+        from nkyel.config.extensions_config import get_extensions_config
 
         if not isinstance(assistant_ids, list) or len(assistant_ids) > 32 or any(not isinstance(name, str) or not name or len(name) > 80 for name in assistant_ids):
             raise AgentRunError(422, "Invalid Agent references")
@@ -186,7 +186,7 @@ class _BoundAgentRuns:
                 if durable:
                     from app.gateway.auth.config import get_auth_config
 
-                    key = hmac.new(get_auth_config().jwt_secret.encode(), b"deerflow:configuration-revision:v1", hashlib.sha256).digest()
+                    key = hmac.new(get_auth_config().jwt_secret.encode(), b"nkyel:configuration-revision:v1", hashlib.sha256).digest()
                 return hmac.new(key, raw, hashlib.sha256).hexdigest()
 
             return await asyncio.to_thread(snapshot)
@@ -251,7 +251,7 @@ class _BoundAgentRuns:
         async with self._request("runs:cancel", thread_id) as request:
             if execution_fence is not None:
                 from app.gateway.deps import get_run_manager
-                from deerflow.runtime.runs.manager import ConflictError, RunIdempotencyUnsupported
+                from nkyel.runtime.runs.manager import ConflictError, RunIdempotencyUnsupported
 
                 if not isinstance(execution_fence, ExecutionFence) or self._plugin_namespace is None or execution_fence.namespace != self._plugin_namespace:
                     raise AgentRunError(422, "Execution fence must belong to this plugin")

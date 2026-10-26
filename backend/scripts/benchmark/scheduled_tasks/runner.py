@@ -19,13 +19,13 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.gateway.routers.scheduled_tasks import ScheduledTaskCreateRequest, resolve_scheduled_task_assistant_id
 from app.gateway.run_models import RunCreateRequest
 from app.gateway.scheduled_task_validation import validate_scheduled_task_create
-from deerflow.config.scheduler_config import SchedulerConfig
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import TERMINAL_RUN_STATUSES, ScheduledTaskRow
-from deerflow.persistence.thread_meta.sql import ThreadMetaRepository
-from deerflow.runtime.user_context import DEFAULT_USER_ID
+from nkyel.config.scheduler_config import SchedulerConfig
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import TERMINAL_RUN_STATUSES, ScheduledTaskRow
+from nkyel.persistence.thread_meta.sql import ThreadMetaRepository
+from nkyel.runtime.user_context import DEFAULT_USER_ID
 
 from .protocol import (
     ROOT,
@@ -93,9 +93,9 @@ class Rows:
     """Read production rows; fixture setup uses the production repository only."""
 
     def __init__(self, sqlite_dir: Path):
-        if not sqlite_dir.is_absolute() or not (sqlite_dir / ".scheduled-benchmark-disposable").is_file() or not (sqlite_dir / "deerflow.db").is_file():
+        if not sqlite_dir.is_absolute() or not (sqlite_dir / ".scheduled-benchmark-disposable").is_file() or not (sqlite_dir / "nkyel.db").is_file():
             raise ValueError("Mark an existing disposable absolute SQLite directory before live execution")
-        db = sqlite_dir / "deerflow.db"
+        db = sqlite_dir / "nkyel.db"
         self.read_engine = create_async_engine(URL.create("sqlite+aiosqlite", database=f"file:{db}", query={"mode": "ro", "uri": "true"}))
         self.write_engine = create_async_engine(URL.create("sqlite+aiosqlite", database=str(db)))
         self.read_session = async_sessionmaker(self.read_engine, expire_on_commit=False)

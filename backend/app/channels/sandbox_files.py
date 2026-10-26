@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from deerflow.sandbox.lease import acquire_sandbox_client_lease
+from nkyel.sandbox.lease import acquire_sandbox_client_lease
 
 logger = logging.getLogger(__name__)
 

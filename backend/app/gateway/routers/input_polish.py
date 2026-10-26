@@ -3,11 +3,11 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-import deerflow.utils.llm_text as llm_text
+import nkyel.utils.llm_text as llm_text
 from app.gateway.authz import require_permission
 from app.gateway.deps import get_config
-from deerflow.config.app_config import AppConfig
-from deerflow.utils.oneshot_llm import run_oneshot_llm
+from nkyel.config.app_config import AppConfig
+from nkyel.utils.oneshot_llm import run_oneshot_llm
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ def _clean_rewritten_text(text: str) -> str:
 
 def _build_system_instruction() -> str:
     return (
-        "You are DeerFlow's pre-send prompt optimizer.\n"
+        "You are nkyel's pre-send prompt optimizer.\n"
         "Rewrite the user's rough draft into a clearer instruction for an AI agent before it is sent.\n"
         "Do not answer the task.\n"
         "Preserve the user's language, intent, entities, file paths, URLs, code blocks, and any leading slash command prefix exactly.\n"

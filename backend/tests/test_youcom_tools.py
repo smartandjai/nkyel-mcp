@@ -15,7 +15,7 @@ pytestmark = pytest.mark.anyio
 
 @pytest.fixture
 def mock_config_with_key():
-    with patch("deerflow.community.youcom.tools.get_app_config") as mock:
+    with patch("nkyel.community.youcom.tools.get_app_config") as mock:
         tool_config = MagicMock()
         tool_config.model_extra = {"api_key": "test-ydc-key", "max_results": 5}
         mock.return_value.get_tool_config.return_value = tool_config
@@ -24,7 +24,7 @@ def mock_config_with_key():
 
 @pytest.fixture
 def mock_config_no_key():
-    with patch("deerflow.community.youcom.tools.get_app_config") as mock:
+    with patch("nkyel.community.youcom.tools.get_app_config") as mock:
         tool_config = MagicMock()
         tool_config.model_extra = {}
         mock.return_value.get_tool_config.return_value = tool_config
@@ -40,7 +40,7 @@ def _make_response(payload: object) -> MagicMock:
 
 def _patch_get(mock_resp: MagicMock):
     """Patch httpx.AsyncClient so the context-managed .get returns mock_resp."""
-    patcher = patch("deerflow.community.youcom.tools.httpx.AsyncClient")
+    patcher = patch("nkyel.community.youcom.tools.httpx.AsyncClient")
     mock_client_cls = patcher.start()
     mock_client_cls.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_resp)
     return patcher, mock_client_cls
@@ -58,31 +58,31 @@ def _web(**overrides) -> dict:
 
 class TestResolveToolSettings:
     def test_returns_config_key_when_present(self):
-        with patch("deerflow.community.youcom.tools.get_app_config") as mock:
+        with patch("nkyel.community.youcom.tools.get_app_config") as mock:
             tool_config = MagicMock()
             tool_config.model_extra = {"api_key": "from-config"}
             mock.return_value.get_tool_config.return_value = tool_config
 
-            from deerflow.community.youcom.tools import _resolve_tool_settings
+            from nkyel.community.youcom.tools import _resolve_tool_settings
 
             assert _resolve_tool_settings("web_search")[0] == "from-config"
 
     def test_falls_back_to_env_when_config_key_blank(self):
-        with patch("deerflow.community.youcom.tools.get_app_config") as mock:
+        with patch("nkyel.community.youcom.tools.get_app_config") as mock:
             tool_config = MagicMock()
             tool_config.model_extra = {"api_key": "   "}
             mock.return_value.get_tool_config.return_value = tool_config
             with patch.dict("os.environ", {"YDC_API_KEY": "env-key"}, clear=True):
-                from deerflow.community.youcom.tools import _resolve_tool_settings
+                from nkyel.community.youcom.tools import _resolve_tool_settings
 
                 assert _resolve_tool_settings("web_search")[0] == "env-key"
 
     def test_returns_none_when_no_key_anywhere(self):
         """No key is not an error: it selects the keyless endpoint."""
-        with patch("deerflow.community.youcom.tools.get_app_config") as mock:
+        with patch("nkyel.community.youcom.tools.get_app_config") as mock:
             mock.return_value.get_tool_config.return_value = None
             with patch.dict("os.environ", {}, clear=True):
-                from deerflow.community.youcom.tools import _resolve_tool_settings
+                from nkyel.community.youcom.tools import _resolve_tool_settings
 
                 assert _resolve_tool_settings("web_search")[0] is None
 
@@ -91,7 +91,7 @@ class TestEndpointSelection:
     async def test_configured_key_uses_keyed_endpoint_with_header(self, mock_config_with_key):
         patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             await web_search_tool.ainvoke({"query": "test"})
             call = _get_call(mock_client_cls)
@@ -107,7 +107,7 @@ class TestEndpointSelection:
         with patch.dict("os.environ", {}, clear=True):
             patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
             try:
-                from deerflow.community.youcom.tools import web_search_tool
+                from nkyel.community.youcom.tools import web_search_tool
 
                 await web_search_tool.ainvoke({"query": "test"})
                 call = _get_call(mock_client_cls)
@@ -121,7 +121,7 @@ class TestEndpointSelection:
         with patch.dict("os.environ", {"YDC_API_KEY": "env-key"}, clear=True):
             patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
             try:
-                from deerflow.community.youcom.tools import web_search_tool
+                from nkyel.community.youcom.tools import web_search_tool
 
                 await web_search_tool.ainvoke({"query": "test"})
                 call = _get_call(mock_client_cls)
@@ -132,13 +132,13 @@ class TestEndpointSelection:
         assert call.kwargs["headers"]["X-API-Key"] == "env-key"
 
     @pytest.mark.parametrize("with_key", [True, False])
-    async def test_identifies_deerflow_in_user_agent(self, with_key, mock_config_no_key):
-        """Both endpoints identify DeerFlow so You.com can attribute the traffic."""
+    async def test_identifies_nkyel_in_user_agent(self, with_key, mock_config_no_key):
+        """Both endpoints identify nkyel so You.com can attribute the traffic."""
         env = {"YDC_API_KEY": "k"} if with_key else {}
         with patch.dict("os.environ", env, clear=True):
             patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
             try:
-                from deerflow.community.youcom.tools import web_search_tool
+                from nkyel.community.youcom.tools import web_search_tool
 
                 await web_search_tool.ainvoke({"query": "test"})
                 call = _get_call(mock_client_cls)
@@ -146,8 +146,8 @@ class TestEndpointSelection:
                 patcher.stop()
 
         user_agent = call.kwargs["headers"]["User-Agent"]
-        assert user_agent.startswith("deerflow-harness/")
-        assert "youdotcom-integration/bytedance-deer-flow" in user_agent
+        assert user_agent.startswith("nkyel-harness/")
+        assert "youdotcom-integration/bytedance-nkyel" in user_agent
 
 
 class TestWebSearchTool:
@@ -162,7 +162,7 @@ class TestWebSearchTool:
         }
         patcher, _ = _patch_get(_make_response(payload))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "vector databases"}))
         finally:
@@ -183,7 +183,7 @@ class TestWebSearchTool:
         }
         patcher, _ = _patch_get(_make_response(payload))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "news"}))
         finally:
@@ -201,7 +201,7 @@ class TestWebSearchTool:
         }
         patcher, _ = _patch_get(_make_response(payload))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "test"}))
         finally:
@@ -213,7 +213,7 @@ class TestWebSearchTool:
     async def test_agent_max_results_is_honored_over_config(self, mock_config_with_key):
         patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             await web_search_tool.ainvoke({"query": "test", "max_results": 20})
             params = _get_call(mock_client_cls).kwargs["params"]
@@ -225,7 +225,7 @@ class TestWebSearchTool:
     async def test_config_max_results_used_when_caller_omits(self, mock_config_with_key):
         patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             await web_search_tool.ainvoke({"query": "test"})
             params = _get_call(mock_client_cls).kwargs["params"]
@@ -236,13 +236,13 @@ class TestWebSearchTool:
 
     @pytest.mark.parametrize(("max_results", "expected"), [(0, 5), (-2, 5), (1, 1), (100, 100), ("500", 100)])
     async def test_max_results_clamped_to_provider_bounds(self, max_results, expected):
-        with patch("deerflow.community.youcom.tools.get_app_config") as mock:
+        with patch("nkyel.community.youcom.tools.get_app_config") as mock:
             tool_config = MagicMock()
             tool_config.model_extra = {"api_key": "k", "max_results": max_results}
             mock.return_value.get_tool_config.return_value = tool_config
             patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
             try:
-                from deerflow.community.youcom.tools import web_search_tool
+                from nkyel.community.youcom.tools import web_search_tool
 
                 await web_search_tool.ainvoke({"query": "test"})
                 params = _get_call(mock_client_cls).kwargs["params"]
@@ -252,15 +252,15 @@ class TestWebSearchTool:
         assert params["count"] == expected
 
     async def test_invalid_max_results_falls_back_to_default_with_warning(self, caplog):
-        with patch("deerflow.community.youcom.tools.get_app_config") as mock:
+        with patch("nkyel.community.youcom.tools.get_app_config") as mock:
             tool_config = MagicMock()
             tool_config.model_extra = {"api_key": "k", "max_results": "not-a-number"}
             mock.return_value.get_tool_config.return_value = tool_config
             patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
             try:
-                from deerflow.community.youcom.tools import web_search_tool
+                from nkyel.community.youcom.tools import web_search_tool
 
-                with caplog.at_level(logging.WARNING, logger="deerflow.community.youcom.tools"):
+                with caplog.at_level(logging.WARNING, logger="nkyel.community.youcom.tools"):
                     await web_search_tool.ainvoke({"query": "test"})
                 params = _get_call(mock_client_cls).kwargs["params"]
             finally:
@@ -272,7 +272,7 @@ class TestWebSearchTool:
     async def test_empty_results_returns_error_json(self, mock_config_with_key):
         patcher, _ = _patch_get(_make_response({"results": {"web": []}}))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "no results"}))
         finally:
@@ -284,7 +284,7 @@ class TestWebSearchTool:
     async def test_missing_results_section_returns_error_json(self, mock_config_with_key):
         patcher, _ = _patch_get(_make_response({"metadata": {"latency": 0.1}}))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "test"}))
         finally:
@@ -295,7 +295,7 @@ class TestWebSearchTool:
     async def test_non_dict_payload_returns_format_error(self, mock_config_with_key):
         patcher, _ = _patch_get(_make_response(["not", "a", "dict"]))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "test"}))
         finally:
@@ -306,7 +306,7 @@ class TestWebSearchTool:
     async def test_partial_fields_default_to_empty_string(self, mock_config_with_key):
         patcher, _ = _patch_get(_make_response({"results": {"web": [{}]}}))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "test"}))
         finally:
@@ -332,7 +332,7 @@ class TestWebSearchTool:
         )
         patcher, _ = _patch_get(mock_resp)
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "test"}))
         finally:
@@ -346,7 +346,7 @@ class TestWebSearchTool:
         patcher, mock_client_cls = _patch_get(MagicMock())
         mock_client_cls.return_value.__aenter__.return_value.get.side_effect = Exception("timeout")
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             parsed = json.loads(await web_search_tool.ainvoke({"query": "test"}))
         finally:
@@ -369,13 +369,13 @@ async def test_invalid_max_results_shapes_fall_back_to_default(raw):
     ``coerce_max_results`` owns the rejection profile; this provider only
     adds the 1-100 cap on top.
     """
-    with patch("deerflow.community.youcom.tools.get_app_config") as mock:
+    with patch("nkyel.community.youcom.tools.get_app_config") as mock:
         tool_config = MagicMock()
         tool_config.model_extra = {"api_key": "***", "max_results": raw}
         mock.return_value.get_tool_config.return_value = tool_config
         patcher, mock_client_cls = _patch_get(_make_response({"results": {"web": [_web()]}}))
         try:
-            from deerflow.community.youcom.tools import web_search_tool
+            from nkyel.community.youcom.tools import web_search_tool
 
             await web_search_tool.ainvoke({"query": "test"})
             params = _get_call(mock_client_cls).kwargs["params"]
@@ -386,7 +386,7 @@ async def test_invalid_max_results_shapes_fall_back_to_default(raw):
 
 
 def test_package_exports_web_search_tool():
-    from deerflow.community.youcom import web_search_tool
-    from deerflow.community.youcom.tools import web_search_tool as direct_web_search_tool
+    from nkyel.community.youcom import web_search_tool
+    from nkyel.community.youcom.tools import web_search_tool as direct_web_search_tool
 
     assert web_search_tool is direct_web_search_tool

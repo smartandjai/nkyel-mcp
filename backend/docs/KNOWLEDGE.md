@@ -1,12 +1,12 @@
 # Read-only knowledge contract (#6269, phases 1–3)
 
-`deerflow.knowledge` owns `RetrievalResult`, `RetrievalHit`, `KnowledgeSource`,
+`nkyel.knowledge` owns `RetrievalResult`, `RetrievalHit`, `KnowledgeSource`,
 `KnowledgeCapabilities`, and the search-only `RetrievalProvider` protocol.
 Search-only providers need no knowledge management service, resource store,
 catalog, or scope-filter implementation. Scope admission, the read-only catalog
 and selection UI consume the same operation-level capabilities. LightRAG still
 does not advertise dataset/document filters. The phase 3
-[WeKnora extension](../../examples/deerflow-extension-weknora/README.md) implements
+[WeKnora extension](../../examples/nkyel-extension-weknora/README.md) implements
 all six read-only operations against the v0.8.3 API.
 
 ## Provider registration and optional operations
@@ -21,7 +21,7 @@ operation, rejects duplicate/reserved names, and participates in source
 attribution and positional install rollback. Connection settings, response
 mapping and credentials belong to that extension's `plugins[].config`.
 The contract package remains dependency-free; providers use the published
-`deerflow.knowledge` models from the harness.
+`nkyel.knowledge` models from the harness.
 
 | Operation | Optional interface | Behavior |
 | --- | --- | --- |
@@ -42,14 +42,14 @@ never truncated. The WeKnora extension maps endpoint/tenant/base tuples to stabl
 `wk1_` SHA-256 IDs (68 ASCII characters), resolving them from the authorized
 catalog on each request without a mapping store. The earlier `ks1_` encoding
 allowing 512 characters is not the public contract. Reuse provider API/mapping logic without adding a second discovery
-protocol or a DeerFlow ACL store.
+protocol or a nkyel ACL store.
 
 `KnowledgeRequestContext` supplies the host user ID, Agent name and optional
 execution-only scope. A provider implementing `search_scoped` receives context
 on every search, including unrestricted searches. A search-only implementation
 may retain `search(query)` when it uses an operator-owned connection with a
 fixed resource visibility. User/tenant mappings and resource authorization
-remain provider responsibilities; DeerFlow does not infer tenants from client
+remain provider responsibilities; nkyel does not infer tenants from client
 metadata or create a second ACL store.
 `agent_name` identifies the current executor: the selected assistant name,
 defaulting to `lead_agent`, or the executing subagent's configured name from
@@ -74,7 +74,7 @@ knowledge_base:
 tools:
   - name: knowledge_search
     group: knowledge
-    use: deerflow.knowledge.tools:knowledge_search_tool
+    use: nkyel.knowledge.tools:knowledge_search_tool
     provider: my-provider
 ```
 
@@ -91,7 +91,7 @@ in dataset IDs used as path segments. Traversal and encoded URL delimiters
 are rejected before any document-list request, for both browsing and scope
 validation. Other providers retain their own opaque-ID syntax.
 
-See [the packaged synthetic Provider example](../../examples/deerflow-extension-knowledge/README.md)
+See [the packaged synthetic Provider example](../../examples/nkyel-extension-knowledge/README.md)
 for an offline catalog → selected document → retrieval → captured source flow.
 The existing `ModelTool(response_format="content_and_artifact")` and
 `PluginToolResult` channel from #6861 is unchanged. Custom ModelTools can still
@@ -245,7 +245,7 @@ Verify actual retrieved evidence from an existing indexed LightRAG workspace
 with the read-only opt-in check from `backend/`:
 
 ```bash
-DEER_FLOW_RUN_LIVE_TESTS=1 \
+NKYEL_RUN_LIVE_TESTS=1 \
 LIGHTRAG_BASE_URL=http://localhost:9621 \
 LIGHTRAG_EVIDENCE_QUERY='a question matching an indexed document' \
 uv run pytest tests/test_knowledge_contract_live.py -m live -q
@@ -257,7 +257,7 @@ citation against the real returned chunk evidence.
 
 ## WeKnora read-only extension
 
-The independently packaged `examples/deerflow-extension-weknora` registers
+The independently packaged `examples/nkyel-extension-weknora` registers
 `weknora` through the existing registry. Its operator configuration binds exact
 host users (and optionally current executor names) to credential environment
 variables, endpoint, tenant and optional base allowlist. No automatic tenant
@@ -278,7 +278,7 @@ See the extension README for immutable API references, installation, limits and
 opt-in real-provider verification. Offline synthetic responses exercise the
 actual registry, Gateway catalog, ToolNode, shared evidence and replay path.
 Live validation needs an indexed instance and is not implied by offline passes.
-The extension's [validation record](../../examples/deerflow-extension-weknora/VALIDATION.md)
+The extension's [validation record](../../examples/nkyel-extension-weknora/VALIDATION.md)
 documents the local v0.8.3 / Ollama bge-m3 run.
 
 ## New Phase 1: three independently configurable retrieval tools
@@ -294,7 +294,7 @@ there is no `retrieval_channels` or per-tool `enabled` switch.
 | `knowledge_entries_search` | `entries_search(query, *, context)` | `entries_dataset_filter`, `entries_document_filter` |
 | `entity_relations_search` | `relations_search(query, *, context)` | `relations_dataset_filter`, `relations_document_filter` |
 
-Tool paths are `deerflow.knowledge.tools:<tool_name>_tool`. All methods return
+Tool paths are `nkyel.knowledge.tools:<tool_name>_tool`. All methods return
 `RetrievalResult`; optional methods always receive `KnowledgeRequestContext`,
 including all-scope requests. Registration checks advertised async methods.
 An entry-only or relation-only provider needs no document `search` method.
@@ -335,7 +335,7 @@ real ToolNode calls, shared sources, replay, delegation and budget pruning;
 provider tests exercise API-shaped synthetic responses, access denial,
 unsupported filters and evidence joins. The opt-in `test_knowledge_phase1_live.py` also passed against real OrbStack
 WeKnora/LightRAG services with bge-m3 and a GLM-5.3 three-tool agent loop.
-See the [live validation record](../../examples/deerflow-extension-lightrag/VALIDATION.md)
+See the [live validation record](../../examples/nkyel-extension-lightrag/VALIDATION.md)
 for exact coverage, reproduction and limits; this is not browser-chat acceptance.
 
 Configured generic retrieval tools must resolve to a registered provider advertising

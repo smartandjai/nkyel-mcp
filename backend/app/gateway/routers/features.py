@@ -15,10 +15,10 @@ from app.gateway.conversation_access import conversation_references_enabled
 from app.gateway.deps import get_config
 from app.gateway.routers.thread_activity import thread_activity_available
 from app.gateway.run_models import MAX_CONVERSATION_REFERENCES
-from deerflow.config.app_config import AppConfig
-from deerflow.knowledge.providers import get_knowledge_capabilities
-from deerflow.scheduler.runtime import scheduler_tools_enabled
-from deerflow.subagents.capacity import configured_subagent_max_running
+from nkyel.config.app_config import AppConfig
+from nkyel.knowledge.providers import get_knowledge_capabilities
+from nkyel.scheduler.runtime import scheduler_tools_enabled
+from nkyel.subagents.capacity import configured_subagent_max_running
 
 router = APIRouter(prefix="/api", tags=["features"])
 

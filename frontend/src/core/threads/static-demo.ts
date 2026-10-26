@@ -85,7 +85,7 @@ export const STATIC_DEMO_ARTIFACTS: Readonly<
   "f4125791-0128-402a-8ca9-50e0947557e4": ["user-data/outputs/index.html"],
   "fe3f7974-1bcb-4a01-a950-79673baafefd": [
     "user-data/outputs/index.html",
-    "user-data/outputs/research_deerflow_20260201.md",
+    "user-data/outputs/research_nkyel_20260201.md",
   ],
 };
 

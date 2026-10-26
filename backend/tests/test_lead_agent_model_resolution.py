@@ -11,28 +11,28 @@ import pytest
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import HumanMessage
 
-from deerflow.agents.lead_agent import agent as lead_agent_module
-from deerflow.agents.middlewares import summarization_middleware as summarization_middleware_module
-from deerflow.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
-from deerflow.agents.middlewares.subagent_limit_middleware import SubagentLimitMiddleware
-from deerflow.agents.middlewares.view_image_middleware import ViewImageMiddleware
-from deerflow.agents.thread_state import DeltaThreadState, ThreadState
-from deerflow.config.agents_config import AgentConfig
-from deerflow.config.app_config import AppConfig
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.config.loop_detection_config import LoopDetectionConfig
-from deerflow.config.memory_config import MemoryConfig
-from deerflow.config.model_config import ModelConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.subagents_config import SubagentsAppConfig
-from deerflow.config.summarization_config import SummarizationConfig
-from deerflow.runtime.checkpoint_mode import INTERNAL_CHECKPOINT_MODE_KEY
+from nkyel.agents.lead_agent import agent as lead_agent_module
+from nkyel.agents.middlewares import summarization_middleware as summarization_middleware_module
+from nkyel.agents.middlewares.loop_detection_middleware import LoopDetectionMiddleware
+from nkyel.agents.middlewares.subagent_limit_middleware import SubagentLimitMiddleware
+from nkyel.agents.middlewares.view_image_middleware import ViewImageMiddleware
+from nkyel.agents.thread_state import DeltaThreadState, ThreadState
+from nkyel.config.agents_config import AgentConfig
+from nkyel.config.app_config import AppConfig
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.config.loop_detection_config import LoopDetectionConfig
+from nkyel.config.memory_config import MemoryConfig
+from nkyel.config.model_config import ModelConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.subagents_config import SubagentsAppConfig
+from nkyel.config.summarization_config import SummarizationConfig
+from nkyel.runtime.checkpoint_mode import INTERNAL_CHECKPOINT_MODE_KEY
 
 
 def _make_app_config(models: list[ModelConfig], loop_detection: LoopDetectionConfig | None = None) -> AppConfig:
     return AppConfig(
         models=models,
-        sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"),
+        sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"),
         loop_detection=loop_detection or LoopDetectionConfig(),
     )
 
@@ -51,8 +51,8 @@ def _make_model(name: str, *, supports_thinking: bool) -> ModelConfig:
 
 @pytest.fixture
 def model_control_assembly(monkeypatch):
-    import deerflow.models.selection as selection
-    import deerflow.tools as tools
+    import nkyel.models.selection as selection
+    import nkyel.tools as tools
 
     app_config = _make_app_config([_make_model(name, supports_thinking=False) for name in ("default", "chosen")])
     strict = MagicMock()
@@ -143,7 +143,7 @@ def test_make_lead_agent_signature_matches_langgraph_server_factory_abi():
     ],
 )
 def test_lead_conversation_tool_requires_callable_host_reader(monkeypatch, reader, is_subagent, is_bootstrap, expected):
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
     get_available_tools = MagicMock(return_value=[])
@@ -171,7 +171,7 @@ def test_make_lead_agent_uses_server_auth_identity_for_all_user_scoped_inputs(mo
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
     captured: dict[str, object] = {}
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     def _load_agent_config(name, *, user_id=None):
         captured["agent_config_user_id"] = user_id
@@ -225,7 +225,7 @@ def test_make_lead_agent_applies_custom_agent_memory_opt_out(monkeypatch):
     app_config.memory = MemoryConfig(enabled=True, mode="tool")
     captured: dict[str, object] = {"memory_tool_appends": 0}
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(
         lead_agent_module,
@@ -270,7 +270,7 @@ def test_make_lead_agent_scopes_bootstrap_middlewares_to_custom_agent(monkeypatc
     middleware_calls: list[dict[str, object]] = []
     prompt_calls: list[dict[str, object]] = []
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(lead_agent_module, "_load_enabled_available_skills", lambda *args, **kwargs: [])
     monkeypatch.setattr(lead_agent_module, "build_middlewares", lambda *args, **kwargs: middleware_calls.append(kwargs) or [])
@@ -303,7 +303,7 @@ def test_make_lead_agent_attaches_tracing_callbacks_at_graph_root(monkeypatch):
     """
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(lead_agent_module, "get_app_config", lambda: app_config)
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
@@ -338,7 +338,7 @@ def test_make_lead_agent_attaches_tracing_callbacks_at_graph_root(monkeypatch):
 def test_internal_make_lead_agent_uses_explicit_app_config(monkeypatch):
     app_config = _make_app_config([_make_model("explicit-model", supports_thinking=False)])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     def _raise_get_app_config():
         raise AssertionError("ambient get_app_config() must not be used when app_config is explicit")
@@ -394,7 +394,7 @@ def test_internal_make_lead_agent_builds_model_whose_profile_sets_reasoning_effo
     )
     app_config = _make_app_config([model])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
     monkeypatch.setattr(lead_agent_module, "build_middlewares", lambda config, model_name, agent_name=None, **kwargs: [])
@@ -414,7 +414,7 @@ def test_internal_make_lead_agent_selects_and_normalizes_delta_state(monkeypatch
     middleware = ViewImageMiddleware()
     original_schema = middleware.state_schema
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
     monkeypatch.setattr(
@@ -445,7 +445,7 @@ def test_internal_make_lead_agent_selects_and_normalizes_delta_state(monkeypatch
 def test_internal_make_lead_agent_does_not_take_mode_from_runtime_context(monkeypatch):
     app_config = _make_app_config([_make_model("full-model", supports_thinking=False)])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
     monkeypatch.setattr(lead_agent_module, "build_middlewares", lambda *args, **kwargs: [])
@@ -468,7 +468,7 @@ def test_internal_make_lead_agent_does_not_take_mode_from_runtime_context(monkey
 
 
 def test_public_make_lead_agent_does_not_take_mode_from_runtime_context(monkeypatch):
-    from deerflow.runtime import checkpoint_mode
+    from nkyel.runtime import checkpoint_mode
 
     app_config = _make_app_config([_make_model("full-model", supports_thinking=False)])
     captured: dict[str, object] = {}
@@ -498,7 +498,7 @@ def test_public_make_lead_agent_does_not_take_mode_from_runtime_context(monkeypa
 def test_make_lead_agent_uses_runtime_app_config_from_context_without_global_read(monkeypatch):
     app_config = _make_app_config([_make_model("context-model", supports_thinking=False)])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     def _raise_get_app_config():
         raise AssertionError("ambient get_app_config() must not be used when runtime context already carries app_config")
@@ -580,7 +580,7 @@ def test_resolve_model_name_raises_when_no_models_configured(monkeypatch):
 def test_make_lead_agent_disables_thinking_when_model_does_not_support_it(monkeypatch):
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(lead_agent_module, "get_app_config", lambda: app_config)
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
@@ -623,7 +623,7 @@ def test_make_lead_agent_reads_runtime_options_from_context(monkeypatch):
         ]
     )
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     get_available_tools = MagicMock(return_value=[])
     monkeypatch.setattr(lead_agent_module, "get_app_config", lambda: app_config)
@@ -669,7 +669,7 @@ def test_make_lead_agent_reads_runtime_options_from_context(monkeypatch):
 def test_make_lead_agent_filters_clarification_tool_for_non_interactive_runs(monkeypatch, is_bootstrap):
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     def _named_tool(name: str):
         tool = MagicMock()
@@ -768,10 +768,10 @@ def test_build_middlewares_uses_resolved_model_name_for_vision(monkeypatch):
     #   sits at index [-5].
     assert len(middlewares) > 0 and isinstance(middlewares[-5], MagicMock)
 
-    from deerflow.agents.middlewares.clarification_middleware import ClarificationMiddleware
-    from deerflow.agents.middlewares.model_length_finish_reason_middleware import ModelLengthFinishReasonMiddleware
-    from deerflow.agents.middlewares.safety_finish_reason_middleware import SafetyFinishReasonMiddleware
-    from deerflow.agents.middlewares.terminal_response_middleware import TerminalResponseMiddleware
+    from nkyel.agents.middlewares.clarification_middleware import ClarificationMiddleware
+    from nkyel.agents.middlewares.model_length_finish_reason_middleware import ModelLengthFinishReasonMiddleware
+    from nkyel.agents.middlewares.safety_finish_reason_middleware import SafetyFinishReasonMiddleware
+    from nkyel.agents.middlewares.terminal_response_middleware import TerminalResponseMiddleware
 
     assert isinstance(middlewares[-4], TerminalResponseMiddleware)
     assert isinstance(middlewares[-3], ModelLengthFinishReasonMiddleware)
@@ -780,8 +780,8 @@ def test_build_middlewares_uses_resolved_model_name_for_vision(monkeypatch):
 
 
 def test_build_middlewares_custom_agent_memory_opt_out_keeps_dynamic_date_only(monkeypatch):
-    from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
-    from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
+    from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+    from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
 
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
     summarization_kwargs: dict[str, object] = {}
@@ -914,8 +914,8 @@ def test_build_middlewares_passes_run_model_name_to_summarization(monkeypatch):
 
 
 def test_build_middlewares_orders_skill_activation_before_durable_context(monkeypatch):
-    from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
-    from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
+    from nkyel.agents.middlewares.durable_context_middleware import DurableContextMiddleware
+    from nkyel.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware
 
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
     monkeypatch.setattr(lead_agent_module, "build_lead_runtime_middlewares", lambda *, app_config, lazy_init=True: [])
@@ -934,10 +934,10 @@ def test_build_middlewares_orders_skill_activation_before_durable_context(monkey
 
 
 def test_build_middlewares_places_mcp_routing_before_deferred_filter(monkeypatch):
-    from deerflow.agents.middlewares.deferred_tool_filter_middleware import DeferredToolFilterMiddleware
-    from deerflow.agents.middlewares.mcp_routing_middleware import McpRoutingMiddleware
-    from deerflow.agents.middlewares.tool_promotion_audit_middleware import DeferredToolPromotionAuditMiddleware
-    from deerflow.tools.builtins.tool_search import DeferredToolSetup
+    from nkyel.agents.middlewares.deferred_tool_filter_middleware import DeferredToolFilterMiddleware
+    from nkyel.agents.middlewares.mcp_routing_middleware import McpRoutingMiddleware
+    from nkyel.agents.middlewares.tool_promotion_audit_middleware import DeferredToolPromotionAuditMiddleware
+    from nkyel.tools.builtins.tool_search import DeferredToolSetup
 
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)], loop_detection=LoopDetectionConfig(enabled=False))
     routing = McpRoutingMiddleware({"mcp_thing": {"priority": 100, "keywords": ["orders"]}}, "hash123", 3)
@@ -1139,7 +1139,7 @@ def test_make_lead_agent_falls_back_to_app_config_for_null_subagent_total_limit(
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
     app_config.subagents = SubagentsAppConfig(max_total_per_run=7)
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
     monkeypatch.setattr(lead_agent_module, "build_middlewares", lambda config, model_name, agent_name=None, **kwargs: [])
@@ -1260,7 +1260,7 @@ def test_create_summarization_middleware_uses_configured_model_alias(monkeypatch
 
     monkeypatch.setattr(summarization_middleware_module, "get_app_config", _raise_get_app_config)
     monkeypatch.setattr(summarization_middleware_module, "create_chat_model", _fake_create_chat_model)
-    monkeypatch.setattr(summarization_middleware_module, "DeerFlowSummarizationMiddleware", lambda **kwargs: kwargs)
+    monkeypatch.setattr(summarization_middleware_module, "NkyelSummarizationMiddleware", lambda **kwargs: kwargs)
 
     middleware = lead_agent_module._create_summarization_middleware(app_config=app_config)
 
@@ -1288,7 +1288,7 @@ def test_create_summarization_middleware_uses_default_when_unconfigured(monkeypa
         return fake_model
 
     monkeypatch.setattr(summarization_middleware_module, "create_chat_model", _fake_create_chat_model)
-    monkeypatch.setattr(summarization_middleware_module, "DeerFlowSummarizationMiddleware", lambda **kwargs: kwargs)
+    monkeypatch.setattr(summarization_middleware_module, "NkyelSummarizationMiddleware", lambda **kwargs: kwargs)
 
     middleware = lead_agent_module._create_summarization_middleware(app_config=app_config)
 
@@ -1315,7 +1315,7 @@ def test_create_summarization_middleware_threads_run_model_name(monkeypatch):
     fake_model = MagicMock()
     fake_model.with_config.return_value = fake_model
     monkeypatch.setattr(summarization_middleware_module, "create_chat_model", lambda **kwargs: fake_model)
-    monkeypatch.setattr(summarization_middleware_module, "DeerFlowSummarizationMiddleware", lambda **kwargs: kwargs)
+    monkeypatch.setattr(summarization_middleware_module, "NkyelSummarizationMiddleware", lambda **kwargs: kwargs)
 
     middleware = lead_agent_module._create_summarization_middleware(app_config=app_config, run_model_name="custom-agent-model")
 
@@ -1338,7 +1338,7 @@ def test_create_summarization_middleware_uses_frontend_supported_update_key(monk
 
     assert middleware is not None
     update_key = f"{type(middleware).__name__}.before_model"
-    assert update_key == "DeerFlowSummarizationMiddleware.before_model"
+    assert update_key == "NkyelSummarizationMiddleware.before_model"
 
 
 def test_create_summarization_middleware_threads_resolved_app_config_to_model(monkeypatch):
@@ -1358,7 +1358,7 @@ def test_create_summarization_middleware_threads_resolved_app_config_to_model(mo
 
     monkeypatch.setattr(summarization_middleware_module, "get_app_config", lambda: fallback_app_config)
     monkeypatch.setattr(summarization_middleware_module, "create_chat_model", _fake_create_chat_model)
-    monkeypatch.setattr(summarization_middleware_module, "DeerFlowSummarizationMiddleware", lambda **kwargs: kwargs)
+    monkeypatch.setattr(summarization_middleware_module, "NkyelSummarizationMiddleware", lambda **kwargs: kwargs)
 
     lead_agent_module._create_summarization_middleware()
 
@@ -1366,8 +1366,8 @@ def test_create_summarization_middleware_threads_resolved_app_config_to_model(mo
 
 
 def test_memory_middleware_uses_explicit_memory_config_without_global_read(monkeypatch):
-    from deerflow.agents.middlewares import memory_middleware as memory_middleware_module
-    from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
+    from nkyel.agents.middlewares import memory_middleware as memory_middleware_module
+    from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
 
     def _raise_get_memory_config():
         raise AssertionError("ambient get_memory_config() must not be used when memory_config is explicit")
@@ -1380,8 +1380,8 @@ def test_memory_middleware_uses_explicit_memory_config_without_global_read(monke
 
 
 def test_memory_middleware_async_path_uses_async_manager_call(monkeypatch):
-    from deerflow.agents.middlewares import memory_middleware as memory_middleware_module
-    from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
+    from nkyel.agents.middlewares import memory_middleware as memory_middleware_module
+    from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
 
     manager = SimpleNamespace(aadd=AsyncMock(), add=MagicMock(side_effect=AssertionError("sync add must not run")))
     monkeypatch.setattr(memory_middleware_module, "get_memory_manager", lambda: manager)
@@ -1411,7 +1411,7 @@ def test_resolve_runtime_option_precedence():
 
 
 def _make_agent_config(**kwargs):
-    from deerflow.config.agents_config import AgentConfig
+    from nkyel.config.agents_config import AgentConfig
 
     return AgentConfig(name="researcher", **kwargs)
 
@@ -1428,7 +1428,7 @@ def test_make_lead_agent_applies_agent_model_settings(monkeypatch):
         reasoning_effort="high",
     )
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(lead_agent_module, "load_agent_config", lambda name, *, user_id=None: agent_config)
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
@@ -1457,7 +1457,7 @@ def test_request_thinking_overrides_agent_default(monkeypatch):
     app_config = _make_app_config([_make_model("agent-model", supports_thinking=True)])
     agent_config = _make_agent_config(model="agent-model", thinking_enabled=False)
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(lead_agent_module, "load_agent_config", lambda name, *, user_id=None: agent_config)
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
@@ -1487,7 +1487,7 @@ def test_empty_allowed_subagents_disables_requested_delegation(monkeypatch, mcp_
     agent_config = _make_agent_config(model="agent-model", allowed_subagents=[])
     agent_config.mcp_plugins = mcp_plugins
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     get_available_tools = MagicMock(return_value=[])
     monkeypatch.setattr(lead_agent_module, "load_agent_config", lambda name, *, user_id=None: agent_config)
@@ -1523,7 +1523,7 @@ def test_make_lead_agent_no_agent_settings_passes_none_overrides(monkeypatch):
     """Without a custom agent, model_overrides is None (no behavior change)."""
     app_config = _make_app_config([_make_model("safe-model", supports_thinking=False)])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(lead_agent_module, "get_app_config", lambda: app_config)
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])
@@ -1562,7 +1562,7 @@ def test_internal_make_lead_agent_applies_the_required_thinking_contract(monkeyp
     )
     app_config = _make_app_config([model])
 
-    import deerflow.tools as tools_module
+    import nkyel.tools as tools_module
 
     monkeypatch.setattr(lead_agent_module, "get_app_config", lambda: app_config)
     monkeypatch.setattr(tools_module, "get_available_tools", lambda **kwargs: [])

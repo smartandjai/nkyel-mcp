@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.core.prompt import (
+from nkyel.agents.memory.backends.deermem.deermem.core.prompt import (
     FACT_EXTRACTION_PROMPT,
     _coerce_confidence,
     format_memory_for_injection,
@@ -46,7 +46,7 @@ def test_format_memory_sorts_facts_by_confidence_desc() -> None:
 
 def test_format_memory_respects_budget_when_adding_facts(monkeypatch) -> None:
     # Make token counting deterministic for this test by counting characters.
-    monkeypatch.setattr("deerflow.agents.memory.backends.deermem.deermem.core.prompt._count_tokens", lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text))
+    monkeypatch.setattr("nkyel.agents.memory.backends.deermem.deermem.core.prompt._count_tokens", lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text))
 
     memory_data = {
         "user": {},
@@ -191,7 +191,7 @@ def test_guaranteed_correction_injected_when_budget_tight(monkeypatch) -> None:
     """Correction facts must be injected even when the regular budget is exhausted."""
     # Deterministic char-based counting.
     monkeypatch.setattr(
-        "deerflow.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
+        "nkyel.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
         lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text),
     )
 
@@ -321,7 +321,7 @@ def test_fallback_on_ranking_error(monkeypatch) -> None:
     # Force _select_fact_lines to raise on the *first* call (the guaranteed
     # path) but succeed on subsequent calls (the fallback path).
     call_count = {"n": 0}
-    prompt_module = __import__("deerflow.agents.memory.backends.deermem.deermem.core.prompt", fromlist=["_select_fact_lines"])
+    prompt_module = __import__("nkyel.agents.memory.backends.deermem.deermem.core.prompt", fromlist=["_select_fact_lines"])
     original_select = prompt_module._select_fact_lines
 
     def flaky_select(*args, **kwargs):
@@ -331,7 +331,7 @@ def test_fallback_on_ranking_error(monkeypatch) -> None:
         return original_select(*args, **kwargs)
 
     monkeypatch.setattr(
-        "deerflow.agents.memory.backends.deermem.deermem.core.prompt._select_fact_lines",
+        "nkyel.agents.memory.backends.deermem.deermem.core.prompt._select_fact_lines",
         flaky_select,
     )
 
@@ -350,7 +350,7 @@ def test_fallback_on_ranking_error(monkeypatch) -> None:
 def test_guaranteed_respects_its_own_budget_limit(monkeypatch) -> None:
     """Even guaranteed facts are capped by guaranteed_token_budget."""
     monkeypatch.setattr(
-        "deerflow.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
+        "nkyel.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
         lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text),
     )
 
@@ -443,7 +443,7 @@ def test_strict_confidence_order_when_high_confidence_fact_overflows(monkeypatch
     This locks in the strict confidence-ordered selection semantics.
     """
     monkeypatch.setattr(
-        "deerflow.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
+        "nkyel.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
         lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text),
     )
 
@@ -479,7 +479,7 @@ def test_structure_aware_truncation_preserves_guaranteed_on_overflow(monkeypatch
     Locks in the fix for willem-bd's P1 finding on PR #3592.
     """
     monkeypatch.setattr(
-        "deerflow.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
+        "nkyel.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
         lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text),
     )
 
@@ -525,7 +525,7 @@ def test_structure_aware_truncation_no_facts_does_not_raise(monkeypatch) -> None
     raised ``UnboundLocalError`` and aborted memory injection entirely.
     """
     monkeypatch.setattr(
-        "deerflow.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
+        "nkyel.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
         lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text),
     )
 
@@ -608,7 +608,7 @@ def test_categoryless_fact_not_promoted_into_guaranteed_context_pool(monkeypatch
     Locks in the fix for willem-bd's P2 category-less finding on PR #3592.
     """
     monkeypatch.setattr(
-        "deerflow.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
+        "nkyel.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
         lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text),
     )
 
@@ -650,12 +650,12 @@ def test_fallback_uses_prefiltered_valid_facts(monkeypatch) -> None:
     PR #3592.
     """
     monkeypatch.setattr(
-        "deerflow.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
+        "nkyel.agents.memory.backends.deermem.deermem.core.prompt._count_tokens",
         lambda text, encoding_name="cl100k_base", *, use_tiktoken=True: len(text),
     )
 
     call_count = {"select": 0}
-    original_select = __import__("deerflow.agents.memory.backends.deermem.deermem.core.prompt", fromlist=["_select_fact_lines"])._select_fact_lines
+    original_select = __import__("nkyel.agents.memory.backends.deermem.deermem.core.prompt", fromlist=["_select_fact_lines"])._select_fact_lines
 
     def raising_select(*args, **kwargs):
         call_count["select"] += 1
@@ -663,7 +663,7 @@ def test_fallback_uses_prefiltered_valid_facts(monkeypatch) -> None:
             raise RuntimeError("primary path failure")
         return original_select(*args, **kwargs)
 
-    monkeypatch.setattr("deerflow.agents.memory.backends.deermem.deermem.core.prompt._select_fact_lines", raising_select)
+    monkeypatch.setattr("nkyel.agents.memory.backends.deermem.deermem.core.prompt._select_fact_lines", raising_select)
 
     memory_data = {
         "facts": [

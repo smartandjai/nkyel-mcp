@@ -17,9 +17,9 @@ import pytest
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel, Field
 
-from deerflow.config.extensions_config import ExtensionsConfig, McpServerConfig
-from deerflow.constants import DEFAULT_MCP_SESSION_INIT_TIMEOUT
-from deerflow.mcp.tools import _make_session_pool_tool, get_mcp_tools
+from nkyel.config.extensions_config import ExtensionsConfig, McpServerConfig
+from nkyel.constants import DEFAULT_MCP_SESSION_INIT_TIMEOUT
+from nkyel.mcp.tools import _make_session_pool_tool, get_mcp_tools
 
 
 class _Args(BaseModel):
@@ -92,13 +92,13 @@ async def test_discovery_timeout_skips_hung_server_without_blocking_healthy_serv
             return [_tool("fast_server_fast_search")]
 
     with (
-        patch("deerflow.mcp.tools.ExtensionsConfig.from_file", return_value=extensions_config),
-        patch("deerflow.mcp.tools.build_servers_config", return_value=servers_config),
-        patch("deerflow.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
-        patch("deerflow.mcp.tools.build_oauth_tool_interceptor", return_value=None),
+        patch("nkyel.mcp.tools.ExtensionsConfig.from_file", return_value=extensions_config),
+        patch("nkyel.mcp.tools.build_servers_config", return_value=servers_config),
+        patch("nkyel.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
+        patch("nkyel.mcp.tools.build_oauth_tool_interceptor", return_value=None),
         patch("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient),
         patch("langchain_mcp_adapters.tools.load_mcp_tools", new_callable=AsyncMock),
-        patch("deerflow.mcp.tools._make_session_pool_tool", side_effect=lambda tool, *_args, **_kwargs: tool),
+        patch("nkyel.mcp.tools._make_session_pool_tool", side_effect=lambda tool, *_args, **_kwargs: tool),
     ):
         # Without the discovery timeout the slow server would hang the call past
         # the 5s bound and this test would fail with TimeoutError.
@@ -120,13 +120,13 @@ async def test_session_init_timeout_raises_when_session_creation_hangs(tmp_path,
     mock_pool.get_session = hanging_get_session
 
     with (
-        patch("deerflow.mcp.tools.get_session_pool", return_value=mock_pool),
-        patch("deerflow.mcp.tools.get_paths", return_value=MagicMock()),
+        patch("nkyel.mcp.tools.get_session_pool", return_value=mock_pool),
+        patch("nkyel.mcp.tools.get_paths", return_value=MagicMock()),
         patch(
-            "deerflow.mcp.tools._prepare_stdio_workspace",
+            "nkyel.mcp.tools._prepare_stdio_workspace",
             return_value=(tmp_path, tmp_path / "tmp", {}),
         ),
-        caplog.at_level(logging.WARNING, logger="deerflow.mcp.tools"),
+        caplog.at_level(logging.WARNING, logger="nkyel.mcp.tools"),
     ):
         wrapped = _make_session_pool_tool(
             _tool("github_search"),
@@ -188,13 +188,13 @@ async def test_discovery_timeout_from_sdk_with_opt_out_is_reported_without_loggi
             raise TimeoutError("internal SDK timeout")
 
     with (
-        patch("deerflow.mcp.tools.ExtensionsConfig.from_file", return_value=extensions_config),
-        patch("deerflow.mcp.tools.build_servers_config", return_value=servers_config),
-        patch("deerflow.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
-        patch("deerflow.mcp.tools.build_oauth_tool_interceptor", return_value=None),
+        patch("nkyel.mcp.tools.ExtensionsConfig.from_file", return_value=extensions_config),
+        patch("nkyel.mcp.tools.build_servers_config", return_value=servers_config),
+        patch("nkyel.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
+        patch("nkyel.mcp.tools.build_oauth_tool_interceptor", return_value=None),
         patch("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient),
         patch("langchain_mcp_adapters.tools.load_mcp_tools", new_callable=AsyncMock),
-        caplog.at_level(logging.WARNING, logger="deerflow.mcp.tools"),
+        caplog.at_level(logging.WARNING, logger="nkyel.mcp.tools"),
     ):
         tools = await get_mcp_tools()
 
@@ -225,10 +225,10 @@ async def test_session_init_timeout_does_not_block_fast_session(tmp_path) -> Non
     mock_pool.get_session = AsyncMock(return_value=mock_session)
 
     with (
-        patch("deerflow.mcp.tools.get_session_pool", return_value=mock_pool),
-        patch("deerflow.mcp.tools.get_paths", return_value=MagicMock()),
+        patch("nkyel.mcp.tools.get_session_pool", return_value=mock_pool),
+        patch("nkyel.mcp.tools.get_paths", return_value=MagicMock()),
         patch(
-            "deerflow.mcp.tools._prepare_stdio_workspace",
+            "nkyel.mcp.tools._prepare_stdio_workspace",
             return_value=(tmp_path, tmp_path / "tmp", {}),
         ),
     ):

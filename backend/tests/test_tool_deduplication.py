@@ -13,8 +13,8 @@ from unittest.mock import MagicMock, patch
 from langchain_core.tools import BaseTool, StructuredTool, tool
 from pydantic import BaseModel, Field
 
-from deerflow.mcp.tasks.runtime import set_mcp_task_submitter
-from deerflow.tools.tools import get_available_tools
+from nkyel.mcp.tasks.runtime import set_mcp_task_submitter
+from nkyel.tools.tools import get_available_tools
 
 # ---------------------------------------------------------------------------
 # Fixture tools
@@ -64,8 +64,8 @@ def _make_minimal_config(tools):
     return config
 
 
-@patch("deerflow.tools.tools.get_app_config")
-@patch("deerflow.tools.tools.is_host_bash_allowed", return_value=True)
+@patch("nkyel.tools.tools.get_app_config")
+@patch("nkyel.tools.tools.is_host_bash_allowed", return_value=True)
 def test_config_loaded_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     """Config-loaded async-only tools can still be invoked by sync clients."""
 
@@ -86,8 +86,8 @@ def test_config_loaded_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     mock_cfg.return_value = _make_minimal_config([tool_cfg])
 
     with (
-        patch("deerflow.tools.tools.resolve_variable", return_value=async_tool),
-        patch("deerflow.tools.tools.BUILTIN_TOOLS", []),
+        patch("nkyel.tools.tools.resolve_variable", return_value=async_tool),
+        patch("nkyel.tools.tools.BUILTIN_TOOLS", []),
     ):
         result = get_available_tools(include_mcp=False, app_config=mock_cfg.return_value)
 
@@ -96,8 +96,8 @@ def test_config_loaded_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     assert async_tool.invoke({"x": 42}) == "result: 42"
 
 
-@patch("deerflow.tools.tools.get_app_config")
-@patch("deerflow.tools.tools.is_host_bash_allowed", return_value=True)
+@patch("nkyel.tools.tools.get_app_config")
+@patch("nkyel.tools.tools.is_host_bash_allowed", return_value=True)
 def test_subagent_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     """Async-only tools added through the subagent path can be invoked by sync clients."""
 
@@ -114,8 +114,8 @@ def test_subagent_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     mock_cfg.return_value = _make_minimal_config([])
 
     with (
-        patch("deerflow.tools.tools.BUILTIN_TOOLS", []),
-        patch("deerflow.tools.tools.SUBAGENT_TOOLS", [async_tool]),
+        patch("nkyel.tools.tools.BUILTIN_TOOLS", []),
+        patch("nkyel.tools.tools.SUBAGENT_TOOLS", [async_tool]),
     ):
         result = get_available_tools(include_mcp=False, subagent_enabled=True, app_config=mock_cfg.return_value)
 
@@ -124,8 +124,8 @@ def test_subagent_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     assert async_tool.invoke({"x": 7}) == "subagent: 7"
 
 
-@patch("deerflow.tools.tools.get_app_config")
-@patch("deerflow.tools.tools.is_host_bash_allowed", return_value=True)
+@patch("nkyel.tools.tools.get_app_config")
+@patch("nkyel.tools.tools.is_host_bash_allowed", return_value=True)
 def test_acp_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     """Async-only ACP tools can be invoked by sync clients."""
 
@@ -144,8 +144,8 @@ def test_acp_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     mock_cfg.return_value = config
 
     with (
-        patch("deerflow.tools.tools.BUILTIN_TOOLS", []),
-        patch("deerflow.tools.builtins.invoke_acp_agent_tool.build_invoke_acp_agent_tool", return_value=async_tool),
+        patch("nkyel.tools.tools.BUILTIN_TOOLS", []),
+        patch("nkyel.tools.builtins.invoke_acp_agent_tool.build_invoke_acp_agent_tool", return_value=async_tool),
     ):
         result = get_available_tools(include_mcp=False, app_config=config)
 
@@ -154,22 +154,22 @@ def test_acp_async_only_tool_gets_sync_wrapper(mock_bash, mock_cfg):
     assert async_tool.invoke({"x": 9}) == "acp: 9"
 
 
-@patch("deerflow.tools.tools.get_app_config")
-@patch("deerflow.tools.tools.is_host_bash_allowed", return_value=True)
+@patch("nkyel.tools.tools.get_app_config")
+@patch("nkyel.tools.tools.is_host_bash_allowed", return_value=True)
 def test_no_duplicates_returned(mock_bash, mock_cfg):
     """get_available_tools() never returns two tools with the same name."""
     mock_cfg.return_value = _make_minimal_config([])
 
     # Patch the builtin tools so we control exactly what comes back.
-    with patch("deerflow.tools.tools.BUILTIN_TOOLS", [_tool_alpha, _tool_alpha_dup, _tool_beta]):
+    with patch("nkyel.tools.tools.BUILTIN_TOOLS", [_tool_alpha, _tool_alpha_dup, _tool_beta]):
         result = get_available_tools(include_mcp=False)
 
     names = [t.name for t in result]
     assert len(names) == len(set(names)), f"Duplicate names detected: {names}"
 
 
-@patch("deerflow.tools.tools.get_app_config")
-@patch("deerflow.tools.tools.is_host_bash_allowed", return_value=True)
+@patch("nkyel.tools.tools.get_app_config")
+@patch("nkyel.tools.tools.is_host_bash_allowed", return_value=True)
 def test_first_occurrence_wins(mock_bash, mock_cfg):
     """When duplicates exist, the first occurrence is kept."""
     mock_cfg.return_value = _make_minimal_config([])
@@ -179,29 +179,29 @@ def test_first_occurrence_wins(mock_bash, mock_cfg):
     sentinel_alpha_dup = MagicMock(spec=BaseTool, name="_sentinel_dup")
     sentinel_alpha_dup.name = _tool_alpha.name  # same name — should be dropped
 
-    with patch("deerflow.tools.tools.BUILTIN_TOOLS", [sentinel_alpha, sentinel_alpha_dup, _tool_beta]):
+    with patch("nkyel.tools.tools.BUILTIN_TOOLS", [sentinel_alpha, sentinel_alpha_dup, _tool_beta]):
         result = get_available_tools(include_mcp=False)
 
     returned_alpha = next(t for t in result if t.name == _tool_alpha.name)
     assert returned_alpha is sentinel_alpha
 
 
-@patch("deerflow.tools.tools.get_app_config")
-@patch("deerflow.tools.tools.is_host_bash_allowed", return_value=True)
+@patch("nkyel.tools.tools.get_app_config")
+@patch("nkyel.tools.tools.is_host_bash_allowed", return_value=True)
 def test_duplicate_triggers_warning(mock_bash, mock_cfg, caplog):
     """A warning is logged for every skipped duplicate."""
     import logging
 
     mock_cfg.return_value = _make_minimal_config([])
 
-    with patch("deerflow.tools.tools.BUILTIN_TOOLS", [_tool_alpha, _tool_alpha_dup]):
-        with caplog.at_level(logging.WARNING, logger="deerflow.tools.tools"):
+    with patch("nkyel.tools.tools.BUILTIN_TOOLS", [_tool_alpha, _tool_alpha_dup]):
+        with caplog.at_level(logging.WARNING, logger="nkyel.tools.tools"):
             get_available_tools(include_mcp=False)
 
     assert any("Duplicate tool name" in r.message for r in caplog.records), "Expected a duplicate-tool warning in log output"
 
 
-@patch("deerflow.tools.tools.is_host_bash_allowed", return_value=True)
+@patch("nkyel.tools.tools.is_host_bash_allowed", return_value=True)
 def test_background_task_tools_follow_started_runtime_not_hot_config(mock_bash):
     config = _make_minimal_config([])
     config.mcp_tasks.enabled = False

@@ -48,10 +48,10 @@ from test_mcp_cache_reconciliation import (  # noqa: F401  (``reconciler`` fixtu
     reconciler,
 )
 
-import deerflow.mcp.cache as cache_module
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp import session_pool as session_pool_module
-from deerflow.mcp.session_pool import MCPSessionPool, StaleMCPBindingError
+import nkyel.mcp.cache as cache_module
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp import session_pool as session_pool_module
+from nkyel.mcp.session_pool import MCPSessionPool, StaleMCPBindingError
 
 # One Gateway worker committing A's delete + identical re-add against the shared
 # config, in a separate interpreter.  It prints its own epochs so the reader can
@@ -63,7 +63,7 @@ _PEER_WORKER_PROGRAM = textwrap.dedent(
     import os
     from pathlib import Path
 
-    from deerflow.config.extensions_config import (
+    from nkyel.config.extensions_config import (
         ExtensionsConfig,
         atomic_write_extensions_config,
         extensions_config_file_lock,
@@ -71,13 +71,13 @@ _PEER_WORKER_PROGRAM = textwrap.dedent(
         reload_extensions_config,
         validate_raw_extensions_config,
     )
-    from deerflow.mcp import cache as cache_module
-    from deerflow.mcp import session_pool as session_pool_module
-    from deerflow.mcp.client import build_servers_config
-    from deerflow.mcp.lifecycle import LIFECYCLE_KEY, plan_mcp_lifecycle
-    from deerflow.mcp.session_pool import normalized_connection_fingerprint
+    from nkyel.mcp import cache as cache_module
+    from nkyel.mcp import session_pool as session_pool_module
+    from nkyel.mcp.client import build_servers_config
+    from nkyel.mcp.lifecycle import LIFECYCLE_KEY, plan_mcp_lifecycle
+    from nkyel.mcp.session_pool import normalized_connection_fingerprint
 
-    cfg = Path(os.environ["DEER_FLOW_EXTENSIONS_CONFIG_PATH"])
+    cfg = Path(os.environ["NKYEL_EXTENSIONS_CONFIG_PATH"])
     raw = json.loads(cfg.read_text(encoding="utf-8"))
     original_a = raw["mcpServers"]["A"]
 
@@ -150,13 +150,13 @@ _GATEWAY_WRITER_PROGRAM = textwrap.dedent(
 
     from app.gateway.routers import mcp as mcp_router
     from app.gateway.routers.mcp import McpConfigUpdateRequest, McpServerConfigResponse
-    from deerflow.config.extensions_config import ExtensionsConfig
-    from deerflow.mcp import cache as cache_module
-    from deerflow.mcp import session_pool as session_pool_module
-    from deerflow.mcp.client import build_servers_config
-    from deerflow.mcp.session_pool import normalized_connection_fingerprint
+    from nkyel.config.extensions_config import ExtensionsConfig
+    from nkyel.mcp import cache as cache_module
+    from nkyel.mcp import session_pool as session_pool_module
+    from nkyel.mcp.client import build_servers_config
+    from nkyel.mcp.session_pool import normalized_connection_fingerprint
 
-    cfg = Path(os.environ["DEER_FLOW_EXTENSIONS_CONFIG_PATH"])
+    cfg = Path(os.environ["NKYEL_EXTENSIONS_CONFIG_PATH"])
     pool = session_pool_module.get_session_pool()
     baseline = ExtensionsConfig.from_file(str(cfg))
     for name, connection in build_servers_config(baseline).items():
@@ -198,7 +198,7 @@ _GATEWAY_WRITER_PROGRAM = textwrap.dedent(
 def _run_worker(program: str, config_path: Path) -> dict:
     """Run one writer program in a second, independent interpreter."""
     env = os.environ.copy()
-    env["DEER_FLOW_EXTENSIONS_CONFIG_PATH"] = str(config_path)
+    env["NKYEL_EXTENSIONS_CONFIG_PATH"] = str(config_path)
     completed = subprocess.run(
         [sys.executable, "-c", program],
         cwd=str(Path(__file__).resolve().parent.parent),
@@ -327,7 +327,7 @@ async def test_durable_only_without_baseline_is_retired_conservatively(
     cfg = tmp_path / "extensions_config.json"
     servers = {"A": _stdio("cmd-A"), "B": _stdio("cmd-B")}
     _write_config(cfg, servers)
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(cfg))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(cfg))
 
     pool = MCPSessionPool()
     session_pool_module._pool = pool

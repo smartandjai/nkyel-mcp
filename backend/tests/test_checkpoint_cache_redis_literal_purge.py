@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from deerflow.runtime.checkpoint_cache.base import make_history_key
-from deerflow.runtime.checkpoint_cache.redis import RedisCheckpointHistoryCache
+from nkyel.runtime.checkpoint_cache.base import make_history_key
+from nkyel.runtime.checkpoint_cache.redis import RedisCheckpointHistoryCache
 
 
 @pytest.mark.anyio

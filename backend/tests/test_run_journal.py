@@ -16,14 +16,14 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 
-from deerflow.runtime.events.store.base import RunEventStoreNotCommittedError
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+from nkyel.runtime.events.store.base import RunEventStoreNotCommittedError
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
 
 def test_run_journal_is_marked_as_loop_bound():
-    assert RunJournal.deerflow_loop_bound is True
+    assert RunJournal.nkyel_loop_bound is True
 
 
 def test_tool_promotion_claim_is_atomic_across_parallel_sync_wrappers():
@@ -437,7 +437,7 @@ class TestWriteOwnership:
         ``Task.cancelled()`` cannot prove the underlying I/O stopped, so the
         journal bounds its wait instead of claiming the write was terminated.
         """
-        import deerflow.runtime.journal as journal_module
+        import nkyel.runtime.journal as journal_module
 
         monkeypatch.setattr(journal_module, "_WRITE_SETTLE_TIMEOUT_SECONDS", 0.05, raising=False)
         started = asyncio.Event()
@@ -514,7 +514,7 @@ class TestWriteOwnership:
         with pytest.raises(asyncio.CancelledError):
             await flush_task
 
-        with caplog.at_level(logging.WARNING, logger="deerflow.runtime.journal"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.runtime.journal"):
             store.finish.set()
             for _ in range(5):
                 await asyncio.sleep(0)
@@ -645,7 +645,7 @@ class TestWriteOwnership:
         with pytest.raises(asyncio.CancelledError):
             await flush_task
 
-        with caplog.at_level(logging.WARNING, logger="deerflow.runtime.journal"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.runtime.journal"):
             store.finish.set()
             for _ in range(5):
                 await asyncio.sleep(0)
@@ -663,7 +663,7 @@ class TestWriteOwnership:
         journal = RunJournal("r-sync-log", "t-sync-log", FailingStore(), flush_threshold=100)
         journal._put(event_type="A", category="trace", content="one")
 
-        with caplog.at_level(logging.WARNING, logger="deerflow.runtime.journal"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.runtime.journal"):
             with pytest.raises(RuntimeError, match="store unavailable"):
                 await journal.flush()
 
@@ -725,7 +725,7 @@ class TestWriteOwnership:
         """A store that outlives bounded teardown must still have its result observed."""
         import gc
 
-        import deerflow.runtime.journal as journal_module
+        import nkyel.runtime.journal as journal_module
 
         monkeypatch.setattr(journal_module, "_WRITE_SETTLE_TIMEOUT_SECONDS", 0.02, raising=False)
         started = asyncio.Event()
@@ -751,7 +751,7 @@ class TestWriteOwnership:
         previous = loop.get_exception_handler()
         loop.set_exception_handler(lambda _loop, ctx: unretrieved.append(ctx.get("exception")))
         try:
-            with caplog.at_level(logging.WARNING, logger="deerflow.runtime.journal"):
+            with caplog.at_level(logging.WARNING, logger="nkyel.runtime.journal"):
                 await journal.close(flush=False)
                 assert journal._closed is True
                 assert len(journal._abandoned_store_tasks) == 1, "inner store task was not supervised"
@@ -771,7 +771,7 @@ class TestWriteOwnership:
     @pytest.mark.anyio
     async def test_abandoned_store_success_is_logged_without_clearing_quarantine(self, monkeypatch, caplog):
         """A late successful store return must be observable but change nothing else."""
-        import deerflow.runtime.journal as journal_module
+        import nkyel.runtime.journal as journal_module
 
         monkeypatch.setattr(journal_module, "_WRITE_SETTLE_TIMEOUT_SECONDS", 0.02, raising=False)
         started = asyncio.Event()
@@ -799,7 +799,7 @@ class TestWriteOwnership:
         journal._flush_sync()
         await started.wait()
 
-        with caplog.at_level(logging.WARNING, logger="deerflow.runtime.journal"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.runtime.journal"):
             await asyncio.wait_for(journal.close(flush=False), timeout=2.0)
             assert journal._closed is True
             assert len(journal._abandoned_store_tasks) == 1, "inner store task was not supervised"
@@ -1120,7 +1120,7 @@ class TestOperationOwnership:
         issued, not that local cleanup finished. This is documented rather than
         changed here; whether callers should join one cleanup is a contract call.
         """
-        import deerflow.runtime.journal as journal_module
+        import nkyel.runtime.journal as journal_module
 
         monkeypatch.setattr(journal_module, "_WRITE_SETTLE_TIMEOUT_SECONDS", 0.05, raising=False)
         started = asyncio.Event()
@@ -1155,7 +1155,7 @@ class TestOperationOwnership:
     @pytest.mark.parametrize("late_failure", [False, True], ids=["late-success", "late-failure"])
     async def test_force_close_bounds_and_supervises_progress_reporter(self, monkeypatch, caplog, late_failure):
         """Lease-loss close is bounded while a late progress result stays observed."""
-        import deerflow.runtime.journal as journal_module
+        import nkyel.runtime.journal as journal_module
 
         monkeypatch.setattr(journal_module, "_WRITE_SETTLE_TIMEOUT_SECONDS", 0.02, raising=False)
         started = asyncio.Event()
@@ -1183,7 +1183,7 @@ class TestOperationOwnership:
             assert journal._closed is True
             assert len(journal._abandoned_progress_tasks) == 1, "late progress task was not supervised"
 
-            with caplog.at_level(logging.WARNING, logger="deerflow.runtime.journal"):
+            with caplog.at_level(logging.WARNING, logger="nkyel.runtime.journal"):
                 release.set()
                 await _pump_loop()
 
@@ -1198,7 +1198,7 @@ class TestOperationOwnership:
     @pytest.mark.anyio
     async def test_force_close_progress_cleanup_survives_repeated_caller_cancellation(self, monkeypatch):
         """Caller cancellation detaches cleanup without dropping the late task."""
-        import deerflow.runtime.journal as journal_module
+        import nkyel.runtime.journal as journal_module
 
         monkeypatch.setattr(journal_module, "_WRITE_SETTLE_TIMEOUT_SECONDS", 1.0, raising=False)
         write_started = asyncio.Event()
@@ -1586,7 +1586,7 @@ class TestFinalToolMessageReconciliation:
 
         j, store = journal_setup
         j.on_llm_end(
-            _make_llm_response("", tool_calls=[{"id": "call_search", "name": "web_search", "args": {"query": "deerflow"}}]),
+            _make_llm_response("", tool_calls=[{"id": "call_search", "name": "web_search", "args": {"query": "nkyel"}}]),
             run_id=uuid4(),
             parent_run_id=None,
             tags=["subagent:general-purpose"],
@@ -2288,7 +2288,7 @@ class TestCallerBucketing:
                 "Canonical",
                 tool_calls=original_tool_calls,
                 additional_kwargs={
-                    "deerflow_error_fallback": True,
+                    "nkyel_error_fallback": True,
                     "error_detail": "canonical fallback",
                 },
             ),
@@ -2302,7 +2302,7 @@ class TestCallerBucketing:
                 usage=usage,
                 tool_calls=replay_tool_calls,
                 additional_kwargs={
-                    "deerflow_error_fallback": True,
+                    "nkyel_error_fallback": True,
                     "error_detail": "replay fallback",
                 },
             ),
@@ -2506,7 +2506,7 @@ class TestCallerBucketing:
                 "Late replay",
                 usage=usage,
                 tool_calls=[{"id": "late-call", "name": "write_file", "args": {}}],
-                additional_kwargs={"deerflow_error_fallback": True, "error_detail": "late fallback"},
+                additional_kwargs={"nkyel_error_fallback": True, "error_detail": "late fallback"},
             ),
             run_id=first_run_id,
             parent_run_id=None,
@@ -3158,8 +3158,8 @@ async def test_image_input_is_journaled_once_across_graph_model_calls(mode):
     from langgraph.checkpoint.memory import InMemorySaver
     from langgraph.graph import StateGraph
 
-    from deerflow.agents.thread_state import get_thread_state_schema
-    from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
+    from nkyel.agents.thread_state import get_thread_state_schema
+    from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
 
     store = MemoryRunEventStore()
     journal = RunJournal("image-run", "image-thread", store)

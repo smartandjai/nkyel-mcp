@@ -10,11 +10,11 @@ import httpx
 import pytest
 import yaml
 
-from deerflow.agents.memory.backends.honcho.client import HonchoClient, HonchoRequestError
-from deerflow.agents.memory.backends.honcho.config import HonchoConfig, sanitize_id
-from deerflow.agents.memory.backends.honcho.honcho_manager import HonchoMemoryManager, _stable_id
-from deerflow.agents.memory.manager import MemoryManagerError, MemoryReadError
-from deerflow.config.app_config import AppConfig
+from nkyel.agents.memory.backends.honcho.client import HonchoClient, HonchoRequestError
+from nkyel.agents.memory.backends.honcho.config import HonchoConfig, sanitize_id
+from nkyel.agents.memory.backends.honcho.honcho_manager import HonchoMemoryManager, _stable_id
+from nkyel.agents.memory.manager import MemoryManagerError, MemoryReadError
+from nkyel.config.app_config import AppConfig
 
 
 class TestHonchoConfig:
@@ -22,10 +22,10 @@ class TestHonchoConfig:
         cfg = HonchoConfig.from_backend_config(None)
         assert cfg.base_url == "http://localhost:8000"
         assert cfg.api_key is None
-        assert cfg.workspace_prefix == "deerflow-u-"
+        assert cfg.workspace_prefix == "nkyel-u-"
         assert cfg.workspace_overrides == {}
         assert cfg.user_peer_overrides == {}
-        assert cfg.assistant_peer == "deerflow"
+        assert cfg.assistant_peer == "nkyel"
         assert cfg.timeout_seconds == 10.0
         assert cfg.connect_timeout_seconds == 3.0
         assert cfg.message_char_limit == 8000
@@ -96,7 +96,7 @@ class TestHonchoConfig:
             yaml.safe_dump(
                 {
                     "models": [],
-                    "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                    "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                     "memory": {
                         "backend_config": {
                             "base_url": "http://internal:8000",
@@ -320,7 +320,7 @@ class TestHonchoClient:
         c = _client_with_handler(handler)
         c.get_or_create_peer("ws1", "alice")
         c.get_or_create_session("ws1", "df-t1")
-        c.set_session_peers("ws1", "df-t1", ["alice", "deerflow"])
+        c.set_session_peers("ws1", "df-t1", ["alice", "nkyel"])
         c.add_messages("ws1", "df-t1", [{"peer_id": "alice", "content": "hi"}])
         assert c.working_representation("ws1", "alice", max_conclusions=10) == "knows things"
         assert c.search("ws1", "q", limit=5)[0]["content"] == "hit"
@@ -334,7 +334,7 @@ class TestHonchoClient:
             "/v3/workspaces/ws1/peers/alice/representation",
             "/v3/workspaces/ws1/search",
         ]
-        assert b'"alice"' in seen[2][2] and b'"deerflow"' in seen[2][2]
+        assert b'"alice"' in seen[2][2] and b'"nkyel"' in seen[2][2]
         assert b'"messages"' in seen[3][2]
 
     def test_search_payload_carries_filters_only_when_present(self):
@@ -401,7 +401,7 @@ class _FakeClient:
         # not narrowly typed to the client's own exception class.
         self.raise_exc_cls: type[BaseException] = HonchoRequestError
         self.closed = False
-        self.search_results = [{"content": "found", "peer_id": "deerflow", "session_id": "df-t", "created_at": "2026-01-01"}]
+        self.search_results = [{"content": "found", "peer_id": "nkyel", "session_id": "df-t", "created_at": "2026-01-01"}]
 
     def _maybe_raise(self, name):
         if self.raise_on == name:
@@ -471,8 +471,8 @@ class TestHonchoManagerWrite:
         # Session ids share the user-id path's collision-resistant derivation;
         # computed, not hardcoded (see test_add_prefix_workspace_for_unmapped_user).
         sid = f"df-{_stable_id('t-1')}"
-        assert ("messages", ("shared", sid, (("alice", "please check the deploy"), ("deerflow", "deploy is green")))) in fake.calls
-        assert ("set_peers", ("shared", sid, ("alice", "deerflow"))) in fake.calls
+        assert ("messages", ("shared", sid, (("alice", "please check the deploy"), ("nkyel", "deploy is green")))) in fake.calls
+        assert ("set_peers", ("shared", sid, ("alice", "nkyel"))) in fake.calls
 
     def test_add_without_user_is_noop(self):
         mgr, fake = _manager()
@@ -491,7 +491,7 @@ class TestHonchoManagerWrite:
         # hardcoded, so this test doesn't silently drift from the real
         # collision-resistant derivation (see TestHonchoIdentityDerivation).
         expected_peer = _stable_id("bob@example.com")
-        assert fake.calls[0] == ("peer", (f"deerflow-u-{expected_peer}", expected_peer))
+        assert fake.calls[0] == ("peer", (f"nkyel-u-{expected_peer}", expected_peer))
 
     def test_add_swallows_backend_errors(self):
         mgr, fake = _manager()
@@ -627,7 +627,7 @@ class TestHonchoManagerRead:
         mgr, fake = _manager(workspace_overrides={"u1": "shared"})
         results = mgr.search("q", top_k=3, user_id="u1")
         assert fake.calls[-1] == ("search", ("shared", "q", 3, None))
-        assert results == [{"content": "found", "category": "memory", "session_id": "df-t", "peer_id": "deerflow", "created_at": "2026-01-01"}]
+        assert results == [{"content": "found", "category": "memory", "session_id": "df-t", "peer_id": "nkyel", "created_at": "2026-01-01"}]
 
     def test_search_without_user_is_empty(self):
         mgr, _ = _manager()
@@ -766,6 +766,6 @@ class TestHonchoIdentityDerivation:
 
 class TestFactoryDiscovery:
     def test_manager_class_resolves(self):
-        from deerflow.agents.memory.backends.honcho import MANAGER_CLASS
+        from nkyel.agents.memory.backends.honcho import MANAGER_CLASS
 
         assert MANAGER_CLASS is HonchoMemoryManager

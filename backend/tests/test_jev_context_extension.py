@@ -10,9 +10,9 @@ from pathlib import Path
 
 import httpx
 import pytest
-from deerflow_extension_api import AgentBuildContext, AgentScope
-from deerflow_extension_api.auth import ExtensionPrincipal
-from deerflow_extension_api.plugins import ActionContext
+from nkyel_extension_api import AgentBuildContext, AgentScope
+from nkyel_extension_api.auth import ExtensionPrincipal
+from nkyel_extension_api.plugins import ActionContext
 from langchain.agents import create_agent
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, get_buffer_string
@@ -21,20 +21,20 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 from langgraph.checkpoint.memory import InMemorySaver
 from pydantic import PrivateAttr, ValidationError
 
-from deerflow.agents.middlewares.llm_error_handling_middleware import LLMErrorHandlingMiddleware
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.app_config import AppConfig
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
-from deerflow.extensions.stack import compose_with_extensions
+from nkyel.agents.middlewares.llm_error_handling_middleware import LLMErrorHandlingMiddleware
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.app_config import AppConfig
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.stack import compose_with_extensions
 
 
 @pytest.fixture
 def jev(monkeypatch):
-    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/deerflow-extension-jev-context"))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "examples/nkyel-extension-jev-context"))
     monkeypatch.setenv("TYPESAFE_API_KEY", "test-only-not-a-real-key")
-    import deerflow_extension_jev_context.compaction as module
+    import nkyel_extension_jev_context.compaction as module
 
     return module
 
@@ -43,7 +43,7 @@ def history():
     return [
         HumanMessage(content="Inspect old logs. Then report the release code.", id="user-start"),
         AIMessage(content="", tool_calls=[{"id": "call-old", "name": "read_file", "args": {"path": "/tmp/old.log"}}], id="assistant-old"),
-        ToolMessage(content="Obsolete debug log\n" * 1000, tool_call_id="call-old", id="result-old", additional_kwargs={"deerflow_producer_kind": "sandbox"}),
+        ToolMessage(content="Obsolete debug log\n" * 1000, tool_call_id="call-old", id="result-old", additional_kwargs={"nkyel_producer_kind": "sandbox"}),
         AIMessage(content="The logs have been inspected.", id="assistant-done"),
         HumanMessage(content="Ignore the old logs. The release code is ORCHID.", id="user-goal"),
         AIMessage(content="I will preserve the release code.", id="assistant-ack"),
@@ -93,11 +93,11 @@ class RecordingModel(BaseChatModel):
 
 
 def build_graph(jev, *, enabled=True, summary_trigger=2000):
-    loaded, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_jev_context:install", config={"enabled": enabled, "trigger_tokens": 1000, "min_calls_between_attempts": 3})])
+    loaded, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_jev_context:install", config={"enabled": enabled, "trigger_tokens": 1000, "min_calls_between_attempts": 3})])
     assert not diagnostics
-    app_config = AppConfig(sandbox=SandboxConfig(use="deerflow.sandbox.local:LocalSandboxProvider"))
+    app_config = AppConfig(sandbox=SandboxConfig(use="nkyel.sandbox.local:LocalSandboxProvider"))
     model, summary_model = RecordingModel(), RecordingModel()
-    summary = DeerFlowSummarizationMiddleware(model=summary_model, trigger=("tokens", summary_trigger), keep=("messages", 6), token_counter=count_tokens_approximately, app_config=app_config)
+    summary = NkyelSummarizationMiddleware(model=summary_model, trigger=("tokens", summary_trigger), keep=("messages", 6), token_counter=count_tokens_approximately, app_config=app_config)
     stack = compose_with_extensions([LLMErrorHandlingMiddleware(app_config=app_config), summary], AgentScope.LEAD, AgentBuildContext(scope=AgentScope.LEAD), loaded)
     graph = create_agent(model, tools=[], middleware=stack, state_schema=ThreadState, checkpointer=InMemorySaver())
     return graph, model, summary_model, loaded
@@ -229,7 +229,7 @@ def test_live_script_checks_all_required_settings_before_requests(jev, monkeypat
     else:
         monkeypatch.setenv(missing, value)
     requests = transport(monkeypatch)
-    script = Path(__file__).resolve().parents[2] / "examples/deerflow-extension-jev-context/scripts/verify_live.py"
+    script = Path(__file__).resolve().parents[2] / "examples/nkyel-extension-jev-context/scripts/verify_live.py"
     original_search_path = sys.path
     original_entries = list(original_search_path)
     monkeypatch.setattr(sys, "path", list(sys.path))
@@ -289,27 +289,27 @@ def test_cooldown_skips_all_configured_intervening_calls(jev, monkeypatch, gap, 
 @pytest.mark.parametrize("metadata", [{"status": "error"}, {"status": "partial_success"}, {"status": "cancelled"}, {}, None, "error"])
 def test_structured_non_success_results_are_protected(jev, metadata):
     messages = history()
-    messages[2].additional_kwargs["deerflow_tool_meta"] = metadata
+    messages[2].additional_kwargs["nkyel_tool_meta"] = metadata
     assert not list(jev.candidates(messages, options(jev)))
 
 
 def test_real_host_normalized_error_is_protected(jev):
-    from deerflow.agents.middlewares.tool_result_meta import normalize_tool_message
+    from nkyel.agents.middlewares.tool_result_meta import normalize_tool_message
 
     messages = history()
     messages[2].content = json.dumps({"error": "Permission denied. " * 350})
     normalize_tool_message(messages[2])
     assert messages[2].status == "success"
-    assert messages[2].additional_kwargs["deerflow_tool_meta"]["status"] == "error"
+    assert messages[2].additional_kwargs["nkyel_tool_meta"]["status"] == "error"
     assert jev.prepare(messages, options(jev)) is None
 
 
 def test_structured_success_remains_eligible_and_keeps_metadata(jev):
     messages = history()
-    messages[2].additional_kwargs["deerflow_tool_meta"] = {"status": "success", "source": "tool_return"}
+    messages[2].additional_kwargs["nkyel_tool_meta"] = {"status": "success", "source": "tool_return"}
     _, selected = jev.prepare(messages, options(jev))
     (replacement,) = jev.updates(messages, selected, {"answers": {"result_0": {"noul": 0.0}}}, options(jev))
-    assert replacement.additional_kwargs["deerflow_tool_meta"] == messages[2].additional_kwargs["deerflow_tool_meta"]
+    assert replacement.additional_kwargs["nkyel_tool_meta"] == messages[2].additional_kwargs["nkyel_tool_meta"]
 
 
 @pytest.mark.parametrize(
@@ -327,8 +327,8 @@ def test_structured_success_remains_eligible_and_keeps_metadata(jev):
     ],
 )
 def test_effective_options_change_wrapped_middleware_identity(jev, field, value):
-    from deerflow.agents.assembly_descriptor import describe_middleware
-    from deerflow.extensions.isolation import IsolatedMiddleware
+    from nkyel.agents.assembly_descriptor import describe_middleware
+    from nkyel.extensions.isolation import IsolatedMiddleware
 
     original = options(jev)
     changed = original.model_copy(update={field: value})
@@ -409,6 +409,6 @@ async def test_plugin_catalog_and_status_have_no_secrets_or_user_data(jev):
     payload = await action.handler({}, ActionContext(ExtensionPrincipal("alice"), {}))
     assert payload == {"enabled": True, "configured": True, "trigger_tokens": 1000}
     assert "test-only-not-a-real-key" not in repr(plugin)
-    from deerflow_extension_jev_context import Contributor
+    from nkyel_extension_jev_context import Contributor
 
     assert not Contributor(options(jev)).contribute_middlewares(None, AgentBuildContext(scope=AgentScope.SUBAGENT))

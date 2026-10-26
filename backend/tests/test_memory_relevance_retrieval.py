@@ -18,16 +18,16 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import HumanMessage
 
-from deerflow.agents.memory.backends.deermem.deer_mem import DeerMem
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.relevance import (
+from nkyel.agents.memory.backends.deermem.deer_mem import DeerMem
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.relevance import (
     build_idf,
     diversify,
     lexical_relevance,
     rank_facts,
     tokenize,
 )
-from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
 
 
 def _make_fact(content: str, category: str = "context", confidence: float = 0.7) -> dict:
@@ -60,7 +60,7 @@ class TestLexicalRelevance:
         assert rank_facts([missing, low], "python")[0] is low
 
     def test_optional_segmenter_receives_bounded_input(self, monkeypatch):
-        from deerflow.agents.memory.backends.deermem.deermem.core import relevance
+        from nkyel.agents.memory.backends.deermem.deermem.core import relevance
 
         seen = []
 
@@ -76,7 +76,7 @@ class TestLexicalRelevance:
     @staticmethod
     def _punctuation_emitting_segmenter(monkeypatch):
         """Stub jieba the way it really segments: punctuation is its own token."""
-        from deerflow.agents.memory.backends.deermem.deermem.core import relevance
+        from nkyel.agents.memory.backends.deermem.deermem.core import relevance
 
         def cut(text):
             yield from re.findall(r"\w+|[^\w\s]|\s", text)
@@ -99,7 +99,7 @@ class TestLexicalRelevance:
         assert lexical_relevance(query, "term75 is the read replica") > 0.0
 
     def test_mixed_cjk_without_jieba(self, monkeypatch):
-        from deerflow.agents.memory.backends.deermem.deermem.core import relevance
+        from nkyel.agents.memory.backends.deermem.deermem.core import relevance
 
         monkeypatch.setattr(relevance, "_jieba_available", False)
         assert {"python", "我喜", "喜欢", "编程"} <= set(tokenize("我喜欢Python编程"))
@@ -113,14 +113,14 @@ class TestLexicalRelevance:
         assert rank_facts([invalid, low], "python")[0] is low
 
     def test_bounded_tokens(self, monkeypatch):
-        from deerflow.agents.memory.backends.deermem.deermem.core import relevance
+        from nkyel.agents.memory.backends.deermem.deermem.core import relevance
 
         monkeypatch.setattr(relevance, "_jieba_available", False)
         assert len(tokenize("word " * 10000)) <= 128
         assert len(tokenize("数据库迁移" * 10000)) <= 128
 
     def test_query_tokenized_once_per_ranking(self, monkeypatch):
-        from deerflow.agents.memory.backends.deermem.deermem.core import relevance
+        from nkyel.agents.memory.backends.deermem.deermem.core import relevance
 
         original = relevance.tokenize
         queries = []
@@ -216,7 +216,7 @@ class TestDiversify:
             assert diversify(scored, similarity_weight=0.5, limit=limit) == expected[:limit]
 
     def test_limit_preserves_full_prefix(self):
-        from deerflow.agents.memory.backends.deermem.deermem.core.relevance import order_facts_for_query
+        from nkyel.agents.memory.backends.deermem.deermem.core.relevance import order_facts_for_query
 
         facts = [_make_fact(text) for text in ["database migrations", "database migration", "python testing", "Italian cooking"]]
         full = order_facts_for_query(facts, "database", diversity_weight=0.5)
@@ -224,7 +224,7 @@ class TestDiversify:
         assert order_facts_for_query(facts, "database", diversity_weight=0.5, limit=0) == []
 
     def test_tokenization_is_linear(self, monkeypatch):
-        from deerflow.agents.memory.backends.deermem.deermem.core import relevance
+        from nkyel.agents.memory.backends.deermem.deermem.core import relevance
 
         calls = []
         original = relevance.tokenize
@@ -295,7 +295,7 @@ class TestRelevanceConfig:
 
 class TestRelevanceSearch:
     def test_search_passes_top_k_to_mmr(self, monkeypatch):
-        from deerflow.agents.memory.backends.deermem import deer_mem
+        from nkyel.agents.memory.backends.deermem import deer_mem
 
         facts = [_make_fact(f"database fact {i}") for i in range(30)]
         original = deer_mem.order_facts_for_query
@@ -313,7 +313,7 @@ class TestRelevanceSearch:
     @pytest.mark.parametrize("enabled", [False, True])
     @pytest.mark.parametrize("counting", ["char", "tiktoken"])
     def test_warms_segmenter_only_when_enabled(self, monkeypatch, enabled, counting):
-        from deerflow.agents.memory.backends.deermem import deer_mem
+        from nkyel.agents.memory.backends.deermem import deer_mem
 
         calls = []
         monkeypatch.setattr(deer_mem, "warm_tokenizer", lambda: calls.append("jieba"))
@@ -413,7 +413,7 @@ class TestRelevanceSearch:
 
 class TestInjectionRelevance:
     def test_diversification_stops_at_budget_and_preserves_guaranteed_pool(self, monkeypatch):
-        from deerflow.agents.memory.backends.deermem.deermem.core import prompt
+        from nkyel.agents.memory.backends.deermem.deermem.core import prompt
 
         original = prompt.iter_diversify
         picked = []
@@ -448,7 +448,7 @@ class TestInjectionRelevance:
         return args
 
     def test_relevance_reranks_facts_under_token_budget(self):
-        from deerflow.agents.memory.backends.deermem.deermem.core.prompt import (
+        from nkyel.agents.memory.backends.deermem.deermem.core.prompt import (
             format_memory_for_injection,
         )
 
@@ -474,7 +474,7 @@ class TestInjectionRelevance:
         assert "alembic" not in legacy
 
     def test_query_none_preserves_legacy_order(self):
-        from deerflow.agents.memory.backends.deermem.deermem.core.prompt import (
+        from nkyel.agents.memory.backends.deermem.deermem.core.prompt import (
             format_memory_for_injection,
         )
 
@@ -529,8 +529,8 @@ class TestMiddlewareQueryWiring:
     def test_upload_context_does_not_replace_original_query(self, monkeypatch, tmp_path, multimodal, user_text):
         from unittest import mock
 
-        from deerflow.agents.middlewares.uploads_middleware import UploadsMiddleware
-        from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+        from nkyel.agents.middlewares.uploads_middleware import UploadsMiddleware
+        from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
         uploads = UploadsMiddleware(base_dir=str(tmp_path))
         files = [{"filename": f"report-{i}.csv", "size": 1024, "path": f"/mnt/user-data/uploads/report-{i}.csv", "extension": ".csv"} for i in range(5)]
@@ -540,14 +540,14 @@ class TestMiddlewareQueryWiring:
         update = uploads.before_agent({"messages": [HumanMessage(content=content, id="msg-1")]}, runtime)
         uploaded_message = update["messages"][0]
         assert uploaded_message.additional_kwargs[ORIGINAL_USER_CONTENT_KEY] == user_text
-        with mock.patch("deerflow.agents.lead_agent.prompt._get_memory_context", return_value="") as get_context:
+        with mock.patch("nkyel.agents.lead_agent.prompt._get_memory_context", return_value="") as get_context:
             DynamicContextMiddleware().before_agent({"messages": [uploaded_message]}, runtime)
         get_context.assert_called_once()
         assert get_context.call_args.kwargs["query"] == (user_text.strip()[:1000] or None)
 
     def test_invalid_original_content_metadata_uses_message_text(self):
-        from deerflow.agents.middlewares.dynamic_context_middleware import _derive_injection_query
-        from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+        from nkyel.agents.middlewares.dynamic_context_middleware import _derive_injection_query
+        from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
         message = HumanMessage(content="database migration", additional_kwargs={ORIGINAL_USER_CONTENT_KEY: ["not a string"]})
         assert _derive_injection_query(message) == "database migration"
@@ -564,10 +564,10 @@ class TestMiddlewareQueryWiring:
 
         with (
             mock.patch(
-                "deerflow.agents.lead_agent.prompt._get_memory_context",
+                "nkyel.agents.lead_agent.prompt._get_memory_context",
                 return_value="",
             ) as get_context,
-            mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+            mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
         ):
             mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
             mw.before_agent(state, SimpleNamespace(context={}))
@@ -593,10 +593,10 @@ class TestMiddlewareQueryWiring:
 
         with (
             mock.patch(
-                "deerflow.agents.lead_agent.prompt._get_memory_context",
+                "nkyel.agents.lead_agent.prompt._get_memory_context",
                 return_value="",
             ) as get_context,
-            mock.patch("deerflow.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
+            mock.patch("nkyel.agents.middlewares.dynamic_context_middleware.datetime") as mock_dt,
         ):
             mock_dt.now.return_value.strftime.return_value = "2026-05-08, Friday"
             mw.before_agent(state, SimpleNamespace(context={}))

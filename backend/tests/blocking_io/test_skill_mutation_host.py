@@ -13,16 +13,16 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session
 
 from app.gateway.routers.skill_mutations import router
-from deerflow.config.app_config import AppConfig
-from deerflow.config.paths import Paths
-from deerflow.extensions.host_capabilities import HostCapabilities
-from deerflow.persistence.base import Base
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.user.model import UserRow
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.skills.security_scanner import ScanResult
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config.app_config import AppConfig
+from nkyel.config.paths import Paths
+from nkyel.extensions.host_capabilities import HostCapabilities
+from nkyel.persistence.base import Base
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.user.model import UserRow
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.skills.security_scanner import ScanResult
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 pytestmark = pytest.mark.skipif(os.name != "posix", reason="Skill publication requires POSIX local storage")
 
@@ -32,10 +32,10 @@ CONTENT = "---\nname: example\ndescription: A sample skill\n---\nOriginal instru
 @pytest.fixture
 def durable_host(tmp_path, monkeypatch):
     """Only seed data synchronously; all host lifetime work stays under the gate."""
-    monkeypatch.setattr("deerflow.config.paths._paths", Paths(base_dir=tmp_path / "home"))
+    monkeypatch.setattr("nkyel.config.paths._paths", Paths(base_dir=tmp_path / "home"))
     config = AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "database": {"backend": "sqlite", "sqlite_dir": str(tmp_path)},
             "skill_scan": {"enabled": True},
             "plugins": [
@@ -50,11 +50,11 @@ def durable_host(tmp_path, monkeypatch):
             ],
         }
     )
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: config)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: config)
     # Replace only the remote moderation boundary, retaining the real scanner,
     # package staging/static scan, publication, projection and SQLite paths.
     model = AsyncMock(return_value=ScanResult("allow", "safe"))
-    monkeypatch.setattr("deerflow.skills.mutations.scanner.scan_skill_content", model)
+    monkeypatch.setattr("nkyel.skills.mutations.scanner.scan_skill_content", model)
     storage = UserScopedSkillStorage("owner", host_path=str(tmp_path / "skills"), app_config=config)
     root = storage.get_custom_skill_dir("example")
     root.mkdir(parents=True)
@@ -83,7 +83,7 @@ async def test_host_check_evidence_publication_revert_and_admin_are_off_loop(dur
         evidence, mutations = host.bindings["fixture:install"]
         assert (await evidence.list_changed_runs()).items[0].run_id == "run"
         snapshot = await evidence.get_snapshot(thread_id="thread", run_id="run")
-        from deerflow_extension_api import EvidenceLimits
+        from nkyel_extension_api import EvidenceLimits
 
         page = await evidence.read_events(snapshot_ref=snapshot.snapshot_ref, limits=EvidenceLimits(max_events=1))
         assert len(page.items) == 1 and page.has_more

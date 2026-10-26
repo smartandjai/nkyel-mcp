@@ -12,8 +12,8 @@ from pydantic import BaseModel
 from starlette.requests import ClientDisconnect
 from starlette.responses import StreamingResponse
 
-from deerflow.skills.export import SkillExportArchive, SkillExportError
-from deerflow.utils.file_io import run_file_io
+from nkyel.skills.export import SkillExportArchive, SkillExportError
+from nkyel.utils.file_io import run_file_io
 
 # Slots are shared across all users in this Gateway process.
 _slots = threading.BoundedSemaphore(2)

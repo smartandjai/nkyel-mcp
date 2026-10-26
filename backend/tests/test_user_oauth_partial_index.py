@@ -1,6 +1,6 @@
 """Live PostgreSQL regression test for the ``users`` table's OAuth identity
 index (idx_users_oauth_identity) -- same opt-in pattern as
-test_pg_schema_integration.py (set DEERFLOW_TEST_POSTGRES_URL to run).
+test_pg_schema_integration.py (set NKYEL_TEST_POSTGRES_URL to run).
 
 Confirms the index is created as a genuine PARTIAL index on Postgres
 (``postgresql_where``), matching the SQLite side (``sqlite_where``) and the
@@ -20,20 +20,20 @@ from datetime import UTC, datetime
 import pytest
 from sqlalchemy import text
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.engine import close_engine, get_engine, init_engine_from_config
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.engine import close_engine, get_engine, init_engine_from_config
 
-POSTGRES_URL = os.getenv("DEERFLOW_TEST_POSTGRES_URL")
+POSTGRES_URL = os.getenv("NKYEL_TEST_POSTGRES_URL")
 
 pytestmark = pytest.mark.skipif(
     not POSTGRES_URL,
-    reason="set DEERFLOW_TEST_POSTGRES_URL to run live PostgreSQL tests",
+    reason="set NKYEL_TEST_POSTGRES_URL to run live PostgreSQL tests",
 )
 
 
 @pytest.mark.anyio
 async def test_oauth_identity_index_is_partial_on_postgres():
-    schema = f"deerflow_test_{uuid.uuid4().hex[:12]}"
+    schema = f"nkyel_test_{uuid.uuid4().hex[:12]}"
     db_config = DatabaseConfig(backend="postgres", postgres_url=POSTGRES_URL or "", postgres_schema=schema)
 
     await init_engine_from_config(db_config)
@@ -64,7 +64,7 @@ async def test_oauth_identity_uniqueness_enforced_end_to_end():
     a genuine duplicate (provider, oauth_id) pair is rejected, and
     multiple plain-password accounts (both fields NULL) are allowed to
     coexist -- the two behaviours the index exists to guarantee."""
-    schema = f"deerflow_test_{uuid.uuid4().hex[:12]}"
+    schema = f"nkyel_test_{uuid.uuid4().hex[:12]}"
     db_config = DatabaseConfig(backend="postgres", postgres_url=POSTGRES_URL or "", postgres_schema=schema)
 
     await init_engine_from_config(db_config)
@@ -74,7 +74,7 @@ async def test_oauth_identity_uniqueness_enforced_end_to_end():
     try:
         from app.gateway.auth.models import User
         from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-        from deerflow.persistence.engine import get_session_factory
+        from nkyel.persistence.engine import get_session_factory
 
         repo = SQLiteUserRepository(get_session_factory())
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from deerflow.tui.input_history import InputHistory
+from nkyel.tui.input_history import InputHistory
 
 
 def test_add_ignores_empty_and_whitespace():

@@ -116,7 +116,7 @@ def _row_field(row: Any, name: str, index: int) -> Any:
     """Read one column from a DB-API row whatever row factory produced it.
 
     Postgres cursors are opened with ``row_factory=dict_row`` — both by this
-    codebase (``deerflow/runtime/checkpointer/async_provider.py``) and inside
+    codebase (``nkyel/runtime/checkpointer/async_provider.py``) and inside
     ``langgraph-checkpoint-postgres`` itself (``aio.py`` opens every cursor as
     ``conn.cursor(binary=True, row_factory=dict_row)``) — so their rows are
     name-addressable and positional access raises ``KeyError: 0``. aiosqlite
@@ -396,7 +396,7 @@ async def enforce_thread_retention(
     "converts a cleanup into a thread-level outage" failure class. Callers
     must therefore serialize per-thread mutation against the runtime writer
     by passing the thread's checkpoint lock
-    (``deerflow.runtime.runs.worker._checkpoint_thread_lock(thread_id)``) as
+    (``nkyel.runtime.runs.worker._checkpoint_thread_lock(thread_id)``) as
     *thread_lock*; without one, retention must only run while the thread is
     guaranteed quiescent.
 
@@ -651,7 +651,7 @@ async def enforce_completed_run_retention(
     to the root head, its parent and one pending-write probe, independently of
     thread history length.
     """
-    from deerflow.runtime.runs.worker import _checkpoint_thread_lock
+    from nkyel.runtime.runs.worker import _checkpoint_thread_lock
 
     report = await enforce_trailing_duration_retention(
         checkpointer,

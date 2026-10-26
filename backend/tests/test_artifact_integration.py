@@ -20,11 +20,11 @@ from langchain_core.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt.tool_node import ToolCallRequest
 
-from deerflow.agents.middlewares.artifact_capture_middleware import ArtifactCaptureMiddleware
-from deerflow.agents.middlewares.artifact_resolution_middleware import ArtifactResolutionMiddleware
-from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.tools.artifact_registry import generate_handle
+from nkyel.agents.middlewares.artifact_capture_middleware import ArtifactCaptureMiddleware
+from nkyel.agents.middlewares.artifact_resolution_middleware import ArtifactResolutionMiddleware
+from nkyel.agents.middlewares.durable_context_middleware import DurableContextMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.tools.artifact_registry import generate_handle
 
 THREAD_ID = "artifact-cycle-thread"
 REAL_REF = "/mnt/user-data/outputs/report.md"
@@ -185,7 +185,7 @@ def test_remote_url_survives_capture_checkpoint_and_resolved_download(url, closi
 
 @pytest.mark.parametrize("directory_name", ["项目（归档）", "archive(old)", "archive[old]", "archive{old}", "archive(old[1])"])
 def test_glob_directory_survives_capture_checkpoint_and_resolved_listing(tmp_path, directory_name):
-    from deerflow.sandbox.tools import _format_glob_results
+    from nkyel.sandbox.tools import _format_glob_results
 
     real_ref = f"/mnt/user-data/workspace/{directory_name}"
     directory = tmp_path / directory_name

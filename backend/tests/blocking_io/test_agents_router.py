@@ -33,23 +33,23 @@ from app.gateway.routers.agents import (
     update_agent,
     update_user_profile,
 )
-from deerflow.config.agents_api_config import load_agents_api_config_from_dict
-from deerflow.config.paths import get_paths
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.config.agents_api_config import load_agents_api_config_from_dict
+from nkyel.config.paths import get_paths
+from nkyel.runtime.user_context import get_effective_user_id
 
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture(autouse=True)
 def _isolate_agent_store_config(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.delenv("DEER_FLOW_CONFIG_PATH", raising=False)
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.app_config._legacy_config_candidates", lambda: ())
+    monkeypatch.delenv("NKYEL_CONFIG_PATH", raising=False)
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.app_config._legacy_config_candidates", lambda: ())
 
 
 async def test_create_agent_does_not_block_event_loop(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     load_agents_api_config_from_dict({"enabled": True})
     try:
         response = await create_agent_endpoint(AgentCreateRequest(name="loop-make-agent", soul="You are a test agent."))
@@ -64,8 +64,8 @@ async def test_create_agent_does_not_block_event_loop(tmp_path: Path, monkeypatc
 
 
 async def test_delete_agent_does_not_block_event_loop(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     load_agents_api_config_from_dict({"enabled": True})
     try:
         user_id = get_effective_user_id()
@@ -86,8 +86,8 @@ async def test_read_endpoints_do_not_block_event_loop(tmp_path: Path, monkeypatc
     # list/get/check read through the sync agent store; on the db backend each is
     # a DB round trip. They must offload via asyncio.to_thread, or the strict
     # Blockbuster gate raises BlockingError here (finding: reads on the loop).
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     load_agents_api_config_from_dict({"enabled": True})
     try:
         await create_agent_endpoint(AgentCreateRequest(name="loop-read-agent", soul="You are a test agent."))
@@ -106,8 +106,8 @@ async def test_read_endpoints_do_not_block_event_loop(tmp_path: Path, monkeypatc
 
 
 async def test_update_agent_does_not_block_event_loop(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     load_agents_api_config_from_dict({"enabled": True})
     try:
         await create_agent_endpoint(AgentCreateRequest(name="loop-update-agent", soul="Original soul"))
@@ -123,8 +123,8 @@ async def test_user_profile_endpoints_do_not_block_event_loop(tmp_path: Path, mo
     # GET stats and reads USER.md, PUT creates the user bucket and writes it.
     # Every other handler in this router offloads its filesystem work; these
     # two ran it on the loop, so the strict gate raises BlockingError here.
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     load_agents_api_config_from_dict({"enabled": True})
     try:
         # Missing profile: the existence check must not block either.

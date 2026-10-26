@@ -18,8 +18,8 @@ from pathlib import Path
 
 import pytest
 
-import deerflow.config.extensions_config as extensions_config_module
-from deerflow.config.extensions_config import (
+import nkyel.config.extensions_config as extensions_config_module
+from nkyel.config.extensions_config import (
     ExtensionsConfig,
     McpServerConfig,
     atomic_write_extensions_config,
@@ -28,9 +28,9 @@ from deerflow.config.extensions_config import (
     reset_extensions_config,
     set_extensions_config,
 )
-from deerflow.sandbox.tools import _get_mcp_allowed_paths
+from nkyel.sandbox.tools import _get_mcp_allowed_paths
 
-_LOGGER_NAME = "deerflow.config.extensions_config"
+_LOGGER_NAME = "nkyel.config.extensions_config"
 _KEEPING_PREVIOUS = "keeping the previously loaded configuration"
 
 
@@ -65,7 +65,7 @@ def _warnings(caplog: pytest.LogCaptureFixture) -> list[logging.LogRecord]:
 def config_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     path = tmp_path / "extensions_config.json"
     _write_from_peer_process(path, _filesystem_server_payload("/data/alpha"))
-    monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(path))
+    monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(path))
     reset_extensions_config()
     yield path
     reset_extensions_config()
@@ -182,10 +182,10 @@ def test_deleted_file_keeps_last_known_good_until_it_returns(config_path: Path, 
 
 @pytest.mark.parametrize("deletion_stage", ["before-signature", "after-signature"])
 def test_search_mode_deletion_during_reload_keeps_last_known_good(config_path: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, deletion_stage: str) -> None:
-    monkeypatch.delenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH")
-    monkeypatch.setenv("DEER_FLOW_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.delenv("NKYEL_EXTENSIONS_CONFIG_PATH")
+    monkeypatch.setenv("NKYEL_PROJECT_ROOT", str(tmp_path))
     # Keep search-mode fallback locations isolated from the checkout's config.
-    monkeypatch.setattr(extensions_config_module, "__file__", str(tmp_path / "isolated/backend/packages/harness/deerflow/config/extensions_config.py"))
+    monkeypatch.setattr(extensions_config_module, "__file__", str(tmp_path / "isolated/backend/packages/harness/nkyel/config/extensions_config.py"))
     assert ExtensionsConfig.resolve_config_path() == config_path
     first = get_extensions_config()
     _write_from_peer_process(config_path, _filesystem_server_payload("/data/beta"))
@@ -216,7 +216,7 @@ def test_search_mode_deletion_during_reload_keeps_last_known_good(config_path: P
 
 
 def test_config_appearing_after_unconfigured_start_is_adopted(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", raising=False)
+    monkeypatch.delenv("NKYEL_EXTENSIONS_CONFIG_PATH", raising=False)
     path = tmp_path / "extensions_config.json"
     resolved: list[Path | None] = [None]
     monkeypatch.setattr(ExtensionsConfig, "resolve_config_path", classmethod(lambda cls, config_path=None: resolved[0]))

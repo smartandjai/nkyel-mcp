@@ -89,7 +89,7 @@ GET /api/threads/{thread_id}/token-usage?include_active=false
 
 ## Langfuse
 
-子 Agent 的 span 归属到父线程：`session_id` 是父线程的 `thread_id`，`user_id` 是当前用户，trace 名称为 `subagent:<名称>`（名称小写、下划线转连字符），标签包含环境与模型。LangChain 层面的 tag 同样是 `subagent:<名称>`。在 Langfuse 的 Sessions 视图打开一个线程，就能看到它派出的全部子 Agent。请求级 `deerflow_trace_id` 也会写入 trace 元数据。
+子 Agent 的 span 归属到父线程：`session_id` 是父线程的 `thread_id`，`user_id` 是当前用户，trace 名称为 `subagent:<名称>`（名称小写、下划线转连字符），标签包含环境与模型。LangChain 层面的 tag 同样是 `subagent:<名称>`。在 Langfuse 的 Sessions 视图打开一个线程，就能看到它派出的全部子 Agent。请求级 `nkyel_trace_id` 也会写入 trace 元数据。
 
 ## 请求 trace id
 

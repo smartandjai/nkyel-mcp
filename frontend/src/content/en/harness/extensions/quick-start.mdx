@@ -7,12 +7,12 @@ import { Callout, Steps } from "nextra/components";
 
 # Quick Start
 
-This chapter walks through a complete extension named `hello`. It contributes one middleware that times every tool call and logs a warning when a call is slower than a configured threshold. By the end you will have packaged it, unit-tested it without DeerFlow, installed it into a checkout, and seen it run.
+This chapter walks through a complete extension named `hello`. It contributes one middleware that times every tool call and logs a warning when a call is slower than a configured threshold. By the end you will have packaged it, unit-tested it without nkyel, installed it into a checkout, and seen it run.
 
 ## Start from an existing example
 
-To adapt working code, start with `examples/deerflow-extension-example` for backend
-hooks or `examples/deerflow-extension-bookmarks` for a browser feature with backend
+To adapt working code, start with `examples/nkyel-extension-example` for backend
+hooks or `examples/nkyel-extension-bookmarks` for a browser feature with backend
 actions and a model tool. The [example guide](https://github.com/bytedance/deer-flow/blob/main/examples/README.md)
 links their tests and installation steps. After preparing the backend environment,
 run the packaging check from the checkout root:
@@ -27,7 +27,7 @@ verification. To build a minimal middleware from scratch, follow the tutorial be
 
 ## Prerequisites
 
-- A DeerFlow checkout that runs with `make dev`. See [Quick Start](/docs/application/quick-start).
+- A nkyel checkout that runs with `make dev`. See [Quick Start](/docs/application/quick-start).
 - Python 3.12 or newer and [uv](https://docs.astral.sh/uv/) 0.8.0 or newer. The extension manager refuses older uv.
 - Shell access to the machine running the Gateway. Installing an extension is an operator action, not something the web UI does.
 
@@ -35,52 +35,52 @@ verification. To build a minimal middleware from scratch, follow the tutorial be
 
 ### Create the package
 
-An extension is a normal Python package. Create it **outside** the DeerFlow checkout, for example in `~/src/deerflow-extension-hello`:
+An extension is a normal Python package. Create it **outside** the nkyel checkout, for example in `~/src/nkyel-extension-hello`:
 
 ```text
-deerflow-extension-hello/
+nkyel-extension-hello/
 ├── pyproject.toml
-├── deerflow_extension_hello/
+├── nkyel_extension_hello/
 │   └── __init__.py
 └── tests/
     └── test_hello.py
 ```
 
-`pyproject.toml` declares the contract range, every framework the code imports, and exactly one entry point in the `deerflow.extensions` group:
+`pyproject.toml` declares the contract range, every framework the code imports, and exactly one entry point in the `nkyel.extensions` group:
 
 ```toml filename="pyproject.toml"
 [project]
-name = "deerflow-extension-hello"
+name = "nkyel-extension-hello"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "deerflow-extension-api>=0.2,<0.3",
+    "nkyel-extension-api>=0.2,<0.3",
     "langchain>=1.3,<2",
 ]
 
-[project.entry-points."deerflow.extensions"]
-hello = "deerflow_extension_hello:install"
+[project.entry-points."nkyel.extensions"]
+hello = "nkyel_extension_hello:install"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["deerflow_extension_hello"]
+packages = ["nkyel_extension_hello"]
 ```
 
 The entry-point name, `hello`, becomes the operator-facing name used by `enable`, `disable`, and `remove`.
 
 <Callout type="warning">
-  `deerflow-extension-api` deliberately has no dependencies. If your code imports
+  `nkyel-extension-api` deliberately has no dependencies. If your code imports
   LangChain, LangGraph, or FastAPI, declare them yourself, as `langchain` is
-  declared here. Never import `deerflow.*` or `app.*`: those are host internals
+  declared here. Never import `nkyel.*` or `app.*`: those are host internals
   with no compatibility promise.
 </Callout>
 
 ### Write install()
 
-```python filename="deerflow_extension_hello/__init__.py"
+```python filename="nkyel_extension_hello/__init__.py"
 """Log how long each tool call takes, as the model sees it."""
 
 from __future__ import annotations
@@ -90,7 +90,7 @@ import time
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     AgentBuildContext,
     AgentScope,
     ExtensionData,
@@ -152,7 +152,7 @@ Three things to notice:
 - `Placement.TOOL_VISIBLE` asks for the outer end of the tool chain, so the timing includes output truncation and error wrapping: what the model finally waits for. `AgentScope.BOTH` installs the middleware into the Lead Agent and into every subagent. Both are explained in [Middleware Contributions](/docs/harness/extensions/middleware).
 - The middleware implements both `wrap_tool_call` and `awrap_tool_call`. If you implement only one side, the other execution path passes through without observing anything.
 
-### Test it without DeerFlow
+### Test it without nkyel
 
 The contract is plain Python, so a stand-in registry is enough to test registration, and the middleware can be called directly:
 
@@ -161,9 +161,9 @@ import asyncio
 import logging
 from types import SimpleNamespace
 
-from deerflow_extension_api import AgentBuildContext, AgentScope, ExtensionData, Placement
+from nkyel_extension_api import AgentBuildContext, AgentScope, ExtensionData, Placement
 
-from deerflow_extension_hello import ToolTimer, install
+from nkyel_extension_hello import ToolTimer, install
 
 
 class RecordingRegistry:
@@ -198,31 +198,31 @@ def test_slow_tool_calls_log_a_warning(caplog):
     assert caplog.records[-1].levelno == logging.WARNING
 ```
 
-The contract package is currently sourced from the DeerFlow checkout, so install it from there in editable mode:
+The contract package is currently sourced from the nkyel checkout, so install it from there in editable mode:
 
 ```bash
-cd ~/src/deerflow-extension-hello
+cd ~/src/nkyel-extension-hello
 uv venv --python 3.12
-uv pip install -e /path/to/deer-flow/backend/packages/extension-api -e . pytest
+uv pip install -e /path/to/nkyel/backend/packages/extension-api -e . pytest
 uv run --no-project pytest -q
 ```
 
-### Install it into DeerFlow
+### Install it into nkyel
 
-From the root of the DeerFlow checkout, pass the package directory as an **absolute** path. The Make wrapper runs the manager from `backend/`, so a relative path would resolve against the wrong directory:
+From the root of the nkyel checkout, pass the package directory as an **absolute** path. The Make wrapper runs the manager from `backend/`, so a relative path would resolve against the wrong directory:
 
 ```bash
-make extension-install SOURCE="$HOME/src/deerflow-extension-hello"
+make extension-install SOURCE="$HOME/src/nkyel-extension-hello"
 ```
 
 The manager warns that the extension will execute with Gateway privileges and asks `Install this trusted source? [y/N]`. After you confirm, it:
 
-1. copies a snapshot of the directory to `backend/extensions/sources/deerflow-extension-hello/`. Later edits to your working copy are not picked up until you run `make extension-upgrade`;
+1. copies a snapshot of the directory to `backend/extensions/sources/nkyel-extension-hello/`. Later edits to your working copy are not picked up until you run `make extension-upgrade`;
 2. adds the snapshot to the `extensions` dependency group in `backend/pyproject.toml` and updates `backend/uv.lock`;
 3. syncs the locked environment;
 4. appends an enabled `plugins:` record to `config.yaml`.
 
-It then prints `Installed and enabled hello (deerflow-extension-hello). Restart DeerFlow to load it.` Check the record:
+It then prints `Installed and enabled hello (nkyel-extension-hello). Restart nkyel to load it.` Check the record:
 
 ```bash
 make extension-list
@@ -230,7 +230,7 @@ make extension-list
 
 ```text
 NAME	STATE	PACKAGE	ENTRY POINT
-hello	enabled	deerflow-extension-hello	deerflow_extension_hello:install
+hello	enabled	nkyel-extension-hello	nkyel_extension_hello:install
 ```
 
 ### Configure and restart
@@ -240,8 +240,8 @@ The manager writes an empty private `config: {}`. To lower the slow-call thresho
 ```yaml filename="config.yaml"
 plugins:
   - name: hello
-    package: deerflow-extension-hello
-    use: deerflow_extension_hello:install
+    package: nkyel-extension-hello
+    use: nkyel_extension_hello:install
     enabled: true
     required: false
     config:
@@ -257,17 +257,17 @@ make dev
 The Gateway log confirms the load:
 
 ```text
-Extensions loaded: 1/1 (deerflow_extension_hello:install)
+Extensions loaded: 1/1 (nkyel_extension_hello:install)
 ```
 
-If the entry point cannot be imported, is incompatible, or `install()` raises, the count reads `0/1` and an error line starting with `Extension deerflow_extension_hello:install:` explains why. The Gateway still starts, because the record has `required: false`.
+If the entry point cannot be imported, is incompatible, or `install()` raises, the count reads `0/1` and an error line starting with `Extension nkyel_extension_hello:install:` explains why. The Gateway still starts, because the record has `required: false`.
 
 ### See it run
 
 Send a message that makes the agent use a tool, such as a web search. The Gateway log shows one line per tool call, from the Lead Agent and from any subagent it delegates to. The exact prefix depends on your logging format:
 
 ```text
-WARNING deerflow_extension_hello: tool web_search took 1432.7 ms
+WARNING nkyel_extension_hello: tool web_search took 1432.7 ms
 ```
 
 ### Disable or remove it
@@ -285,4 +285,4 @@ Every command takes effect after the next restart. If you deploy with Docker, re
 ## Next steps
 
 - [Middleware Contributions](/docs/harness/extensions/middleware): the five placements, scope and ordering, and what an extension middleware may and may not change.
-- The [bundled example](https://github.com/bytedance/deer-flow/tree/main/examples/deerflow-extension-example) combines middleware with task-lifecycle state, a system-model observer, a service, and an HTTP route.
+- The [bundled example](https://github.com/bytedance/deer-flow/tree/main/examples/nkyel-extension-example) combines middleware with task-lifecycle state, a system-model observer, a service, and an HTTP route.

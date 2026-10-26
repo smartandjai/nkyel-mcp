@@ -4,9 +4,9 @@ Two halves:
 - Gateway: only an internally authenticated caller's top-level ``body.context``
   may supply ``channel_user_id``; free-form RunnableConfig values are cleared.
 - Sandbox: ``bash_tool`` exposes both identities as fixed env vars via an
-  ``export`` prefix on the command string — ``DEERFLOW_CHANNEL_USER_ID`` for the
-  IM platform sender (#3914) and ``DEERFLOW_USER_ID`` for the authenticated
-  DeerFlow user (#3919). Neither must ride the ``env=`` parameter: on
+  ``export`` prefix on the command string — ``NKYEL_CHANNEL_USER_ID`` for the
+  IM platform sender (#3914) and ``NKYEL_USER_ID`` for the authenticated
+  nkyel user (#3919). Neither must ride the ``env=`` parameter: on
   ``AioSandbox`` a non-empty env switches execution to the ``bash.exec`` API,
   which requires image >= 1.9.3 and abandons the persistent shell session —
   that channel is reserved for request-scoped secrets.
@@ -18,7 +18,7 @@ its prefix is skipped, whereas the user id always resolves (falling back to
 
 from types import SimpleNamespace
 
-from deerflow.sandbox.tools import (
+from nkyel.sandbox.tools import (
     CHANNEL_USER_ID_ENV,
     USER_ID_ENV,
     _channel_identity_prefix,
@@ -27,9 +27,9 @@ from deerflow.sandbox.tools import (
 )
 
 _THREAD_DATA = {
-    "workspace_path": "/tmp/deer-flow/threads/t1/user-data/workspace",
-    "uploads_path": "/tmp/deer-flow/threads/t1/user-data/uploads",
-    "outputs_path": "/tmp/deer-flow/threads/t1/user-data/outputs",
+    "workspace_path": "/tmp/nkyel/threads/t1/user-data/workspace",
+    "uploads_path": "/tmp/nkyel/threads/t1/user-data/uploads",
+    "outputs_path": "/tmp/nkyel/threads/t1/user-data/outputs",
 }
 
 # Pinned so expected command strings do not depend on whichever identity the
@@ -57,8 +57,8 @@ class _CapturingSandbox:
 
 def _run_bash(monkeypatch, runtime, command: str = "echo hi") -> _CapturingSandbox:
     sandbox = _CapturingSandbox()
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     bash_tool.func(runtime=runtime, description="test", command=command)
     return sandbox
 
@@ -203,10 +203,10 @@ class TestBashToolChannelIdentityPrefix:
             context={"channel_user_id": "ou_1", "thread_id": "t1", "user_id": _USER_ID},
         )
         sandbox = _CapturingSandbox()
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
-        monkeypatch.setattr("deerflow.sandbox.tools.is_host_bash_allowed", lambda: True)
-        monkeypatch.setattr("deerflow.sandbox.tools._is_windows", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+        monkeypatch.setattr("nkyel.sandbox.tools.is_host_bash_allowed", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools._is_windows", lambda: True)
 
         bash_tool.func(runtime=runtime, description="test", command="echo hi")
 
@@ -219,10 +219,10 @@ class TestBashToolChannelIdentityPrefix:
             context={"channel_user_id": "ou_1", "thread_id": "t1", "user_id": _USER_ID},
         )
         sandbox = _CapturingSandbox()
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
-        monkeypatch.setattr("deerflow.sandbox.tools.is_host_bash_allowed", lambda: True)
-        monkeypatch.setattr("deerflow.sandbox.tools._is_windows", lambda: False)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+        monkeypatch.setattr("nkyel.sandbox.tools.is_host_bash_allowed", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools._is_windows", lambda: False)
 
         bash_tool.func(runtime=runtime, description="test", command="echo hi")
 
@@ -277,7 +277,7 @@ class TestBashToolUserIdentityPrefix:
         command cannot inherit a stale value from a reused shell session."""
         for bad in ("", 123, "x" * 5000, None):
             monkeypatch.setattr(
-                "deerflow.sandbox.tools.resolve_runtime_user_id",
+                "nkyel.sandbox.tools.resolve_runtime_user_id",
                 lambda runtime, _bad=bad: _bad,
             )
             prefix = _user_identity_prefix(SimpleNamespace(context={}))
@@ -305,10 +305,10 @@ class TestBashToolUserIdentityPrefix:
             context={"thread_id": "t1", "user_id": _USER_ID},
         )
         sandbox = _CapturingSandbox()
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
-        monkeypatch.setattr("deerflow.sandbox.tools.is_host_bash_allowed", lambda: True)
-        monkeypatch.setattr("deerflow.sandbox.tools._is_windows", lambda: False)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+        monkeypatch.setattr("nkyel.sandbox.tools.is_host_bash_allowed", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools._is_windows", lambda: False)
 
         bash_tool.func(runtime=runtime, description="test", command="echo hi")
 
@@ -324,10 +324,10 @@ class TestBashToolUserIdentityPrefix:
             context={"thread_id": "t1", "user_id": _USER_ID},
         )
         sandbox = _CapturingSandbox()
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
-        monkeypatch.setattr("deerflow.sandbox.tools.is_host_bash_allowed", lambda: True)
-        monkeypatch.setattr("deerflow.sandbox.tools._is_windows", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+        monkeypatch.setattr("nkyel.sandbox.tools.is_host_bash_allowed", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools._is_windows", lambda: True)
 
         bash_tool.func(runtime=runtime, description="test", command="echo hi")
 
@@ -349,10 +349,10 @@ class TestBashToolUserIdentityPrefix:
             },
         )
         sandbox = _CapturingSandbox()
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
-        monkeypatch.setattr("deerflow.sandbox.tools.is_host_bash_allowed", lambda: True)
-        monkeypatch.setattr("deerflow.sandbox.tools._is_windows", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+        monkeypatch.setattr("nkyel.sandbox.tools.is_host_bash_allowed", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools._is_windows", lambda: True)
 
         bash_tool.func(runtime=runtime, description="test", command="echo hi")
 
@@ -367,10 +367,10 @@ class TestBashToolUserIdentityPrefix:
             context={"thread_id": "t1", "user_id": "x" * 5000},
         )
         sandbox = _CapturingSandbox()
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
-        monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
-        monkeypatch.setattr("deerflow.sandbox.tools.is_host_bash_allowed", lambda: True)
-        monkeypatch.setattr("deerflow.sandbox.tools._is_windows", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+        monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+        monkeypatch.setattr("nkyel.sandbox.tools.is_host_bash_allowed", lambda: True)
+        monkeypatch.setattr("nkyel.sandbox.tools._is_windows", lambda: True)
 
         bash_tool.func(runtime=runtime, description="test", command="echo hi")
 

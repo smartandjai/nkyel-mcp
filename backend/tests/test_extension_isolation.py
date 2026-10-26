@@ -8,7 +8,7 @@ import pytest
 from langchain.agents.middleware import AgentMiddleware
 from langgraph.errors import GraphBubbleUp
 
-from deerflow.extensions.isolation import IsolatedMiddleware
+from nkyel.extensions.isolation import IsolatedMiddleware
 
 
 class _Boom(AgentMiddleware):
@@ -683,7 +683,7 @@ def test_graph_bubble_up_propagates_from_lifecycle_hooks():
 def test_middleware_implements_agrees_with_the_wrapper():
     """Placement-guarantee checks reason about hook participation through
     middleware_implements(); the wrapper must not distort it."""
-    from deerflow.extensions.stack import middleware_implements
+    from nkyel.extensions.stack import middleware_implements
 
     wrapped = IsolatedMiddleware(_LifecycleObserver(), "obs:install", lambda d: None)
     for hook in _LIFECYCLE_HOOKS:

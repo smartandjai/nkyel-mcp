@@ -17,7 +17,7 @@ replaces those channels nor writes a long-term user profile. No embedding servic
 or additional model call is required by the feature itself.
 
 The standard lead-agent builders (including custom-agent bootstrap) and
-`DeerFlowClient` expose three tools through the existing authorization filter:
+`NkyelClient` expose three tools through the existing authorization filter:
 
 - `task_note`: save, replace or delete a named note, with at most eight notes,
   750 characters and four source IDs per note. Parallel additions reserve the
@@ -121,7 +121,7 @@ Valid user answers from clarification cards are included even when their
 `HumanMessage` is hidden from the UI; hidden framework injections remain excluded.
 
 The archive lives at
-`{DEER_FLOW_HOME}/users/{user_id}/threads/{thread_id}/task-history/history.sqlite`,
+`{NKYEL_HOME}/users/{user_id}/threads/{thread_id}/task-history/history.sqlite`,
 outside the sandbox's mounted `user-data`. Sources have the same sensitivity as
 their original task messages. Existing thread deletion removes this directory;
 there is no cross-thread search or separate global index. On multiple hosts,
@@ -158,9 +158,9 @@ sources can still be read. `scope_unavailable` denotes a scope mismatch instead.
 
 Subagent compaction does not archive into the parent's thread. The feature does
 not transfer arbitrary parent state into children and does not resume a stopped
-run automatically. Direct `create_deerflow_agent` integrations can explicitly
+run automatically. Direct `create_nkyel_agent` integrations can explicitly
 compose these middleware/tools; automatic installation is limited to the standard
-lead builders and `DeerFlowClient`.
+lead builders and `NkyelClient`.
 
 ## Evidence
 
@@ -173,7 +173,7 @@ without calling a live model API.
 [The historical experiment package](experiments/task-continuity-20260912/README.md)
 contains the original A/B/C/D protocol, scripts and results. Those numbers describe
 an independent replay prototype under forced compression, not this production
-implementation or complete DeerFlow baseline behavior. Its vector-versus-keyword
+implementation or complete nkyel baseline behavior. Its vector-versus-keyword
 comparison did not establish a stable net benefit, so this implementation has no
 vector dependency.
 

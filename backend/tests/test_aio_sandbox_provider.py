@@ -16,10 +16,10 @@ import pytest
 from _windows_acl_helpers import _windows_acl_owner_sid, _windows_acl_sids
 from pydantic import ValidationError
 
-from deerflow.config.paths import Paths, join_host_path
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.runtime.user_context import reset_current_user, set_current_user
-from deerflow.sandbox.acquire_serialization import AcquireSerializer
+from nkyel.config.paths import Paths, join_host_path
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.runtime.user_context import reset_current_user, set_current_user
+from nkyel.sandbox.acquire_serialization import AcquireSerializer
 
 _LEGACY_COLLIDING_IDENTITIES = (
     ("user-9721", "thread-9721"),
@@ -38,9 +38,9 @@ _LEGACY_COLLIDING_IDENTITIES = (
     ],
 )
 def test_load_config_preserves_thread_data_mounts_override(sandbox_overrides, expected, monkeypatch):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     sandbox_config = SandboxConfig(
-        use="deerflow.community.aio_sandbox:AioSandboxProvider",
+        use="nkyel.community.aio_sandbox:AioSandboxProvider",
         **sandbox_overrides,
     )
     app_config = SimpleNamespace(sandbox=sandbox_config, stream_bridge=None)
@@ -56,9 +56,9 @@ def test_load_config_preserves_thread_data_mounts_override(sandbox_overrides, ex
 
 
 def test_load_config_snapshots_custom_skills_container_path(monkeypatch):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     sandbox_config = SandboxConfig(
-        use="deerflow.community.aio_sandbox:AioSandboxProvider",
+        use="nkyel.community.aio_sandbox:AioSandboxProvider",
     )
     app_config = SimpleNamespace(
         sandbox=sandbox_config,
@@ -72,9 +72,9 @@ def test_load_config_snapshots_custom_skills_container_path(monkeypatch):
 
 
 def test_load_config_wires_bash_command_timeout_to_aio_default(monkeypatch):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     sandbox_config = SandboxConfig(
-        use="deerflow.community.aio_sandbox:AioSandboxProvider",
+        use="nkyel.community.aio_sandbox:AioSandboxProvider",
         bash_command_timeout=42.5,
     )
     app_config = SimpleNamespace(sandbox=sandbox_config, stream_bridge=None)
@@ -86,14 +86,14 @@ def test_load_config_wires_bash_command_timeout_to_aio_default(monkeypatch):
 
 @pytest.mark.parametrize("invalid_timeout", [float("nan"), float("inf"), float("-inf"), 0, -1])
 def test_positive_float_rejects_non_positive_or_non_finite_values(invalid_timeout):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
 
     with pytest.raises(ValueError, match="sandbox.bash_command_timeout must be positive"):
         aio_mod.AioSandboxProvider._positive_float("bash_command_timeout", invalid_timeout, 600)
 
 
 def test_positive_float_accepts_fractional_value():
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
 
     assert aio_mod.AioSandboxProvider._positive_float("bash_command_timeout", 42.5, 600) == 42.5
 
@@ -105,7 +105,7 @@ def test_bash_command_timeout_rejects_non_finite_values(value):
 
 
 def test_register_created_sandbox_forwards_configured_command_timeout(tmp_path):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._config["command_timeout"] = 42
     provider._warm_pool = {}
@@ -129,9 +129,9 @@ def test_register_created_sandbox_forwards_configured_command_timeout(tmp_path):
 
 def test_load_config_sizes_aio_shell_capacity_for_subagent_runtime(monkeypatch):
     """Twelve subagents must not exceed AIO 1.11's ten-session default."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     sandbox_config = SandboxConfig(
-        use="deerflow.community.aio_sandbox:AioSandboxProvider",
+        use="nkyel.community.aio_sandbox:AioSandboxProvider",
     )
     app_config = SimpleNamespace(
         sandbox=sandbox_config,
@@ -151,13 +151,13 @@ def test_load_config_sizes_aio_shell_capacity_for_subagent_runtime(monkeypatch):
 @pytest.mark.parametrize("persisted_capacity", [4, 9, 13])
 def test_backend_checks_runtime_minimum_without_overriding_image_default(monkeypatch, remote, persisted_capacity):
     """Removing a four-session override must not reuse it for eight subagents."""
-    from deerflow.community.aio_sandbox import aio_sandbox_provider as aio_mod
-    from deerflow.community.aio_sandbox import local_backend as local_mod
-    from deerflow.community.aio_sandbox import remote_backend as remote_mod
+    from nkyel.community.aio_sandbox import aio_sandbox_provider as aio_mod
+    from nkyel.community.aio_sandbox import local_backend as local_mod
+    from nkyel.community.aio_sandbox import remote_backend as remote_mod
 
     app_config = SimpleNamespace(
         sandbox=SandboxConfig(
-            use="deerflow.community.aio_sandbox:AioSandboxProvider",
+            use="nkyel.community.aio_sandbox:AioSandboxProvider",
             container_prefix="sandbox",
             provisioner_url="http://provisioner:8002" if remote else None,
             environment={"MAX_SHELL_SESSIONS": "4"},
@@ -192,7 +192,7 @@ def test_backend_checks_runtime_minimum_without_overriding_image_default(monkeyp
             host_port=18080,
             image="sandbox:latest",
             networks=frozenset({"bridge"}),
-            labels={"deerflow.role": "sandbox", "deerflow.sandbox_id": "example", "deerflow.network_mode": "open"},
+            labels={"nkyel.role": "sandbox", "nkyel.sandbox_id": "example", "nkyel.network_mode": "open"},
             max_shell_sessions=persisted_capacity,
         )
         monkeypatch.setattr(backend, "_batch_inspect", lambda *_a, **_kw: {"sandbox-example": inspection})
@@ -206,9 +206,9 @@ def test_backend_checks_runtime_minimum_without_overriding_image_default(monkeyp
 
 
 def test_load_config_rejects_shell_capacity_below_subagent_runtime(monkeypatch):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     sandbox_config = SandboxConfig(
-        use="deerflow.community.aio_sandbox:AioSandboxProvider",
+        use="nkyel.community.aio_sandbox:AioSandboxProvider",
         environment={"MAX_SHELL_SESSIONS": "12"},
     )
     app_config = SimpleNamespace(
@@ -233,7 +233,7 @@ def test_load_config_rejects_shell_capacity_below_subagent_runtime(monkeypatch):
     ],
 )
 def test_thread_data_mounts_override_precedes_backend_detection(backend_is_local, override, expected):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = aio_mod.AioSandboxProvider.__new__(aio_mod.AioSandboxProvider)
     provider._config = {} if override is None else {"thread_data_mounts": override}
     provider._backend = object.__new__(aio_mod.LocalContainerBackend) if backend_is_local else object()
@@ -284,11 +284,11 @@ def _make_provider(tmp_path):
     ``test_sandbox_orphan_reconciliation.py`` (shared store) and
     ``test_sandbox_ownership_store.py`` (store contract).
     """
-    from deerflow.community.aio_sandbox.ownership.memory import MemoryOwnershipStore
-    from deerflow.community.aio_sandbox.quarantine import SandboxQuarantine
-    from deerflow.config.sandbox_config import SandboxOwnershipConfig
+    from nkyel.community.aio_sandbox.ownership.memory import MemoryOwnershipStore
+    from nkyel.community.aio_sandbox.quarantine import SandboxQuarantine
+    from nkyel.config.sandbox_config import SandboxOwnershipConfig
 
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     with patch.object(aio_mod.AioSandboxProvider, "_start_idle_checker"):
         provider = aio_mod.AioSandboxProvider.__new__(aio_mod.AioSandboxProvider)
         provider._config = {"command_timeout": 600.0, "idle_timeout": 600, "replicas": 3}
@@ -316,7 +316,7 @@ def _make_provider(tmp_path):
 
 def test_get_thread_mounts_includes_acp_workspace(tmp_path, monkeypatch):
     """_get_thread_mounts must include /mnt/acp-workspace (read-only) for docker sandbox."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     monkeypatch.setattr(aio_mod, "get_paths", lambda: Paths(base_dir=tmp_path))
     monkeypatch.setattr(aio_mod, "get_effective_user_id", lambda: None)
 
@@ -333,7 +333,7 @@ def test_get_thread_mounts_includes_acp_workspace(tmp_path, monkeypatch):
 
 def test_get_thread_mounts_includes_user_data_dirs(tmp_path, monkeypatch):
     """Baseline: user-data mounts must still be present after the ACP workspace change."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     monkeypatch.setattr(aio_mod, "get_paths", lambda: Paths(base_dir=tmp_path))
 
     mounts = aio_mod.AioSandboxProvider._get_thread_mounts("thread-4")
@@ -346,7 +346,7 @@ def test_get_thread_mounts_includes_user_data_dirs(tmp_path, monkeypatch):
 
 def test_get_thread_mounts_uses_explicit_user_id(tmp_path, monkeypatch):
     """Channel runs must mount the same user bucket used for artifact delivery."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     monkeypatch.setattr(aio_mod, "get_paths", lambda: Paths(base_dir=tmp_path))
     monkeypatch.setattr(aio_mod, "get_effective_user_id", lambda: "default")
 
@@ -360,8 +360,8 @@ def test_get_thread_mounts_uses_explicit_user_id(tmp_path, monkeypatch):
 
 def test_get_lark_cli_runtime_mounts_uses_user_auth_dirs(tmp_path, monkeypatch):
     """Sandbox lark-cli commands must read the same auth dirs as Settings."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
-    lark_cli = importlib.import_module("deerflow.integrations.lark_cli")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
+    lark_cli = importlib.import_module("nkyel.integrations.lark_cli")
     monkeypatch.setattr(aio_mod, "get_paths", lambda: Paths(base_dir=tmp_path))
     monkeypatch.setattr(aio_mod, "get_effective_user_id", lambda: "default")
     runtime_dir = tmp_path / "integrations" / "lark-cli" / "sandbox-cli"
@@ -404,7 +404,7 @@ def test_get_lark_cli_runtime_mounts_uses_user_auth_dirs(tmp_path, monkeypatch):
 
 
 def test_get_user_skill_mounts_mounts_only_global_integrations(tmp_path, monkeypatch):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     skills_root = tmp_path / "skills"
     (skills_root / "public").mkdir(parents=True)
     config = SimpleNamespace(
@@ -428,9 +428,9 @@ def test_get_user_skill_mounts_mounts_only_global_integrations(tmp_path, monkeyp
 
 def test_get_extra_mounts_provisioner_payload_has_unique_container_paths(tmp_path, monkeypatch, provisioner_module):
     """Full AIO mount composition must not send duplicate paths to provisioner."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
-    lark_cli = importlib.import_module("deerflow.integrations.lark_cli")
-    remote_backend = importlib.import_module("deerflow.community.aio_sandbox.remote_backend")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
+    lark_cli = importlib.import_module("nkyel.integrations.lark_cli")
+    remote_backend = importlib.import_module("nkyel.community.aio_sandbox.remote_backend")
     skills_root = tmp_path / "skills"
     (skills_root / "public").mkdir(parents=True)
     home = tmp_path / "home"
@@ -466,7 +466,7 @@ def test_get_extra_mounts_provisioner_payload_has_unique_container_paths(tmp_pat
     assert len(payload_paths) == len(set(payload_paths))
     assert payload_paths.index(lark_cli.LARK_CLI_SANDBOX_CONFIG_DIR) < payload_paths.index(lark_cli.LARK_CLI_SANDBOX_LOCKS_DIR)
 
-    provisioner_module.DEER_FLOW_HOST_BASE_DIR = str(home)
+    provisioner_module.NKYEL_HOST_BASE_DIR = str(home)
     validated = provisioner_module._validated_extra_mounts([provisioner_module.ExtraMount(**item) for item in payload])
     validated_paths = [mount.container_path for mount in validated]
 
@@ -488,7 +488,7 @@ def test_thread_skill_projection_mounts_all_categories(
     tmp_path,
     monkeypatch,
 ):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     paths = Paths(base_dir=tmp_path / "home")
     projection_root = paths.thread_skills_view_dir(
         "thread-policy",
@@ -513,7 +513,7 @@ def test_thread_skill_projection_uses_distinct_sandbox_identity(
     tmp_path,
     monkeypatch,
 ):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     paths = Paths(base_dir=tmp_path / "home")
     monkeypatch.setattr(aio_mod, "get_paths", lambda: paths)
     monkeypatch.setattr(
@@ -542,7 +542,7 @@ def test_policy_scoped_sandbox_identity_changes_with_skills_container_root(
     tmp_path,
     monkeypatch,
 ):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     paths = Paths(base_dir=tmp_path / "home")
     paths.thread_skills_view_dir(
         "thread-policy",
@@ -571,7 +571,7 @@ def test_shared_sandbox_identity_changes_when_custom_skills_root_changes(
     tmp_path,
     monkeypatch,
 ):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     paths = Paths(base_dir=tmp_path / "home")
     monkeypatch.setattr(aio_mod, "get_paths", lambda: paths)
     config = SimpleNamespace(skills=SimpleNamespace(container_path="/custom-skills-a"))
@@ -599,7 +599,7 @@ def test_cached_sandbox_is_replaced_when_expected_identity_changes(
     monkeypatch,
     active_holder,
 ):
-    from deerflow.sandbox.lease import get_sandbox_lease_manager
+    from nkyel.sandbox.lease import get_sandbox_lease_manager
 
     provider, sandbox, aio_mod = _make_provider_with_active_sandbox(tmp_path, "stale-root-id")
     provider._config["skills_container_path"] = "/custom-skills"
@@ -635,7 +635,7 @@ def test_policy_scoped_create_excludes_local_config_mounts_below_skills_root(
     tmp_path,
     monkeypatch,
 ):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     paths = Paths(base_dir=tmp_path / "home")
     paths.thread_skills_view_dir(
         "thread-policy",
@@ -704,7 +704,7 @@ def test_remote_create_forwards_configured_skills_container_path(
     tmp_path,
     monkeypatch,
 ):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._config = {
         "command_timeout": 600.0,
@@ -767,7 +767,7 @@ async def test_remote_create_async_forwards_configured_skills_container_path(
     tmp_path,
     monkeypatch,
 ):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._config = {
         "command_timeout": 600.0,
@@ -830,17 +830,17 @@ async def test_remote_create_async_forwards_configured_skills_container_path(
 
 
 def test_join_host_path_preserves_windows_drive_letter_style():
-    base = r"C:\Users\demo\deer-flow\backend\.deer-flow"
+    base = r"C:\Users\demo\nkyel\backend\.nkyel"
 
     joined = join_host_path(base, "threads", "thread-9", "user-data", "outputs")
 
-    assert joined == r"C:\Users\demo\deer-flow\backend\.deer-flow\threads\thread-9\user-data\outputs"
+    assert joined == r"C:\Users\demo\nkyel\backend\.nkyel\threads\thread-9\user-data\outputs"
 
 
 def test_get_thread_mounts_preserves_windows_host_path_style(tmp_path, monkeypatch):
     """Docker bind mount sources must keep Windows-style paths intact."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
-    monkeypatch.setenv("DEER_FLOW_HOST_BASE_DIR", r"C:\Users\demo\deer-flow\backend\.deer-flow")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
+    monkeypatch.setenv("NKYEL_HOST_BASE_DIR", r"C:\Users\demo\nkyel\backend\.nkyel")
     monkeypatch.setattr(aio_mod, "get_paths", lambda: Paths(base_dir=tmp_path))
     monkeypatch.setattr(aio_mod, "get_effective_user_id", lambda: None)
 
@@ -848,15 +848,15 @@ def test_get_thread_mounts_preserves_windows_host_path_style(tmp_path, monkeypat
 
     container_paths = {container_path: host_path for host_path, container_path, _ in mounts}
 
-    assert container_paths["/mnt/user-data/workspace"] == r"C:\Users\demo\deer-flow\backend\.deer-flow\threads\thread-10\user-data\workspace"
-    assert container_paths["/mnt/user-data/uploads"] == r"C:\Users\demo\deer-flow\backend\.deer-flow\threads\thread-10\user-data\uploads"
-    assert container_paths["/mnt/user-data/outputs"] == r"C:\Users\demo\deer-flow\backend\.deer-flow\threads\thread-10\user-data\outputs"
-    assert container_paths["/mnt/acp-workspace"] == r"C:\Users\demo\deer-flow\backend\.deer-flow\threads\thread-10\acp-workspace"
+    assert container_paths["/mnt/user-data/workspace"] == r"C:\Users\demo\nkyel\backend\.nkyel\threads\thread-10\user-data\workspace"
+    assert container_paths["/mnt/user-data/uploads"] == r"C:\Users\demo\nkyel\backend\.nkyel\threads\thread-10\user-data\uploads"
+    assert container_paths["/mnt/user-data/outputs"] == r"C:\Users\demo\nkyel\backend\.nkyel\threads\thread-10\user-data\outputs"
+    assert container_paths["/mnt/acp-workspace"] == r"C:\Users\demo\nkyel\backend\.nkyel\threads\thread-10\acp-workspace"
 
 
 def test_discover_or_create_only_unlocks_when_lock_succeeds(tmp_path, monkeypatch):
     """Unlock should not run if exclusive locking itself fails."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._discover_or_create_with_lock = aio_mod.AioSandboxProvider._discover_or_create_with_lock.__get__(
         provider,
@@ -887,7 +887,7 @@ def test_discover_or_create_only_unlocks_when_lock_succeeds(tmp_path, monkeypatc
 @pytest.mark.anyio
 async def test_acquire_async_uses_async_readiness_polling(tmp_path, monkeypatch):
     """AioSandboxProvider async creation must not use sync readiness polling."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._config = {"command_timeout": 600.0, "replicas": 3}
     provider._warm_pool = {}
@@ -925,7 +925,7 @@ async def test_acquire_async_uses_async_readiness_polling(tmp_path, monkeypatch)
 @pytest.mark.anyio
 async def test_discover_or_create_with_lock_async_offloads_lock_file_open_and_close(tmp_path, monkeypatch):
     """Async lock path must not open or close lock files on the event loop."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._discover_or_create_with_lock_async = aio_mod.AioSandboxProvider._discover_or_create_with_lock_async.__get__(
         provider,
@@ -959,7 +959,7 @@ async def test_discover_or_create_with_lock_async_offloads_lock_file_open_and_cl
 @pytest.mark.anyio
 async def test_discover_or_create_with_lock_async_cancellation_aborts_flock_wait(tmp_path, monkeypatch):
     """A cancelled waiter must not park until a peer releases the cross-process flock."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._discover_or_create_with_lock_async = aio_mod.AioSandboxProvider._discover_or_create_with_lock_async.__get__(
         provider,
@@ -1018,7 +1018,7 @@ async def test_discover_or_create_with_lock_async_cancellation_aborts_flock_wait
 @pytest.mark.anyio
 async def test_discover_or_create_with_lock_async_cancellation_keeps_file_lock_until_worker_finishes(tmp_path, monkeypatch):
     """Caller cancellation must not release the cross-process lock over an admitted worker."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._discover_or_create_with_lock_async = aio_mod.AioSandboxProvider._discover_or_create_with_lock_async.__get__(
         provider,
@@ -1097,7 +1097,7 @@ async def test_discover_or_create_with_lock_async_cancellation_keeps_file_lock_u
 @pytest.mark.anyio
 async def test_discover_or_create_with_lock_async_cancellation_drains_create_before_unlock(tmp_path, monkeypatch):
     """Cancellation during create must finish the async lifecycle before releasing the flock."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._discover_or_create_with_lock_async = aio_mod.AioSandboxProvider._discover_or_create_with_lock_async.__get__(
         provider,
@@ -1180,7 +1180,7 @@ async def test_discover_or_create_with_lock_async_cancellation_drains_create_lif
     monkeypatch,
 ):
     """Create/register workers must settle before cancellation releases the flock."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._discover_or_create_with_lock_async = aio_mod.AioSandboxProvider._discover_or_create_with_lock_async.__get__(
         provider,
@@ -1285,7 +1285,7 @@ async def test_discover_or_create_with_lock_async_cancellation_drains_create_lif
 @pytest.mark.anyio
 async def test_acquire_async_lock_wait_uses_dedicated_executor(tmp_path, monkeypatch):
     """Per-thread lock waits should not consume the default asyncio.to_thread pool."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
 
     async def fail_to_thread(*_args, **_kwargs):
@@ -1315,7 +1315,7 @@ async def test_acquire_async_lock_wait_uses_dedicated_executor(tmp_path, monkeyp
 @pytest.mark.anyio
 async def test_acquire_async_cancellation_does_not_leak_thread_lock(tmp_path):
     """Cancelled async lock waiters must not leave the per-thread lock held."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._warm_pool = {}
     provider._sandbox_infos = {}
@@ -1350,7 +1350,7 @@ async def test_acquire_async_cancellation_does_not_leak_thread_lock(tmp_path):
 @pytest.mark.anyio
 async def test_acquire_async_cancelled_waiter_does_not_block_successor(tmp_path, monkeypatch):
     """A cancelled waiter must not prevent the next live waiter from acquiring."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._warm_pool = {}
     provider._sandbox_infos = {}
@@ -1401,7 +1401,7 @@ async def test_acquire_async_cancellation_keeps_serializer_until_started_worker_
     monkeypatch,
 ):
     """A cancelled same-key acquire must not overlap an already-started worker."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._warm_pool = {}
     provider._sandbox_infos = {}
@@ -1483,7 +1483,7 @@ async def test_acquire_async_cancellation_keeps_serializer_until_started_worker_
 @pytest.mark.anyio
 async def test_acquire_async_cancellation_cancels_queued_reclaim_before_it_runs(tmp_path, monkeypatch):
     """Cancellation must not force a not-yet-started reclaim to run later."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._acquire_worker_executor.shutdown(wait=False, cancel_futures=True)
     provider._acquire_worker_executor = aio_mod.ThreadPoolExecutor(
@@ -1634,7 +1634,7 @@ async def test_acquire_async_lock_waiters_do_not_starve_holder_worker(tmp_path, 
 @pytest.mark.anyio
 async def test_acquire_internal_async_offloads_cached_reuse_health_check(tmp_path, monkeypatch):
     """Async cached reuse must keep backend health checks off the event loop."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider, _sandbox, _ = _make_provider_with_active_sandbox(tmp_path, "sandbox-cached-async")
     provider._thread_sandboxes = {("default", "thread-cached-async"): "sandbox-cached-async"}
     provider._backend.is_alive = MagicMock(return_value=True)
@@ -1657,7 +1657,7 @@ async def test_acquire_internal_async_offloads_cached_reuse_health_check(tmp_pat
 
 def test_remote_backend_create_forwards_effective_user_id(monkeypatch):
     """Provisioner mode must receive user_id so PVC subPath matches user isolation."""
-    remote_mod = importlib.import_module("deerflow.community.aio_sandbox.remote_backend")
+    remote_mod = importlib.import_module("nkyel.community.aio_sandbox.remote_backend")
     backend = remote_mod.RemoteSandboxBackend("http://provisioner:8002")
     token = set_current_user(SimpleNamespace(id="user-7"))
     posted: dict = {}
@@ -1695,7 +1695,7 @@ def test_remote_backend_create_forwards_effective_user_id(monkeypatch):
 
 def test_remote_backend_create_prefers_explicit_user_id(monkeypatch):
     """Provisioner mode must not fall back to the ambient default for channel runs."""
-    remote_mod = importlib.import_module("deerflow.community.aio_sandbox.remote_backend")
+    remote_mod = importlib.import_module("nkyel.community.aio_sandbox.remote_backend")
     backend = remote_mod.RemoteSandboxBackend("http://provisioner:8002")
     posted: dict = {}
 
@@ -1721,7 +1721,7 @@ def test_remote_backend_create_prefers_explicit_user_id(monkeypatch):
 
 
 def test_remote_backend_forwards_shell_capacity_to_provisioner(monkeypatch):
-    remote_mod = importlib.import_module("deerflow.community.aio_sandbox.remote_backend")
+    remote_mod = importlib.import_module("nkyel.community.aio_sandbox.remote_backend")
     backend = remote_mod.RemoteSandboxBackend(
         "http://provisioner:8002",
         max_shell_sessions=13,
@@ -1749,7 +1749,7 @@ def test_remote_backend_forwards_shell_capacity_to_provisioner(monkeypatch):
 
 def test_create_sandbox_requests_runtime_when_lark_installed(tmp_path, monkeypatch):
     """The provider must request lark-cli runtime provisioning when Lark is installed."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._config = {"command_timeout": 600.0, "replicas": 3}
     provider._warm_pool = {}
@@ -1779,7 +1779,7 @@ def test_create_sandbox_requests_runtime_when_lark_installed(tmp_path, monkeypat
 
 def test_create_sandbox_requests_broker_when_active(tmp_path, monkeypatch):
     """Broker mode (Pattern B) is requested when the provisioner reports it."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._config = {"command_timeout": 600.0, "replicas": 3}
     provider._warm_pool = {}
@@ -1809,7 +1809,7 @@ def test_create_sandbox_requests_broker_when_active(tmp_path, monkeypatch):
 
 def test_create_sandbox_skips_runtime_when_lark_absent(tmp_path, monkeypatch):
     """No runtime provisioning request when the Lark skill pack is not installed."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._config = {"command_timeout": 600.0, "replicas": 3}
     provider._warm_pool = {}
@@ -1840,7 +1840,7 @@ def test_create_sandbox_skips_runtime_when_lark_absent(tmp_path, monkeypatch):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("async_create", [False, True])
 async def test_unknown_broker_probe_stops_creation_before_mounts(tmp_path, monkeypatch, async_create):
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     provider, _, provider_mod = _make_provider_with_active_sandbox(tmp_path, "sandbox-probe")
     monkeypatch.setattr(provider, "_get_extra_mounts", lambda *_args, **_kwargs: [("credentials", "/mnt/integrations/lark-cli/config", True)])
@@ -1862,7 +1862,7 @@ async def test_unknown_broker_probe_stops_creation_before_mounts(tmp_path, monke
 
 def _make_provider_with_active_sandbox(tmp_path, sandbox_id: str):
     """Build a provider with one active sandbox suitable for release/destroy/shutdown tests."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._lock = aio_mod.threading.Lock()
     provider._warm_pool = {}
@@ -1890,7 +1890,7 @@ def _make_provider_with_active_sandbox(tmp_path, sandbox_id: str):
 @pytest.fixture()
 def failure_recovery_lifecycle(tmp_path, monkeypatch):
     """Keep server-side shell state while release/reclaim replaces SDK clients."""
-    from deerflow.community.aio_sandbox import aio_sandbox as sandbox_mod
+    from nkyel.community.aio_sandbox import aio_sandbox as sandbox_mod
 
     provider, _, provider_mod = _make_provider_with_active_sandbox(tmp_path, "sandbox-failure-recovery")
     provider._backend.complete_absent_teardown = MagicMock()
@@ -2329,7 +2329,7 @@ async def test_old_quarantine_does_not_destroy_replacement_when_endpoint_is_miss
 @pytest.mark.parametrize("async_acquire", [False, True], ids=["sync", "async"])
 @pytest.mark.parametrize("final_probe", ["still-present", "unavailable"])
 async def test_accepted_delete_keeps_quarantine_until_runtime_disappears(failure_recovery_lifecycle, monkeypatch, async_acquire, final_probe):
-    from deerflow.community.aio_sandbox.aio_sandbox_provider import SandboxPolicyReplacementDeferredError
+    from nkyel.community.aio_sandbox.aio_sandbox_provider import SandboxPolicyReplacementDeferredError
 
     old = failure_recovery_lifecycle[3]
     current = type(old)(old.sandbox_id, "", container_id=old.container_id)
@@ -2417,7 +2417,7 @@ async def test_remote_creation_metadata_rejection_uses_fenced_cleanup(failure_re
 
     import requests
 
-    from deerflow.community.aio_sandbox import remote_backend as remote_mod
+    from nkyel.community.aio_sandbox import remote_backend as remote_mod
 
     provider, _, _, old = failure_recovery_lifecycle
     sid = "new-sandbox"
@@ -2474,7 +2474,7 @@ async def test_cancelled_remote_creation_drains_metadata_rejection_cleanup(failu
 
     import requests
 
-    from deerflow.community.aio_sandbox import remote_backend as remote_mod
+    from nkyel.community.aio_sandbox import remote_backend as remote_mod
 
     provider = failure_recovery_lifecycle[0]
     sid = "new-sandbox"
@@ -2620,9 +2620,9 @@ async def test_post_creation_policy_failure_uses_fenced_rollback(failure_recover
 @pytest.mark.parametrize("source", ["active", "warm", "discovered"])
 @pytest.mark.parametrize("actual_broker", [False, True])
 def test_mode_mismatch_refreshes_capabilities_before_replacing_pod(failure_recovery_lifecycle, monkeypatch, source, actual_broker):
-    from deerflow.community.aio_sandbox.remote_backend import RemoteSandboxBackend
-    from deerflow.config import app_config
-    from deerflow.integrations import lark_cli
+    from nkyel.community.aio_sandbox.remote_backend import RemoteSandboxBackend
+    from nkyel.config import app_config
+    from nkyel.integrations import lark_cli
 
     provider, sandbox, _, info = failure_recovery_lifecycle
     info.lark_cli_broker = sandbox.lark_cli_broker = actual_broker
@@ -2632,7 +2632,7 @@ def test_mode_mismatch_refreshes_capabilities_before_replacing_pod(failure_recov
     provider._backend.discover = MagicMock(return_value=info)
     monkeypatch.setattr(type(provider), "_lark_integration_active", staticmethod(lambda *_args: True))
     monkeypatch.setattr(provider, "_check_tracked_sandbox_alive", lambda *_args: True)
-    config = SimpleNamespace(sandbox=SimpleNamespace(use="deerflow.community.aio_sandbox:AioSandboxProvider", provisioner_url="http://provisioner:8002"))
+    config = SimpleNamespace(sandbox=SimpleNamespace(use="nkyel.community.aio_sandbox:AioSandboxProvider", provisioner_url="http://provisioner:8002"))
     monkeypatch.setattr(app_config, "get_app_config", lambda: config)
     monkeypatch.setattr(lark_cli.sandbox_lark_broker_active, "_cache", {}, raising=False)
     probe = MagicMock(side_effect=[{"lark_cli_broker_image": not actual_broker}, {"lark_cli_broker_image": actual_broker}])
@@ -2657,10 +2657,10 @@ def test_probe_recovery_cannot_readmit_non_broker_generation(failure_recovery_li
     """Capability recovery must validate every reuse path before executing."""
     import json
 
-    from deerflow.community.aio_sandbox import aio_sandbox_provider as provider_mod
-    from deerflow.community.aio_sandbox import remote_backend as remote_mod
-    from deerflow.config import app_config
-    from deerflow.integrations import lark_cli
+    from nkyel.community.aio_sandbox import aio_sandbox_provider as provider_mod
+    from nkyel.community.aio_sandbox import remote_backend as remote_mod
+    from nkyel.config import app_config
+    from nkyel.integrations import lark_cli
 
     provider, _, shell, info = failure_recovery_lifecycle
     provider._backend = remote_mod.RemoteSandboxBackend("http://provisioner:8002")
@@ -2668,7 +2668,7 @@ def test_probe_recovery_cannot_readmit_non_broker_generation(failure_recovery_li
     monkeypatch.setattr(provider, "_get_extra_mounts", lambda *_args, **_kwargs: [])
     monkeypatch.setattr(provider_mod, "wait_for_sandbox_ready", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(remote_mod, "user_should_see_legacy_skills", lambda *_args: False)
-    config = SimpleNamespace(sandbox=SimpleNamespace(use="deerflow.community.aio_sandbox:AioSandboxProvider", provisioner_url="http://provisioner:8002"))
+    config = SimpleNamespace(sandbox=SimpleNamespace(use="nkyel.community.aio_sandbox:AioSandboxProvider", provisioner_url="http://provisioner:8002"))
     monkeypatch.setattr(app_config, "get_app_config", lambda: config)
     capability = MagicMock()
     capability.__enter__.return_value = capability
@@ -2739,7 +2739,7 @@ def test_acquire_recycles_quarantined_cached_sandbox_inline(tmp_path, monkeypatc
 
 
 def test_pending_create_allows_upload_acquire_without_recycling_live_run(failure_recovery_lifecycle, monkeypatch):
-    from deerflow.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
+    from nkyel.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
 
     provider, sandbox, shell, info = failure_recovery_lifecycle
     manager = get_sandbox_lease_manager(provider)
@@ -2778,7 +2778,7 @@ def test_pending_create_allows_upload_acquire_without_recycling_live_run(failure
 
 
 def test_uncertain_runtime_preserves_live_holders_until_final_release(failure_recovery_lifecycle):
-    from deerflow.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
+    from nkyel.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
 
     provider, sandbox, _, info = failure_recovery_lifecycle
     manager = get_sandbox_lease_manager(provider)
@@ -2823,7 +2823,7 @@ def test_idle_release_quarantines_abandoned_pending_create(failure_recovery_life
 @pytest.mark.asyncio
 @pytest.mark.parametrize("async_acquire", [False, True], ids=["sync", "async"])
 async def test_lease_acquire_can_replace_its_own_fenced_generation(failure_recovery_lifecycle, async_acquire):
-    from deerflow.sandbox.lease import get_sandbox_lease_manager
+    from nkyel.sandbox.lease import get_sandbox_lease_manager
 
     provider, sandbox, _, info = failure_recovery_lifecycle
     sandbox._default_shell_corrupted = True
@@ -2879,8 +2879,8 @@ def test_acquire_recycle_failure_defers_with_quarantine_reason(tmp_path, monkeyp
 @pytest.mark.parametrize("attested", [False, True])
 def test_reuse_policy_defers_to_attested_mode_when_probe_unavailable(tmp_path, monkeypatch, attested):
     """A Pod-attested mode outranks an unavailable deployment-level capabilities probe."""
-    from deerflow.community.aio_sandbox.remote_backend import RemoteSandboxBackend
-    from deerflow.integrations import lark_cli
+    from nkyel.community.aio_sandbox.remote_backend import RemoteSandboxBackend
+    from nkyel.integrations import lark_cli
 
     provider, _, aio_mod = _make_provider_with_active_sandbox(tmp_path, "sandbox-attested")
     provider._backend = RemoteSandboxBackend("http://provisioner:8002")
@@ -2902,7 +2902,7 @@ def test_reuse_policy_defers_to_attested_mode_when_probe_unavailable(tmp_path, m
 @pytest.mark.parametrize("required_broker", [False, True])
 def test_unattested_broker_mode_refuses_acquire_without_deleting_pod(failure_recovery_lifecycle, monkeypatch, source, required_broker):
     """Version skew must refuse admission while preserving the existing Pod."""
-    from deerflow.community.aio_sandbox import remote_backend as remote_mod
+    from nkyel.community.aio_sandbox import remote_backend as remote_mod
 
     provider, sandbox, _, info = failure_recovery_lifecycle
     info.lark_cli_broker = sandbox.lark_cli_broker = None
@@ -2931,8 +2931,8 @@ def test_unattested_broker_mode_refuses_acquire_without_deleting_pod(failure_rec
 
 def test_reuse_policy_stays_fail_closed_for_unattested_mode_when_probe_unavailable(tmp_path, monkeypatch):
     """Without a Pod attestation there is no stronger evidence: probe failure keeps refusing reuse."""
-    from deerflow.community.aio_sandbox.remote_backend import RemoteSandboxBackend
-    from deerflow.integrations import lark_cli
+    from nkyel.community.aio_sandbox.remote_backend import RemoteSandboxBackend
+    from nkyel.integrations import lark_cli
 
     provider, _, aio_mod = _make_provider_with_active_sandbox(tmp_path, "sandbox-unattested")
     provider._backend = RemoteSandboxBackend("http://provisioner:8002")
@@ -2951,7 +2951,7 @@ def test_reuse_policy_stays_fail_closed_for_unattested_mode_when_probe_unavailab
 
 def test_reused_active_sandbox_requires_matching_releases(tmp_path):
     """The execution lease manager keeps AIO clients active until the final holder exits."""
-    from deerflow.sandbox.lease import SandboxLeaseManager
+    from nkyel.sandbox.lease import SandboxLeaseManager
 
     provider, sandbox, _ = _make_provider_with_active_sandbox(tmp_path, "sandbox-lease")
     manager = SandboxLeaseManager(provider)
@@ -3002,7 +3002,7 @@ def test_destroy_reports_false_when_teardown_is_deferred(tmp_path):
     deferral instead of letting the caller assume the container is gone."""
     import threading
 
-    from deerflow.sandbox.lease import get_sandbox_lease_manager
+    from nkyel.sandbox.lease import get_sandbox_lease_manager
 
     provider, sandbox, _ = _make_provider_with_active_sandbox(tmp_path, "sandbox-destroy-defer")
     manager = get_sandbox_lease_manager(provider)
@@ -3158,7 +3158,7 @@ def test_get_uses_in_memory_registry_only(tmp_path):
 
 def test_acquire_drops_dead_cached_sandbox(tmp_path, monkeypatch):
     """acquire() must replace a stale active cache entry after its container dies."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider, sandbox, _ = _make_provider_with_active_sandbox(tmp_path, "sandbox-dead")
     provider._thread_sandboxes = {("default", "thread-dead"): "sandbox-dead"}
     provider._config = {"command_timeout": 600.0, "replicas": 3}
@@ -3168,7 +3168,7 @@ def test_acquire_drops_dead_cached_sandbox(tmp_path, monkeypatch):
         return_value=aio_mod.SandboxInfo(
             sandbox_id="sandbox-dead",
             sandbox_url="http://fresh-sandbox",
-            container_name="deer-flow-sandbox-sandbox-dead",
+            container_name="nkyel-sandbox-sandbox-dead",
         )
     )
 
@@ -3204,7 +3204,7 @@ def test_acquire_keeps_cached_sandbox_when_health_check_errors(tmp_path):
 
 def test_drop_unhealthy_sandbox_skips_recreated_entry(tmp_path):
     """A stale health-check result must not delete a newly registered sandbox."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._lock = aio_mod.threading.Lock()
     provider._warm_pool = {}
@@ -3228,7 +3228,7 @@ def test_drop_unhealthy_sandbox_skips_recreated_entry(tmp_path):
 
 def test_acquire_skips_dead_warm_pool_sandbox(tmp_path, monkeypatch):
     """acquire() must create a fresh sandbox when the warm-pool entry died."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._lock = aio_mod.threading.Lock()
     provider._sandboxes = {}
@@ -3240,7 +3240,7 @@ def test_acquire_skips_dead_warm_pool_sandbox(tmp_path, monkeypatch):
             aio_mod.SandboxInfo(
                 sandbox_id="sandbox-warm-dead",
                 sandbox_url="http://stale-sandbox",
-                container_name="deer-flow-sandbox-sandbox-warm-dead",
+                container_name="nkyel-sandbox-sandbox-warm-dead",
             ),
             0.0,
         )
@@ -3254,7 +3254,7 @@ def test_acquire_skips_dead_warm_pool_sandbox(tmp_path, monkeypatch):
             return_value=aio_mod.SandboxInfo(
                 sandbox_id="sandbox-warm-dead",
                 sandbox_url="http://fresh-sandbox",
-                container_name="deer-flow-sandbox-sandbox-warm-dead",
+                container_name="nkyel-sandbox-sandbox-warm-dead",
             )
         ),
     )
@@ -3361,7 +3361,7 @@ def test_destroy_retry_preserves_a_different_runtime_generation(tmp_path):
 @pytest.mark.parametrize("admission", ["discovery", "orphan-adoption"])
 @pytest.mark.parametrize("via_lease", [False, True], ids=["provider", "lease-manager"])
 def test_failed_destroy_allows_replacement_acquisition(failure_recovery_lifecycle, admission, via_lease):
-    from deerflow.sandbox.lease import SandboxLeaseManager
+    from nkyel.sandbox.lease import SandboxLeaseManager
 
     provider, _, _, old = failure_recovery_lifecycle
     running = _observe_destroy_target(provider, old)
@@ -3416,7 +3416,7 @@ def test_warm_reclaim_keeps_failed_stop_fence_for_unsafe_generation(failure_reco
     candidate = type(old)(old.sandbox_id, old.sandbox_url, container_id=generation)
     provider._warm_pool[old.sandbox_id] = (candidate, time.monotonic())
     provider._warm_pool_identity[old.sandbox_id] = None
-    provider_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    provider_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
 
     with pytest.raises(provider_mod.SandboxPolicyReplacementDeferredError):
         provider._reclaim_warm_pool_sandbox("thread-failure-recovery", old.sandbox_id, user_id="alice")
@@ -3508,7 +3508,7 @@ def test_destroy_retry_needs_confirmed_absence_after_accepted_stop(tmp_path):
 
 
 def test_destroy_keeps_reservation_while_stop_is_pending(tmp_path):
-    from deerflow.sandbox.lease import get_sandbox_lease_manager
+    from nkyel.sandbox.lease import get_sandbox_lease_manager
 
     provider, _, _ = _make_provider_with_active_sandbox(tmp_path, "slow-stop")
     info = provider._sandbox_infos["slow-stop"]
@@ -3631,7 +3631,7 @@ def test_shutdown_retains_only_failed_resources_and_retries_them(tmp_path, monke
 
 
 def test_shutdown_retry_still_closes_unfinished_executions(tmp_path):
-    from deerflow.sandbox.lease import get_sandbox_lease_manager
+    from nkyel.sandbox.lease import get_sandbox_lease_manager
 
     provider, _, _ = _make_provider_with_active_sandbox(tmp_path, "unfinished")
     info = provider._sandbox_infos["unfinished"]
@@ -3660,7 +3660,7 @@ def test_shutdown_retry_still_closes_unfinished_executions(tmp_path):
 
 def test_shutdown_keeps_aio_warm_entries_owned_when_idle_checker_stop_times_out(tmp_path):
     """A failed reaper join must leave AIO warm entries available to a retry."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._lock = aio_mod.threading.Lock()
     provider._shutdown_called = False
@@ -3699,7 +3699,7 @@ def test_shutdown_keeps_aio_warm_entries_owned_when_idle_checker_stop_times_out(
 
 def test_shutdown_keeps_aio_warm_entries_owned_when_lease_renewal_stop_times_out(tmp_path):
     """A live renewal worker must keep AIO ownership attached for shutdown retry."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._lock = aio_mod.threading.Lock()
     provider._shutdown_called = False
@@ -3743,7 +3743,7 @@ def test_shutdown_keeps_aio_warm_entries_owned_when_lease_renewal_stop_times_out
 
 def test_signal_handler_forwards_original_signal_when_shutdown_fails(tmp_path, monkeypatch, caplog):
     """A fail-closed shutdown must not swallow or replace the process signal."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider.shutdown = MagicMock(side_effect=RuntimeError("renewal worker still alive"))
 
@@ -3771,7 +3771,7 @@ def test_signal_handler_forwards_original_signal_when_shutdown_fails(tmp_path, m
 
 def test_cleanup_idle_sandboxes_keeps_active_cleanup_and_delegates_warm_expiry(tmp_path):
     """AIO active-idle cleanup must remain local while warm expiry uses the shared lifecycle."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._lock = aio_mod.threading.Lock()
     provider._sandboxes = {"active-old": MagicMock()}
@@ -3807,7 +3807,7 @@ def test_cleanup_idle_sandboxes_keeps_active_cleanup_and_delegates_warm_expiry(t
 
 def test_create_sandbox_evicts_oldest_warm_replica_via_shared_lifecycle(tmp_path, monkeypatch):
     """Replica enforcement must destroy the oldest warm SandboxInfo before creating another."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._lock = aio_mod.threading.Lock()
     provider._config = {"command_timeout": 600.0, "replicas": 2}
@@ -3840,7 +3840,7 @@ def test_create_sandbox_evicts_oldest_warm_replica_via_shared_lifecycle(tmp_path
 
 
 def _make_tenant_isolation_provider(tmp_path, monkeypatch):
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider = _make_provider(tmp_path)
     provider._lock = aio_mod.threading.Lock()
     provider._sandboxes = {}
@@ -3860,7 +3860,7 @@ def _make_tenant_isolation_provider(tmp_path, monkeypatch):
         return aio_mod.SandboxInfo(
             sandbox_id=sandbox_id,
             sandbox_url=f"http://sandbox-{len(create_calls)}.local",
-            container_name=f"deer-flow-sandbox-{sandbox_id}",
+            container_name=f"nkyel-sandbox-{sandbox_id}",
         )
 
     provider._backend = SimpleNamespace(
@@ -3888,7 +3888,7 @@ def _make_tenant_isolation_provider(tmp_path, monkeypatch):
 
 
 def test_aio_wider_id_separates_known_legacy_collision():
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     identity_a, identity_b = _LEGACY_COLLIDING_IDENTITIES
     user_a, thread_a = identity_a
     user_b, thread_b = identity_b
@@ -3976,7 +3976,7 @@ def test_create_sandbox_claims_ownership_before_readiness_timeout_destroy(tmp_pa
     readiness gate, so for up to 60s the container ran unowned and a peer could
     adopt it; the subsequent stop landed on whatever turn the peer had handed it.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider, unready_info = _make_unready_destroy_provider(
         tmp_path,
         sandbox_id="unready",
@@ -4010,7 +4010,7 @@ def test_create_sandbox_claims_ownership_before_readiness_timeout_destroy(tmp_pa
 @pytest.mark.anyio
 async def test_create_sandbox_async_claims_ownership_before_readiness_timeout_destroy(tmp_path, monkeypatch):
     """#4248 (async path): same teardown-lease guard on the async readiness branch."""
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider, unready_info = _make_unready_destroy_provider(
         tmp_path,
         sandbox_id="unready-async",
@@ -4054,7 +4054,7 @@ def test_create_sandbox_skips_destroy_when_unready_sandbox_owned_by_peer(tmp_pat
     to reap via its own reconciliation. Stopping it anyway would be the
     cross-instance kill this guard exists to prevent.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider, unready_info = _make_unready_destroy_provider(
         tmp_path,
         sandbox_id="peer-owned",
@@ -4087,7 +4087,7 @@ def test_reconcile_does_not_adopt_a_container_whose_unready_teardown_is_reserved
     shape as ``test_reconcile_does_not_adopt_a_container_this_instance_is_tearing_down``
     in ``test_sandbox_orphan_reconciliation.py``.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider, unready_info = _make_unready_destroy_provider(
         tmp_path,
         sandbox_id="unready-race",
@@ -4138,7 +4138,7 @@ def test_reconcile_adopts_unready_container_when_no_teardown_is_in_flight(tmp_pa
     over-block legitimate reconciliation of a container whose creator crashed
     before the readiness gate.
     """
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     provider, unready_info = _make_unready_destroy_provider(
         tmp_path,
         sandbox_id="adoptable",
@@ -4155,7 +4155,7 @@ def test_reconcile_adopts_unready_container_when_no_teardown_is_in_flight(tmp_pa
 
 
 def test_deterministic_sandbox_id_matches_shared_identity():
-    from deerflow.sandbox.identity import derive_sandbox_scope_token
+    from nkyel.sandbox.identity import derive_sandbox_scope_token
 
-    aio_mod = importlib.import_module("deerflow.community.aio_sandbox.aio_sandbox_provider")
+    aio_mod = importlib.import_module("nkyel.community.aio_sandbox.aio_sandbox_provider")
     assert aio_mod.AioSandboxProvider._deterministic_sandbox_id("t-1", "u-1") == derive_sandbox_scope_token(user_id="u-1", thread_id="t-1")

@@ -12,12 +12,12 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from app.mcp_tasks.errors import PermanentNotificationError
-from deerflow.constants import (
+from nkyel.constants import (
     MCP_TASK_POLL_AFTER_MAX_SECONDS,
     MCP_TASK_REMOTE_ID_MAX_LENGTH,
     MCP_TASK_RESULT_ARTIFACT_MAX_BYTES,
 )
-from deerflow.mcp.tasks import (
+from nkyel.mcp.tasks import (
     McpTaskConnectionUnavailableError,
     McpTaskDriverRegistry,
     McpTaskProtocolError,
@@ -26,10 +26,10 @@ from deerflow.mcp.tasks import (
     TaskStatus,
     TaskSubmitRequest,
 )
-from deerflow.persistence.mcp_tasks import DuplicateMcpRemoteTaskError
-from deerflow.runtime.cancellation import wait_for_task_until
-from deerflow.runtime.runs.manager import ConflictError
-from deerflow.runtime.runs.schemas import RunStatus
+from nkyel.persistence.mcp_tasks import DuplicateMcpRemoteTaskError
+from nkyel.runtime.cancellation import wait_for_task_until
+from nkyel.runtime.runs.manager import ConflictError
+from nkyel.runtime.runs.schemas import RunStatus
 
 logger = logging.getLogger(__name__)
 
@@ -1661,7 +1661,7 @@ class McpTaskService:
         self._stopping_task = None
         self._stop_deadline = None
         self._stop_timeout_logged = False
-        task = asyncio.create_task(self._run_loop(), name="deerflow-mcp-task-poller")
+        task = asyncio.create_task(self._run_loop(), name="nkyel-mcp-task-poller")
         self._task = task
         task.add_done_callback(self._poller_done)
 

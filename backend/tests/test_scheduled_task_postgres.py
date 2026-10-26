@@ -13,19 +13,19 @@ import pytest_asyncio
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.base import Base
-from deerflow.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.models.run_event import RunEventRow, RunEventThreadSeqRow
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunChangeClockRow, RunRow
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.runtime.events.terminal import RecoveryTerminalPublisher
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.base import Base
+from nkyel.persistence.engine import close_engine, get_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.models.run_event import RunEventRow, RunEventThreadSeqRow
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunChangeClockRow, RunRow
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.runtime.events.terminal import RecoveryTerminalPublisher
 
 POSTGRES_URL = os.environ.get("TEST_POSTGRES_URI")
 
@@ -264,7 +264,7 @@ async def test_postgres_once_recovery_uses_occurrence_order_despite_clock_skew(p
         increment_run_count=False,
     )
     # The older worker's clock and descending UUID order both favor its success.
-    with patch("deerflow.persistence.scheduled_task_runs.sql.datetime") as clock:
+    with patch("nkyel.persistence.scheduled_task_runs.sql.datetime") as clock:
         clock.now.return_value = now + timedelta(seconds=older_clock_ahead_seconds)
         older = await task_run_repo.create(
             run_record_id="ffffffff-ffff-4fff-8fff-ffffffffffff",

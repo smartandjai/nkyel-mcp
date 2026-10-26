@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.deermem.deermem.core.prompt import format_conversation_for_update
+from nkyel.agents.memory.backends.deermem.deermem.core.prompt import format_conversation_for_update
 
 
 def test_long_message_keeps_head_and_tail_drops_middle() -> None:

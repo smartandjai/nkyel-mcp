@@ -13,7 +13,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from deerflow.utils.file_io import await_drained
+from nkyel.utils.file_io import await_drained
 
 logger = logging.getLogger(__name__)
 
@@ -80,14 +80,14 @@ class InboundMessage:
         text: The message text.
         msg_type: Whether this is a regular chat message or a command.
         thread_ts: Optional platform thread identifier (for threaded replies).
-        topic_id: Conversation topic identifier used to map to a DeerFlow thread.
+        topic_id: Conversation topic identifier used to map to a nkyel thread.
             Messages sharing the same ``topic_id`` within a ``chat_id`` will
-            reuse the same DeerFlow thread.  When ``None``, each message
+            reuse the same nkyel thread.  When ``None``, each message
             creates a new thread (one-shot Q&A).
-        connection_id: Optional DeerFlow channel connection id. When present,
+        connection_id: Optional nkyel channel connection id. When present,
             conversation mapping is scoped by the connection instead of the
             legacy global ``channel_name:chat_id[:topic_id]`` key.
-        owner_user_id: DeerFlow user id that owns the channel connection.
+        owner_user_id: nkyel user id that owns the channel connection.
             Platform user ids stay in ``user_id``.
         workspace_id: Optional external workspace/guild/team id.
         files: Optional list of file attachments (platform-specific dicts).
@@ -142,15 +142,15 @@ class OutboundMessage:
     Attributes:
         channel_name: Target channel name (used for routing).
         chat_id: Target chat/conversation identifier.
-        thread_id: DeerFlow thread ID that produced this response.
+        thread_id: nkyel thread ID that produced this response.
         text: The response text.
         artifacts: List of artifact paths produced by the agent.
         is_final: Whether this is the final message in the response stream.
         thread_ts: Optional platform thread identifier for threaded replies.
         metadata: Arbitrary extra data.
-        connection_id: Optional DeerFlow channel connection id used for
+        connection_id: Optional nkyel channel connection id used for
             connection-specific outbound credentials.
-        owner_user_id: DeerFlow user id that owns the channel connection.
+        owner_user_id: nkyel user id that owns the channel connection.
         created_at: Unix timestamp.
     """
 
@@ -192,7 +192,7 @@ class InboundReservationExpiredError(RuntimeError):
 class InboundReservation:
     """One capacity slot reserved before a provider hands work to the bus.
 
-    Some provider SDKs invoke DeerFlow on a foreign thread. Reserving before
+    Some provider SDKs invoke nkyel on a foreign thread. Reserving before
     scheduling their final identity/ack preparation onto the Gateway loop
     bounds both the queue and those scheduled callbacks. A reservation must be
     committed exactly once or released in a ``finally`` block.

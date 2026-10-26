@@ -28,7 +28,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
 
-from deerflow.config.database_config import DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY
+from nkyel.config.database_config import DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import checkpoint_bench_common as common  # noqa: E402
@@ -190,7 +190,7 @@ def _worker_main(encoded_case: str, *, profile_path: Path | None = None) -> int:
     except (TypeError, ValueError) as exc:
         print(json.dumps({"schema_version": SCHEMA_VERSION, "benchmark_version": BENCHMARK_VERSION, "benchmark": BENCHMARK_NAME, "success": False, "error": common.safe_error(exc)}, separators=(",", ":")))
         return 2
-    with tempfile.TemporaryDirectory(prefix="deerflow-checkpoint-production-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="nkyel-checkpoint-production-") as temp_dir:
         if profile_path is None:
             row = _run_case(case, work_dir=Path(temp_dir))
         else:
@@ -377,9 +377,9 @@ def _thread_id(case: ProductionCase) -> str:
 
 async def _run_phase(case: ProductionCase, saver: Any, timing: _TimingSaver, work_dir: Path) -> dict[str, Any]:
     """Seed the thread through the real lead-agent graph; measure per-turn latency."""
-    from deerflow.agents.lead_agent.agent import make_lead_agent
-    from deerflow.config.app_config import AppConfig, set_app_config
-    from deerflow.runtime.checkpoint_mode import inject_checkpoint_mode
+    from nkyel.agents.lead_agent.agent import make_lead_agent
+    from nkyel.config.app_config import AppConfig, set_app_config
+    from nkyel.runtime.checkpoint_mode import inject_checkpoint_mode
 
     app_config = AppConfig.model_validate(
         {
@@ -397,7 +397,7 @@ async def _run_phase(case: ProductionCase, saver: Any, timing: _TimingSaver, wor
                     "supports_vision": False,
                 }
             ],
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             # Title and memory middleware would fire background LLM calls and
             # debounce timers; both pollute per-turn latency, so disable them.
             "title": {"enabled": False},
@@ -417,10 +417,10 @@ async def _run_phase(case: ProductionCase, saver: Any, timing: _TimingSaver, wor
     def _fake_create_chat_model(**kwargs: Any) -> Any:
         return model
 
-    with patch("deerflow.agents.lead_agent.agent.create_chat_model", _fake_create_chat_model):
+    with patch("nkyel.agents.lead_agent.agent.create_chat_model", _fake_create_chat_model):
         graph = make_lead_agent({"configurable": {}})
     # Attach the timed saver post-construction, mirroring the run worker
-    # (deerflow.runs.worker assigns ``agent.checkpointer`` the same way), so
+    # (nkyel.runs.worker assigns ``agent.checkpointer`` the same way), so
     # every checkpoint write flows through ``timing``.
     graph.checkpointer = timing
 
@@ -492,8 +492,8 @@ def _make_gateway_app(saver: Any, mode: str, store: Any) -> Any:
     from app.gateway.auth.models import User
     from app.gateway.authz import AuthContext, Permissions
     from app.gateway.routers import threads
-    from deerflow.persistence.thread_meta.memory import MemoryThreadMetaStore
-    from deerflow.runtime.user_context import reset_current_user, set_current_user
+    from nkyel.persistence.thread_meta.memory import MemoryThreadMetaStore
+    from nkyel.runtime.user_context import reset_current_user, set_current_user
 
     permissions = [Permissions.THREADS_READ, Permissions.THREADS_WRITE, Permissions.THREADS_DELETE]
 
@@ -568,7 +568,7 @@ async def _read_phase(case: ProductionCase, saver: Any, timing: _TimingSaver) ->
     transport = httpx.ASGITransport(app=app)
     result: dict[str, Any] = {}
     try:
-        with patch("deerflow.agents.lead_agent.agent.create_chat_model", _fake_create_chat_model):
+        with patch("nkyel.agents.lead_agent.agent.create_chat_model", _fake_create_chat_model):
             async with httpx.AsyncClient(transport=transport, base_url="http://bench") as client:
 
                 async def _timed_request(label: str, method: str, url: str, **kwargs: Any) -> tuple[Any, float, float]:
@@ -682,7 +682,7 @@ def _run_case(case: ProductionCase, *, work_dir: Path) -> dict:
             run_info = await _run_phase(case, saver, timing, work_dir)
 
             # Seed correctness: materialize through the mode-matched accessor.
-            from deerflow.runtime.checkpoint_state import CheckpointStateAccessor
+            from nkyel.runtime.checkpoint_state import CheckpointStateAccessor
 
             accessor = CheckpointStateAccessor.bind(run_info["graph"], saver, mode=case.mode)
             snapshot = await accessor.aget(run_info["config"])

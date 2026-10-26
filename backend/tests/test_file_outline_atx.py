@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from deerflow.utils.file_outline import MAX_OUTLINE_ENTRIES, extract_outline
+from nkyel.utils.file_outline import MAX_OUTLINE_ENTRIES, extract_outline
 
 
 @pytest.mark.parametrize("line", ["#tag", "##tag", "####### Too many", "    # Code comment", "\t# Code comment", "#\u00a0Not a separator", "\\# Escaped"])
@@ -52,7 +52,7 @@ def test_long_whitespace_without_closing_hashes_finishes_promptly(tmp_path):
         [
             sys.executable,
             "-c",
-            "from pathlib import Path; import sys; from deerflow.utils.file_outline import extract_outline; result = extract_outline(Path(sys.argv[1])); "
+            "from pathlib import Path; import sys; from nkyel.utils.file_outline import extract_outline; result = extract_outline(Path(sys.argv[1])); "
             "assert len(result) == 1 and result[0]['line'] == 1 and result[0]['title'].startswith('Title')",
             str(path),
         ],

@@ -504,7 +504,7 @@ test("rejoining a scheduled run shows its launch once", async () => {
     id: "scheduled-x",
     type: "human",
     content: "Check the list.",
-    additional_kwargs: { deerflow_scheduled_origin: origin },
+    additional_kwargs: { nkyel_scheduled_origin: origin },
   };
   const fetchFn = rs.fn(async (url: string | URL) => {
     const path = new URL(url.toString()).pathname;

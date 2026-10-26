@@ -9,19 +9,19 @@ import pytest
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.base import Base
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import CompletedRunSnapshotRow, RunRow
-from deerflow.skills.mutations.topology import mutation_session_factory
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.base import Base
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import CompletedRunSnapshotRow, RunRow
+from nkyel.skills.mutations.topology import mutation_session_factory
 
-pytestmark = pytest.mark.skipif(not os.environ.get("DEERFLOW_TEST_POSTGRES_URL"), reason="requires an explicit live DEERFLOW_TEST_POSTGRES_URL")
+pytestmark = pytest.mark.skipif(not os.environ.get("NKYEL_TEST_POSTGRES_URL"), reason="requires an explicit live NKYEL_TEST_POSTGRES_URL")
 
 
 @pytest.mark.asyncio
 async def test_run_deletion_waits_for_publication_source_share_lock():
     schema = "skill_evolution_test_" + uuid.uuid4().hex
-    config = DatabaseConfig(backend="postgres", postgres_url=os.environ["DEERFLOW_TEST_POSTGRES_URL"], postgres_schema=schema)
+    config = DatabaseConfig(backend="postgres", postgres_url=os.environ["NKYEL_TEST_POSTGRES_URL"], postgres_schema=schema)
     admin = create_engine(config.app_sync_sqlalchemy_url)
     with admin.begin() as connection:
         connection.execute(text(f'CREATE SCHEMA "{schema}"'))

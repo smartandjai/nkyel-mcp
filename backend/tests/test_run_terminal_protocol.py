@@ -24,20 +24,20 @@ from langgraph.graph.message import add_messages
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-import deerflow.runtime.events.terminal as terminal_module
-import deerflow.runtime.runs.worker as worker_module
-from deerflow.config.paths import Paths
-from deerflow.config.run_ownership_config import RunOwnershipConfig
-from deerflow.persistence.base import Base
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.run.sql import RunRepository
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.runtime.journal import RunJournal
-from deerflow.runtime.runs.manager import CancelOutcome, RunManager
-from deerflow.runtime.runs.schemas import RunStatus
-from deerflow.runtime.runs.worker import RunContext, run_agent
-from deerflow.runtime.stream_bridge import MemoryStreamBridge
-from deerflow.runtime.user_context import get_effective_user_id
+import nkyel.runtime.events.terminal as terminal_module
+import nkyel.runtime.runs.worker as worker_module
+from nkyel.config.paths import Paths
+from nkyel.config.run_ownership_config import RunOwnershipConfig
+from nkyel.persistence.base import Base
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.run.sql import RunRepository
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.runtime.journal import RunJournal
+from nkyel.runtime.runs.manager import CancelOutcome, RunManager
+from nkyel.runtime.runs.schemas import RunStatus
+from nkyel.runtime.runs.worker import RunContext, run_agent
+from nkyel.runtime.stream_bridge import MemoryStreamBridge
+from nkyel.runtime.user_context import get_effective_user_id
 
 
 class RootAgent:
@@ -120,7 +120,7 @@ async def runtime(tmp_path, monkeypatch):
     sf = async_sessionmaker(engine, expire_on_commit=False)
     events, runs = DbRunEventStore(sf), RunRepository(sf)
     paths = Paths(base_dir=tmp_path / "home")
-    monkeypatch.setattr("deerflow.workspace_changes.recorder.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.workspace_changes.recorder.get_paths", lambda: paths)
     workers, housekeeping = [], []
     original_create = worker_module._create_contextless_task
 
@@ -498,8 +498,8 @@ async def test_confirmed_terminal_is_inside_original_receipt_and_seal(runtime, m
 @pytest.mark.parametrize("backend", ["memory", "jsonl", "sqlite"])
 @pytest.mark.parametrize("heartbeat_enabled", [False, True])
 async def test_terminal_publication_supports_default_and_owned_workers(runtime, tmp_path, backend, heartbeat_enabled):
-    from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
-    from deerflow.runtime.events.store.memory import MemoryRunEventStore
+    from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
+    from nkyel.runtime.events.store.memory import MemoryRunEventStore
 
     stores = {"memory": MemoryRunEventStore(), "jsonl": JsonlRunEventStore(base_dir=tmp_path / "events"), "sqlite": runtime.events}
     store = stores[backend]

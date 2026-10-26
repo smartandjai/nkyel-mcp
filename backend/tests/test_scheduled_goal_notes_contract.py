@@ -15,9 +15,9 @@ from pathlib import Path
 import pytest
 
 from app.scheduler.notification_delivery import render_notification_text
-from deerflow.persistence.scheduled_task_runs import finalization
-from deerflow.runtime.goal import DEFAULT_MAX_GOAL_CONTINUATIONS, DEFAULT_MAX_NO_PROGRESS_CONTINUATIONS, GOAL_BLOCKERS
-from deerflow.runtime.runs import worker
+from nkyel.persistence.scheduled_task_runs import finalization
+from nkyel.runtime.goal import DEFAULT_MAX_GOAL_CONTINUATIONS, DEFAULT_MAX_NO_PROGRESS_CONTINUATIONS, GOAL_BLOCKERS
+from nkyel.runtime.runs import worker
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _CONTRACT = json.loads((_REPO_ROOT / "contracts" / "scheduled_goal_notes_contract.json").read_text(encoding="utf-8"))
@@ -61,7 +61,7 @@ def test_im_notice_translates_every_contract_code(code, locale, unknown):
 
 def test_contract_version_three_keeps_version_two_keys():
     assert _CONTRACT["version"] == 3
-    assert _CONTRACT["scheduled_origin_key"] == "deerflow_scheduled_origin"
+    assert _CONTRACT["scheduled_origin_key"] == "nkyel_scheduled_origin"
     assert {"agent_stop_last_error_prefix", "auto_pause_last_error", "unmet_reason_codes", "check_failure_codes", "host_run_errors"} <= set(_CONTRACT)
 
 
@@ -87,7 +87,7 @@ def test_check_failure_codes_match_finalization_and_are_unmet_reasons():
 
 
 def test_host_run_errors_match_the_host_note_constants():
-    from deerflow.scheduler import host_notes
+    from nkyel.scheduler import host_notes
 
     assert _CONTRACT["host_run_errors"] == {
         "restarted": host_notes.RUN_ERROR_RESTARTED,

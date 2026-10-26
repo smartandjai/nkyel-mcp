@@ -14,12 +14,12 @@ from _scheduled_rows import occurrence
 from app.gateway.auth.models import User
 from app.gateway.auth_disabled import AUTH_SOURCE_SESSION
 from app.gateway.routers import scheduled_tasks
-from deerflow.config.channel_connections_config import ChannelConnectionsConfig
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.persistence.channel_connections import ChannelConnectionRepository
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.config.channel_connections_config import ChannelConnectionsConfig
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.persistence.channel_connections import ChannelConnectionRepository
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
 
 OWNER = "00000000-0000-0000-0000-000000000111"
 OTHER = "00000000-0000-0000-0000-000000000222"

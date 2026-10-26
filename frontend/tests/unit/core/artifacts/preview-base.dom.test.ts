@@ -6,9 +6,9 @@ import {
 } from "@/core/artifacts/preview";
 
 const ARTIFACT_URL = "/api/threads/thread-1/artifacts/report/index.html";
-const CURRENT_HREF = "https://deerflow.example/workspace/chats/thread-1";
+const CURRENT_HREF = "https://nkyel.example/workspace/chats/thread-1";
 const BASE_ELEMENT =
-  '<base href="https://deerflow.example/api/threads/thread-1/artifacts/report/">';
+  '<base href="https://nkyel.example/api/threads/thread-1/artifacts/report/">';
 
 // Textarea/title RCDATA is checked in a real browser: happy-dom misparses it here.
 test("skips DOM construction when HTML contains no base text", () => {
@@ -79,7 +79,7 @@ test("preserves existing head elements when injecting scroll restoration", () =>
     '<base href="http://localhost/demo/threads/thread-1/user-data/outputs/">',
   );
   expect(
-    result.indexOf("data-deerflow-artifact-scroll-restoration"),
+    result.indexOf("data-nkyel-artifact-scroll-restoration"),
   ).toBeLessThan(
     result.indexOf(
       '<base href="http://localhost/demo/threads/thread-1/user-data/outputs/">',

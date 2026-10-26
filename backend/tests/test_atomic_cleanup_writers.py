@@ -58,7 +58,7 @@ def test_artifact_edit_success_is_quiet(tmp_path, caplog):
     file_stat = os.stat(target)
     caplog.clear()
 
-    with caplog.at_level("WARNING", logger="deerflow.utils.atomic_write"):
+    with caplog.at_level("WARNING", logger="nkyel.utils.atomic_write"):
         artifacts._replace_artifact_atomically(target, b"replacement", file_stat)
 
     assert target.read_bytes() == b"replacement"
@@ -67,7 +67,7 @@ def test_artifact_edit_success_is_quiet(tmp_path, caplog):
 
 
 def test_lark_flow_state_write_keeps_the_write_error_when_cleanup_fails(tmp_path, monkeypatch, real_unlink):
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     target = tmp_path / "flow-state.json"
 
@@ -85,7 +85,7 @@ def test_lark_flow_state_write_keeps_the_write_error_when_cleanup_fails(tmp_path
 
 def test_lark_flow_state_write_still_succeeds(monkeypatch, tmp_path):
     """The success path keeps its behaviour: payload written, no temp left."""
-    from deerflow.integrations import lark_cli
+    from nkyel.integrations import lark_cli
 
     target = tmp_path / "flow-state.json"
     lark_cli._write_json_file_atomic(target, {"state": "pending"})

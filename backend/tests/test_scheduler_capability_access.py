@@ -11,9 +11,9 @@ from _router_auth_helpers import call_unwrapped
 from app.gateway.auth_disabled import AUTH_SOURCE_AUTH_DISABLED, AUTH_SOURCE_INTERNAL, AUTH_SOURCE_PAT, AUTH_SOURCE_SESSION
 from app.gateway.authz import AuthContext
 from app.gateway.routers import scheduled_tasks
-from deerflow.agents.interaction_policy import RunInteractionMode, RunInteractionPolicy
-from deerflow.config.app_config import AppConfig
-from deerflow.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict
+from nkyel.agents.interaction_policy import RunInteractionMode, RunInteractionPolicy
+from nkyel.config.app_config import AppConfig
+from nkyel.persistence.scheduled_tasks import ActiveScheduledTaskMutationConflict
 
 _PERMISSIONS = ("threads:read", "threads:write", "runs:create")
 
@@ -72,7 +72,7 @@ def _setup(monkeypatch, *, source=AUTH_SOURCE_SESSION, permissions=_PERMISSIONS,
     service = SimpleNamespace(is_running=True, dispatch_task=AsyncMock(return_value={"outcome": "launched", "run_id": "trial-run", "thread_id": "trial-thread", "existing": False}))
     threads = SimpleNamespace(get=AsyncMock(return_value={"user_id": "alice"}), check_access=AsyncMock(return_value=True))
     provider = SimpleNamespace(get_user=AsyncMock(return_value=user))
-    config = AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "scheduler": {"enabled": enabled, "tool_enabled": tool_enabled}})
+    config = AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "scheduler": {"enabled": enabled, "tool_enabled": tool_enabled}})
     request = SimpleNamespace(state=SimpleNamespace(auth_source=source, user=user, auth=AuthContext(user, list(permissions))), app=SimpleNamespace(state=SimpleNamespace(scheduled_task_service=service)))
     monkeypatch.setattr(access, "get_config", lambda: config)
     monkeypatch.setattr(access, "get_scheduled_task_repo", lambda _request: repo)
@@ -425,7 +425,7 @@ async def test_trial_never_uses_task_title_as_authorization_text(monkeypatch, ti
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["create", "pause"])
 async def test_tool_quota_conflicts_use_409_without_dispatch(monkeypatch, action):
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskQuotaExceeded
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskQuotaExceeded
 
     prepare, repo, _, service, *_ = _setup(monkeypatch)
     capability = await prepare()
@@ -531,7 +531,7 @@ async def test_rest_and_tool_share_creation_validation_status_and_reason(monkeyp
     tool_result = await capability.manage(action="create", request=body)
     monkeypatch.setattr(scheduled_tasks, "get_scheduled_task_repo", lambda _request: repo)
     monkeypatch.setattr(scheduled_tasks, "get_thread_store", lambda _request: threads)
-    monkeypatch.setattr(scheduled_tasks, "get_config", lambda: AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    monkeypatch.setattr(scheduled_tasks, "get_config", lambda: AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     monkeypatch.setattr(scheduled_tasks, "get_optional_user_from_request", AsyncMock(return_value=_user()))
     from fastapi import HTTPException
 
@@ -545,9 +545,9 @@ async def test_rest_and_tool_share_creation_validation_status_and_reason(monkeyp
 @pytest.mark.asyncio
 async def test_capability_maps_real_repository_note_capacity_and_live_task_limit(monkeypatch, tmp_path):
     from app.gateway import scheduled_task_access as access
-    from deerflow.config.database_config import DatabaseConfig
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
+    from nkyel.config.database_config import DatabaseConfig
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
 
     await init_engine_from_config(DatabaseConfig(backend="sqlite", sqlite_dir=str(tmp_path)))
     try:
@@ -643,10 +643,10 @@ _INTERVAL = {"title": "Report", "prompt": "Write the report", "schedule_type": "
 async def _real_repos(monkeypatch, tmp_path, **setup):
     """``_setup`` backed by real SQLite repositories (owner ``alice``, conversation ``origin``)."""
     from app.gateway import scheduled_task_access as access
-    from deerflow.config.database_config import DatabaseConfig
-    from deerflow.persistence.engine import get_session_factory, init_engine_from_config
-    from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
+    from nkyel.config.database_config import DatabaseConfig
+    from nkyel.persistence.engine import get_session_factory, init_engine_from_config
+    from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
 
     await init_engine_from_config(DatabaseConfig(backend="sqlite", sqlite_dir=str(tmp_path)))
     prepare, _, _, service, threads, *_ = _setup(monkeypatch, **setup)
@@ -687,7 +687,7 @@ async def _seed_runs(sf, *rows):
 async def test_update_keeps_task_id_and_never_deletes(monkeypatch, tmp_path):
     from _scheduled_rows import occurrence
 
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     prepare, sf, repo, runs, *_ = await _real_repos(monkeypatch, tmp_path)
     try:
@@ -743,7 +743,7 @@ async def test_update_shares_rest_validation_codes(monkeypatch, task_updates, fi
     tool_result = await capability.manage(action="update", request={"task_id": "task-1", **fields})
     monkeypatch.setattr(scheduled_tasks, "get_scheduled_task_repo", lambda _request: repo)
     monkeypatch.setattr(scheduled_tasks, "get_thread_store", lambda _request: threads)
-    monkeypatch.setattr(scheduled_tasks, "get_config", lambda: AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}}))
+    monkeypatch.setattr(scheduled_tasks, "get_config", lambda: AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}}))
     monkeypatch.setattr(scheduled_tasks, "get_optional_user_from_request", AsyncMock(return_value=_user()))
     with pytest.raises(HTTPException) as error:
         await call_unwrapped(scheduled_tasks.update_scheduled_task, task_id="task-1", request=request, body=scheduled_tasks.ScheduledTaskUpdateRequest(**fields))
@@ -756,7 +756,7 @@ async def test_update_shares_rest_validation_codes(monkeypatch, task_updates, fi
 async def test_resume_recomputes_and_reports_limits_exhausted_with_renewal(monkeypatch, tmp_path):
     from _scheduled_rows import occurrence
 
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     prepare, sf, repo, *_ = await _real_repos(monkeypatch, tmp_path)
     try:
@@ -785,7 +785,7 @@ async def test_resume_recomputes_and_reports_limits_exhausted_with_renewal(monke
 async def test_run_conversation_can_manage_its_task(monkeypatch, tmp_path):
     from _scheduled_rows import occurrence
 
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     # This turn runs in "origin", which is a run conversation of a page-created task.
     prepare, sf, repo, *_ = await _real_repos(monkeypatch, tmp_path)
@@ -807,7 +807,7 @@ async def test_run_conversation_can_manage_its_task(monkeypatch, tmp_path):
 async def test_foreign_or_unrelated_run_thread_grants_nothing(monkeypatch, tmp_path, case):
     from _scheduled_rows import create_task, occurrence
 
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     prepare, sf, repo, *_ = await _real_repos(monkeypatch, tmp_path)
     try:
@@ -980,7 +980,7 @@ async def test_naive_end_at_uses_task_timezone(monkeypatch):
 async def test_resume_clear_fields_removes_cap_and_reactivates(monkeypatch, tmp_path):
     from _scheduled_rows import occurrence
 
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     prepare, sf, repo, *_ = await _real_repos(monkeypatch, tmp_path)
     try:
@@ -999,7 +999,7 @@ async def test_resume_clear_fields_removes_cap_and_reactivates(monkeypatch, tmp_
 async def test_resume_clear_fields_keeps_the_cap_rule_for_sub_hourly_chat_tasks(monkeypatch, tmp_path):
     from _scheduled_rows import occurrence
 
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     prepare, sf, repo, *_ = await _real_repos(monkeypatch, tmp_path)
     try:
@@ -1137,7 +1137,7 @@ async def test_results_have_no_utc_or_lease_fields(monkeypatch):
 async def test_list_reports_last_run_and_no_next_run_when_paused(monkeypatch, tmp_path):
     from _scheduled_rows import occurrence
 
-    from deerflow.persistence.engine import close_engine
+    from nkyel.persistence.engine import close_engine
 
     prepare, sf, repo, *_ = await _real_repos(monkeypatch, tmp_path)
     try:
@@ -1162,7 +1162,7 @@ async def test_list_reports_last_run_and_no_next_run_when_paused(monkeypatch, tm
 
 def test_host_run_errors_reach_the_agent_as_short_keys():
     from app.gateway.scheduled_task_access import _reason_code
-    from deerflow.scheduler.host_notes import RUN_ERROR_QUEUE_TIMEOUT
+    from nkyel.scheduler.host_notes import RUN_ERROR_QUEUE_TIMEOUT
 
     assert _reason_code({"status": "failed", "error": RUN_ERROR_QUEUE_TIMEOUT}) == "queue_timeout"
     assert _reason_code({"status": "unmet", "error": "blocked:external_wait"}) == "blocked:external_wait"

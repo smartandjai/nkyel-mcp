@@ -16,9 +16,9 @@ from langchain_core.tools import StructuredTool
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
-from deerflow.subagents.acceptance_checks import _carries_summary_shape, check_acceptance_criteria, render_acceptance_section
+from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.subagents.acceptance_checks import _carries_summary_shape, check_acceptance_criteria, render_acceptance_section
 
 
 def _summary(prefix="#", *, passed=1, failed=0, cancelled=0, skipped=0, todo=0, total=None):
@@ -149,7 +149,7 @@ def test_color_codes_are_normalized_for_counts_and_output_admission():
 
 @pytest.fixture
 def executor_module(monkeypatch):
-    path = Path(__file__).parents[1] / "packages/harness/deerflow/subagents/executor.py"
+    path = Path(__file__).parents[1] / "packages/harness/nkyel/subagents/executor.py"
     spec = importlib.util.spec_from_file_location("_node_evidence_executor", path)
     module = importlib.util.module_from_spec(spec)
     monkeypatch.setitem(sys.modules, spec.name, module)
@@ -248,7 +248,7 @@ async def test_real_node_results_reach_parent_acceptance(tmp_path, monkeypatch, 
     (tmp_path / "sample.test.cjs").write_text("const { test, describe } = require('node:test');\n" + body, encoding="utf-8")
     monkeypatch.delenv("NO_COLOR", raising=False)
     sandbox = LocalSandbox("node-evidence", path_mappings=[PathMapping("/mnt/user-data/workspace", str(tmp_path))])
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: sandbox if sandbox_id == sandbox.id else None))
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: sandbox if sandbox_id == sandbox.id else None))
     outputs = []
 
     async def bash(command: str) -> str:
@@ -283,7 +283,7 @@ def test_real_node_todo_stack_after_summary_survives_harvest(tmp_path, monkeypat
     )
     command = f"NO_COLOR=1 FORCE_COLOR=1 {shlex.quote(shutil.which('node'))} --test --test-reporter=spec {shlex.quote(str(test_file))}"
     sandbox = LocalSandbox("node-long-todo-evidence")
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: sandbox if sandbox_id == sandbox.id else None))
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: SimpleNamespace(get=lambda sandbox_id: sandbox if sandbox_id == sandbox.id else None))
     output = sandbox.execute_command(command, timeout=30)
     state = {
         "sandbox": {"sandbox_id": sandbox.id},
@@ -320,7 +320,7 @@ def test_node_counts_preserve_other_runner_summaries(sibling, expected):
 def test_harvest_reuses_unchanged_summaries_and_invalidates_changes(executor_module, monkeypatch):
     from unittest.mock import Mock
 
-    from deerflow.subagents import acceptance_checks
+    from nkyel.subagents import acceptance_checks
 
     classify = Mock(wraps=acceptance_checks.summarize_test_output)
     monkeypatch.setattr(acceptance_checks, "summarize_test_output", classify)
@@ -341,7 +341,7 @@ def test_harvest_reuses_unchanged_summaries_and_invalidates_changes(executor_mod
 def test_summary_cache_is_bounded_and_tracks_compaction(executor_module, monkeypatch):
     from unittest.mock import Mock
 
-    from deerflow.subagents import acceptance_checks
+    from nkyel.subagents import acceptance_checks
 
     classify = Mock(wraps=acceptance_checks.summarize_test_output)
     monkeypatch.setattr(acceptance_checks, "summarize_test_output", classify)

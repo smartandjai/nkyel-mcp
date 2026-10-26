@@ -2,7 +2,7 @@
 
 Extension API **0.2.4** adds an optional `ExtensionRuntimeDeps.model_invoker`.
 An operator-authorized service can make an asynchronous, non-streaming text call
-using DeerFlow's configured models. The host constructs the provider client and
+using nkyel's configured models. The host constructs the provider client and
 returns plain data; the extension needs no provider credentials or LangChain dependency.
 
 ## Grant and route logical roles
@@ -47,7 +47,7 @@ A service exposing an HTTP route must authorize callers and their input itself.
 ## Call from a service
 
 ```python
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     ModelInvocationRequest,
     ModelMessage,
     extension,

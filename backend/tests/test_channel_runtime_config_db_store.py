@@ -2,7 +2,7 @@
 
 ``SqlChannelRuntimeConfigStore`` replaces ``{base_dir}/channels/runtime-config.json``
 for a sqlite/postgres database: every Gateway instance reads the same rows, the
-UI-entered credentials are stored as ``DEER_FLOW_CREDENTIALS_KEY`` ciphertext,
+UI-entered credentials are stored as ``NKYEL_CREDENTIALS_KEY`` ciphertext,
 a disconnect is a plaintext tombstone with no secrets, and every save bumps the
 provider's ``version`` so a peer notices it. The old JSON file is imported once
 and then deleted, because a plaintext copy left on disk is the leak the table
@@ -30,11 +30,11 @@ from app.channels.runtime_config_store import (
     SqlChannelRuntimeConfigStore,
     resolve_runtime_config_store,
 )
-from deerflow.config.app_config import AppConfig
-from deerflow.config.credentials_key import CredentialsCipher
-from deerflow.persistence.base import Base
-from deerflow.persistence.channel_runtime_configs import ChannelRuntimeConfigRow, SqlChannelRuntimeConfigRepository
-from deerflow.persistence.postgres_schema import dsn_with_search_path
+from nkyel.config.app_config import AppConfig
+from nkyel.config.credentials_key import CredentialsCipher
+from nkyel.persistence.base import Base
+from nkyel.persistence.channel_runtime_configs import ChannelRuntimeConfigRow, SqlChannelRuntimeConfigRepository
+from nkyel.persistence.postgres_schema import dsn_with_search_path
 
 SLACK = {"enabled": True, "bot_token": "xoxb-secret-token", "app_token": "xapp-secret-token"}
 TOMBSTONE = {"enabled": False, RUNTIME_CHANNEL_DISABLED_FLAG: True}
@@ -158,7 +158,7 @@ def test_a_row_the_configured_key_cannot_decrypt_reads_as_not_configured(session
         configs = _store(session_factory, cipher=_cipher()).load_all()
 
     assert configs == {"discord": TOMBSTONE}
-    assert "slack" in caplog.text and "DEER_FLOW_CREDENTIALS_KEY" in caplog.text
+    assert "slack" in caplog.text and "NKYEL_CREDENTIALS_KEY" in caplog.text
     assert "xoxb" not in caplog.text
 
 
@@ -276,7 +276,7 @@ def test_no_legacy_file_is_a_no_op(session_factory, tmp_path):
 
 def _app_config(tmp_path, backend: str) -> AppConfig:
     database = {"backend": backend, "sqlite_dir": str(tmp_path)} if backend != "memory" else {"backend": "memory"}
-    return AppConfig.model_validate({"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}, "database": database})
+    return AppConfig.model_validate({"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}, "database": database})
 
 
 def test_a_memory_database_keeps_the_json_file(tmp_path):
@@ -286,7 +286,7 @@ def test_a_memory_database_keeps_the_json_file(tmp_path):
 
 
 def test_a_sql_database_uses_the_shared_table(tmp_path, monkeypatch):
-    import deerflow.persistence.engine as engine_module
+    import nkyel.persistence.engine as engine_module
 
     monkeypatch.setattr(engine_module, "get_session_factory", lambda: object())
     legacy = tmp_path / "runtime-config.json"
@@ -298,7 +298,7 @@ def test_a_sql_database_uses_the_shared_table(tmp_path, monkeypatch):
 
 
 def test_a_sql_database_without_an_initialised_engine_falls_back_to_the_file(tmp_path, monkeypatch, caplog):
-    import deerflow.persistence.engine as engine_module
+    import nkyel.persistence.engine as engine_module
 
     monkeypatch.setattr(engine_module, "get_session_factory", lambda: None)
 

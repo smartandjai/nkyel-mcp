@@ -8,14 +8,14 @@ import os
 
 import pytest
 
-from deerflow.integrations.lark_broker import install_shim
+from nkyel.integrations.lark_broker import install_shim
 
 
 def test_install_shim_publishes_executable_files(tmp_path):
     launcher = install_shim(str(tmp_path), version="1.2.3")
 
     assert os.access(launcher, os.X_OK)
-    marker = tmp_path / ".deerflow-lark-cli-runtime.json"
+    marker = tmp_path / ".nkyel-lark-cli-runtime.json"
     assert json.loads(marker.read_text(encoding="utf-8"))["version"] == "1.2.3"
     assert [p.name for p in (tmp_path / "bin").glob("*.tmp")] == []
 
@@ -32,14 +32,14 @@ def test_install_shim_publishes_correct_permissions(tmp_path):
     shim_stat = os.stat(shim_body)
     assert shim_stat.st_mode & 0o777 == 0o755
 
-    marker = tmp_path / ".deerflow-lark-cli-runtime.json"
+    marker = tmp_path / ".nkyel-lark-cli-runtime.json"
     marker_stat = os.stat(marker)
     assert marker_stat.st_mode & 0o777 == 0o644
 
 
 def test_a_failed_publish_leaves_the_previous_runtime_intact(tmp_path, monkeypatch):
     install_shim(str(tmp_path), version="1.0.0")
-    marker = tmp_path / ".deerflow-lark-cli-runtime.json"
+    marker = tmp_path / ".nkyel-lark-cli-runtime.json"
     before = marker.read_text(encoding="utf-8")
 
     def _boom(*args, **kwargs):
@@ -56,7 +56,7 @@ def test_a_failed_publish_leaves_the_previous_runtime_intact(tmp_path, monkeypat
 
 
 def test_atomic_helper_keeps_the_previous_file_when_publish_fails(tmp_path, monkeypatch):
-    from deerflow.integrations.lark_broker import _write_text_atomically
+    from nkyel.integrations.lark_broker import _write_text_atomically
 
     target = tmp_path / "runtime.json"
     target.write_text('{"version": "1.0.0"}', encoding="utf-8")

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SHOWCASE_ROUTE_PREFIX } from "@/core/threads/static-demo";
 import { uuid } from "@/core/utils/uuid";
 
-export const THREAD_CHAT_RESET_EVENT = "deer-flow:thread-chat-reset";
+export const THREAD_CHAT_RESET_EVENT = "nkyel:thread-chat-reset";
 
 type ThreadChatResetDetail = {
   deletedThreadId: string;
@@ -27,7 +27,7 @@ export function resetThreadChatAfterDelete(detail: ThreadChatResetDetail) {
 
 // Sentinel distinguishing "no identity minted yet" from a minted identity
 // whose scope is a project-less new chat (project === null).
-const NEW_CHAT_SCOPE_UNSET = Symbol("deerflow.newChatScopeUnset");
+const NEW_CHAT_SCOPE_UNSET = Symbol("nkyel.newChatScopeUnset");
 
 export function useThreadChat() {
   const { thread_id: threadIdFromPath } = useParams<{ thread_id: string }>();

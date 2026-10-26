@@ -15,21 +15,21 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from support.postgres import asyncpg_test_url
 
-import deerflow.runtime.events.terminal as terminal_module
-from deerflow.persistence.models.run_event import RunEventRow, RunEventThreadSeqRow
-from deerflow.persistence.run.model import CompletedRunSnapshotRow, RunChangeClockRow, RunRow
-from deerflow.runtime.events.store.base import RunEventLifecycleRejected
-from deerflow.runtime.events.store.db import DbRunEventStore
-from deerflow.runtime.events.store.jsonl import JsonlRunEventStore
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.events.terminal import (
+import nkyel.runtime.events.terminal as terminal_module
+from nkyel.persistence.models.run_event import RunEventRow, RunEventThreadSeqRow
+from nkyel.persistence.run.model import CompletedRunSnapshotRow, RunChangeClockRow, RunRow
+from nkyel.runtime.events.store.base import RunEventLifecycleRejected
+from nkyel.runtime.events.store.db import DbRunEventStore
+from nkyel.runtime.events.store.jsonl import JsonlRunEventStore
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.events.terminal import (
     RecoveryTerminalPublisher,
     RecoveryTerminalTargetConsumed,
     TerminalEventConfirmation,
     confirm_terminal_event,
 )
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.user_context import AUTO
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.user_context import AUTO
 
 
 @pytest_asyncio.fixture(params=["memory", "jsonl", "sqlite", "postgresql"])

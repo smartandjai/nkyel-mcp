@@ -4,12 +4,12 @@ from types import SimpleNamespace
 
 import httpx
 
-from deerflow.logging_config import TraceContextFilter, configure_logging
-from deerflow.trace_context import request_trace_context
+from nkyel.logging_config import TraceContextFilter, configure_logging
+from nkyel.trace_context import request_trace_context
 
 
 def test_trace_context_filter_injects_current_trace_id() -> None:
-    record = logging.LogRecord("deerflow.test", logging.INFO, __file__, 1, "hello", (), None)
+    record = logging.LogRecord("nkyel.test", logging.INFO, __file__, 1, "hello", (), None)
 
     with request_trace_context("trace-log-1"):
         assert TraceContextFilter().filter(record) is True
@@ -34,7 +34,7 @@ def test_configure_logging_enhanced_text_includes_trace_id() -> None:
         configure_logging(config)
 
         with request_trace_context("trace-log-2"):
-            logging.getLogger("deerflow.test").info("hello")
+            logging.getLogger("nkyel.test").info("hello")
 
         assert "[trace_id=trace-log-2]" in stream.getvalue()
     finally:
@@ -60,7 +60,7 @@ def _httpx_record(url: str, method: str = "GET", status: int = 200) -> logging.L
 
 
 def test_url_redaction_filter_rewrites_request_records() -> None:
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
 
@@ -127,7 +127,7 @@ def test_url_redaction_filter_covers_urllib3_redirect_records() -> None:
     (poolmanager.py:500) and ``urllib3.connectionpool`` logs the same shape at
     DEBUG (connectionpool.py:922). Both must come out redacted through the
     real emit path with configure_logging's handler-level installation."""
-    from deerflow.logging_config import configure_logging
+    from nkyel.logging_config import configure_logging
 
     root = logging.getLogger()
     old_handlers = root.handlers[:]
@@ -172,7 +172,7 @@ def test_url_redaction_filter_covers_urllib3_request_line_records() -> None:
     response.length_remaining) — the authority ends at a space (bare-origin
     early return) and the quoted origin-form target has no scheme, which is
     why the request line needs its own redaction shape."""
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     format_string = '%s://%s:%s "%s %s %s" %s %s'
     filt = UrlRedactionFilter()
@@ -220,7 +220,7 @@ def test_url_redaction_filter_covers_urllib3_request_line_through_real_emit() ->
     handler-level filters installed by configure_logging can rewrite the
     record. Emits with the connectionpool.py:545 format string at root
     DEBUG."""
-    from deerflow.logging_config import configure_logging
+    from nkyel.logging_config import configure_logging
 
     root = logging.getLogger()
     old_handlers = root.handlers[:]
@@ -266,7 +266,7 @@ def test_url_redaction_filter_covers_urllib3_retry_lines() -> None:
     (connectionpool.py:869, WARNING — above the Gateway's INFO root). Each
     collapses the target to ``/<redacted>`` while keeping the surrounding
     format (status counts, error text) for observability."""
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
 
@@ -396,7 +396,7 @@ def test_url_redaction_filter_covers_urllib3_retry_lines_through_real_emit() -> 
     import urllib3
     from urllib3.util.retry import Retry
 
-    from deerflow.logging_config import configure_logging
+    from nkyel.logging_config import configure_logging
 
     root = logging.getLogger()
     old_handlers = root.handlers[:]
@@ -442,7 +442,7 @@ def test_url_redaction_filter_covers_urllib3_retry_lines_through_real_emit() -> 
 
 
 def test_configure_logging_installs_url_redaction_on_httpx_logger_and_root_handlers() -> None:
-    from deerflow.logging_config import UrlRedactionFilter, _has_url_redaction_filter, configure_logging, install_url_log_redaction
+    from nkyel.logging_config import UrlRedactionFilter, _has_url_redaction_filter, configure_logging, install_url_log_redaction
 
     httpx_logger = logging.getLogger("httpx")
     root = logging.getLogger()
@@ -482,7 +482,7 @@ def test_url_redaction_filter_long_input_stays_linear_time() -> None:
     going red against any regression to per-position rescanning."""
     import time
 
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
 
@@ -536,7 +536,7 @@ def test_url_redaction_filter_nested_scheme_in_path_keeps_both_passes() -> None:
     by urllib3 quoting — is rewritten by the request-line pass that ran
     before it. Pins the leftmost-non-overlapping equivalence with the old
     two-pass re.sub behavior on overlapping candidates."""
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
     record = logging.LogRecord(
@@ -564,7 +564,7 @@ def test_url_redaction_filter_scheme_start_skips_non_letter_run_head() -> None:
     digit glued in front of a URL shifts the match start past it, exactly
     like re.sub's leftmost scan; a run with no letter at all ("123://x")
     cannot start any match and passes through with nothing rewritten."""
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
     glued = logging.LogRecord("httpx", logging.INFO, __file__, 1, "fetch %s", ("9https://host.example/private/x?token=QuerySecret",), None)
@@ -588,7 +588,7 @@ def test_url_redaction_filter_embedded_quotes_stay_inside_rest() -> None:
     consumed so the whole path+query stays redacted; the earlier
     quote-stop-at-any-quote behavior kept the suffix after the quote
     verbatim."""
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
 
@@ -651,18 +651,18 @@ def test_url_redaction_filter_leaves_arrow_paths_in_other_logs_alone() -> None:
     ``sandbox.mounts entry <host_path> -> <container_path>`` and a substring
     match rewrote the container path to ``/<redacted>``, breaking the error's
     instructions (backend-unit-tests shard 3 on CI, round 11)."""
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
     sandbox_error = (
-        "sandbox.mounts entry /srv/deer-flow/knowledge -> /mnt/knowledge ignored: host_path "
-        "/srv/deer-flow/knowledge does not exist from the perspective of the gateway process. "
+        "sandbox.mounts entry /srv/nkyel/knowledge -> /mnt/knowledge ignored: host_path "
+        "/srv/nkyel/knowledge does not exist from the perspective of the gateway process. "
         "In Docker deployments (make up / docker-compose), this path must also be bind-mounted "
         "into the gateway container — add a matching volume entry under services.gateway.volumes "
         "in docker/docker-compose.yaml (and use the in-container path here), or run in local mode "
         "(make dev) where the gateway sees the host filesystem directly."
     )
-    record = logging.LogRecord("deerflow.sandbox.local.local_sandbox_provider", logging.ERROR, "provider.py", 1, "%s", (sandbox_error,), None)
+    record = logging.LogRecord("nkyel.sandbox.local.local_sandbox_provider", logging.ERROR, "provider.py", 1, "%s", (sandbox_error,), None)
     assert filt.filter(record) is True
     assert record.getMessage() == sandbox_error  # byte-for-byte passthrough
     assert "/mnt/knowledge" in record.getMessage()
@@ -677,7 +677,7 @@ def test_url_redaction_filter_redirecting_survives_spacey_location() -> None:
     can emit. A whitespace-strict tail voided the pass entirely and leaked
     the origin-form request target in the first slot; a space-carrying
     second slot now collapses whole."""
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
 
@@ -748,7 +748,7 @@ def test_url_redaction_filter_redirecting_survives_spacey_location() -> None:
 
     # The sandbox arrow false positive stays excluded: the prefix anchor,
     # not a strict tail, is what keeps non-Redirecting messages untouched.
-    sandbox = logging.LogRecord("deerflow.sandbox.local.local_sandbox_provider", logging.ERROR, "p.py", 1, "sandbox.mounts entry /srv/knowledge -> /mnt/knowledge ignored: missing", (), None)
+    sandbox = logging.LogRecord("nkyel.sandbox.local.local_sandbox_provider", logging.ERROR, "p.py", 1, "sandbox.mounts entry /srv/knowledge -> /mnt/knowledge ignored: missing", (), None)
     assert filt.filter(sandbox) is True
     assert sandbox.getMessage() == "sandbox.mounts entry /srv/knowledge -> /mnt/knowledge ignored: missing"
 
@@ -767,7 +767,7 @@ def _emit_real_header_parse_warning(url: str, raw: bytes, *, json_format: bool =
     from urllib3.exceptions import HeaderParsingError
     from urllib3.util.response import assert_header_parsing
 
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     headers = http.client.parse_headers(io.BytesIO(raw))
     root = logging.getLogger()
@@ -775,7 +775,7 @@ def _emit_real_header_parse_warning(url: str, raw: bytes, *, json_format: bool =
     stream = io.StringIO()
     handler = logging.StreamHandler(stream)
     if json_format:
-        from deerflow.logging_config import JsonTraceFormatter
+        from nkyel.logging_config import JsonTraceFormatter
 
         handler.setFormatter(JsonTraceFormatter())
     else:
@@ -978,7 +978,7 @@ def test_url_redaction_filter_collapses_credentials_carried_by_the_traceback() -
     """
     from urllib3.exceptions import HeaderParsingError
 
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     payload = "Set-Cookie: session=CookieSecret\r\n"
     record = logging.LogRecord("urllib3.connection", logging.WARNING, __file__, 1, "Failed to parse headers (url=%s): %s", ("https://cdn.example.com/tenant-42/x?sig=UrlSecret", HeaderParsingError([], payload)), None)
@@ -998,9 +998,9 @@ def test_url_redaction_filter_does_not_format_exceptions_of_other_records() -> N
     log a ``linecache`` read for no redaction benefit, so a record that is not
     urllib3's header-parse warning keeps its ``exc_text`` unset.
     """
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
-    record = logging.LogRecord("deerflow.something", logging.ERROR, __file__, 1, "upstream call failed", (), None)
+    record = logging.LogRecord("nkyel.something", logging.ERROR, __file__, 1, "upstream call failed", (), None)
     try:
         raise ValueError("boom")
     except ValueError:
@@ -1022,7 +1022,7 @@ def test_url_redaction_filter_anchors_every_repr_form_of_the_payload() -> None:
     of those is an anchor this pass must recognise, or the field glued to it
     stays whole.
     """
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     cases = [
         # First field glued to the repr's opening quote.
@@ -1078,10 +1078,10 @@ def test_url_redaction_filter_leaves_header_looking_text_outside_the_dump_alone(
     component's data, and rewriting it here would silently widen a URL
     redactor into a general PII filter.
     """
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     record = logging.LogRecord(
-        "deerflow.something",
+        "nkyel.something",
         logging.INFO,
         __file__,
         1,
@@ -1108,7 +1108,7 @@ def test_url_redaction_filter_redirecting_covers_all_relative_ref_forms() -> Non
     closing mark, or an empty host the ``host`` group never matches;
     network-path references collapse with any
     userinfo credentials they carry."""
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
 
@@ -1161,7 +1161,7 @@ def test_url_redaction_filter_collapses_space_carrying_targets_in_every_retry_sh
     path survived all of them while the two sibling passes that never did
     (``Incremented Retry for (url='…')`` and ``Redirecting``) redacted it.
     """
-    from deerflow.logging_config import UrlRedactionFilter
+    from nkyel.logging_config import UrlRedactionFilter
 
     filt = UrlRedactionFilter()
 

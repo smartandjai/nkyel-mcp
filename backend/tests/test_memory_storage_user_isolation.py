@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.agents.memory.backends.deermem.deermem.config import DeerMemConfig
-from deerflow.agents.memory.backends.deermem.deermem.core.paths import fact_file_path
-from deerflow.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage, create_empty_memory
+from nkyel.agents.memory.backends.deermem.deermem.config import DeerMemConfig
+from nkyel.agents.memory.backends.deermem.deermem.core.paths import fact_file_path
+from nkyel.agents.memory.backends.deermem.deermem.core.storage import FileMemoryStorage, create_empty_memory
 
 
 @pytest.fixture

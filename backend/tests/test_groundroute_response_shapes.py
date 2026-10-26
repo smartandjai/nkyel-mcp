@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-_LOGGER_NAME = "deerflow.community.groundroute.tools"
+_LOGGER_NAME = "nkyel.community.groundroute.tools"
 _FORMAT_ERROR = "GroundRoute returned an unexpected response format"
 _SEARCH_QUERY = "文档 search"
 _FETCH_URL = "https://example.com/文档"
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.anyio
 
 @pytest.fixture(autouse=True)
 def reset_api_key_warned():
-    import deerflow.community.groundroute.tools as gr_mod
+    import nkyel.community.groundroute.tools as gr_mod
 
     gr_mod._api_key_warned = set()
     yield
@@ -25,7 +25,7 @@ def reset_api_key_warned():
 
 def _invoker(monkeypatch, tool_name):
     """Patch the provider's httpx reference with a local MockTransport client factory."""
-    from deerflow.community.groundroute import tools
+    from nkyel.community.groundroute import tools
 
     config = SimpleNamespace(get_tool_config=lambda _: SimpleNamespace(model_extra={"api_key": "synthetic-test-key"}))
     monkeypatch.setattr(tools, "get_app_config", lambda: config)

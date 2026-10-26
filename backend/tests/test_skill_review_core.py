@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-from deerflow.skills.review import LocalDirectoryReader, analyze_skill_package, stable_json_dumps
-from deerflow.skills.review.cli import main as review_cli_main
-from deerflow.skills.review.models import PackageLimits, normalize_relative_path
-from deerflow.skills.review.readers import ArchivePackageReader, parse_skill_uri
-from deerflow.skills.review.renderer import build_static_report, render_report_markdown
-from deerflow.skills.review.resource_graph import _extract_references
+from nkyel.skills.review import LocalDirectoryReader, analyze_skill_package, stable_json_dumps
+from nkyel.skills.review.cli import main as review_cli_main
+from nkyel.skills.review.models import PackageLimits, normalize_relative_path
+from nkyel.skills.review.readers import ArchivePackageReader, parse_skill_uri
+from nkyel.skills.review.renderer import build_static_report, render_report_markdown
+from nkyel.skills.review.resource_graph import _extract_references
 
 CONTRACTS_DIR = Path(__file__).resolve().parents[2] / "contracts" / "skill_review"
 
@@ -76,7 +76,7 @@ def test_review_core_accepts_minimal_valid_skill(tmp_path):
     _validate_contract("package_snapshot.v1.schema.json", snapshot)
     _validate_contract("review_facts.v1.schema.json", facts)
     _validate_contract("review_report.v1.schema.json", report)
-    assert facts["schema_version"] == "deerflow.skill-review.facts.v1"
+    assert facts["schema_version"] == "nkyel.skill-review.facts.v1"
     assert facts["subject"]["declared_name"] == "demo-skill"
     assert facts["summary"]["blockers"] == 0
     assert facts["subject"]["package_digest"].startswith("sha256:")
@@ -759,7 +759,7 @@ def test_static_report_renders_chinese_labels(tmp_path):
     report = build_static_report(facts, completed_at="2026-07-10T00:00:00Z")
     markdown = render_report_markdown(report, facts, locale="zh")
 
-    assert report["schema_version"] == "deerflow.skill-review.report.v1"
+    assert report["schema_version"] == "nkyel.skill-review.report.v1"
     assert "## 摘要" in markdown
     assert "publish_candidate" in markdown
 

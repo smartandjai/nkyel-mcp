@@ -7,10 +7,10 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.storage import BlobRef, BlobWriteError
-from deerflow.tools.builtins.view_image_tool import view_image_tool
+from nkyel.storage import BlobRef, BlobWriteError
+from nkyel.tools.builtins.view_image_tool import view_image_tool
 
-view_image_module = importlib.import_module("deerflow.tools.builtins.view_image_tool")
+view_image_module = importlib.import_module("nkyel.tools.builtins.view_image_tool")
 
 PNG_BYTES = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
 
@@ -94,7 +94,7 @@ def test_view_image_persists_blob_ref_when_enabled(tmp_path: Path, monkeypatch: 
                 content_type=kwargs["content_type"],
             )
 
-    monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", lambda: RecordingStore())
+    monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", lambda: RecordingStore())
 
     result = view_image_tool.func(
         runtime=_make_runtime(thread_data),
@@ -132,7 +132,7 @@ def test_view_image_does_not_claim_success_when_configured_blob_write_fails(
         def put_bytes(self, data: bytes, **kwargs) -> BlobRef:
             raise BlobWriteError("backend detail must not reach the model")
 
-    monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", lambda: FailingStore())
+    monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", lambda: FailingStore())
 
     result = view_image_tool.func(
         runtime=_make_runtime(thread_data),
@@ -156,7 +156,7 @@ def test_view_image_returns_generic_error_when_blob_store_factory_fails(
     def fail_to_resolve_store():
         raise ValueError("misconfigured backend detail must not reach the model")
 
-    monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", fail_to_resolve_store)
+    monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", fail_to_resolve_store)
 
     result = view_image_tool.func(
         runtime=_make_runtime(thread_data),
@@ -181,7 +181,7 @@ def test_view_image_returns_generic_error_when_backend_leaks_raw_exception(
         def put_bytes(self, data: bytes, **kwargs) -> BlobRef:
             raise RuntimeError("raw SDK detail must not reach the model")
 
-    monkeypatch.setattr("deerflow.storage.get_blob_store_if_enabled", lambda: FailingStore())
+    monkeypatch.setattr("nkyel.storage.get_blob_store_if_enabled", lambda: FailingStore())
 
     result = view_image_tool.func(
         runtime=_make_runtime(thread_data),

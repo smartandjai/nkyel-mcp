@@ -120,12 +120,12 @@ async def test_production_fixture_seed_and_scheduler_launch_install_only_goal_ar
     from datetime import UTC, datetime, timedelta
 
     from app.scheduler.service import ScheduledTaskService
-    from deerflow.config.database_config import DatabaseConfig
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine_from_config
-    from deerflow.persistence.scheduled_task_runs import ScheduledTaskRunRepository
-    from deerflow.persistence.scheduled_tasks import ScheduledTaskRepository
-    from deerflow.persistence.thread_meta.sql import ThreadMetaRepository
-    from deerflow.runtime.user_context import DEFAULT_USER_ID
+    from nkyel.config.database_config import DatabaseConfig
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine_from_config
+    from nkyel.persistence.scheduled_task_runs import ScheduledTaskRunRepository
+    from nkyel.persistence.scheduled_tasks import ScheduledTaskRepository
+    from nkyel.persistence.thread_meta.sql import ThreadMetaRepository
+    from nkyel.runtime.user_context import DEFAULT_USER_ID
     from scripts.benchmark.scheduled_tasks.runner import Rows
 
     await init_engine_from_config(DatabaseConfig(backend="sqlite", sqlite_dir=str(tmp_path)))

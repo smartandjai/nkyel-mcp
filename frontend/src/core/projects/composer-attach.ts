@@ -27,7 +27,7 @@ import type { AttachProjectDocumentResult } from "./types";
  * sessionStorage (not module memory) so the pending list also survives a
  * full page load of the target thread.
  */
-const STORAGE_KEY_PREFIX = "deerflow.project-attachment.";
+const STORAGE_KEY_PREFIX = "nkyel.project-attachment.";
 
 function storageKey(threadId: string): string {
   return `${STORAGE_KEY_PREFIX}${threadId}`;

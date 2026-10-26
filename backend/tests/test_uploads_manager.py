@@ -1,4 +1,4 @@
-"""Tests for deerflow.uploads.manager — shared upload management logic."""
+"""Tests for nkyel.uploads.manager — shared upload management logic."""
 
 import errno
 import logging
@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.uploads.manager import (
+from nkyel.uploads.manager import (
     PathTraversalError,
     UnsafeUploadPathError,
     _staging_name_shares_inode_with_sibling,
@@ -381,7 +381,7 @@ class TestWriteUploadFileNoSymlink:
     def test_open_uses_nonblocking_flag_when_available(self, tmp_path):
         if not hasattr(os, "O_NONBLOCK"):
             pytest.skip("O_NONBLOCK not available on this platform")
-        with patch("deerflow.uploads.manager.os.open", side_effect=OSError(errno.ENXIO, "no reader")) as open_mock:
+        with patch("nkyel.uploads.manager.os.open", side_effect=OSError(errno.ENXIO, "no reader")) as open_mock:
             with pytest.raises(UnsafeUploadPathError, match="Unsafe upload destination"):
                 write_upload_file_no_symlink(tmp_path, "pipe.txt", b"hello")
 
@@ -392,7 +392,7 @@ class TestWriteUploadFileNoSymlink:
     def test_nonblocking_special_file_open_errors_are_unsafe(self, tmp_path, open_errno):
         if not hasattr(os, "O_NONBLOCK"):
             pytest.skip("O_NONBLOCK not available on this platform")
-        with patch("deerflow.uploads.manager.os.open", side_effect=OSError(open_errno, "would block")):
+        with patch("nkyel.uploads.manager.os.open", side_effect=OSError(open_errno, "would block")):
             with pytest.raises(UnsafeUploadPathError, match="Unsafe upload destination"):
                 write_upload_file_no_symlink(tmp_path, "pipe.txt", b"hello")
 
@@ -447,7 +447,7 @@ class TestCopyUploadFileNoSymlink:
         src.write_bytes(b"new contents" * 4096)
         snapshot = tmp_path / "snapshot" if capture else None
 
-        with patch("deerflow.uploads.manager.shutil.copyfileobj", wraps=shutil.copyfileobj) as copy:
+        with patch("nkyel.uploads.manager.shutil.copyfileobj", wraps=shutil.copyfileobj) as copy:
             dest = copy_upload_file_no_symlink(uploads, "notes.txt", src, snapshot_path=snapshot)
 
         assert copy.call_count == 1 + int(capture)
@@ -541,7 +541,7 @@ class TestCopyUploadFileNoSymlink:
             staged.write(b"partial")
             raise OSError("copy failed")
 
-        with patch("deerflow.uploads.manager.shutil.copyfileobj", side_effect=fail_copy):
+        with patch("nkyel.uploads.manager.shutil.copyfileobj", side_effect=fail_copy):
             with pytest.raises(OSError, match="copy failed"):
                 copy_upload_file_no_replace(uploads, "notes.txt", src)
 
@@ -565,7 +565,7 @@ class TestCopyUploadFileNoSymlink:
             assert cleanup_stale_upload_staging_files(tmp_path) == 0
             real_link(staged, dest, **kwargs)
 
-        with patch("deerflow.uploads.manager.os.link", side_effect=publish):
+        with patch("nkyel.uploads.manager.os.link", side_effect=publish):
             dest = copy_upload_file_no_replace(uploads, "notes.txt", src)
 
         assert dest.read_bytes() == b"complete contents"
@@ -699,11 +699,11 @@ class TestListFilesInDir:
 
         monkeypatch.setattr(os, "scandir", replace_before_scandir)
 
-        with caplog.at_level(logging.DEBUG, logger="deerflow.uploads.manager"):
+        with caplog.at_level(logging.DEBUG, logger="nkyel.uploads.manager"):
             assert list_files_in_dir(directory) == {"files": [], "count": 0}
 
         assert (
-            "deerflow.uploads.manager",
+            "nkyel.uploads.manager",
             logging.DEBUG,
             f"Uploads directory vanished mid-scan, keeping partial snapshot of 0 entries: {directory}",
         ) in caplog.record_tuples
@@ -761,7 +761,7 @@ class TestListFilesInDir:
         )
         monkeypatch.setattr(os, "scandir", lambda path: _StaticScandir([real_entries["kept.txt"], vanished]))
 
-        with caplog.at_level(logging.DEBUG, logger="deerflow.uploads.manager"):
+        with caplog.at_level(logging.DEBUG, logger="nkyel.uploads.manager"):
             result = list_files_in_dir(tmp_path)
 
         assert result["count"] == 1
@@ -927,13 +927,13 @@ class TestCleanupStaleUploadStagingFiles:
             return real_scandir(path)
 
         monkeypatch.setattr(os, "scandir", fail_one_scan)
-        with caplog.at_level(logging.WARNING, logger="deerflow.uploads.manager"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.uploads.manager"):
             removed = cleanup_stale_upload_staging_files(tmp_path)
 
         assert removed == 1
         assert (failed_dir / ".upload-old.part").exists()
         assert not (healthy_dir / ".upload-old.part").exists()
-        warnings = [record for record in caplog.records if record.name == "deerflow.uploads.manager" and record.levelno >= logging.WARNING]
+        warnings = [record for record in caplog.records if record.name == "nkyel.uploads.manager" and record.levelno >= logging.WARNING]
         if error_code == errno.ENOENT:
             assert warnings == []
         else:
@@ -950,8 +950,8 @@ class TestCleanupStaleUploadStagingFiles:
         _set_age(old, timedelta(days=2))
 
         with (
-            patch("deerflow.uploads.manager._staging_entry_stat", side_effect=PermissionError(errno.EACCES, "denied")),
-            caplog.at_level("WARNING", logger="deerflow.uploads.manager"),
+            patch("nkyel.uploads.manager._staging_entry_stat", side_effect=PermissionError(errno.EACCES, "denied")),
+            caplog.at_level("WARNING", logger="nkyel.uploads.manager"),
         ):
             removed = cleanup_stale_upload_staging_files(tmp_path)
 
@@ -1007,8 +1007,8 @@ class TestCleanupStaleUploadStagingFiles:
         (uploads_dir / ".upload-gone.part").write_text("partial")
 
         with (
-            patch("deerflow.uploads.manager._staging_entry_stat", side_effect=FileNotFoundError),
-            caplog.at_level("WARNING", logger="deerflow.uploads.manager"),
+            patch("nkyel.uploads.manager._staging_entry_stat", side_effect=FileNotFoundError),
+            caplog.at_level("WARNING", logger="nkyel.uploads.manager"),
         ):
             removed = cleanup_stale_upload_staging_files(tmp_path)
 

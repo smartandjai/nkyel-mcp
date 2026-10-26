@@ -18,19 +18,19 @@ import pytest
 from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage
 
-from deerflow.agents.memory.backends.openviking.config import OpenVikingConfig
-from deerflow.agents.memory.backends.openviking.openviking_manager import (
+from nkyel.agents.memory.backends.openviking.config import OpenVikingConfig
+from nkyel.agents.memory.backends.openviking.openviking_manager import (
     OpenVikingMemoryManager,
     _canonical_peer_id,
     _session_id,
 )
-from deerflow.agents.memory.manager import (
+from nkyel.agents.memory.manager import (
     MemoryManagerError,
     MemoryReadError,
     _scan_backends,
     reset_memory_manager,
 )
-from deerflow.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
+from nkyel.agents.middlewares.dynamic_context_middleware import DynamicContextMiddleware
 
 
 class _CommitPolicy:
@@ -172,12 +172,12 @@ def test_memory_admission_redacts_call_views_before_openviking_recorder(tmp_path
     from langchain_openai.chat_models.base import _convert_dict_to_message
     from langgraph.runtime import Runtime
 
-    from deerflow.agents.memory import summarization_hook
-    from deerflow.agents.middlewares import memory_middleware
-    from deerflow.agents.middlewares.memory_middleware import MemoryMiddleware
-    from deerflow.agents.middlewares.summarization_middleware import SummarizationEvent
-    from deerflow.config.memory_config import MemoryConfig
-    from deerflow.config.pii_redaction_config import PiiRedactionConfig
+    from nkyel.agents.memory import summarization_hook
+    from nkyel.agents.middlewares import memory_middleware
+    from nkyel.agents.middlewares.memory_middleware import MemoryMiddleware
+    from nkyel.agents.middlewares.summarization_middleware import SummarizationEvent
+    from nkyel.config.memory_config import MemoryConfig
+    from nkyel.config.pii_redaction_config import PiiRedactionConfig
 
     config = PiiRedactionConfig(enabled=True, token_secret="openviking-regression-secret")
     raw = {"role": "assistant", "content": "Preparing lookup"}
@@ -223,7 +223,7 @@ def _use_actor_peer(peer_id: str | None):
 
 @pytest.fixture
 def official_integration(monkeypatch: pytest.MonkeyPatch) -> None:
-    import deerflow.agents.memory.backends.openviking.openviking_manager as module
+    import nkyel.agents.memory.backends.openviking.openviking_manager as module
 
     monkeypatch.setattr(
         module,
@@ -384,7 +384,7 @@ def test_read_failure_capability_matches_policy(
 
 
 def test_official_loader_uses_standalone_package() -> None:
-    from deerflow.agents.memory.backends.openviking.openviking_manager import (
+    from nkyel.agents.memory.backends.openviking.openviking_manager import (
         _load_official_integration,
     )
 
@@ -484,11 +484,11 @@ def test_unreachable_context_read_raise_aborts_dynamic_context_injection(
         failure_policy={"read": "raise"},
     )
     monkeypatch.setattr(
-        "deerflow.agents.memory.get_memory_manager",
+        "nkyel.agents.memory.get_memory_manager",
         lambda: manager,
     )
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.dynamic_context_middleware.resolve_runtime_user_id",
+        "nkyel.agents.middlewares.dynamic_context_middleware.resolve_runtime_user_id",
         lambda runtime: "alice",
     )
     middleware = DynamicContextMiddleware()
@@ -511,11 +511,11 @@ def test_strict_scope_mismatch_uses_required_read_error(
         failure_policy={"read": "raise"},
     )
     monkeypatch.setattr(
-        "deerflow.agents.memory.get_memory_manager",
+        "nkyel.agents.memory.get_memory_manager",
         lambda: manager,
     )
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.dynamic_context_middleware.resolve_runtime_user_id",
+        "nkyel.agents.middlewares.dynamic_context_middleware.resolve_runtime_user_id",
         lambda runtime: "bob",
     )
     middleware = DynamicContextMiddleware()
@@ -545,11 +545,11 @@ def test_unreachable_context_read_fail_open_returns_no_injected_context(
         failure_policy={"read": "fail_open"},
     )
     monkeypatch.setattr(
-        "deerflow.agents.memory.get_memory_manager",
+        "nkyel.agents.memory.get_memory_manager",
         lambda: manager,
     )
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.dynamic_context_middleware.resolve_runtime_user_id",
+        "nkyel.agents.middlewares.dynamic_context_middleware.resolve_runtime_user_id",
         lambda runtime: "alice",
     )
     middleware = DynamicContextMiddleware()
@@ -599,11 +599,11 @@ async def test_unreachable_context_read_raise_aborts_async_dynamic_context_injec
         failure_policy={"read": "raise"},
     )
     monkeypatch.setattr(
-        "deerflow.agents.memory.get_memory_manager",
+        "nkyel.agents.memory.get_memory_manager",
         lambda: manager,
     )
     monkeypatch.setattr(
-        "deerflow.agents.middlewares.dynamic_context_middleware.resolve_runtime_user_id",
+        "nkyel.agents.middlewares.dynamic_context_middleware.resolve_runtime_user_id",
         lambda runtime: "alice",
     )
     middleware = DynamicContextMiddleware()
@@ -615,7 +615,7 @@ async def test_unreachable_context_read_raise_aborts_async_dynamic_context_injec
     assert exc_info.value.__cause__ is not None
 
 
-def test_manager_refuses_to_share_single_user_key_across_deerflow_users(
+def test_manager_refuses_to_share_single_user_key_across_nkyel_users(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     official_integration: None,
@@ -888,18 +888,18 @@ def test_corrupt_cursor_fails_closed_instead_of_replaying_history(
 
 
 def test_peer_mapping_is_stable_and_namespaces_are_disjoint() -> None:
-    assert _canonical_peer_id(None, "deerflow") == "deerflow"
-    assert _canonical_peer_id("Research", "deerflow") == "research"
-    assert _canonical_peer_id("deerflow", "deerflow").startswith("df-agent-")
-    assert _canonical_peer_id("-research", "deerflow").startswith("df-agent-")
-    assert _canonical_peer_id("df-agent-custom", "deerflow").startswith("df-agent-")
+    assert _canonical_peer_id(None, "nkyel") == "nkyel"
+    assert _canonical_peer_id("Research", "nkyel") == "research"
+    assert _canonical_peer_id("nkyel", "nkyel").startswith("df-agent-")
+    assert _canonical_peer_id("-research", "nkyel").startswith("df-agent-")
+    assert _canonical_peer_id("df-agent-custom", "nkyel").startswith("df-agent-")
     assert (
         len(
             {
-                _canonical_peer_id(None, "deerflow"),
-                _canonical_peer_id("deerflow", "deerflow"),
-                _canonical_peer_id("-research", "deerflow"),
-                _canonical_peer_id("df-agent-custom", "deerflow"),
+                _canonical_peer_id(None, "nkyel"),
+                _canonical_peer_id("nkyel", "nkyel"),
+                _canonical_peer_id("-research", "nkyel"),
+                _canonical_peer_id("df-agent-custom", "nkyel"),
             }
         )
         == 4

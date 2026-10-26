@@ -143,7 +143,7 @@ export function AgentCard({ agent }: AgentCardProps) {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${agent.name}.deerflow-agent.json`;
+      anchor.download = `${agent.name}.nkyel-agent.json`;
       document.body.append(anchor);
       anchor.click();
       anchor.remove();

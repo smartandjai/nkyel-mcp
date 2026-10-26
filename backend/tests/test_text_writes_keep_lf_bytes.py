@@ -21,14 +21,14 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.config.paths import Paths, get_paths
-from deerflow.persistence.agents.file import FileAgentStore
-from deerflow.persistence.managed_subagents import ManagedSubagentDefinition
-from deerflow.persistence.managed_subagents.file import FileManagedSubagentStore
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.skills.storage import get_or_new_skill_storage, reset_skill_storage
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
-from deerflow.tools.builtins.setup_agent_tool import _publish_text
+from nkyel.config.paths import Paths, get_paths
+from nkyel.persistence.agents.file import FileAgentStore
+from nkyel.persistence.managed_subagents import ManagedSubagentDefinition
+from nkyel.persistence.managed_subagents.file import FileManagedSubagentStore
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.skills.storage import get_or_new_skill_storage, reset_skill_storage
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.tools.builtins.setup_agent_tool import _publish_text
 
 LF_CONTENT = "---\nname: demo-skill\ndescription: Demo skill\n---\n\n# Demo\nsecond line\n"
 
@@ -84,8 +84,8 @@ def storage(tmp_path: Path):
 
 @pytest.fixture()
 def user_storage(tmp_path: Path):
-    with patch("deerflow.config.paths.get_paths", return_value=Paths(base_dir=tmp_path)):
-        with patch("deerflow.config.paths._paths", None):
+    with patch("nkyel.config.paths.get_paths", return_value=Paths(base_dir=tmp_path)):
+        with patch("nkyel.config.paths._paths", None):
             yield UserScopedSkillStorage("test-user", host_path=str(tmp_path))
 
 
@@ -132,8 +132,8 @@ def test_user_scoped_skill_states_store_lf_bytes(user_storage, tmp_path: Path, m
 
 
 def test_agent_store_soul_keeps_lf_bytes(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     soul = "# Persona\nAnswer briefly.\n"
     with _windows_text_writes(monkeypatch):
         FileAgentStore().create("lf-agent", {"description": "demo"}, soul)
@@ -143,8 +143,8 @@ def test_agent_store_soul_keeps_lf_bytes(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_managed_subagent_file_store_keeps_lf_bytes(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     definition = ManagedSubagentDefinition(
         name="lf-researcher",
         description="Researches a bounded topic",
@@ -168,10 +168,10 @@ def test_setup_agent_publish_keeps_lf_bytes(tmp_path: Path, monkeypatch) -> None
 @pytest.mark.asyncio
 async def test_user_profile_update_keeps_lf_bytes(tmp_path: Path, monkeypatch) -> None:
     from app.gateway.routers.agents import UserProfileUpdateRequest, update_user_profile
-    from deerflow.config.agents_api_config import load_agents_api_config_from_dict
+    from nkyel.config.agents_api_config import load_agents_api_config_from_dict
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
     load_agents_api_config_from_dict({"enabled": True})
     try:
         with _windows_text_writes(monkeypatch):
@@ -185,8 +185,8 @@ async def test_user_profile_update_keeps_lf_bytes(tmp_path: Path, monkeypatch) -
 
 def test_skill_markdown_validation_reads_lf_bytes(monkeypatch) -> None:
     """The frontmatter validator has to see the bytes the caller submitted."""
-    import deerflow.skills.validation as validation
-    from deerflow.skills.storage.skill_storage import SkillStorage
+    import nkyel.skills.validation as validation
+    from nkyel.skills.storage.skill_storage import SkillStorage
 
     seen: list[bytes] = []
 
@@ -229,7 +229,7 @@ async def test_static_skill_scan_reads_lf_bytes(monkeypatch) -> None:
 @pytest.mark.parametrize("newline", ["\n", "\r\n"], ids=["lf", "crlf"])
 async def test_skill_manage_static_scan_matches_stored_bytes(storage, monkeypatch, existing, newline) -> None:
     """Agent-managed candidates must be scanned exactly as storage publishes them."""
-    import deerflow.tools.skill_manage_tool as skill_manage
+    import nkyel.tools.skill_manage_tool as skill_manage
 
     if existing:
         storage.write_custom_skill("demo-skill", "SKILL.md", LF_CONTENT)

@@ -1,10 +1,10 @@
 # DeerMem portability demo (other-agent integration)
 
 `backends/deermem/` is a **self-contained, portable** memory backend. It has
-exactly **one** `from deerflow` line -- the ABC contract
-(`from deerflow.agents.memory.manager import MemoryManager` in `deer_mem.py`).
+exactly **one** `from nkyel` line -- the ABC contract
+(`from nkyel.agents.memory.manager import MemoryManager` in `deer_mem.py`).
 Everything else is relative imports within the folder. So another agent can
-adopt DeerMem in three steps, with **zero deer-flow code**.
+adopt DeerMem in three steps, with **zero nkyel code**.
 
 ## Three steps
 
@@ -17,7 +17,7 @@ adopt DeerMem in three steps, with **zero deer-flow code**.
    `backends/`. Change exactly **one line** in `deer_mem.py`:
    ```python
    # from
-   from deerflow.agents.memory.manager import MemoryManager
+   from nkyel.agents.memory.manager import MemoryManager
    # to (your agent's vendored contract)
    from <your_agent>.memory.manager import MemoryManager
    ```
@@ -35,7 +35,7 @@ enable memory extraction). See `deermem_manager.yaml`.
 `tests/test_deermem_self_contained.py::test_portability_vendor_to_other_agent`
 copies `backends/deermem/` into a temp package, repoints the one ABC import to
 a minimal vendored `manager.py`, imports it, and runs an `import_memory` ->
-`get_context` round-trip -- with **zero deer-flow dependency at runtime**.
+`get_context` round-trip -- with **zero nkyel dependency at runtime**.
 
 ## Sample config
 

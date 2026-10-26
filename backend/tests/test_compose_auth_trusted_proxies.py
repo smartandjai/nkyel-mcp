@@ -50,21 +50,21 @@ def _render(tmp_path: Path, variant: str, env_file: str | None) -> dict:
     docker_dir = tmp_path / "docker"
     shutil.copytree(REPO_ROOT / "docker", docker_dir)
     (tmp_path / "frontend").mkdir(exist_ok=True)
-    env = {key: value for key, value in os.environ.items() if not key.startswith(("DEER_FLOW_", "COMPOSE_", "AUTH_"))}
+    env = {key: value for key, value in os.environ.items() if not key.startswith(("NKYEL_", "COMPOSE_", "AUTH_"))}
     env.update(
-        DEER_FLOW_ROOT=str(tmp_path),
-        DEER_FLOW_HOME=str(tmp_path / "home"),
-        DEER_FLOW_REPO_ROOT=str(tmp_path),
-        DEER_FLOW_CONFIG_PATH=str(tmp_path / "config.yaml"),
-        DEER_FLOW_EXTENSIONS_CONFIG_PATH=str(tmp_path / "extensions_config.json"),
+        NKYEL_ROOT=str(tmp_path),
+        NKYEL_HOME=str(tmp_path / "home"),
+        NKYEL_REPO_ROOT=str(tmp_path),
+        NKYEL_CONFIG_PATH=str(tmp_path / "config.yaml"),
+        NKYEL_EXTENSIONS_CONFIG_PATH=str(tmp_path / "extensions_config.json"),
         BETTER_AUTH_SECRET="test-secret",
-        DEER_FLOW_INTERNAL_AUTH_TOKEN="test-token",
+        NKYEL_INTERNAL_AUTH_TOKEN="test-token",
     )
     command = [DOCKER, "compose"]
     if env_file is not None:
         (tmp_path / ".env").write_text(env_file, encoding="utf-8")
         command += ["--env-file", str(tmp_path / ".env")]
-    command += ["-p", "deer-flow-trusted-proxies-test", "-f", str(docker_dir / COMPOSE_PATHS[variant].name), "config", "--format", "json"]
+    command += ["-p", "nkyel-trusted-proxies-test", "-f", str(docker_dir / COMPOSE_PATHS[variant].name), "config", "--format", "json"]
     result = subprocess.run(command, env=env, capture_output=True, text=True, timeout=120, check=False)
     assert result.returncode == 0, result.stderr
     return json.loads(result.stdout)["services"]["gateway"]["environment"]
@@ -96,10 +96,10 @@ def _render_through_docker_start(tmp_path: Path, env_file: str, shell_value: str
     (tmp_path / "frontend").mkdir()
     (tmp_path / "frontend" / ".env").write_text("", encoding="utf-8")
     (tmp_path / ".env").write_text(env_file, encoding="utf-8")
-    (tmp_path / "config.yaml").write_text("sandbox:\n  use: deerflow.sandbox.local:LocalSandboxProvider\n", encoding="utf-8")
+    (tmp_path / "config.yaml").write_text("sandbox:\n  use: nkyel.sandbox.local:LocalSandboxProvider\n", encoding="utf-8")
     (tmp_path / "extensions_config.json").write_text("{}", encoding="utf-8")
     rendered = tmp_path / "rendered.json"
-    env = {key: value for key, value in os.environ.items() if not key.startswith(("DEER_FLOW_", "COMPOSE_", "AUTH_"))}
+    env = {key: value for key, value in os.environ.items() if not key.startswith(("NKYEL_", "COMPOSE_", "AUTH_"))}
     if shell_value is not None:
         env["AUTH_TRUSTED_PROXIES"] = shell_value
     script = f"""

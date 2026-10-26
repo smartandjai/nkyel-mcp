@@ -28,8 +28,8 @@ class _Records(logging.Handler):
 @pytest.mark.parametrize("unlink_fails", [False, True])
 @pytest.mark.parametrize("logging_fails", [False, True])
 def test_manifest_preserves_primary_error_and_independent_cleanup(tmp_path, monkeypatch, phase, primary_type, existing, unlink_fails, logging_fails):
-    from deerflow.skills import projection
-    from deerflow.utils import atomic_write
+    from nkyel.skills import projection
+    from nkyel.utils import atomic_write
 
     scope = tmp_path / "scope"
     scope.mkdir()
@@ -129,7 +129,7 @@ def test_manifest_preserves_primary_error_and_independent_cleanup(tmp_path, monk
 @pytest.mark.parametrize("existing", [False, True])
 @pytest.mark.parametrize("view_signature", [None, "view-签名"])
 def test_manifest_success_keeps_format_and_private_permissions(tmp_path, existing, view_signature):
-    from deerflow.skills import projection
+    from nkyel.skills import projection
 
     scope = tmp_path / "scope"
     scope.mkdir()

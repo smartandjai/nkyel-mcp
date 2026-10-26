@@ -1,4 +1,4 @@
-"""Capture real HTTP requests through DeerFlow's MCP discovery and tool calls."""
+"""Capture real HTTP requests through nkyel's MCP discovery and tool calls."""
 
 import asyncio
 import json
@@ -8,7 +8,7 @@ from threading import Thread
 
 import pytest
 
-from deerflow.mcp.tools import get_mcp_tools
+from nkyel.mcp.tools import get_mcp_tools
 
 
 @pytest.mark.asyncio
@@ -56,7 +56,7 @@ async def test_parallel_example_user_agent_reaches_tool_requests(tmp_path, monke
         config = {"mcpServers": {"parallel-search": parallel, "other": {"type": "http", "url": f"http://127.0.0.1:{server.server_port}/other", "headers": {"User-Agent": "other-project/1.0", "X-Caller": "other-caller"}}}}
         config_path = tmp_path / "extensions_config.json"
         config_path.write_text(json.dumps(config))
-        monkeypatch.setenv("DEER_FLOW_EXTENSIONS_CONFIG_PATH", str(config_path))
+        monkeypatch.setenv("NKYEL_EXTENSIONS_CONFIG_PATH", str(config_path))
 
         tools = {tool.name: tool for tool in await get_mcp_tools()}
         for name in ("parallel-search_web_search", "parallel-search_web_fetch", "parallel-search_web_search", "other_web_search"):
@@ -69,7 +69,7 @@ async def test_parallel_example_user_agent_reaches_tool_requests(tmp_path, monke
         assert [request["params"]["name"] for request, _ in parallel_requests if request["method"] == "tools/call"] == ["web_search", "web_fetch", "web_search"]
         for _, headers in parallel_requests:
             headers = {name.lower(): value for name, value in headers.items()}
-            assert headers["user-agent"] == "deer-flow"
+            assert headers["user-agent"] == "nkyel"
             if authenticated:
                 assert headers["authorization"] == "Bearer test-only"
                 assert headers["x-caller"] == "test-caller"

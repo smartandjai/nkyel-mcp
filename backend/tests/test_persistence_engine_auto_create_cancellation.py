@@ -4,9 +4,9 @@ import asyncio
 
 import pytest
 
-from deerflow.persistence import engine as engine_mod
+from nkyel.persistence import engine as engine_mod
 
-_TARGET_URL = "postgresql+asyncpg://deerflow:secret@127.0.0.1:5432/deerflow_target"
+_TARGET_URL = "postgresql+asyncpg://nkyel:secret@127.0.0.1:5432/nkyel_target"
 
 
 class _RecordingConnection:
@@ -60,7 +60,7 @@ async def test_auto_create_db_drains_maintenance_dispose_across_repeated_cancell
     try:
         task = asyncio.create_task(engine_mod._auto_create_postgres_db(_TARGET_URL))
         await asyncio.wait_for(maintenance_engine.connection.executed.wait(), timeout=1)
-        assert 'CREATE DATABASE "deerflow_target"' in maintenance_engine.connection.statements[0]
+        assert 'CREATE DATABASE "nkyel_target"' in maintenance_engine.connection.statements[0]
         await asyncio.wait_for(maintenance_engine.dispose_started.wait(), timeout=1)
 
         task.cancel()

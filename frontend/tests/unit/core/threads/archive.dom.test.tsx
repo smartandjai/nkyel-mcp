@@ -16,7 +16,7 @@ import { usePinThread } from "@/core/threads/hooks";
 
 const original = {
   thread_id: "chat",
-  metadata: { deerflow_pinned: true },
+  metadata: { nkyel_pinned: true },
   values: { title: "Report" },
   updated_at: "2026-01-01T00:00:00Z",
 };
@@ -43,7 +43,7 @@ function setup() {
 
 test("archive preserves the active snapshot and resets list pagination after success", async () => {
   mocks.fetch.mockResolvedValue(
-    new Response(JSON.stringify({ metadata: { deerflow_archived: true } })),
+    new Response(JSON.stringify({ metadata: { nkyel_archived: true } })),
   );
   const { client, key, result } = setup();
   await act(async () => {
@@ -53,12 +53,12 @@ test("archive preserves the active snapshot and resets list pagination after suc
     expect.stringContaining("/api/threads/chat"),
     expect.objectContaining({
       method: "PATCH",
-      body: JSON.stringify({ metadata: { deerflow_archived: true } }),
+      body: JSON.stringify({ metadata: { nkyel_archived: true } }),
     }),
   );
   expect(client.getQueryData(key)).toEqual({
     ...original,
-    metadata: { deerflow_pinned: true, deerflow_archived: true },
+    metadata: { nkyel_pinned: true, nkyel_archived: true },
   });
   expect(
     client.getQueryData(["threads", "searchInfinite", { archived: false }]),
@@ -93,7 +93,7 @@ test("archive restarts an initial metadata read cancelled by the mutation", asyn
     <QueryClientProvider client={client}>{children}</QueryClientProvider>
   );
   mocks.fetch.mockResolvedValue(
-    new Response(JSON.stringify({ metadata: { deerflow_archived: true } })),
+    new Response(JSON.stringify({ metadata: { nkyel_archived: true } })),
   );
   const { result } = renderHook(
     () => ({
@@ -104,7 +104,7 @@ test("archive restarts an initial metadata read cancelled by the mutation", asyn
           if (reads === 1) return new Promise<typeof original>(() => undefined);
           return {
             ...original,
-            metadata: { ...original.metadata, deerflow_archived: true },
+            metadata: { ...original.metadata, nkyel_archived: true },
           };
         },
       }),
@@ -121,8 +121,8 @@ test("archive restarts an initial metadata read cancelled by the mutation", asyn
   });
   await waitFor(() =>
     expect(result.current.metadata.data?.metadata).toEqual({
-      deerflow_pinned: true,
-      deerflow_archived: true,
+      nkyel_pinned: true,
+      nkyel_archived: true,
     }),
   );
   client.clear();
@@ -147,7 +147,7 @@ test("a late pin response cannot roll back the confirmed archive flag", async ()
   });
   await waitFor(() => expect(finishPin).toBeDefined());
   mocks.fetch.mockResolvedValue(
-    new Response(JSON.stringify({ metadata: { deerflow_archived: true } })),
+    new Response(JSON.stringify({ metadata: { nkyel_archived: true } })),
   );
   await act(async () => {
     await archive.current.mutateAsync({ threadId: "chat", archived: true });
@@ -156,7 +156,7 @@ test("a late pin response cannot roll back the confirmed archive flag", async ()
     finishPin(
       new Response(
         JSON.stringify({
-          metadata: { deerflow_pinned: true, deerflow_archived: false },
+          metadata: { nkyel_pinned: true, nkyel_archived: false },
         }),
       ),
     );
@@ -164,14 +164,14 @@ test("a late pin response cannot roll back the confirmed archive flag", async ()
   });
   expect(client.getQueryData(key)).toEqual({
     ...original,
-    metadata: { deerflow_pinned: true, deerflow_archived: true },
+    metadata: { nkyel_pinned: true, nkyel_archived: true },
   });
   client.clear();
 });
 
 test("archive invalidates project-scoped thread lists on success", async () => {
   mocks.fetch.mockResolvedValue(
-    new Response(JSON.stringify({ metadata: { deerflow_archived: true } })),
+    new Response(JSON.stringify({ metadata: { nkyel_archived: true } })),
   );
   const { client, result } = setup();
   const projectListKey = [...PROJECTS_QUERY_KEY, "threads", "proj-1"];

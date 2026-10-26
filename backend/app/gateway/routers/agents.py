@@ -12,9 +12,9 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.gateway.authz import require_permission
 from app.gateway.deps import get_config
 from app.gateway.persistent_writes import run_drained_write
-from deerflow.agents.memory.manager import get_memory_manager
-from deerflow.config.agents_api_config import get_agents_api_config
-from deerflow.config.agents_config import (
+from nkyel.agents.memory.manager import get_memory_manager
+from nkyel.config.agents_api_config import get_agents_api_config
+from nkyel.config.agents_config import (
     AgentConfig,
     AgentDisplayName,
     AgentModelSettings,
@@ -23,12 +23,12 @@ from deerflow.config.agents_config import (
     load_agent_soul,
     preserve_non_managed_fields,
 )
-from deerflow.config.app_config import AppConfig, get_app_config
-from deerflow.config.paths import get_paths
-from deerflow.knowledge_scope import KnowledgeScope, canonicalize_knowledge_scope
-from deerflow.persistence.agents import AgentDeleteOutcome, AgentExistsError, get_agent_store
-from deerflow.persistence.agents.file import FileAgentStore
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.config.app_config import AppConfig, get_app_config
+from nkyel.config.paths import get_paths
+from nkyel.knowledge_scope import KnowledgeScope, canonicalize_knowledge_scope
+from nkyel.persistence.agents import AgentDeleteOutcome, AgentExistsError, get_agent_store
+from nkyel.persistence.agents.file import FileAgentStore
+from nkyel.runtime.user_context import get_effective_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["agents"])
@@ -128,7 +128,7 @@ class AgentPackage(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    format: Literal["deerflow.custom-agent"]
+    format: Literal["nkyel.custom-agent"]
     version: Literal[1]
     agent: AgentPackageAgent
 
@@ -378,7 +378,7 @@ async def check_agent_name(name: str, request: Request) -> dict:
     response_model=AgentResponse,
     status_code=201,
     summary="Import Custom Agent",
-    description="Create a user-scoped custom agent from a versioned DeerFlow agent package without importing runtime state.",
+    description="Create a user-scoped custom agent from a versioned nkyel agent package without importing runtime state.",
 )
 @require_permission("agents", "write")
 async def import_agent_package(body: AgentPackage, request: Request, name: str | None = None) -> AgentResponse:
@@ -423,7 +423,7 @@ async def export_agent_package(name: str, request: Request, response: Response) 
         agent_cfg = load_agent_config(normalized_name, user_id=user_id)
         soul = load_agent_soul(normalized_name, user_id=user_id) or ""
         return AgentPackage(
-            format="deerflow.custom-agent",
+            format="nkyel.custom-agent",
             version=1,
             agent=AgentPackageAgent(
                 name=agent_cfg.name,
@@ -451,7 +451,7 @@ async def export_agent_package(name: str, request: Request, response: Response) 
         logger.error("Failed to export agent '%s' (%s)", normalized_name, type(e).__name__, exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to export agent")
 
-    response.headers["Content-Disposition"] = f'attachment; filename="{normalized_name}.deerflow-agent.json"'
+    response.headers["Content-Disposition"] = f'attachment; filename="{normalized_name}.nkyel-agent.json"'
     return package
 
 

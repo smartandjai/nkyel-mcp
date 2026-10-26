@@ -13,7 +13,7 @@ import pytest
 
 @pytest.fixture(params=["url_safety", "brave.tools", "serper.tools", "infoquest.infoquest_client"])
 def screen(request):
-    module = importlib.import_module(f"deerflow.community.{request.param}")
+    module = importlib.import_module(f"nkyel.community.{request.param}")
     return module.safe_public_result_url if request.param == "url_safety" else module._safe_public_url
 
 
@@ -190,7 +190,7 @@ async def test_text_search_providers_screen_result_urls(provider, url, expected)
 
     Only the provider payload varies; the title and snippet stay in the row.
     """
-    module = importlib.import_module(f"deerflow.community.{provider}.tools")
+    module = importlib.import_module(f"nkyel.community.{provider}.tools")
     patches, run = _TEXT_SEARCH_STUBS[provider](module, url)
     with ExitStack() as stack:
         config = stack.enter_context(patch.object(module, "get_app_config"))
@@ -211,7 +211,7 @@ async def test_text_search_providers_screen_result_urls(provider, url, expected)
 
 @pytest.mark.parametrize(("url", "expected"), [(_METADATA_URL, ""), (_PUBLIC_URL, _PUBLIC_URL)])
 def test_serply_scholar_screens_pdf_url(url, expected):
-    from deerflow.community.serply.tools import _normalize_row
+    from nkyel.community.serply.tools import _normalize_row
 
     row = _normalize_row("scholar", {"title": "t", "link": url, "doc": {"link": url}})
     assert (row["url"], row["pdf_url"]) == (expected, expected)

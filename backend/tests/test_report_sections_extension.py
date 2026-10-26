@@ -4,13 +4,13 @@ import asyncio
 from pathlib import Path
 
 import pytest
-from deerflow_extension_api.auth import ExtensionPrincipal
-from deerflow_extension_api.plugins import ToolContext
+from nkyel_extension_api.auth import ExtensionPrincipal
+from nkyel_extension_api.plugins import ToolContext
 
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
-from deerflow.extensions.plugin_tools import build_plugin_tools
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.extensions.plugin_tools import build_plugin_tools
 
-EXAMPLE = Path(__file__).resolve().parents[2] / "examples/deerflow-extension-report-sections"
+EXAMPLE = Path(__file__).resolve().parents[2] / "examples/nkyel-extension-report-sections"
 
 OUTLINE = "# 2026 年新能源汽车行业研究报告\n\n本报告分五章。"
 SECTION_WITH_TITLE = "# 一、行业概述与研究方法\n\n行业概述正文。"
@@ -28,7 +28,7 @@ def load(syspath, tmp_path):
         loaded, diagnostics = load_extensions(
             [
                 ExtensionSpec(
-                    use="deerflow_extension_report_sections:install",
+                    use="nkyel_extension_report_sections:install",
                     config={"enabled": True, "storage_path": str(tmp_path / "sections.sqlite"), **config},
                 )
             ]
@@ -90,7 +90,7 @@ def test_assembly_strips_duplicate_headings_and_keeps_unique_ones(load):
 
 
 def test_strip_duplicate_title_heading_variants(syspath):
-    from deerflow_extension_report_sections.sections import strip_duplicate_title_heading
+    from nkyel_extension_report_sections.sections import strip_duplicate_title_heading
 
     assert strip_duplicate_title_heading("# 摘要\n正文", "摘要") == "正文"
     assert strip_duplicate_title_heading("### 摘要 ###\n正文", "  摘要  ") == "正文"
@@ -100,7 +100,7 @@ def test_strip_duplicate_title_heading_variants(syspath):
 
 
 def test_assemble_document_counts_stripped_bodies(syspath):
-    from deerflow_extension_report_sections.sections import assemble_document
+    from nkyel_extension_report_sections.sections import assemble_document
 
     rows = [
         {"section_index": 0, "title": "大纲", "content": "# 大纲\n引言。"},

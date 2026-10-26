@@ -70,7 +70,7 @@ for (const destination of ["agent-thread", "normal-chat"] as const) {
     const createRequest = await intercepted;
     const previousModel = await page.evaluate(
       // No override and an explicit model-a both select the configured default.
-      (id) => localStorage.getItem(`deerflow.thread-model.${id}`) ?? "model-a",
+      (id) => localStorage.getItem(`nkyel.thread-model.${id}`) ?? "model-a",
       createdId,
     );
     try {
@@ -104,7 +104,7 @@ for (const destination of ["agent-thread", "normal-chat"] as const) {
       expect(
         await page.evaluate(
           (id) =>
-            localStorage.getItem(`deerflow.thread-model.${id}`) ?? "model-a",
+            localStorage.getItem(`nkyel.thread-model.${id}`) ?? "model-a",
           createdId,
         ),
       ).toBe(previousModel);
@@ -137,7 +137,7 @@ test("a completed Custom Agent model change still saves without a run", async ({
   expect(threadId).not.toBe("new");
   expect(
     await page.evaluate(
-      (id) => localStorage.getItem(`deerflow.thread-model.${id}`),
+      (id) => localStorage.getItem(`nkyel.thread-model.${id}`),
       threadId,
     ),
   ).toBe("model-b");

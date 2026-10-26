@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from deerflow_extension_api import ExtensionRegistry, extension
+from nkyel_extension_api import ExtensionRegistry, extension
 
 INSTALLED: list[str] = []
 

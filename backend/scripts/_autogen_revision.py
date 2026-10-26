@@ -2,7 +2,7 @@
 
 Used by ``make migrate-rev MSG="..."``. Avoids two pitfalls:
 
-1. ``alembic.ini``'s default ``sqlalchemy.url`` (``sqlite:///./data/deerflow.db``)
+1. ``alembic.ini``'s default ``sqlalchemy.url`` (``sqlite:///./data/nkyel.db``)
    points at a path that doesn't exist in a clean checkout, so a bare
    ``alembic revision --autogenerate`` fails with ``unable to open database file``.
 2. A persistent DB might be at an unknown revision (or at no revision at all),
@@ -16,7 +16,7 @@ that. The temp DB must be built from migration history -- not from
 a revision remain visible to autogenerate as a real diff.
 
 The generated file lands in
-``packages/harness/deerflow/persistence/migrations/versions/`` -- exactly
+``packages/harness/nkyel/persistence/migrations/versions/`` -- exactly
 where alembic puts it by default -- and the temp directory is left for the OS
 to GC. Review the generated revision and switch raw ``op.add_column`` /
 ``op.drop_column`` calls to the idempotent helpers in ``migrations/_helpers.py``
@@ -38,11 +38,11 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 
-import deerflow.persistence.models  # noqa: F401  -- registers ORM models with Base.metadata
-from deerflow.persistence.bootstrap import _escape_url_for_alembic
+import nkyel.persistence.models  # noqa: F401  -- registers ORM models with Base.metadata
+from nkyel.persistence.bootstrap import _escape_url_for_alembic
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
-MIGRATIONS_DIR = BACKEND_DIR / "packages/harness/deerflow/persistence/migrations"
+MIGRATIONS_DIR = BACKEND_DIR / "packages/harness/nkyel/persistence/migrations"
 
 
 def _alembic_config(url: str) -> Config:
@@ -55,7 +55,7 @@ def _alembic_config(url: str) -> Config:
 
 
 def _build_temp_db_at_head() -> str:
-    tmpdir = tempfile.mkdtemp(prefix="deerflow-autogen-")
+    tmpdir = tempfile.mkdtemp(prefix="nkyel-autogen-")
     db_path = os.path.join(tmpdir, "autogen.db").replace(os.sep, "/")
     url = f"sqlite+aiosqlite:///{db_path}"
     command.upgrade(_alembic_config(url), "head")

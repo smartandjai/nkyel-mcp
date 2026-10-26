@@ -17,7 +17,7 @@ function thread(id: string, updatedAt: string): AgentThread {
 function pinnedThread(id: string, updatedAt: string): AgentThread {
   return {
     ...thread(id, updatedAt),
-    metadata: { deerflow_pinned: true },
+    metadata: { nkyel_pinned: true },
   };
 }
 

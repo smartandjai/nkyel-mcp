@@ -90,14 +90,14 @@ The sync path mirrors this recursion and shares the same cache and depth budget.
 The cache is built **with the checkpointer, once per process**. `langgraph_runtime()` constructs the
 checkpointer from the startup `AppConfig` snapshot (`backend/app/gateway/deps.py:463`), and the delta saver is wrapped in
 `CachedHistorySaver` around whatever `make_checkpoint_cache()` returned at that moment
-(`backend/packages/harness/deerflow/runtime/checkpointer/async_provider.py:250-254`). Nothing re-reads this section at runtime, so every field below keeps its
+(`backend/packages/harness/nkyel/runtime/checkpointer/async_provider.py:250-254`). Nothing re-reads this section at runtime, so every field below keeps its
 startup value for the process's lifetime.
 
 | Key | Type | Default | Range | Restart to change | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `database.checkpoint_cache.type` | `memory` \| `redis` | `memory` | — | Yes | `memory` is a process-local LRU; `redis` is a shared cache for multi-worker deployments, async/Gateway path only |
 | `database.checkpoint_cache.max_entries` | `int` | `128` | `ge=0` | Yes | LRU capacity of the memory backend; `0` disables the cache |
-| `database.checkpoint_cache.redis_url` | `str` or null | `null` | Any redis URL | Yes | Falls back to `DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL`, then `REDIS_URL`, then `redis://localhost:6379/0` |
+| `database.checkpoint_cache.redis_url` | `str` or null | `null` | Any redis URL | Yes | Falls back to `NKYEL_CHECKPOINT_CACHE_REDIS_URL`, then `REDIS_URL`, then `redis://localhost:6379/0` |
 | `database.checkpoint_cache.ttl_seconds` | `int` | `86400` | `ge=0` | Yes | Redis entry TTL, a leak safety net rather than a correctness mechanism; `0` disables expiry |
 | `database.checkpoint_cache.key_prefix` | `str` | `""` | Any string | Yes | Empty means the derived hash of the database identity |
 
@@ -118,7 +118,7 @@ database:
   checkpoint_cache:
     type: memory            # memory | redis (redis is Gateway/async only)
     max_entries: 128        # 0 disables the cache
-    redis_url: null         # or DEER_FLOW_CHECKPOINT_CACHE_REDIS_URL / REDIS_URL
+    redis_url: null         # or NKYEL_CHECKPOINT_CACHE_REDIS_URL / REDIS_URL
     ttl_seconds: 86400      # redis leak safety net; purge itself is immediate
     key_prefix: ""          # default: hash of the database identity
 ```

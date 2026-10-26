@@ -13,14 +13,14 @@ from langchain_core.tools import tool as as_tool
 from pydantic import Field, PrivateAttr
 
 from app.channels.commands import KNOWN_CHANNEL_COMMANDS
-from deerflow.agents.middlewares import skill_activation_middleware as middleware_module
-from deerflow.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware, is_slash_skill_activation_reminder
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.config.paths import Paths
-from deerflow.skills.slash import RESERVED_SLASH_SKILL_NAMES, parse_slash_skill_reference, resolve_slash_skill
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
-from deerflow.skills.types import Skill, SkillCategory
-from deerflow.utils.messages import ORIGINAL_USER_CONTENT_KEY
+from nkyel.agents.middlewares import skill_activation_middleware as middleware_module
+from nkyel.agents.middlewares.skill_activation_middleware import SkillActivationMiddleware, is_slash_skill_activation_reminder
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.config.paths import Paths
+from nkyel.skills.slash import RESERVED_SLASH_SKILL_NAMES, parse_slash_skill_reference, resolve_slash_skill
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.skills.types import Skill, SkillCategory
+from nkyel.utils.messages import ORIGINAL_USER_CONTENT_KEY
 
 _SLASH_SOURCE_OWNER_TOKEN = "test-slash-source-owner"
 
@@ -173,13 +173,13 @@ def test_skill_activation_middleware_reads_public_skill_from_real_user_scoped_st
         skills=SimpleNamespace(
             get_skills_path=lambda: skills_root,
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         ),
     )
     extensions_config = ExtensionsConfig()
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
     monkeypatch.setattr(ExtensionsConfig, "from_file", classmethod(lambda cls, config_path=None: extensions_config))
-    monkeypatch.setattr("deerflow.config.extensions_config.get_extensions_config", lambda: extensions_config)
+    monkeypatch.setattr("nkyel.config.extensions_config.get_extensions_config", lambda: extensions_config)
     storage = UserScopedSkillStorage("test-user", host_path=str(skills_root), app_config=app_config)
     monkeypatch.setattr(middleware_module, "get_or_new_user_skill_storage", lambda user_id, **kwargs: storage)
 
@@ -225,13 +225,13 @@ def test_skill_activation_middleware_reads_external_custom_skill_directory_symli
         skills=SimpleNamespace(
             get_skills_path=lambda: skills_root,
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         ),
     )
     extensions_config = ExtensionsConfig()
-    monkeypatch.setattr("deerflow.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
+    monkeypatch.setattr("nkyel.config.paths.get_paths", lambda: Paths(base_dir=tmp_path))
     monkeypatch.setattr(ExtensionsConfig, "from_file", classmethod(lambda cls, config_path=None: extensions_config))
-    monkeypatch.setattr("deerflow.config.extensions_config.get_extensions_config", lambda: extensions_config)
+    monkeypatch.setattr("nkyel.config.extensions_config.get_extensions_config", lambda: extensions_config)
 
     storage = UserScopedSkillStorage("test-user", host_path=str(skills_root), app_config=app_config)
     monkeypatch.setattr(middleware_module, "get_or_new_user_skill_storage", lambda user_id, **kwargs: storage)
@@ -427,9 +427,9 @@ class _ScriptedChatModel(FakeMessagesListChatModel):
 
 
 def _run_retrying_slash_graph(monkeypatch, tmp_path, *, model, asynchronous=False):
-    from deerflow.agents.middlewares.llm_error_handling_middleware import LLMErrorHandlingMiddleware
-    from deerflow.config.app_config import AppConfig, LlmCallConfig
-    from deerflow.config.sandbox_config import SandboxConfig
+    from nkyel.agents.middlewares.llm_error_handling_middleware import LLMErrorHandlingMiddleware
+    from nkyel.config.app_config import AppConfig, LlmCallConfig
+    from nkyel.config.sandbox_config import SandboxConfig
 
     skill = _make_skill(tmp_path, "data-analysis", content="# Data Analysis\nUse pandas.")
     disk_reads = {"n": 0}
@@ -560,7 +560,7 @@ def test_skill_activation_strips_a_leading_bom_from_skill_content(monkeypatch, t
     """A SKILL.md saved by a Windows editor must reach the model without its BOM.
 
     The frontmatter path already tolerates one — ``_FRONTMATTER_RE``
-    (``deerflow/skills/frontmatter.py``) consumes an optional leading BOM — so a
+    (``nkyel/skills/frontmatter.py``) consumes an optional leading BOM — so a
     skill written by Notepad or PowerShell 5.1 parses and installs fine. That
     tolerance covers the front matter only. Activation then reads the whole file
     for the model, and reading it as plain ``utf-8`` there would hand the model a

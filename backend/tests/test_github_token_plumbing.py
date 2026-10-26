@@ -30,13 +30,13 @@ from langgraph_sdk.errors import ConflictError
 from app.channels.manager import ChannelManager
 from app.channels.message_bus import InboundMessage, InboundMessageType, MessageBus
 from app.channels.store import JsonChannelStore
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
-from deerflow.sandbox.tools import _github_env_from_runtime, bash_tool
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.tools import _github_env_from_runtime, bash_tool
 
 
 def _new_aio_sandbox_with_session_state():
     """Build a manually wired AioSandbox including creation-ownership state."""
-    from deerflow.community.aio_sandbox.aio_sandbox import AioSandbox, _SessionCreationState
+    from nkyel.community.aio_sandbox.aio_sandbox import AioSandbox, _SessionCreationState
 
     sbx = AioSandbox.__new__(AioSandbox)
     sbx._session_creation_state_lock = threading.Lock()
@@ -64,7 +64,7 @@ def _make_conflict_error(detail: str = "thread_id already exists") -> ConflictEr
 def test_local_sandbox_env_overlay_reaches_subprocess(monkeypatch: pytest.MonkeyPatch) -> None:
     """``env`` is layered on top of a sanitized os.environ for the subprocess
     call — inherited benign vars survive, the injected secret wins."""
-    import deerflow.sandbox.local.local_sandbox as local_sandbox
+    import nkyel.sandbox.local.local_sandbox as local_sandbox
 
     captured: dict = {}
 
@@ -88,7 +88,7 @@ def test_local_sandbox_env_overlay_reaches_subprocess(monkeypatch: pytest.Monkey
 def test_local_sandbox_no_env_passes_sanitized_environ(monkeypatch: pytest.MonkeyPatch) -> None:
     """Without ``env`` the subprocess still gets a sanitized environ — platform
     secrets are scrubbed (#3861), only benign inherited vars survive."""
-    import deerflow.sandbox.local.local_sandbox as local_sandbox
+    import nkyel.sandbox.local.local_sandbox as local_sandbox
 
     captured: dict = {}
 
@@ -230,7 +230,7 @@ def test_extra_env_rejects_invalid_keys(bad_key) -> None:
     route a key through a shell — the contract is what matters, not each
     implementation's current escaping rules.
     """
-    from deerflow.sandbox.sandbox import _validate_extra_env
+    from nkyel.sandbox.sandbox import _validate_extra_env
 
     with pytest.raises(ValueError, match="extra_env key"):
         _validate_extra_env({bad_key: "value"})
@@ -249,7 +249,7 @@ def test_extra_env_rejects_invalid_keys(bad_key) -> None:
 )
 def test_extra_env_accepts_valid_keys(good_key: str) -> None:
     """POSIX env-var names round-trip cleanly."""
-    from deerflow.sandbox.sandbox import _validate_extra_env
+    from nkyel.sandbox.sandbox import _validate_extra_env
 
     # No exception => acceptance.
     _validate_extra_env({good_key: "any value with spaces and $metachars"})
@@ -257,7 +257,7 @@ def test_extra_env_accepts_valid_keys(good_key: str) -> None:
 
 def test_extra_env_none_and_empty_pass_through() -> None:
     """``None`` and empty dicts are the common case — must not raise."""
-    from deerflow.sandbox.sandbox import _validate_extra_env
+    from nkyel.sandbox.sandbox import _validate_extra_env
 
     _validate_extra_env(None)
     _validate_extra_env({})
@@ -267,7 +267,7 @@ def test_local_sandbox_rejects_invalid_env_key(monkeypatch: pytest.MonkeyPatch) 
     """End-to-end: a bad key reaches the implementation's ``execute_command``
     and is rejected before any subprocess is spawned.
     """
-    import deerflow.sandbox.local.local_sandbox as local_sandbox
+    import nkyel.sandbox.local.local_sandbox as local_sandbox
 
     fake_popen_called = False
 
@@ -389,8 +389,8 @@ def test_bash_tool_passes_token_as_env(monkeypatch: pytest.MonkeyPatch) -> None:
             captured["env"] = env
             return "done"
 
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: _Sandbox())
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: _Sandbox())
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
 
     result = bash_tool.func(runtime=runtime, description="push", command="git push")
 
@@ -412,8 +412,8 @@ def test_bash_tool_no_env_without_token(monkeypatch: pytest.MonkeyPatch) -> None
             captured["env"] = env
             return "done"
 
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: _Sandbox())
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: _Sandbox())
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
 
     bash_tool.func(runtime=runtime, description="ls", command="ls")
     assert captured["env"] is None
@@ -454,11 +454,11 @@ def test_bash_tool_routes_subagent_command_to_its_shell_scope(
             return "done"
 
     monkeypatch.setattr(
-        "deerflow.sandbox.tools.ensure_sandbox_initialized",
+        "nkyel.sandbox.tools.ensure_sandbox_initialized",
         lambda runtime: _Sandbox(),
     )
     monkeypatch.setattr(
-        "deerflow.sandbox.tools.ensure_thread_directories_exist",
+        "nkyel.sandbox.tools.ensure_thread_directories_exist",
         lambda runtime: None,
     )
 
@@ -466,7 +466,7 @@ def test_bash_tool_routes_subagent_command_to_its_shell_scope(
 
     assert result == "done"
     assert captured["scope_id"] == "subagent:task-1"
-    assert captured["command"] == "export DEERFLOW_USER_ID=u-test; cd /mnt/user-data/workspace; ls"
+    assert captured["command"] == "export NKYEL_USER_ID=u-test; cd /mnt/user-data/workspace; ls"
 
 
 # ---------------------------------------------------------------------------

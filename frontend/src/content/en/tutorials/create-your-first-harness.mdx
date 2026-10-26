@@ -1,24 +1,24 @@
 ---
 title: Create Your First Harness
-description: This tutorial shows you how to use the DeerFlow Harness programmatically — importing and using DeerFlow directly in your Python code rather than through the web interface.
+description: This tutorial shows you how to use the nkyel Harness programmatically — importing and using nkyel directly in your Python code rather than through the web interface.
 ---
 
 import { Callout, Steps } from "nextra/components";
 
 # Create Your First Harness
 
-This tutorial shows you how to use the DeerFlow Harness programmatically — importing and using DeerFlow directly in your Python code rather than through the web interface.
+This tutorial shows you how to use the nkyel Harness programmatically — importing and using nkyel directly in your Python code rather than through the web interface.
 
 ## Prerequisites
 
 - Python 3.12+
 - `uv` installed
-- DeerFlow repository cloned
+- nkyel repository cloned
 
 ## Install
 
 ```bash
-cd deer-flow/backend
+cd nkyel/backend
 uv sync
 ```
 
@@ -36,12 +36,12 @@ models:
     api_key: $OPENAI_API_KEY
 
 sandbox:
-  use: deerflow.sandbox.local:LocalSandboxProvider
+  use: nkyel.sandbox.local:LocalSandboxProvider
 
 tools:
-  - use: deerflow.community.ddg_search.tools:web_search_tool
-  - use: deerflow.sandbox.tools:read_file_tool
-  - use: deerflow.sandbox.tools:write_file_tool
+  - use: nkyel.community.ddg_search.tools:web_search_tool
+  - use: nkyel.sandbox.tools:read_file_tool
+  - use: nkyel.sandbox.tools:write_file_tool
 ```
 
 ## Write the code
@@ -54,13 +54,13 @@ Create `my_agent.py` in the `backend/` directory:
 
 ```python
 import os
-from deerflow.client import DeerFlowClient
+from nkyel.client import NkyelClient
 
 os.environ["OPENAI_API_KEY"] = "sk-..."
 
 # The client loads config.yaml itself. To select a specific file,
-# set DEER_FLOW_CONFIG_PATH before constructing the client.
-client = DeerFlowClient()
+# set NKYEL_CONFIG_PATH before constructing the client.
+client = NkyelClient()
 
 for event in client.stream(
     message="Write a Python fibonacci function with a docstring",

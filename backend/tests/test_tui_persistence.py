@@ -10,8 +10,8 @@ import threading
 import pytest
 from langgraph.store.memory import InMemoryStore
 
-from deerflow.persistence.thread_meta import make_thread_store
-from deerflow.tui.persistence import ThreadMetaWriter, _LoopThread
+from nkyel.persistence.thread_meta import make_thread_store
+from nkyel.tui.persistence import ThreadMetaWriter, _LoopThread
 
 
 @pytest.fixture

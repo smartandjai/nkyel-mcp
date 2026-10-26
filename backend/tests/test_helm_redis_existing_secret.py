@@ -13,7 +13,7 @@ import yaml
 from support.shell import require_posix_sh
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CHART = REPO_ROOT / "deploy" / "helm" / "deer-flow"
+CHART = REPO_ROOT / "deploy" / "helm" / "nkyel"
 PASSWORD = "p a$$'\"@:/?#%[]*"
 
 
@@ -21,7 +21,7 @@ def _render_chart(*settings: str) -> list[dict]:
     helm = shutil.which("helm")
     if helm is None:
         pytest.skip("helm is unavailable")
-    command = [helm, "template", "deer-flow", str(CHART)]
+    command = [helm, "template", "nkyel", str(CHART)]
     for setting in settings:
         command.extend(["--set", setting])
     rendered = subprocess.run(command, check=True, capture_output=True, text=True, encoding="utf-8").stdout
@@ -57,7 +57,7 @@ def _run_command(command: list[str], tmp_path: Path, password: str | None) -> li
 def test_chart_managed_redis_credentials_match_the_gateway(password: str, tmp_path: Path) -> None:
     documents = _render_chart(f"redis.auth.password={password}")
     redis = _container(documents, "redis")
-    gateway_ref = _secret_ref(_container(documents, "gateway"), "DEER_FLOW_STREAM_BRIDGE_REDIS_URL")
+    gateway_ref = _secret_ref(_container(documents, "gateway"), "NKYEL_STREAM_BRIDGE_REDIS_URL")
     secret = next(document for document in documents if document.get("kind") == "Secret" and document["metadata"]["name"] == gateway_ref["name"])
     url = urlsplit(secret["stringData"][gateway_ref["key"]])
     assert unquote(url.password or "") == password
@@ -81,7 +81,7 @@ def test_bundled_redis_uses_optional_existing_secret_password(password: str | No
     documents = _render_chart("redis.existingSecret=managed-redis", f"redis.auth.password={ignored_password}")
     redis = _container(documents, "redis")
     assert _secret_ref(redis, "REDIS_PASSWORD") == {"name": "managed-redis", "key": "redis-password", "optional": True}
-    assert _secret_ref(_container(documents, "gateway"), "DEER_FLOW_STREAM_BRIDGE_REDIS_URL") == {"name": "managed-redis", "key": "redis-url"}
+    assert _secret_ref(_container(documents, "gateway"), "NKYEL_STREAM_BRIDGE_REDIS_URL") == {"name": "managed-redis", "key": "redis-url"}
     assert not any(document.get("kind") == "Secret" and document["metadata"]["name"].endswith("-redis") for document in documents)
     if ignored_password:
         # The stale value must not leak into the manifest: it is the only input
@@ -107,7 +107,7 @@ def test_falsy_existing_secret_still_uses_the_chart_managed_secret(settings: tup
     # last operand even when falsy, so it would name the Secret `false` — and
     # nothing creates a Secret by that name, leaving both refs dangling.
     documents = _render_chart(*settings, f"redis.auth.password={PASSWORD}")
-    gateway_ref = _secret_ref(_container(documents, "gateway"), "DEER_FLOW_STREAM_BRIDGE_REDIS_URL")
+    gateway_ref = _secret_ref(_container(documents, "gateway"), "NKYEL_STREAM_BRIDGE_REDIS_URL")
     redis_ref = _secret_ref(_container(documents, "redis"), "REDIS_PASSWORD")
     assert isinstance(gateway_ref["name"], str)
     assert gateway_ref == {"name": redis_ref["name"], "key": "redis-url"}
@@ -119,7 +119,7 @@ def test_falsy_existing_secret_still_uses_the_chart_managed_secret(settings: tup
 def test_external_secret_precedence_is_unchanged(enabled: str) -> None:
     # The existing helper gives external.existingSecret precedence in both modes.
     documents = _render_chart(f"redis.enabled={enabled}", "redis.existingSecret=bundled-secret", "redis.external.existingSecret=external-secret")
-    assert _secret_ref(_container(documents, "gateway"), "DEER_FLOW_STREAM_BRIDGE_REDIS_URL") == {"name": "external-secret", "key": "redis-url"}
+    assert _secret_ref(_container(documents, "gateway"), "NKYEL_STREAM_BRIDGE_REDIS_URL") == {"name": "external-secret", "key": "redis-url"}
     if enabled == "true":
         assert _secret_ref(_container(documents, "redis"), "REDIS_PASSWORD") == {"name": "external-secret", "key": "redis-password", "optional": True}
     else:
@@ -131,7 +131,7 @@ def test_external_secret_precedence_is_unchanged(enabled: str) -> None:
 def test_external_redis_does_not_deploy_a_bundled_instance(setting: str) -> None:
     documents = _render_chart("redis.enabled=false", setting)
     assert not any(document.get("kind") == "StatefulSet" and document["metadata"]["name"].endswith("-redis") for document in documents)
-    ref = _secret_ref(_container(documents, "gateway"), "DEER_FLOW_STREAM_BRIDGE_REDIS_URL")
+    ref = _secret_ref(_container(documents, "gateway"), "NKYEL_STREAM_BRIDGE_REDIS_URL")
     if setting.startswith("redis.existingSecret="):
         assert ref == {"name": "managed-external", "key": "redis-url"}
     else:

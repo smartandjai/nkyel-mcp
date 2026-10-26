@@ -14,17 +14,17 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.config.extensions_config import ExtensionsConfig, SkillStateConfig
-from deerflow.config.paths import Paths
-from deerflow.sandbox.middleware import SandboxMiddleware
-from deerflow.skills.projection import (
+from nkyel.config.extensions_config import ExtensionsConfig, SkillStateConfig
+from nkyel.config.paths import Paths
+from nkyel.sandbox.middleware import SandboxMiddleware
+from nkyel.skills.projection import (
     ensure_public_skill_projection,
     ensure_skill_projections,
     ensure_thread_skill_projection,
     rebuild_skill_projections,
     skill_projection_mutation,
 )
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 
 def _skill_content(name: str, marker: str = "v1") -> str:
@@ -48,15 +48,15 @@ def projection_env(tmp_path: Path):
         skills=SimpleNamespace(
             get_skills_path=lambda: skills_root,
             container_path="/mnt/skills",
-            use="deerflow.skills.storage.local_skill_storage:LocalSkillStorage",
+            use="nkyel.skills.storage.local_skill_storage:LocalSkillStorage",
         )
     )
     extensions = ExtensionsConfig()
 
     with (
-        patch("deerflow.config.paths.get_paths", return_value=paths),
-        patch("deerflow.config.extensions_config.ExtensionsConfig.from_file", return_value=extensions),
-        patch("deerflow.config.extensions_config.get_extensions_config", return_value=extensions),
+        patch("nkyel.config.paths.get_paths", return_value=paths),
+        patch("nkyel.config.extensions_config.ExtensionsConfig.from_file", return_value=extensions),
+        patch("nkyel.config.extensions_config.get_extensions_config", return_value=extensions),
     ):
         storage = UserScopedSkillStorage("alice", host_path=str(skills_root), app_config=config)
         yield SimpleNamespace(
@@ -183,7 +183,7 @@ def test_custom_content_write_keeps_unrelated_skill_visible_during_rebuild(proje
     projected = rebuild_skill_projections(env.storage)
     alpha_view = projected.custom / "alpha" / "SKILL.md"
 
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     real_stage_skill = projection_module._stage_skill
     staging_started = Event()
@@ -407,12 +407,12 @@ def test_subagent_non_owner_preserves_restricted_lead_projection(
     _write_skill(env.skills_root / "public", "omitted")
     provider = SimpleNamespace(supports_agent_skill_isolation=True)
     monkeypatch.setattr(
-        "deerflow.sandbox.middleware.get_sandbox_provider",
+        "nkyel.sandbox.middleware.get_sandbox_provider",
         lambda: provider,
     )
-    monkeypatch.setattr("deerflow.config.get_app_config", lambda: env.config)
+    monkeypatch.setattr("nkyel.config.get_app_config", lambda: env.config)
     monkeypatch.setattr(
-        "deerflow.skills.storage.get_or_new_user_skill_storage",
+        "nkyel.skills.storage.get_or_new_user_skill_storage",
         lambda *_args, **_kwargs: env.storage,
     )
 
@@ -447,7 +447,7 @@ def test_thread_projection_revokes_removed_skill_before_repopulation(projection_
     projected = ensure_thread_skill_projection(env.storage, "thread-update", {"alpha", "beta"})
     assert projected is not None
 
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     real_stage_skill = projection_module._stage_skill
     staging_started = Event()
@@ -478,7 +478,7 @@ def test_disabling_custom_skill_hides_only_target_while_rebuilding(projection_en
     env.storage.write_custom_skill("beta", "SKILL.md", _skill_content("beta"))
     projected = rebuild_skill_projections(env.storage)
 
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     real_stage_skill = projection_module._stage_skill
     staging_started = Event()
@@ -577,7 +577,7 @@ def test_targeted_removal_drift_check_raises_when_underlying_unlink_swallows_err
     shutil.rmtree(namespace)
     namespace.write_text("drifted file", encoding="utf-8")
 
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     # Simulate Windows Path.unlink(missing_ok=True) semantics where file-in-path
     # returns ENOENT and is swallowed, so underlying removal would not raise ENOTDIR.
@@ -617,7 +617,7 @@ def test_ensure_user_projection_uses_fresh_global_state_across_workers(projectio
 
     fresh_extensions = ExtensionsConfig()
     fresh_extensions.skills[skill_name] = SkillStateConfig(enabled=False)
-    with patch("deerflow.config.extensions_config.ExtensionsConfig.from_file", return_value=fresh_extensions):
+    with patch("nkyel.config.extensions_config.ExtensionsConfig.from_file", return_value=fresh_extensions):
         ensure_skill_projections(env.storage)
         assert not target.exists()
         assert manifest.is_file()
@@ -662,7 +662,7 @@ def test_ensure_steady_state_public_signature_checks_do_not_serialize(projection
     _write_skill(env.skills_root / "public", "demo-skill")
     rebuild_skill_projections(env.storage)
 
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     real_source_signature = projection_module._source_signature
     public_signatures = Barrier(2, timeout=2)
@@ -686,7 +686,7 @@ def test_unlocked_public_snapshot_detects_manifest_change_during_signature_scan(
     projected = rebuild_skill_projections(env.storage)
     manifest = projected.public.parent / ".projection-manifest.json"
 
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     real_source_signature = projection_module._source_signature
     signature_read = Event()
@@ -720,7 +720,7 @@ def test_concurrent_stale_public_ensure_rebuilds_once_after_lock_recheck(project
     replacement.write_text(_skill_content("demo-skill", "after"), encoding="utf-8")
     replacement.replace(source)
 
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     with patch.object(projection_module, "_rebuild_public_locked", wraps=projection_module._rebuild_public_locked) as rebuild:
         with ThreadPoolExecutor(max_workers=8) as executor:
@@ -751,7 +751,7 @@ def test_rebuild_failure_clears_old_projection(projection_env, monkeypatch) -> N
     replacement.write_text(_skill_content("demo-skill", "after"), encoding="utf-8")
     replacement.replace(source)
     monkeypatch.setattr(
-        "deerflow.skills.projection._stage_skill",
+        "nkyel.skills.projection._stage_skill",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("disk full")),
     )
 
@@ -770,7 +770,7 @@ def test_signature_failure_clears_old_projection_and_manifest(projection_env, mo
     assert manifest.is_file()
 
     monkeypatch.setattr(
-        "deerflow.skills.projection._source_signature",
+        "nkyel.skills.projection._source_signature",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(PermissionError("source metadata unavailable")),
     )
 
@@ -789,7 +789,7 @@ def test_boot_ensures_public_projection_without_scanning_known_users(projection_
     def _unexpected_user_storage(*_args, **_kwargs):
         raise AssertionError("gateway boot must not enumerate user skill storage")
 
-    monkeypatch.setattr("deerflow.skills.storage.get_or_new_user_skill_storage", _unexpected_user_storage)
+    monkeypatch.setattr("nkyel.skills.storage.get_or_new_user_skill_storage", _unexpected_user_storage)
 
     assert ensure_public_skill_projection(app_config=env.config) is True
 
@@ -806,7 +806,7 @@ def test_boot_public_projection_failure_is_fail_closed_without_aborting(projecti
     _write_skill(env.skills_root / "public", "public-skill", "before")
     rebuild_skill_projections(env.storage, include_user=False)
     monkeypatch.setattr(
-        "deerflow.skills.projection._source_signature",
+        "nkyel.skills.projection._source_signature",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(PermissionError("source unavailable")),
     )
 
@@ -820,7 +820,7 @@ def test_boot_public_storage_factory_failure_is_fail_closed_without_aborting(pro
     _write_skill(env.skills_root / "public", "public-skill")
     rebuild_skill_projections(env.storage, include_user=False)
     monkeypatch.setattr(
-        "deerflow.skills.storage.get_or_new_skill_storage",
+        "nkyel.skills.storage.get_or_new_skill_storage",
         lambda **_kwargs: (_ for _ in ()).throw(RuntimeError("storage init failed")),
     )
 
@@ -831,7 +831,7 @@ def test_boot_public_storage_factory_failure_is_fail_closed_without_aborting(pro
 def test_boot_factory_failure_cleanup_waits_for_concurrent_public_rebuild(projection_env, monkeypatch) -> None:
     env = projection_env
     _write_skill(env.skills_root / "public", "public-skill")
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     before_manifest = Event()
     release_rebuild = Event()
@@ -845,7 +845,7 @@ def test_boot_factory_failure_cleanup_waits_for_concurrent_public_rebuild(projec
 
     monkeypatch.setattr(projection_module, "_write_manifest", _delayed_write_manifest)
     monkeypatch.setattr(
-        "deerflow.skills.storage.get_or_new_skill_storage",
+        "nkyel.skills.storage.get_or_new_skill_storage",
         lambda **_kwargs: (_ for _ in ()).throw(RuntimeError("storage init failed")),
     )
 
@@ -872,7 +872,7 @@ def test_boot_factory_failure_cleanup_waits_for_concurrent_public_rebuild(projec
 
 @pytest.mark.anyio
 async def test_archive_install_is_projected_before_return(projection_env, monkeypatch, tmp_path) -> None:
-    from deerflow.skills.security_scanner import ScanResult
+    from nkyel.skills.security_scanner import ScanResult
 
     env = projection_env
     archive = tmp_path / "archive-skill.skill"
@@ -883,7 +883,7 @@ async def test_archive_install_is_projected_before_return(projection_env, monkey
     async def _allow_scan(*_args, **_kwargs):
         return ScanResult(decision="allow", reason="test")
 
-    monkeypatch.setattr("deerflow.skills.installer.scan_skill_content", _allow_scan)
+    monkeypatch.setattr("nkyel.skills.installer.scan_skill_content", _allow_scan)
 
     result = await env.storage.ainstall_skill_from_archive(archive)
 
@@ -927,7 +927,7 @@ def test_concurrent_custom_skill_toggles_do_not_lose_state(projection_env) -> No
 def test_projection_read_windows_lock_retries_only_contention(tmp_path, monkeypatch, permanent_error):
     import errno
 
-    from deerflow.skills import projection
+    from nkyel.skills import projection
 
     calls = []
 
@@ -958,7 +958,7 @@ def test_projection_read_windows_lock_retries_only_contention(tmp_path, monkeypa
 
 def test_thread_projection_stays_fresh_when_view_metadata_drifts(projection_env) -> None:
     """Identical bytes with new inodes/timestamps never trigger another copy."""
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     env = projection_env
     _write_skill(env.skills_root / "public", "alpha")
@@ -977,7 +977,7 @@ def test_thread_projection_stays_fresh_when_view_metadata_drifts(projection_env)
 
 
 def test_thread_projection_rebuilds_when_a_source_skill_changes(projection_env) -> None:
-    from deerflow.skills import projection as projection_module
+    from nkyel.skills import projection as projection_module
 
     env = projection_env
     _write_skill(env.skills_root / "public", "alpha", "v1")

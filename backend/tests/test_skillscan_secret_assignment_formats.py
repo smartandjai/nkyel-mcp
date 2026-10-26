@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.skills.skillscan.orchestrator import _SECRET_ASSIGNMENT_RE, scan_skill_dir
+from nkyel.skills.skillscan.orchestrator import _SECRET_ASSIGNMENT_RE, scan_skill_dir
 
 SECRET = "9f8e7d6c5b4a3210ff"
 

@@ -21,8 +21,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-tools = importlib.import_module("deerflow.community.browserless.tools")
-output_names = importlib.import_module("deerflow.utils.output_names")
+tools = importlib.import_module("nkyel.community.browserless.tools")
+output_names = importlib.import_module("nkyel.utils.output_names")
 
 
 @pytest.fixture()

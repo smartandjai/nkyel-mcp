@@ -10,8 +10,8 @@ from app.channels.manager import ChannelManager
 from app.channels.message_bus import MessageBus
 from app.channels.qq import QQChannel
 from app.channels.store import JsonChannelStore
-from deerflow.persistence.channel_connections import ChannelConnectionRepository
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.channel_connections import ChannelConnectionRepository
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
 
 @pytest_asyncio.fixture
@@ -53,7 +53,7 @@ async def bind(repo, channel, owner, code, message_id, group=None):
 
 @pytest.mark.asyncio
 async def test_binding_transfer_rejects_queued_old_owner(repo, tmp_path, monkeypatch):
-    monkeypatch.setenv("DEER_FLOW_AUTH_DISABLED", "0")
+    monkeypatch.setenv("NKYEL_AUTH_DISABLED", "0")
     bus = MessageBus()
     channel = QQChannel(bus, {"app_id": "app1", "client_secret": "fixture", "connection_repo": repo})
     channel.send = AsyncMock()

@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
 
 
 def _sandbox(tmp_path: Path) -> LocalSandbox:

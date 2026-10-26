@@ -9,12 +9,12 @@ import pytest
 from langchain.tools import ToolRuntime
 from langgraph.types import Overwrite
 
-from deerflow.sandbox.exceptions import SandboxNotFoundError
-from deerflow.sandbox.lease import SANDBOX_LEASE_OWNER_CONTEXT_KEY, get_sandbox_lease_manager
-from deerflow.sandbox.sandbox import Sandbox
-from deerflow.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
-from deerflow.sandbox.search import GrepMatch
-from deerflow.sandbox.tools import (
+from nkyel.sandbox.exceptions import SandboxNotFoundError
+from nkyel.sandbox.lease import SANDBOX_LEASE_OWNER_CONTEXT_KEY, get_sandbox_lease_manager
+from nkyel.sandbox.sandbox import Sandbox
+from nkyel.sandbox.sandbox_provider import SandboxProvider, reset_sandbox_provider, set_sandbox_provider
+from nkyel.sandbox.search import GrepMatch
+from nkyel.sandbox.tools import (
     _run_sync_tool_after_async_sandbox_init,
     ensure_sandbox_initialized,
     ensure_sandbox_initialized_async,
@@ -517,8 +517,8 @@ async def test_cancelled_async_tool_drains_worker_before_execution_lease_cleanup
         async def _safe_config():
             return None
 
-        monkeypatch.setattr("deerflow.sandbox.tools.authorize_sandbox_execution_async", _allow_sandbox)
-        monkeypatch.setattr("deerflow.sandbox.tools.safe_app_config_async", _safe_config)
+        monkeypatch.setattr("nkyel.sandbox.tools.authorize_sandbox_execution_async", _allow_sandbox)
+        monkeypatch.setattr("nkyel.sandbox.tools.safe_app_config_async", _safe_config)
 
         def _blocking_tool(inner_runtime: ToolRuntime) -> str:
             worker_started.set()

@@ -17,7 +17,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.gateway.routers import skills as skills_router
-from deerflow.config.extensions_config import (
+from nkyel.config.extensions_config import (
     ExtensionsConfig,
     McpServerConfig,
     SkillStateConfig,
@@ -37,23 +37,23 @@ def _raw_config_with_placeholders() -> dict:
                 "type": "stdio",
                 "command": "npx",
                 "args": ["-y", "@modelcontextprotocol/server-github"],
-                "env": {"GITHUB_TOKEN": "$DEERFLOW_TEST_GH_TOKEN", "OPTIONAL": "$DEERFLOW_TEST_UNSET_VAR"},
+                "env": {"GITHUB_TOKEN": "$NKYEL_TEST_GH_TOKEN", "OPTIONAL": "$NKYEL_TEST_UNSET_VAR"},
             },
             "remote": {
                 "type": "http",
                 "url": "https://mcp.example.com/mcp",
-                "headers": {"Authorization": "$DEERFLOW_TEST_GH_TOKEN"},
+                "headers": {"Authorization": "$NKYEL_TEST_GH_TOKEN"},
             },
         },
-        "mcpInterceptors": {"auth": "$DEERFLOW_TEST_GH_TOKEN"},
+        "mcpInterceptors": {"auth": "$NKYEL_TEST_GH_TOKEN"},
         "skills": {"existing-skill": {"enabled": True}},
     }
 
 
 @pytest.fixture
 def placeholder_env(monkeypatch):
-    monkeypatch.setenv("DEERFLOW_TEST_GH_TOKEN", SECRET)
-    monkeypatch.delenv("DEERFLOW_TEST_UNSET_VAR", raising=False)
+    monkeypatch.setenv("NKYEL_TEST_GH_TOKEN", SECRET)
+    monkeypatch.delenv("NKYEL_TEST_UNSET_VAR", raising=False)
 
 
 def _write_json(path: Path, data: object, encoding: str = "utf-8") -> None:

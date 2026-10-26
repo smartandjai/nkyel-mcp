@@ -7,15 +7,15 @@ import anyio
 import pytest
 from test_stream_bridge import REDIS_TEST_URL, _DelayedBlockingReadRedis, _FakeRedis, requires_redis
 
-from deerflow.runtime import (
+from nkyel.runtime import (
     ORPHAN_RECOVERY_STOP_REASON,
     RunManager,
     RunStatus,
     StreamEvent,
     StreamGap,
 )
-from deerflow.runtime.stream_bridge.base import END_SENTINEL, HEARTBEAT_SENTINEL
-from deerflow.runtime.stream_bridge.redis import RedisStreamBridge
+from nkyel.runtime.stream_bridge.base import END_SENTINEL, HEARTBEAT_SENTINEL
+from nkyel.runtime.stream_bridge.redis import RedisStreamBridge
 
 
 class _ConnectedRequest:
@@ -225,7 +225,7 @@ async def test_gateway_emits_recovery_gap_after_stream_cleanup(cleanup_bridge):
 @pytest.mark.parametrize("store_only", [False, True])
 async def test_wait_completes_when_gap_has_no_retained_tail(store_only):
     from app.gateway.services import wait_for_run_completion
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore() if store_only else None
     manager = RunManager(store=store)
@@ -262,7 +262,7 @@ async def test_wait_completes_when_gap_has_no_retained_tail(store_only):
 @pytest.mark.parametrize("store_only", [False, True])
 async def test_wait_survives_cleanup_with_real_bridge(cleanup_bridge, store_only):
     from app.gateway.services import wait_for_run_completion
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore() if store_only else None
     manager = RunManager(store=store)
@@ -298,7 +298,7 @@ async def test_wait_survives_cleanup_with_real_bridge(cleanup_bridge, store_only
 @pytest.mark.anyio
 async def test_sse_terminalizes_retained_stream_after_producer_lease_expires():
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("expired-producer", thread_id="cleanup-thread", status="success")
@@ -326,7 +326,7 @@ async def test_sse_terminalizes_retained_stream_after_producer_lease_expires():
 @pytest.mark.anyio
 async def test_wait_terminalizes_retained_stream_after_producer_lease_expires():
     from app.gateway.services import wait_for_run_completion
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("expired-producer", thread_id="cleanup-thread", status="success")
@@ -349,7 +349,7 @@ async def test_wait_terminalizes_retained_stream_after_producer_lease_expires():
 @pytest.mark.anyio
 async def test_sse_does_not_terminalize_when_producer_reactivates_before_cleanup():
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("reactivated-producer", thread_id="cleanup-thread", status="success")
@@ -376,7 +376,7 @@ async def test_sse_does_not_terminalize_when_producer_reactivates_before_cleanup
 @pytest.mark.anyio
 async def test_sse_does_not_terminalize_when_producer_cleanup_fails():
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("cleanup-failed", thread_id="cleanup-thread", status="success")
@@ -403,7 +403,7 @@ async def test_sse_does_not_terminalize_when_producer_cleanup_fails():
 @pytest.mark.anyio
 async def test_sse_orphan_recovery_waits_for_active_stream_producer():
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put(
@@ -433,7 +433,7 @@ async def test_sse_orphan_recovery_waits_for_active_stream_producer():
 @pytest.mark.anyio
 async def test_sse_drains_tail_published_after_expired_heartbeat():
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("expired-tail", thread_id="cleanup-thread", status="success")
@@ -462,7 +462,7 @@ async def test_sse_drains_tail_published_after_expired_heartbeat():
 @pytest.mark.anyio
 async def test_wait_drains_tail_published_after_expired_heartbeat():
     from app.gateway.services import wait_for_run_completion
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("expired-tail", thread_id="cleanup-thread", status="success")
@@ -485,7 +485,7 @@ async def test_wait_drains_tail_published_after_expired_heartbeat():
 @pytest.mark.anyio
 async def test_missing_stream_does_not_terminalize_an_active_producer():
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("active-missing", thread_id="cleanup-thread", status="success")
@@ -509,7 +509,7 @@ async def test_missing_stream_does_not_terminalize_an_active_producer():
 @pytest.mark.anyio
 async def test_missing_stream_rechecks_after_expiry_and_drains_new_tail():
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("missing-then-tail", thread_id="cleanup-thread", status="success")
@@ -538,7 +538,7 @@ async def test_missing_stream_rechecks_after_expiry_and_drains_new_tail():
 @pytest.mark.anyio
 async def test_wait_rechecks_missing_stream_after_expiry_and_drains_new_tail():
     from app.gateway.services import wait_for_run_completion
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("missing-then-tail", thread_id="cleanup-thread", status="success")
@@ -563,7 +563,7 @@ async def test_wait_rechecks_missing_stream_after_expiry_and_drains_new_tail():
 @pytest.mark.parametrize("producer_state", ["active", "untracked"])
 async def test_sse_keeps_waiting_for_nonexpired_terminal_producer(producer_state):
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     await store.put("live-producer", thread_id="cleanup-thread", status="success")
@@ -587,7 +587,7 @@ async def test_sse_keeps_waiting_for_nonexpired_terminal_producer(producer_state
 @pytest.mark.anyio
 async def test_sse_keeps_waiting_for_uncommitted_local_terminal_status():
     from app.gateway.services import sse_consumer
-    from deerflow.runtime.runs.store.memory import MemoryRunStore
+    from nkyel.runtime.runs.store.memory import MemoryRunStore
 
     store = MemoryRunStore()
     manager = RunManager(store=store)

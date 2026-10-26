@@ -5,15 +5,15 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.scheduler_config import SchedulerConfig
-from deerflow.tools.tools import get_available_tools
+from nkyel.config.app_config import AppConfig
+from nkyel.config.scheduler_config import SchedulerConfig
+from nkyel.tools.tools import get_available_tools
 
 
 def _config(*, enabled=True, tool_enabled=True):
     return AppConfig.model_validate(
         {
-            "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+            "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
             "models": [{"name": "safe-model", "use": "langchain_openai:ChatOpenAI", "model": "safe-model"}],
             "scheduler": {"enabled": enabled, "tool_enabled": tool_enabled},
         }
@@ -70,7 +70,7 @@ def test_direct_yaml_registration_cannot_bypass_dynamic_tool_scope(enabled, tool
     config = AppConfig.model_validate(
         {
             **config.model_dump(),
-            "tools": [{"name": name, "group": "scheduler", "use": f"deerflow.tools.scheduled_tasks:{name}"} for name in ("schedule_task", "stop_scheduled_task")],
+            "tools": [{"name": name, "group": "scheduler", "use": f"nkyel.tools.scheduled_tasks:{name}"} for name in ("schedule_task", "stop_scheduled_task")],
         }
     )
     kwargs = {"scheduler_capability": _capability(mode)} if mode is not None else {}
@@ -87,7 +87,7 @@ def test_tool_assembly_rejects_data_shaped_like_a_capability(capability):
 
 @pytest.mark.asyncio
 async def test_create_passes_only_definition_fields_to_host_capability():
-    from deerflow.tools.scheduled_tasks import schedule_task
+    from nkyel.tools.scheduled_tasks import schedule_task
 
     capability = _capability()
     result = await schedule_task.coroutine(
@@ -122,7 +122,7 @@ async def test_create_passes_only_definition_fields_to_host_capability():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["list", "pause", "delete", "note", "trial"])
 async def test_interactive_actions_forward_a_bounded_task_selector_without_identity(action):
-    from deerflow.tools.scheduled_tasks import schedule_task
+    from nkyel.tools.scheduled_tasks import schedule_task
 
     capability = _capability()
     kwargs = {} if action == "list" else {"task_id": "task-1"}
@@ -146,7 +146,7 @@ async def test_interactive_actions_forward_a_bounded_task_selector_without_ident
     ],
 )
 async def test_management_invocation_cannot_bypass_mode_subagent_or_config_gate(mode, capability_mode, is_subagent, enabled, tool_enabled):
-    from deerflow.tools.scheduled_tasks import schedule_task
+    from nkyel.tools.scheduled_tasks import schedule_task
 
     capability = _capability(capability_mode)
     result = await schedule_task.coroutine(runtime=_runtime(capability=capability, mode=mode, is_subagent=is_subagent, enabled=enabled, tool_enabled=tool_enabled), action="list")
@@ -159,7 +159,7 @@ async def test_management_invocation_cannot_bypass_mode_subagent_or_config_gate(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("grant_location", ["state", "configurable"])
 async def test_saved_state_and_configurable_cannot_supply_scheduler_authority(grant_location):
-    from deerflow.tools.scheduled_tasks import schedule_task
+    from nkyel.tools.scheduled_tasks import schedule_task
 
     capability = _capability()
     runtime = _runtime()
@@ -174,7 +174,7 @@ async def test_saved_state_and_configurable_cannot_supply_scheduler_authority(gr
 
 @pytest.mark.asyncio
 async def test_self_stop_uses_bound_occurrence_without_any_model_identity_arguments():
-    from deerflow.tools.scheduled_tasks import stop_scheduled_task
+    from nkyel.tools.scheduled_tasks import stop_scheduled_task
 
     capability = _capability("scheduled")
     result = await stop_scheduled_task.coroutine(runtime=_runtime(capability=capability, mode="scheduled"))
@@ -186,7 +186,7 @@ async def test_self_stop_uses_bound_occurrence_without_any_model_identity_argume
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("mode", "is_subagent"), [("interactive", False), ("webhook", False), ("autonomous", False), ("scheduled", True)])
 async def test_self_stop_requires_a_scheduled_lead_run(mode, is_subagent):
-    from deerflow.tools.scheduled_tasks import stop_scheduled_task
+    from nkyel.tools.scheduled_tasks import stop_scheduled_task
 
     capability = _capability("scheduled")
     result = await stop_scheduled_task.coroutine(runtime=_runtime(capability=capability, mode=mode, is_subagent=is_subagent))
@@ -197,7 +197,7 @@ async def test_self_stop_requires_a_scheduled_lead_run(mode, is_subagent):
 
 @pytest.mark.asyncio
 async def test_self_stop_accepts_the_scheduler_legacy_non_interactive_policy():
-    from deerflow.tools.scheduled_tasks import stop_scheduled_task
+    from nkyel.tools.scheduled_tasks import stop_scheduled_task
 
     capability = _capability("scheduled")
     runtime = _runtime(capability=capability)
@@ -209,7 +209,7 @@ async def test_self_stop_accepts_the_scheduler_legacy_non_interactive_policy():
 
 @pytest.mark.asyncio
 async def test_missing_worker_config_cannot_fall_back_to_an_ambient_enabled_config():
-    from deerflow.tools.scheduled_tasks import schedule_task
+    from nkyel.tools.scheduled_tasks import schedule_task
 
     capability = _capability()
     runtime = _runtime(capability=capability)
@@ -220,7 +220,7 @@ async def test_missing_worker_config_cannot_fall_back_to_an_ambient_enabled_conf
 
 
 def test_model_visible_schema_excludes_authority_and_self_stop_has_no_arguments():
-    from deerflow.tools.scheduled_tasks import schedule_task, stop_scheduled_task
+    from nkyel.tools.scheduled_tasks import schedule_task, stop_scheduled_task
 
     management = schedule_task.tool_call_schema.model_json_schema()
     assert set(management["properties"]).isdisjoint({"runtime", "user_id", "thread_id", "run_id", "occurrence_id", "origin_thread_id", "assistant_id"})
@@ -232,7 +232,7 @@ def test_model_visible_schema_excludes_authority_and_self_stop_has_no_arguments(
 
 
 def test_schedule_description_steers_the_conversation_contract():
-    from deerflow.tools.scheduled_tasks import schedule_task, stop_scheduled_task
+    from nkyel.tools.scheduled_tasks import schedule_task, stop_scheduled_task
 
     description = " ".join(schedule_task.description.split())
     for phrase in (
@@ -262,7 +262,7 @@ def _constraint_keys(schema):
 
 
 def test_model_visible_parameters_carry_no_value_constraints():
-    from deerflow.tools.scheduled_tasks import schedule_task
+    from nkyel.tools.scheduled_tasks import schedule_task
 
     # Value rules come back as coded results (same codes as REST), never as a
     # schema rejection the model cannot read.
@@ -271,7 +271,7 @@ def test_model_visible_parameters_carry_no_value_constraints():
 
 @pytest.mark.asyncio
 async def test_update_and_resume_forward_only_allowlisted_fields():
-    from deerflow.tools.scheduled_tasks import schedule_task
+    from nkyel.tools.scheduled_tasks import schedule_task
 
     capability = _capability()
     await schedule_task.coroutine(
@@ -307,8 +307,8 @@ async def test_update_and_resume_forward_only_allowlisted_fields():
     ],
 )
 def test_lead_assembly_only_passes_a_host_capability_for_its_matching_mode(monkeypatch, capability_mode, interaction_mode, is_subagent, is_bootstrap, expected):
-    import deerflow.tools as tools_module
-    from deerflow.agents.lead_agent import agent as lead_agent_module
+    import nkyel.tools as tools_module
+    from nkyel.agents.lead_agent import agent as lead_agent_module
 
     config = _config()
     capability = _capability(capability_mode)
@@ -328,8 +328,8 @@ def test_lead_assembly_only_passes_a_host_capability_for_its_matching_mode(monke
 
 
 def test_lead_assembly_does_not_read_a_capability_from_checkpoint_configurable(monkeypatch):
-    import deerflow.tools as tools_module
-    from deerflow.agents.lead_agent import agent as lead_agent_module
+    import nkyel.tools as tools_module
+    from nkyel.agents.lead_agent import agent as lead_agent_module
 
     assembly = MagicMock(return_value=[])
     monkeypatch.setattr(tools_module, "get_available_tools", assembly)

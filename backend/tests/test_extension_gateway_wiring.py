@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.extensions.registry import ExtensionRegistry
+from nkyel.extensions.registry import ExtensionRegistry
 
 
 class _Service:
@@ -40,7 +40,7 @@ class _Service:
 
 @pytest.mark.asyncio
 async def test_services_start_in_order_with_narrow_deps_and_fail_open():
-    from deerflow.extensions.gateway import start_services
+    from nkyel.extensions.gateway import start_services
 
     events: list[str] = []
     first = _Service("first", events, fail_start=True)
@@ -78,7 +78,7 @@ async def test_services_start_in_order_with_narrow_deps_and_fail_open():
 
 @pytest.mark.asyncio
 async def test_service_originated_cancelled_error_does_not_abort_start_batch():
-    from deerflow.extensions.gateway import start_services
+    from nkyel.extensions.gateway import start_services
 
     events: list[str] = []
 
@@ -105,7 +105,7 @@ async def test_service_originated_cancelled_error_does_not_abort_start_batch():
 
 @pytest.mark.asyncio
 async def test_services_stop_in_reverse_order_and_fail_open():
-    from deerflow.extensions.gateway import stop_services
+    from nkyel.extensions.gateway import stop_services
 
     events: list[str] = []
     first = _Service("first", events)
@@ -124,7 +124,7 @@ async def test_services_stop_in_reverse_order_and_fail_open():
 
 @pytest.mark.asyncio
 async def test_service_originated_cancelled_error_does_not_abort_stop_batch():
-    from deerflow.extensions.gateway import stop_services
+    from nkyel.extensions.gateway import stop_services
 
     events: list[str] = []
 
@@ -151,7 +151,7 @@ async def test_service_originated_cancelled_error_does_not_abort_stop_batch():
 
 @pytest.mark.asyncio
 async def test_each_service_stop_has_its_own_timeout_budget():
-    from deerflow.extensions.gateway import stop_services
+    from nkyel.extensions.gateway import stop_services
 
     events: list[str] = []
 
@@ -178,7 +178,7 @@ async def test_each_service_stop_has_its_own_timeout_budget():
 
 @pytest.mark.asyncio
 async def test_service_originated_timeout_error_is_reported_as_failure_not_budget_expiry():
-    from deerflow.extensions.gateway import stop_services
+    from nkyel.extensions.gateway import stop_services
 
     events: list[str] = []
 
@@ -247,7 +247,7 @@ def test_router_conflicts_follow_starlette_dispatch_order(
 ):
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -287,7 +287,7 @@ def test_re_registered_convertor_does_not_create_a_false_shadow(
     from starlette.convertors import CONVERTOR_TYPES, Convertor
     from starlette.routing import Match
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     class DigitsConvertor(Convertor[str]):
         regex = "[0-9]+"
@@ -342,7 +342,7 @@ def test_router_claim_uses_converter_semantics_at_include_time(monkeypatch):
     from starlette.convertors import CONVERTOR_TYPES, Convertor
     from starlette.routing import Match
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     class DigitsConvertor(Convertor[str]):
         regex = "[0-9]+"
@@ -396,7 +396,7 @@ def test_recompiled_converter_cannot_enter_a_public_namespace(monkeypatch):
     from fastapi import APIRouter, FastAPI
     from starlette.convertors import CONVERTOR_TYPES, Convertor
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     class PublicPathConvertor(Convertor[str]):
         regex = r"webhooks/.+"
@@ -428,7 +428,7 @@ def test_recompiled_converter_cannot_enter_a_public_namespace(monkeypatch):
 def test_host_mount_claims_descendant_http_paths():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     app = FastAPI()
     app.mount("/assets", FastAPI())
@@ -452,7 +452,7 @@ def test_host_mount_claims_descendant_http_paths():
 def test_dynamic_host_mount_claims_matching_descendants():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     app = FastAPI()
     app.mount("/pre{tenant}", FastAPI())
@@ -487,7 +487,7 @@ def test_host_mount_does_not_claim_newline_capable_str_descendants(
     from fastapi import APIRouter, FastAPI
     from starlette.routing import Match, Mount
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -518,7 +518,7 @@ def test_host_mount_does_not_claim_newline_capable_str_descendants(
 def test_contributed_websocket_route_is_rejected_until_host_auth_wraps_it():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def websocket_endpoint(websocket):
         await websocket.close()
@@ -551,7 +551,7 @@ def test_contributed_websocket_route_is_rejected_until_host_auth_wraps_it():
 def test_extension_routes_cannot_enter_host_public_namespaces(path):
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -582,7 +582,7 @@ def test_extension_routes_cannot_enter_host_public_namespaces(path):
 def test_extension_routes_that_cannot_enter_a_public_namespace_are_allowed(path):
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -604,7 +604,7 @@ def test_unknown_convertor_near_a_public_namespace_fails_closed(monkeypatch):
     from fastapi import APIRouter, FastAPI
     from starlette.convertors import CONVERTOR_TYPES, Convertor
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     class UppercaseConvertor(Convertor[str]):
         regex = "[A-Z]+"
@@ -639,7 +639,7 @@ def test_private_custom_convertor_with_named_backreference_is_allowed(monkeypatc
     from fastapi import APIRouter, FastAPI
     from starlette.convertors import CONVERTOR_TYPES, Convertor
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     class DoubledLetterConvertor(Convertor[str]):
         regex = r"(?P<char>[A-Z])(?P=char)"
@@ -674,7 +674,7 @@ def test_extension_public_paths_track_auth_middleware_public_paths():
         _PUBLIC_PATH_PREFIXES,
         _is_public,
     )
-    from deerflow.extensions.gateway import (
+    from nkyel.extensions.gateway import (
         _HOST_PUBLIC_EXACT_PATHS,
         _HOST_PUBLIC_PATH_PREFIXES,
     )
@@ -717,7 +717,7 @@ def test_extension_routes_cannot_claim_reserved_exact_paths_with_a_disjoint_meth
 ):
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -752,7 +752,7 @@ def test_extension_csrf_reserved_exact_paths_track_csrf_exemption(
     from starlette.requests import Request
 
     from app.gateway import csrf_middleware
-    from deerflow.extensions.gateway import (
+    from nkyel.extensions.gateway import (
         _CSRF_STATE_CHANGING_METHODS,
         _HOST_CSRF_EXEMPT_EXACT_PATHS,
         _HOST_PUBLIC_EXACT_PATHS,
@@ -782,7 +782,7 @@ def test_extension_csrf_reserved_exact_paths_track_csrf_exemption(
 def test_safe_method_at_csrf_exempt_exact_path_is_not_reserved():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     router = APIRouter()
     router.add_api_route(
@@ -804,7 +804,7 @@ def test_safe_method_at_csrf_exempt_exact_path_is_not_reserved():
 def test_router_with_one_conflict_is_rejected_atomically_and_names_first_owner():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -834,7 +834,7 @@ def test_router_with_one_conflict_is_rejected_atomically_and_names_first_owner()
 def test_router_is_rejected_when_its_own_earlier_route_shadows_a_later_one():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -857,7 +857,7 @@ def test_router_is_rejected_when_its_own_earlier_route_shadows_a_later_one():
 def test_contributed_mount_is_rejected_but_does_not_starve_later_router():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     bad = APIRouter()
     bad.mount("/nested", FastAPI())
@@ -884,7 +884,7 @@ def test_contributed_mount_is_rejected_but_does_not_starve_later_router():
 def test_router_with_unsupported_route_item_is_rejected_atomically():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -907,7 +907,7 @@ def test_router_with_unsupported_route_item_is_rejected_atomically():
 def test_include_router_failure_rolls_back_partial_routes_before_continuing():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -936,7 +936,7 @@ def test_include_router_failure_rolls_back_partial_routes_before_continuing():
 def test_router_lifecycle_hooks_are_rejected_in_favor_of_extension_service():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     async def endpoint():
         return {"ok": True}
@@ -969,7 +969,7 @@ def test_router_lifecycle_hooks_are_rejected_in_favor_of_extension_service():
 def test_router_custom_lifespan_is_rejected_in_favor_of_extension_service():
     from fastapi import APIRouter, FastAPI
 
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     @asynccontextmanager
     async def lifespan(_app):

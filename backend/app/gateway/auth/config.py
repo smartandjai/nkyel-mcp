@@ -1,4 +1,4 @@
-"""Authentication configuration for DeerFlow."""
+"""Authentication configuration for nkyel."""
 
 import logging
 import os
@@ -15,7 +15,7 @@ class AuthConfig(BaseModel):
     """JWT and auth-related configuration. Parsed once at startup.
 
     Note: the ``users`` table now lives in the shared persistence
-    database managed by ``deerflow.persistence.engine``. The old
+    database managed by ``nkyel.persistence.engine``. The old
     ``users_db_path`` config key has been removed — user storage is
     configured through ``config.database`` like every other table.
     """
@@ -39,8 +39,8 @@ def _load_or_create_secret() -> str:
     runtime home and cold-start together (uvicorn workers, replicas on a shared
     volume) converge on one secret instead of each keeping its own.
     """
-    from deerflow.config.paths import get_paths
-    from deerflow.config.secret_file import read_or_create_secret_file
+    from nkyel.config.paths import get_paths
+    from nkyel.config.secret_file import read_or_create_secret_file
 
     paths = get_paths()
     secret_file = paths.base_dir / _SECRET_FILE
@@ -48,7 +48,7 @@ def _load_or_create_secret() -> str:
     try:
         return read_or_create_secret_file(secret_file, lambda: secrets.token_urlsafe(32))
     except OSError as exc:
-        raise RuntimeError(f"Failed to read or persist the JWT secret at {secret_file}. Set AUTH_JWT_SECRET explicitly or fix DEER_FLOW_HOME/base directory permissions so DeerFlow can keep a stable auth secret.") from exc
+        raise RuntimeError(f"Failed to read or persist the JWT secret at {secret_file}. Set AUTH_JWT_SECRET explicitly or fix NKYEL_HOME/base directory permissions so nkyel can keep a stable auth secret.") from exc
 
 
 def get_auth_config() -> AuthConfig:
@@ -57,7 +57,7 @@ def get_auth_config() -> AuthConfig:
     if _auth_config is None:
         from dotenv import load_dotenv
 
-        from deerflow.env import load_selected_env_file
+        from nkyel.env import load_selected_env_file
 
         if not load_selected_env_file():
             load_dotenv()
@@ -69,7 +69,7 @@ def get_auth_config() -> AuthConfig:
                 "⚠ AUTH_JWT_SECRET is not set — using an auto-generated secret "
                 "persisted to .jwt_secret. Sessions will survive restarts. "
                 "For production, add AUTH_JWT_SECRET to your dotenv file "
-                "(the DEER_FLOW_ENV_FILE target, or .env by default): "
+                "(the NKYEL_ENV_FILE target, or .env by default): "
                 'python -c "import secrets; print(secrets.token_urlsafe(32))"'
             )
         _auth_config = AuthConfig(jwt_secret=jwt_secret)

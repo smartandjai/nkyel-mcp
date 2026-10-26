@@ -10,8 +10,8 @@ import pytest_asyncio
 from app.channels.connection_identity import lookup_thread_id
 from app.channels.message_bus import InboundMessage, MessageBus
 from app.channels.wecom import WeComChannel
-from deerflow.persistence.channel_connections import ChannelConnectionRepository
-from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+from nkyel.persistence.channel_connections import ChannelConnectionRepository
+from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
 
 @pytest_asyncio.fixture

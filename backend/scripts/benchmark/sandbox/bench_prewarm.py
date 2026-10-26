@@ -1,6 +1,6 @@
 """Opt-in AIO prewarm A/B through a real agent graph and deterministic model.
 
-Run from backend with an explicit isolated DEER_FLOW_CONFIG_PATH/DEER_FLOW_HOME:
+Run from backend with an explicit isolated NKYEL_CONFIG_PATH/NKYEL_HOME:
 python -m scripts.benchmark.sandbox.bench_prewarm --output prewarm.jsonl
 
 No paid model calls. The graph uses production thread/sandbox middleware, bash
@@ -33,17 +33,17 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 from pydantic import Field
 
-from deerflow.agents.middlewares.thread_data_middleware import ThreadDataMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config import get_app_config
-from deerflow.sandbox import tools as sandbox_tools
-from deerflow.sandbox.lease import get_sandbox_lease_manager, register_sandbox_prewarm_cleanup, release_sandbox_execution_lease_async, sandbox_lease_owner
-from deerflow.sandbox.middleware import SandboxMiddleware
-from deerflow.sandbox.sandbox_provider import set_sandbox_provider, shutdown_sandbox_provider
+from nkyel.agents.middlewares.thread_data_middleware import ThreadDataMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config import get_app_config
+from nkyel.sandbox import tools as sandbox_tools
+from nkyel.sandbox.lease import get_sandbox_lease_manager, register_sandbox_prewarm_cleanup, release_sandbox_execution_lease_async, sandbox_lease_owner
+from nkyel.sandbox.middleware import SandboxMiddleware
+from nkyel.sandbox.sandbox_provider import set_sandbox_provider, shutdown_sandbox_provider
 from scripts.benchmark.sandbox.bench_provider import _evict_from_warm, _make_aio_provider, _pool_counts
 from scripts.benchmark.sandbox.resources import DockerResourceSampler
 
-COMMAND_MARKER = "deerflow-bench-command-ok"
+COMMAND_MARKER = "nkyel-bench-command-ok"
 COMMAND = f"python -c \"print('{COMMAND_MARKER}')\""
 PROMPTS = {
     "tool": f"Run this command:\n```sh\n{COMMAND}\n```",
@@ -341,7 +341,7 @@ def main(argv=None) -> int:
     if not config.sandbox.use.endswith(":AioSandboxProvider"):
         parser.error("AIO prewarm comparison requires an AioSandboxProvider config; refusing a silently disabled treatment")
     config.sandbox.prewarm_max_concurrent = args.prewarm_max_concurrent
-    prefix = f"deerflow-bench-{args.run_id}"
+    prefix = f"nkyel-bench-{args.run_id}"
     revision = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
     status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, check=True).stdout
     patch = subprocess.run(["git", "diff", "HEAD", "--binary"], capture_output=True, check=True).stdout

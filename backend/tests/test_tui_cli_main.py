@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.client import StreamEvent
-from deerflow.tui import cli
+from nkyel.client import StreamEvent
+from nkyel.tui import cli
 
 
 class _FakeClient:
@@ -82,7 +82,7 @@ def test_main_headless_help_returns_2_and_prints_usage(monkeypatch, capsys):
     monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: True)
     rc = cli.main(["--cli"])
     assert rc == 2
-    assert "deerflow" in capsys.readouterr().err
+    assert "nkyel" in capsys.readouterr().err
 
 
 # --------------------------------------------------------------------------- #
@@ -235,7 +235,7 @@ def _fallback_events():
         _ai(
             "m2",
             "The configured LLM provider rejected the request because authentication or access is invalid.",
-            deerflow_error_fallback=True,
+            nkyel_error_fallback=True,
             error_type="AuthenticationError",
             error_reason="auth",
         ),
@@ -271,7 +271,7 @@ def test_print_still_writes_fallback_text_to_stdout(run_headless, capsys):
 
 @pytest.mark.parametrize("mode", ["--print", "--json"])
 def test_headless_detects_fallback_flag_sent_as_metadata_only_followup(mode, run_headless):
-    events = [_ai("m1", "partial answer"), _ai("m1", "", deerflow_error_fallback=True, error_reason="Model returned an empty terminal response")]
+    events = [_ai("m1", "partial answer"), _ai("m1", "", nkyel_error_fallback=True, error_reason="Model returned an empty terminal response")]
     assert run_headless([mode, "hello"], events) == 1
 
 
@@ -289,5 +289,5 @@ def test_print_outputs_only_last_ai_message(run_headless, capsys):
 @pytest.mark.parametrize("mode", ["--print", "--json"])
 def test_headless_recovered_run_is_not_a_failure(mode, run_headless):
     # A fallback earlier in the thread does not fail a run whose final answer succeeded.
-    events = [_ai("m1", "oops", deerflow_error_fallback=True, error_reason="auth"), _ai("m2", "real answer")]
+    events = [_ai("m1", "oops", nkyel_error_fallback=True, error_reason="auth"), _ai("m2", "real answer")]
     assert run_headless([mode, "hello"], events) == 0

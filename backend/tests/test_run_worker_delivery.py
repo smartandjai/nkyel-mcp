@@ -9,18 +9,18 @@ import pytest
 from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.types import Command
 
-from deerflow.config.app_config import AppConfig
-from deerflow.config.paths import Paths
-from deerflow.config.sandbox_config import SandboxConfig
-from deerflow.config.tool_output_config import ToolOutputConfig
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.runs.manager import RunManager
-from deerflow.runtime.runs.schemas import RunStatus
-from deerflow.runtime.runs.store.memory import MemoryRunStore
-from deerflow.runtime.runs.worker import RunContext, _delivery_content_with_outputs, run_agent
-from deerflow.runtime.user_context import get_effective_user_id
-from deerflow.workspace_changes import WorkspaceChangeLimits, capture_workspace_snapshot
-from deerflow.workspace_changes.api import get_workspace_changes_response
+from nkyel.config.app_config import AppConfig
+from nkyel.config.paths import Paths
+from nkyel.config.sandbox_config import SandboxConfig
+from nkyel.config.tool_output_config import ToolOutputConfig
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.runs.manager import RunManager
+from nkyel.runtime.runs.schemas import RunStatus
+from nkyel.runtime.runs.store.memory import MemoryRunStore
+from nkyel.runtime.runs.worker import RunContext, _delivery_content_with_outputs, run_agent
+from nkyel.runtime.user_context import get_effective_user_id
+from nkyel.workspace_changes import WorkspaceChangeLimits, capture_workspace_snapshot
+from nkyel.workspace_changes.api import get_workspace_changes_response
 
 
 def _make_bridge():
@@ -57,10 +57,10 @@ def test_delivery_verification_treats_presented_directory_as_covering_produced_f
 @pytest.mark.anyio
 @pytest.mark.parametrize("disappear_during", ["before-run", "after-run"])
 async def test_vanished_scratch_file_does_not_discard_run_file_changes(tmp_path, monkeypatch, disappear_during):
-    import deerflow.workspace_changes.scanner as scanner
+    import nkyel.workspace_changes.scanner as scanner
 
     paths = Paths(base_dir=tmp_path)
-    monkeypatch.setattr("deerflow.workspace_changes.recorder.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.workspace_changes.recorder.get_paths", lambda: paths)
     user_id = get_effective_user_id()
     workspace = paths.sandbox_work_dir("thread-1", user_id=user_id)
     outputs = paths.sandbox_outputs_dir("thread-1", user_id=user_id)
@@ -188,7 +188,7 @@ async def test_changed_outputs_succeed_when_a_produced_output_is_presented(monke
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
     monkeypatch.setattr(
-        "deerflow.runtime.runs.worker._produced_output_paths",
+        "nkyel.runtime.runs.worker._produced_output_paths",
         AsyncMock(return_value=["/mnt/user-data/outputs/report.md"]),
     )
 
@@ -242,7 +242,7 @@ async def test_changed_outputs_fail_closed_when_not_presented(monkeypatch):
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
     monkeypatch.setattr(
-        "deerflow.runtime.runs.worker._produced_output_paths",
+        "nkyel.runtime.runs.worker._produced_output_paths",
         AsyncMock(return_value=["/mnt/user-data/outputs/report.md"]),
     )
 
@@ -285,7 +285,7 @@ async def test_changed_outputs_fail_closed_when_not_presented(monkeypatch):
 @pytest.mark.parametrize("terminal_outcome", ["success", "error", "cancelled"])
 async def test_truncated_snapshots_limit_output_delivery_verification(tmp_path, monkeypatch, modify_existing, terminal_outcome):
     paths = Paths(base_dir=tmp_path)
-    monkeypatch.setattr("deerflow.workspace_changes.recorder.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.workspace_changes.recorder.get_paths", lambda: paths)
     run_manager = RunManager()
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
@@ -301,7 +301,7 @@ async def test_truncated_snapshots_limit_output_delivery_verification(tmp_path, 
         snapshots.append(snapshot)
         return snapshot
 
-    monkeypatch.setattr("deerflow.runtime.runs.worker.capture_workspace_snapshot", capture_bounded_snapshot)
+    monkeypatch.setattr("nkyel.runtime.runs.worker.capture_workspace_snapshot", capture_bounded_snapshot)
 
     class ProducingAgent:
         async def astream(self, graph_input, config=None, stream_mode=None, subgraphs=False):
@@ -356,7 +356,7 @@ async def test_truncated_snapshots_limit_output_delivery_verification(tmp_path, 
 @pytest.mark.parametrize("failure_stage", ["before", "after"])
 async def test_snapshot_capture_failure_does_not_claim_truncated_verification(tmp_path, monkeypatch, failure_stage):
     paths = Paths(base_dir=tmp_path)
-    monkeypatch.setattr("deerflow.workspace_changes.recorder.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.workspace_changes.recorder.get_paths", lambda: paths)
     run_manager = RunManager()
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
@@ -371,7 +371,7 @@ async def test_snapshot_capture_failure_does_not_claim_truncated_verification(tm
             raise OSError("Snapshot capture unavailable")
         return await capture_workspace_snapshot(*args, **kwargs)
 
-    monkeypatch.setattr("deerflow.runtime.runs.worker.capture_workspace_snapshot", capture_or_fail)
+    monkeypatch.setattr("nkyel.runtime.runs.worker.capture_workspace_snapshot", capture_or_fail)
 
     class ProducingAgent:
         async def astream(self, graph_input, config=None, stream_mode=None, subgraphs=False):
@@ -403,7 +403,7 @@ async def test_externalized_tool_results_do_not_trigger_delivery_verification(tm
     process feedback for the model, not deliverables: a run that only produced
     those files must succeed without any present_files call."""
     paths = Paths(base_dir=tmp_path)
-    monkeypatch.setattr("deerflow.workspace_changes.recorder.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.workspace_changes.recorder.get_paths", lambda: paths)
     run_manager = RunManager()
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
@@ -439,7 +439,7 @@ async def test_custom_tool_output_storage_subdir_does_not_trigger_delivery_verif
     """A custom tool_output.storage_subdir is honoured by the exclusion, not
     only the default .tool-results name."""
     paths = Paths(base_dir=tmp_path)
-    monkeypatch.setattr("deerflow.workspace_changes.recorder.get_paths", lambda: paths)
+    monkeypatch.setattr("nkyel.workspace_changes.recorder.get_paths", lambda: paths)
     run_manager = RunManager()
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
@@ -472,7 +472,7 @@ async def test_changed_outputs_succeed_when_one_of_multiple_outputs_is_presented
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
     monkeypatch.setattr(
-        "deerflow.runtime.runs.worker._produced_output_paths",
+        "nkyel.runtime.runs.worker._produced_output_paths",
         AsyncMock(
             return_value=[
                 "/mnt/user-data/outputs/report.md",
@@ -523,7 +523,7 @@ async def test_changed_outputs_fail_when_present_files_only_presents_an_unrelate
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
     monkeypatch.setattr(
-        "deerflow.runtime.runs.worker._produced_output_paths",
+        "nkyel.runtime.runs.worker._produced_output_paths",
         AsyncMock(return_value=["/mnt/user-data/outputs/report.md"]),
     )
 
@@ -640,7 +640,7 @@ async def test_delivery_event_is_singleton_across_goal_continuations(monkeypatch
             return {"messages": []}
         return None
 
-    monkeypatch.setattr("deerflow.runtime.runs.worker._prepare_goal_continuation_input", prepare_continuation)
+    monkeypatch.setattr("nkyel.runtime.runs.worker._prepare_goal_continuation_input", prepare_continuation)
 
     await run_agent(
         _make_bridge(),
@@ -867,7 +867,7 @@ async def test_produced_artifact_delivery_fails_closed_when_receipt_cannot_be_pe
     run_manager = RunManager(store=run_store)
     record = await run_manager.create("thread-1")
     monkeypatch.setattr(
-        "deerflow.runtime.runs.worker._produced_output_paths",
+        "nkyel.runtime.runs.worker._produced_output_paths",
         AsyncMock(return_value=["/mnt/user-data/outputs/report.md"]),
     )
 
@@ -911,7 +911,7 @@ async def test_delivery_event_emitted_when_checkpoint_preflight_fails(monkeypatc
     record = await run_manager.create("thread-1")
     store = MemoryRunEventStore()
     compatibility_check = AsyncMock(side_effect=RuntimeError("incompatible checkpoint"))
-    monkeypatch.setattr("deerflow.runtime.runs.worker.aensure_checkpoint_mode_compatible", compatibility_check)
+    monkeypatch.setattr("nkyel.runtime.runs.worker.aensure_checkpoint_mode_compatible", compatibility_check)
 
     def unexpected_agent_factory(**kwargs):
         raise AssertionError("agent must not be built after preflight failure")

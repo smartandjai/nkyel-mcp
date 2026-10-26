@@ -11,8 +11,8 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage
 from test_summarization_cost_recovery import FreeModel, _middleware, _state, _text
 
-from deerflow.agents.middlewares import summarization_middleware as module
-from deerflow.agents.middlewares.summarization_middleware import SummaryGenerationError
+from nkyel.agents.middlewares import summarization_middleware as module
+from nkyel.agents.middlewares.summarization_middleware import SummaryGenerationError
 
 
 class ProgressModel(FreeModel):

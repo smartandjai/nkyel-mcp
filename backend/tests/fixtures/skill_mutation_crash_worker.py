@@ -8,17 +8,17 @@ import stat
 import sys
 from types import SimpleNamespace
 
-from deerflow.config import paths
-from deerflow.config.paths import Paths
-from deerflow.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
-from deerflow.extensions.host_access import BoundHostAccess, HostAccess
-from deerflow.skills.mutations import publication
-from deerflow.skills.mutations import service as service_module
-from deerflow.skills.mutations.guard import SkillMutationRuntime, configure_mutation_runtime
-from deerflow.skills.mutations.recovery import SkillMutationRecovery
-from deerflow.skills.mutations.repository import SkillMutationRepository
-from deerflow.skills.mutations.topology import mutation_session_factory
-from deerflow.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
+from nkyel.config import paths
+from nkyel.config.paths import Paths
+from nkyel.extensions.completed_run_evidence import HostCompletedRunEvidenceReader
+from nkyel.extensions.host_access import BoundHostAccess, HostAccess
+from nkyel.skills.mutations import publication
+from nkyel.skills.mutations import service as service_module
+from nkyel.skills.mutations.guard import SkillMutationRuntime, configure_mutation_runtime
+from nkyel.skills.mutations.recovery import SkillMutationRecovery
+from nkyel.skills.mutations.repository import SkillMutationRepository
+from nkyel.skills.mutations.topology import mutation_session_factory
+from nkyel.skills.storage.user_scoped_skill_storage import UserScopedSkillStorage
 
 
 def die():

@@ -5,9 +5,9 @@ import threading
 
 import pytest
 
-from deerflow.sandbox.sandbox import Sandbox
-from deerflow.sandbox.sandbox_provider import SandboxProvider
-from deerflow.sandbox.tools import _rollback_failed_sandbox_lookup_async
+from nkyel.sandbox.sandbox import Sandbox
+from nkyel.sandbox.sandbox_provider import SandboxProvider
+from nkyel.sandbox.tools import _rollback_failed_sandbox_lookup_async
 
 
 class _BlockingRollbackProvider(SandboxProvider):

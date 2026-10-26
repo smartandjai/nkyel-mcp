@@ -11,9 +11,9 @@ import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.runtime.events.store.memory import MemoryRunEventStore
-from deerflow.runtime.journal import RunJournal
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.runtime.events.store.memory import MemoryRunEventStore
+from nkyel.runtime.journal import RunJournal
 
 
 def _response(*, usage=None, response_metadata=None, additional_kwargs=None) -> LLMResult:
@@ -83,7 +83,7 @@ async def test_middleware_and_fallback_caller_classification():
     journal = RunJournal("r1", "t1", store, flush_threshold=100)
     mid, fb = uuid4(), uuid4()
     journal.on_llm_end(_response(), run_id=mid, tags=["middleware:summarize"])
-    journal.on_llm_end(_response(additional_kwargs={"deerflow_error_fallback": True}), run_id=fb, tags=["lead_agent"])
+    journal.on_llm_end(_response(additional_kwargs={"nkyel_error_fallback": True}), run_id=fb, tags=["lead_agent"])
 
     events = await _events(journal, store, "llm.ai.response")
     by_run = {e["metadata"]["langchain_run_id"]: e["metadata"] for e in events}
@@ -115,8 +115,8 @@ async def test_telemetry_failure_does_not_affect_call_or_event(monkeypatch):
     def explode(*_a, **_k):
         raise RuntimeError("telemetry broken")
 
-    monkeypatch.setattr("deerflow.runtime.journal._rendered_request_size", explode)
-    monkeypatch.setattr("deerflow.runtime.journal._llm_caller_category", explode)
+    monkeypatch.setattr("nkyel.runtime.journal._rendered_request_size", explode)
+    monkeypatch.setattr("nkyel.runtime.journal._llm_caller_category", explode)
     rid = uuid4()
     journal.on_chat_model_start({}, [[HumanMessage(content="hi")]], run_id=rid, tags=["lead_agent"])  # must not raise
     usage = {"input_tokens": 3, "output_tokens": 2, "total_tokens": 5}
@@ -173,7 +173,7 @@ async def test_replayed_on_llm_end_keeps_canonical_request_metadata(initial_usag
         _response(
             usage=usage,
             response_metadata={"model_name": "replay-model", "finish_reason": "length"},
-            additional_kwargs={"deerflow_error_fallback": True, "error_detail": "replay fallback"},
+            additional_kwargs={"nkyel_error_fallback": True, "error_detail": "replay fallback"},
         ),
         run_id=rid,
         parent_run_id=uuid4(),
@@ -219,8 +219,8 @@ async def test_usage_replay_after_flush_keeps_committed_telemetry(initial_usage)
 
 @pytest.mark.anyio
 async def test_telemetry_metadata_round_trips_through_db_store(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
-    from deerflow.runtime.events.store.db import DbRunEventStore
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.runtime.events.store.db import DbRunEventStore
 
     await init_engine("sqlite", url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}", sqlite_dir=str(tmp_path))
     try:
@@ -231,7 +231,7 @@ async def test_telemetry_metadata_round_trips_through_db_store(tmp_path):
         journal.on_llm_end(_response(usage={"input_tokens": 2, "output_tokens": 1, "total_tokens": 3}, response_metadata={"stop_reason": "end_turn"}), run_id=ok_id, tags=["lead_agent"])
         journal.on_chat_model_start({}, [[HumanMessage(content="abc")]], run_id=err_id, tags=["middleware:title"])
         journal.on_llm_error(RuntimeError("boom"), run_id=err_id, tags=["middleware:title"])
-        journal.record_middleware("summarize", name="DeerFlowSummarizationMiddleware", hook="before_model", action="summary_result", changes={"noop": False})
+        journal.record_middleware("summarize", name="NkyelSummarizationMiddleware", hook="before_model", action="summary_result", changes={"noop": False})
         await journal.flush()
 
         events = await store.list_events("t1", "r1")
@@ -246,12 +246,12 @@ async def test_telemetry_metadata_round_trips_through_db_store(tmp_path):
         await close_engine()
 
 
-def _summarizer(text: str) -> DeerFlowSummarizationMiddleware:
+def _summarizer(text: str) -> NkyelSummarizationMiddleware:
     model = MagicMock()
     model.invoke.return_value = SimpleNamespace(text=text)
     model.ainvoke = AsyncMock(return_value=SimpleNamespace(text=text))
     model.with_config.return_value = model
-    return DeerFlowSummarizationMiddleware(model=model, trigger=("messages", 4), keep=("messages", 2), token_counter=len)
+    return NkyelSummarizationMiddleware(model=model, trigger=("messages", 4), keep=("messages", 2), token_counter=len)
 
 
 def _state(summary: str | None) -> dict:

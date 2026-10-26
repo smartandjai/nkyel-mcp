@@ -25,7 +25,7 @@
     "thread_changed_after_evaluation",
     "thread_changed_before_continuation"
   ],
-  "scheduled_origin_key": "deerflow_scheduled_origin",
+  "scheduled_origin_key": "nkyel_scheduled_origin",
   "host_run_errors": {
     "restarted": "interrupted: gateway restarted before the run reached a terminal state",
     "lease_lost": "interrupted: the owning gateway stopped renewing its run lease",

@@ -4,7 +4,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager, suppress
 from typing import Any
 
-from deerflow_extension_api import (
+from nkyel_extension_api import (
     EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY,
     EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY,
     EXTENSION_PRINCIPAL_RESOLVER_KEY,
@@ -62,14 +62,14 @@ from app.gateway.routers import (
     user_preferences,
 )
 from app.gateway.trace_middleware import TraceMiddleware
-from deerflow.config import app_config as deerflow_app_config
-from deerflow.logging_config import DEFAULT_LOG_DATE_FORMAT, DEFAULT_LOG_FORMAT, configure_logging
-from deerflow.tracing.monocle import setup_monocle_tracing_if_enabled
-from deerflow.uploads.manager import cleanup_stale_upload_staging_files
-from deerflow.utils.file_io import await_drained
+from nkyel.config import app_config as nkyel_app_config
+from nkyel.logging_config import DEFAULT_LOG_DATE_FORMAT, DEFAULT_LOG_FORMAT, configure_logging
+from nkyel.tracing.monocle import setup_monocle_tracing_if_enabled
+from nkyel.uploads.manager import cleanup_stale_upload_staging_files
+from nkyel.utils.file_io import await_drained
 
-AppConfig = deerflow_app_config.AppConfig
-get_app_config = deerflow_app_config.get_app_config
+AppConfig = nkyel_app_config.AppConfig
+get_app_config = nkyel_app_config.get_app_config
 
 # Default logging; lifespan overrides from config.yaml log_level.
 logging.basicConfig(
@@ -115,7 +115,7 @@ def _resolve_extension_plugin_management(request: Request, namespace: str, scope
     async endpoint must use :func:`_resolve_extension_plugin_management_async`.
     """
     from app.gateway.authz import _PluginAuthorizationUnavailable, resolve_plugin_authorization
-    from deerflow.authz.plugin_authz import PluginAuthorizationError, enforce_plugin_management
+    from nkyel.authz.plugin_authz import PluginAuthorizationError, enforce_plugin_management
 
     if not _installed_plugin_namespace(request, namespace):
         return None
@@ -143,7 +143,7 @@ def _resolve_extension_plugin_management(request: Request, namespace: str, scope
 async def _resolve_extension_plugin_management_async(request: Request, namespace: str, scope: str = "read") -> bool | None:
     """Async counterpart of :func:`_resolve_extension_plugin_management`."""
     from app.gateway.authz import _PluginAuthorizationUnavailable, aresolve_plugin_authorization
-    from deerflow.authz.plugin_authz import PluginAuthorizationError, aenforce_plugin_management
+    from nkyel.authz.plugin_authz import PluginAuthorizationError, aenforce_plugin_management
 
     if not _installed_plugin_namespace(request, namespace):
         return None
@@ -173,7 +173,7 @@ async def _ensure_admin_user(app: FastAPI) -> None:
 
     After admin creation, migrate orphan threads from the LangGraph
     store (metadata.user_id unset) to the admin account. This is the
-    "no-auth → with-auth" upgrade path: users who ran DeerFlow without
+    "no-auth → with-auth" upgrade path: users who ran nkyel without
     authentication have existing LangGraph thread data that needs an
     owner assigned.
         First boot (no admin exists):
@@ -192,8 +192,8 @@ async def _ensure_admin_user(app: FastAPI) -> None:
     from sqlalchemy import select
 
     from app.gateway.deps import get_local_provider
-    from deerflow.persistence.engine import get_session_factory
-    from deerflow.persistence.user.model import UserRow
+    from nkyel.persistence.engine import get_session_factory
+    from nkyel.persistence.user.model import UserRow
 
     try:
         provider = get_local_provider()
@@ -299,7 +299,7 @@ async def _shutdown_memory_backend(*, retrieval_warm_finished: bool) -> None:
     try:
         app_cfg: AppConfig = await asyncio.to_thread(get_app_config)
         if app_cfg.memory.enabled:
-            from deerflow.agents.memory import get_memory_manager
+            from nkyel.agents.memory import get_memory_manager
 
             manager = await asyncio.to_thread(get_memory_manager)
             flush_timeout = app_cfg.memory.shutdown_flush_timeout_seconds
@@ -334,9 +334,9 @@ async def _run_startup_trash_sweep(app: FastAPI, startup_config) -> None:
     teardown continues.
     """
     try:
-        from deerflow.config.paths import get_paths
-        from deerflow.config.projects_config import ProjectsConfig
-        from deerflow.projects.trash import run_trash_retention_sweep
+        from nkyel.config.paths import get_paths
+        from nkyel.config.projects_config import ProjectsConfig
+        from nkyel.projects.trash import run_trash_retention_sweep
 
         project_document_repo = getattr(app.state, "project_document_repo", None)
         if project_document_repo is None:
@@ -435,7 +435,7 @@ async def _shutdown_subagent_batch_service(app: FastAPI) -> None:
     except Exception:
         logger.exception("Failed to stop subagent batch service")
     finally:
-        from deerflow.subagents.batch_runtime import set_subagent_batch_submitter
+        from nkyel.subagents.batch_runtime import set_subagent_batch_submitter
 
         set_subagent_batch_submitter(None)
 
@@ -443,7 +443,7 @@ async def _shutdown_subagent_batch_service(app: FastAPI) -> None:
 async def _load_credentials_cipher(startup_config: AppConfig):
     """Load the at-rest credentials cipher when an enabled feature stores credentials, else ``None``.
 
-    Without ``DEER_FLOW_CREDENTIALS_KEY`` the first load creates
+    Without ``NKYEL_CREDENTIALS_KEY`` the first load creates
     ``{base_dir}/.credentials_key``, so it runs in a worker thread. The startup
     gate has already refused a malformed environment key; a key file that
     cannot be read or created leaves stored credentials unavailable (the
@@ -453,7 +453,7 @@ async def _load_credentials_cipher(startup_config: AppConfig):
 
     if not credentials_key_consumers(startup_config):
         return None
-    from deerflow.config import credentials_key
+    from nkyel.config import credentials_key
 
     try:
         return await asyncio.to_thread(credentials_key.get_credentials_cipher)
@@ -472,9 +472,9 @@ def _scheduled_task_notification_repos(startup_config: AppConfig, credentials_ci
     if connection_config is None or not getattr(connection_config, "enabled", False):
         return None, None
 
-    from deerflow.persistence.channel_connections import ChannelConnectionRepository
-    from deerflow.persistence.engine import get_session_factory
-    from deerflow.persistence.notification_deliveries import NotificationDeliveryRepository
+    from nkyel.persistence.channel_connections import ChannelConnectionRepository
+    from nkyel.persistence.engine import get_session_factory
+    from nkyel.persistence.notification_deliveries import NotificationDeliveryRepository
 
     session_factory = get_session_factory()
     if session_factory is None:
@@ -504,9 +504,9 @@ async def _start_scheduled_task_notification_delivery(app: FastAPI, startup_conf
 
     try:
         from app.scheduler.notification_delivery import NotificationDeliveryWorker
-        from deerflow.persistence.engine import get_session_factory
-        from deerflow.persistence.run import RunRepository
-        from deerflow.persistence.user.im_notifications import ImNotificationPreferencesRepository
+        from nkyel.persistence.engine import get_session_factory
+        from nkyel.persistence.run import RunRepository
+        from nkyel.persistence.user.im_notifications import ImNotificationPreferencesRepository
 
         run_repo = RunRepository(get_session_factory())
 
@@ -535,8 +535,8 @@ async def _start_scheduled_task_notification_delivery(app: FastAPI, startup_conf
 
             from app.gateway.context_usage import _load_checkpoint_messages
             from app.gateway.services import build_thread_checkpoint_state_accessor
-            from deerflow.agents.human_input import extract_unanswered_human_input_request
-            from deerflow.runtime.user_context import reset_current_user, set_current_user
+            from nkyel.agents.human_input import extract_unanswered_human_input_request
+            from nkyel.runtime.user_context import reset_current_user, set_current_user
 
             owner_token = set_current_user(SimpleNamespace(id=owner_user_id)) if isinstance(owner_user_id, str) and owner_user_id else None
             try:
@@ -595,7 +595,7 @@ async def _runtime_with_mcp_pool_shutdown(app: FastAPI, startup_config: AppConfi
             # shutdown hooks, so closing the pool inside the runtime leaves fresh
             # owner tasks and transports alive after the only close pass.
             try:
-                from deerflow.mcp.session_pool import get_session_pool
+                from nkyel.mcp.session_pool import get_session_pool
 
                 await asyncio.wait_for(
                     get_session_pool().close_all(),
@@ -613,7 +613,7 @@ async def _runtime_with_mcp_pool_shutdown(app: FastAPI, startup_config: AppConfi
             # provider cannot install signal handlers. Close only the existing
             # provider after runtime shutdown and MCP teardown, without allocating.
             try:
-                from deerflow.sandbox.sandbox_provider import shutdown_sandbox_provider
+                from nkyel.sandbox.sandbox_provider import shutdown_sandbox_provider
 
                 await await_drained(asyncio.to_thread(shutdown_sandbox_provider))
             except Exception:
@@ -633,9 +633,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # snapshot on `app.state` to keep that contract enforceable.
     try:
         startup_config = get_app_config()
-        from deerflow.config.subagent_batches_config import SubagentBatchesConfig
-        from deerflow.config.subagent_runtime_config import SubagentRuntimeConfig
-        from deerflow.subagents.capacity import configure_subagent_execution_capacity
+        from nkyel.config.subagent_batches_config import SubagentBatchesConfig
+        from nkyel.config.subagent_runtime_config import SubagentRuntimeConfig
+        from nkyel.subagents.capacity import configure_subagent_execution_capacity
 
         subagent_runtime_config = getattr(startup_config, "subagent_runtime", None)
         if not isinstance(subagent_runtime_config, SubagentRuntimeConfig):
@@ -655,7 +655,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     config = get_gateway_config()
     logger.info(f"Starting API Gateway on {config.host}:{config.port}")
 
-    from deerflow.skills.projection import ensure_public_skill_projection
+    from nkyel.skills.projection import ensure_public_skill_projection
 
     public_projection_ready = await asyncio.to_thread(ensure_public_skill_projection, app_config=startup_config)
     if public_projection_ready:
@@ -663,7 +663,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Agent observability (Monocle). Off by default; enabled with
     # MONOCLE_TRACING. Initialized here at startup — not at import time — so a
-    # plain `import deerflow.agents` never installs a process-global tracer.
+    # plain `import nkyel.agents` never installs a process-global tracer.
     # Unlike LangSmith/Langfuse, whose validation failures abort the agent run,
     # a bad Monocle config only logs: the Gateway keeps serving without tracing.
     try:
@@ -676,7 +676,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # the requested scope when the full warm-up has not completed yet.
     retrieval_warm_task: asyncio.Task[None] | None = None
     try:
-        from deerflow.agents.memory import get_memory_manager
+        from nkyel.agents.memory import get_memory_manager
 
         if startup_config.memory.enabled:
             manager = await asyncio.to_thread(get_memory_manager)
@@ -701,7 +701,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # the base default -- log "skipping" instead of the misleading "warmed
     # successfully" so the log reflects what actually happened.
     try:
-        from deerflow.agents.memory import get_memory_manager
+        from nkyel.agents.memory import get_memory_manager
 
         manager = await asyncio.to_thread(get_memory_manager)
         warmed = await asyncio.wait_for(
@@ -752,9 +752,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # write routes' enqueue is a no-op otherwise. Needs the session
         # factory and paths, both ready after langgraph_runtime.
         try:
-            from deerflow.config.paths import get_paths
-            from deerflow.persistence.engine import get_session_factory
-            from deerflow.projects.summaries import init_summary_generator
+            from nkyel.config.paths import get_paths
+            from nkyel.persistence.engine import get_session_factory
+            from nkyel.projects.summaries import init_summary_generator
 
             _summary_sf = get_session_factory()
             if _summary_sf is not None:
@@ -764,7 +764,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         except Exception:
             logger.exception("Failed to start summary generation workers")
 
-        # At-rest credentials cipher (DEER_FLOW_CREDENTIALS_KEY) shared by every
+        # At-rest credentials cipher (NKYEL_CREDENTIALS_KEY) shared by every
         # ChannelConnectionRepository this process builds; None when no enabled
         # feature stores credentials.
         credentials_cipher = await _load_credentials_cipher(startup_config)
@@ -847,15 +847,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
         from app.gateway.services import launch_mcp_task_notification_run
         from app.mcp_tasks import McpTaskService
-        from deerflow.config.extensions_config import ExtensionsConfig
-        from deerflow.config.mcp_tasks_config import McpTasksConfig
-        from deerflow.mcp.task_tool_caller import McpTaskToolCaller
-        from deerflow.mcp.tasks import (
+        from nkyel.config.extensions_config import ExtensionsConfig
+        from nkyel.config.mcp_tasks_config import McpTasksConfig
+        from nkyel.mcp.task_tool_caller import McpTaskToolCaller
+        from nkyel.mcp.tasks import (
             ORDINARY_MCP_TASK_DRIVER,
             McpTaskDriverRegistry,
             OrdinaryMcpTaskDriver,
         )
-        from deerflow.mcp.tasks.runtime import (
+        from nkyel.mcp.tasks.runtime import (
             set_mcp_task_config_snapshot,
             set_mcp_task_submitter,
             validate_mcp_task_runtime_configuration,
@@ -904,7 +904,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 app.state.mcp_tasks_available = True
 
         from app.subagent_batches import SubagentBatchService
-        from deerflow.subagents.batch_runtime import set_subagent_batch_submitter
+        from nkyel.subagents.batch_runtime import set_subagent_batch_submitter
 
         batch_repo = getattr(app.state, "subagent_batch_repo", None)
         app.state.subagent_batches_available = False
@@ -928,7 +928,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
         await _shutdown_startup_trash_sweep(app)
         try:
-            from deerflow.projects.summaries import get_summary_generator, reset_summary_generator
+            from nkyel.projects.summaries import get_summary_generator, reset_summary_generator
 
             _generator = get_summary_generator()
             if _generator is not None:
@@ -984,10 +984,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             except Exception:
                 logger.exception("Failed to stop MCP task service")
             finally:
-                from deerflow.mcp.tasks.runtime import set_mcp_task_submitter
+                from nkyel.mcp.tasks.runtime import set_mcp_task_submitter
 
                 set_mcp_task_submitter(None)
-        from deerflow.mcp.tasks.runtime import set_mcp_task_config_snapshot
+        from nkyel.mcp.tasks.runtime import set_mcp_task_config_snapshot
 
         set_mcp_task_config_snapshot(None)
 
@@ -996,7 +996,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Browser sessions have their own bounded teardown. MCP sessions close
         # after the runtime drains runs, since those runs may still call tools.
         try:
-            from deerflow.community.browser_automation import get_browser_session_manager
+            from nkyel.community.browser_automation import get_browser_session_manager
 
             closed = await asyncio.wait_for(
                 get_browser_session_manager().close_all_sessions(),
@@ -1056,7 +1056,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             # system-model callbacks. Stop accepting those callbacks before
             # flushing, while keeping the registered loop alive for awaited
             # task hooks until langgraph_runtime drains runs and subagents.
-            from deerflow.extensions.notify import suspend_extension_system_observations
+            from nkyel.extensions.notify import suspend_extension_system_observations
 
             suspend_extension_system_observations()
         except Exception:
@@ -1087,11 +1087,11 @@ def create_app() -> FastAPI:
     openapi_url = "/openapi.json" if config.enable_docs else None
 
     app = FastAPI(
-        title="DeerFlow API Gateway",
+        title="nkyel API Gateway",
         description="""
-## DeerFlow API Gateway
+## nkyel API Gateway
 
-API Gateway for DeerFlow - A LangGraph-based AI agent backend with sandbox execution capabilities.
+API Gateway for nkyel - A LangGraph-based AI agent backend with sandbox execution capabilities.
 
 ### Features
 
@@ -1139,7 +1139,7 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
             },
             {
                 "name": "threads",
-                "description": "Manage DeerFlow thread-local filesystem data",
+                "description": "Manage nkyel thread-local filesystem data",
             },
             {
                 "name": "agents",
@@ -1236,7 +1236,7 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
 
     setattr(app.state, RUN_EVIDENCE_READER_RESOLVER_KEY, _resolve_extension_run_evidence_reader)
 
-    from deerflow_extension_api.agent_runs import AGENT_RUNS_RESOLVER_KEY
+    from nkyel_extension_api.agent_runs import AGENT_RUNS_RESOLVER_KEY
 
     def _resolve_extension_agent_runs(request):
         host = getattr(app.state, "agent_runs_host", None)
@@ -1274,7 +1274,7 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
     # Python extensions load once while the Gateway app is constructed. Agent
     # middleware builders consume the same immutable set through the process
     # singleton; app.state exposes it to the Gateway runtime.
-    from deerflow.extensions import (
+    from nkyel.extensions import (
         EMPTY_EXTENSIONS,
         ExtensionLoadError,
         initialize_runtime_diagnostics,
@@ -1422,7 +1422,7 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
     # registers the GitHub channel's ChannelRunPolicy as an import side-effect.
     #
     # Fail-closed: only mount the route when a webhook secret is configured
-    # (or when the explicit DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS=1
+    # (or when the explicit NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS=1
     # dev opt-in is set). A misconfigured deployment without a secret cannot
     # serve forged deliveries because the URL responds 404 — there is no
     # handler to reach.
@@ -1430,7 +1430,7 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
         app.include_router(github_webhooks.router)
         logger.info("GitHub webhooks route mounted at /api/webhooks/github")
     else:
-        logger.warning("GitHub webhooks route NOT mounted: GITHUB_WEBHOOK_SECRET unset and DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS not set. /api/webhooks/github will respond 404. Configure either env var to enable the route.")
+        logger.warning("GitHub webhooks route NOT mounted: GITHUB_WEBHOOK_SECRET unset and NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS not set. /api/webhooks/github will respond 404. Configure either env var to enable the route.")
 
     @app.get("/health", tags=["health"])
     async def health_check() -> dict[str, str]:
@@ -1439,7 +1439,7 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
         Returns:
             Service health status information.
         """
-        return {"status": "healthy", "service": "deer-flow-gateway"}
+        return {"status": "healthy", "service": "nkyel-gateway"}
 
     @app.get("/health/ready", tags=["health"])
     async def readiness_check(request: Request, response: Response) -> dict[str, str]:
@@ -1470,7 +1470,7 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
     # registration order, so every host route (including conditional routes
     # and /health) keeps precedence. Definite shadows are rejected with an
     # attributed diagnostic while unrelated extension routers still mount.
-    from deerflow.extensions.gateway import include_contributed_routers
+    from nkyel.extensions.gateway import include_contributed_routers
 
     record_runtime_diagnostics(include_contributed_routers(app, loaded_extensions))
 

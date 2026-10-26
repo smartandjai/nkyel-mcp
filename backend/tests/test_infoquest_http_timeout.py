@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from deerflow.community.infoquest.infoquest_client import InfoQuestClient
+from nkyel.community.infoquest.infoquest_client import InfoQuestClient
 
 _SEARCH_PAYLOAD = {"search_result": {"results": []}}
 
@@ -24,7 +24,7 @@ def _mock_async_client_cls() -> MagicMock:
 def _install_response(monkeypatch, response: httpx.Response):
     mock_async_client_cls = _mock_async_client_cls()
     mock_async_client_cls.return_value.post.return_value = response
-    monkeypatch.setattr("deerflow.community.infoquest.infoquest_client.httpx.AsyncClient", mock_async_client_cls)
+    monkeypatch.setattr("nkyel.community.infoquest.infoquest_client.httpx.AsyncClient", mock_async_client_cls)
     monkeypatch.setenv("INFOQUEST_API_KEY", "test-placeholder")
     return mock_async_client_cls
 
@@ -56,7 +56,7 @@ async def test_infoquest_sets_transport_timeout(monkeypatch, operation):
 async def test_infoquest_transport_timeout_returns_existing_error(monkeypatch, operation, error_type):
     mock_async_client_cls = _mock_async_client_cls()
     mock_async_client_cls.return_value.post.side_effect = error_type("synthetic timeout")
-    monkeypatch.setattr("deerflow.community.infoquest.infoquest_client.httpx.AsyncClient", mock_async_client_cls)
+    monkeypatch.setattr("nkyel.community.infoquest.infoquest_client.httpx.AsyncClient", mock_async_client_cls)
     monkeypatch.setenv("INFOQUEST_API_KEY", "test-placeholder")
 
     result = await getattr(InfoQuestClient(), operation)("https://example.com" if operation == "fetch" else "query")

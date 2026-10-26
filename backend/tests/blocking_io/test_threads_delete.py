@@ -25,8 +25,8 @@ from unittest.mock import patch
 import pytest
 
 from app.gateway.routers import threads
-from deerflow.config.paths import Paths
-from deerflow.runtime.user_context import get_effective_user_id
+from nkyel.config.paths import Paths
+from nkyel.runtime.user_context import get_effective_user_id
 
 pytestmark = pytest.mark.asyncio
 

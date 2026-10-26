@@ -1,6 +1,6 @@
 """Per-provider leader lease bookkeeping for one Gateway instance (``channels.leader_lease``).
 
-The shared ``channel_leases`` table (``deerflow.persistence.channel_leases``)
+The shared ``channel_leases`` table (``nkyel.persistence.channel_leases``)
 decides, against the database clock, which instance may hold a provider's
 platform connection. This module keeps the holder's side of that contract:
 
@@ -40,7 +40,7 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Protocol, TypeVar
 
-from deerflow.persistence.channel_leases import ChannelLeaseGrant, ChannelLeaseState
+from nkyel.persistence.channel_leases import ChannelLeaseGrant, ChannelLeaseState
 
 logger = logging.getLogger(__name__)
 

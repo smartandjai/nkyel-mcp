@@ -33,8 +33,8 @@ def _is_staged(path: Path) -> bool:
 
 
 def test_managed_subagent_write_keeps_the_replace_error_when_cleanup_fails(tmp_path, monkeypatch, real_unlink):
-    from deerflow.persistence.managed_subagents import file as store_module
-    from deerflow.persistence.managed_subagents.base import ManagedSubagentDefinition
+    from nkyel.persistence.managed_subagents import file as store_module
+    from nkyel.persistence.managed_subagents.base import ManagedSubagentDefinition
 
     definition = ManagedSubagentDefinition(
         name="planner",
@@ -56,7 +56,7 @@ def test_managed_subagent_write_keeps_the_replace_error_when_cleanup_fails(tmp_p
 
 
 def test_agent_store_write_keeps_the_publish_error_when_cleanup_fails(tmp_path, monkeypatch, real_unlink):
-    from deerflow.persistence.agents.file import FileAgentStore
+    from nkyel.persistence.agents.file import FileAgentStore
 
     agent_dir = tmp_path / "agents"
     agent_dir.mkdir()

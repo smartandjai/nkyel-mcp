@@ -11,9 +11,9 @@ import pytest
 import yaml
 from support.shell import find_script_bash
 
-from deerflow.config.app_config import AppConfig, _legacy_config_candidates
-from deerflow.config.knowledge_base_config import KnowledgeBaseConfig
-from deerflow.tools.tools import get_available_tools
+from nkyel.config.app_config import AppConfig, _legacy_config_candidates
+from nkyel.config.knowledge_base_config import KnowledgeBaseConfig
+from nkyel.tools.tools import get_available_tools
 
 
 def test_knowledge_base_config_is_provider_agnostic() -> None:
@@ -41,7 +41,7 @@ def _make_config_files(tmpdir: Path, user_config: dict, example_config: dict) ->
 
     # Minimal valid config needs sandbox
     defaults = {
-        "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+        "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
     }
     for cfg in (user_config, example_config):
         for k, v in defaults.items():
@@ -63,9 +63,9 @@ def test_missing_version_treated_as_zero(caplog):
             user_config={},  # no config_version
             example_config={"config_version": 1},
         )
-        with caplog.at_level(logging.WARNING, logger="deerflow.config.app_config"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.config.app_config"):
             AppConfig._check_config_version(
-                {"sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}},
+                {"sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}},
                 config_path,
             )
         assert "outdated" in caplog.text
@@ -81,7 +81,7 @@ def test_matching_version_no_warning(caplog):
             user_config={"config_version": 1},
             example_config={"config_version": 1},
         )
-        with caplog.at_level(logging.WARNING, logger="deerflow.config.app_config"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.config.app_config"):
             AppConfig._check_config_version(
                 {"config_version": 1},
                 config_path,
@@ -97,7 +97,7 @@ def test_outdated_version_emits_warning(caplog):
             user_config={"config_version": 1},
             example_config={"config_version": 2},
         )
-        with caplog.at_level(logging.WARNING, logger="deerflow.config.app_config"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.config.app_config"):
             AppConfig._check_config_version(
                 {"config_version": 1},
                 config_path,
@@ -115,7 +115,7 @@ def test_no_example_file_no_warning(caplog):
             yaml.dump({"sandbox": {"use": "test"}}, f)
         # No config.example.yaml created
 
-        with caplog.at_level(logging.WARNING, logger="deerflow.config.app_config"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.config.app_config"):
             AppConfig._check_config_version({}, config_path)
         assert "outdated" not in caplog.text
 
@@ -140,7 +140,7 @@ def test_newer_user_version_no_warning(caplog):
             user_config={"config_version": 3},
             example_config={"config_version": 2},
         )
-        with caplog.at_level(logging.WARNING, logger="deerflow.config.app_config"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.config.app_config"):
             AppConfig._check_config_version(
                 {"config_version": 3},
                 config_path,
@@ -169,17 +169,17 @@ def test_version_26_config_upgrades_to_checkpoint_channel_mode(tmp_path, caplog)
     (tmp_path / "config.example.yaml").write_text(example_src.read_text(encoding="utf-8"), encoding="utf-8")
     user_config = {
         "config_version": 26,
-        "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+        "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
         "database": {"backend": "sqlite", "sqlite_dir": "custom-data"},
     }
     config_path.write_text(yaml.dump(user_config), encoding="utf-8")
 
-    with caplog.at_level(logging.WARNING, logger="deerflow.config.app_config"):
+    with caplog.at_level(logging.WARNING, logger="nkyel.config.app_config"):
         AppConfig._check_config_version(dict(user_config), config_path)
     assert "outdated" in caplog.text
     assert "(version 26)" in caplog.text
 
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(config_path)}
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(config_path)}
     result = subprocess.run(
         [SCRIPT_BASH, str(repo_root / "scripts" / "config-upgrade.sh")],
         env=env,
@@ -213,7 +213,7 @@ def test_version_41_config_moves_legacy_ragflow_settings_to_tool(tmp_path):
     config_path = tmp_path / "config.yaml"
     legacy = {
         "config_version": 41,
-        "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+        "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
         "knowledge_base": {
             "enabled": True,
             "scope_selection_enabled": True,
@@ -225,7 +225,7 @@ def test_version_41_config_moves_legacy_ragflow_settings_to_tool(tmp_path):
             {
                 "name": "knowledge_search",
                 "group": "knowledge",
-                "use": "deerflow.community.ragflow.tools:knowledge_search_tool",
+                "use": "nkyel.community.ragflow.tools:knowledge_search_tool",
                 # Explicit tool values win over the legacy global value.
                 "api_key": "$CURRENT_RAGFLOW_API_KEY",
             }
@@ -233,7 +233,7 @@ def test_version_41_config_moves_legacy_ragflow_settings_to_tool(tmp_path):
     }
     config_path.write_text(yaml.dump(legacy), encoding="utf-8")
 
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(config_path)}
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(config_path)}
     result = subprocess.run(
         [SCRIPT_BASH, str(repo_root / "scripts" / "config-upgrade.sh")],
         env=env,
@@ -268,13 +268,13 @@ def test_version_41_tools_only_ragflow_config_enables_knowledge_capability(tmp_p
     config_path = tmp_path / "config.yaml"
     legacy = {
         "config_version": 41,
-        "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+        "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
         # This was the documented enablement path before knowledge_base existed.
         "tools": [
             {
                 "name": "knowledge_search",
                 "group": "knowledge",
-                "use": "deerflow.community.ragflow.tools:knowledge_search_tool",
+                "use": "nkyel.community.ragflow.tools:knowledge_search_tool",
                 "base_url": "http://legacy-ragflow:9380",
                 "api_key": "$RAGFLOW_API_KEY",
             }
@@ -282,7 +282,7 @@ def test_version_41_tools_only_ragflow_config_enables_knowledge_capability(tmp_p
     }
     config_path.write_text(yaml.dump(legacy), encoding="utf-8")
 
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(config_path)}
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(config_path)}
     result = subprocess.run(
         [SCRIPT_BASH, str(repo_root / "scripts" / "config-upgrade.sh")],
         env=env,
@@ -317,12 +317,12 @@ def test_version_45_tools_only_ragflow_config_runs_knowledge_migration(tmp_path)
         yaml.dump(
             {
                 "config_version": 45,
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "tools": [
                     {
                         "name": "knowledge_search",
                         "group": "knowledge",
-                        "use": "deerflow.community.ragflow.tools:knowledge_search_tool",
+                        "use": "nkyel.community.ragflow.tools:knowledge_search_tool",
                         "base_url": "http://legacy-ragflow:9380",
                         "api_key": "$RAGFLOW_API_KEY",
                     }
@@ -332,7 +332,7 @@ def test_version_45_tools_only_ragflow_config_runs_knowledge_migration(tmp_path)
         encoding="utf-8",
     )
 
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(config_path)}
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(config_path)}
     result = subprocess.run(
         [SCRIPT_BASH, str(repo_root / "scripts" / "config-upgrade.sh")],
         env=env,
@@ -367,12 +367,12 @@ def test_version_45_tools_only_lightrag_config_keeps_knowledge_tool_available(tm
         yaml.dump(
             {
                 "config_version": 45,
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "tools": [
                     {
                         "name": "knowledge_search",
                         "group": "knowledge",
-                        "use": "deerflow.community.lightrag.tools:knowledge_search_tool",
+                        "use": "nkyel.community.lightrag.tools:knowledge_search_tool",
                         "base_url": "http://legacy-lightrag:9621",
                         "api_key": "$LIGHTRAG_API_KEY",
                     }
@@ -382,7 +382,7 @@ def test_version_45_tools_only_lightrag_config_keeps_knowledge_tool_available(tm
         encoding="utf-8",
     )
 
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(config_path)}
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(config_path)}
     result = subprocess.run(
         [SCRIPT_BASH, str(repo_root / "scripts" / "config-upgrade.sh")],
         env=env,
@@ -421,13 +421,13 @@ def test_version_45_lightrag_config_preserves_explicit_disabled_gate(tmp_path):
         yaml.dump(
             {
                 "config_version": 45,
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "knowledge_base": {"enabled": False},
                 "tools": [
                     {
                         "name": "knowledge_search",
                         "group": "knowledge",
-                        "use": "deerflow.community.lightrag.tools:knowledge_search_tool",
+                        "use": "nkyel.community.lightrag.tools:knowledge_search_tool",
                         "base_url": "http://legacy-lightrag:9621",
                     }
                 ],
@@ -436,7 +436,7 @@ def test_version_45_lightrag_config_preserves_explicit_disabled_gate(tmp_path):
         encoding="utf-8",
     )
 
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(config_path)}
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(config_path)}
     result = subprocess.run(
         [SCRIPT_BASH, str(repo_root / "scripts" / "config-upgrade.sh")],
         env=env,
@@ -494,7 +494,7 @@ def test_version_26_config_reported_outdated_against_example(caplog):
             user_config={"config_version": 26},
             example_config=example,
         )
-        with caplog.at_level(logging.WARNING, logger="deerflow.config.app_config"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.config.app_config"):
             AppConfig._check_config_version({"config_version": 26}, config_path)
         assert "outdated" in caplog.text
         assert "version 26" in caplog.text
@@ -537,7 +537,7 @@ def test_version_46_pii_enabled_config_reported_outdated_against_example(caplog)
             user_config={"config_version": 46, "pii_redaction": {"enabled": True}},
             example_config=example,
         )
-        with caplog.at_level(logging.WARNING, logger="deerflow.config.app_config"):
+        with caplog.at_level(logging.WARNING, logger="nkyel.config.app_config"):
             AppConfig._check_config_version({"config_version": 46}, config_path)
         assert "outdated" in caplog.text
         assert "(version 46)" in caplog.text
@@ -562,14 +562,14 @@ def test_version_46_pii_enabled_config_upgrade_generates_token_secret(tmp_path):
         yaml.dump(
             {
                 "config_version": 46,
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "pii_redaction": {"enabled": True},
             }
         ),
         encoding="utf-8",
     )
 
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(config_path)}
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(config_path)}
     result = subprocess.run(
         [SCRIPT_BASH, str(repo_root / "scripts" / "config-upgrade.sh")],
         env=env,
@@ -607,14 +607,14 @@ def test_version_46_pii_disabled_config_upgrade_skips_token_secret(tmp_path):
         yaml.dump(
             {
                 "config_version": 46,
-                "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"},
+                "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"},
                 "pii_redaction": {"enabled": False},
             }
         ),
         encoding="utf-8",
     )
 
-    env = {**os.environ, "DEER_FLOW_CONFIG_PATH": str(config_path)}
+    env = {**os.environ, "NKYEL_CONFIG_PATH": str(config_path)}
     result = subprocess.run(
         [SCRIPT_BASH, str(repo_root / "scripts" / "config-upgrade.sh")],
         env=env,
@@ -646,8 +646,8 @@ def _run_config_upgrade_in_checkout(checkout: Path, **env_overrides: str):
     import shutil
     import subprocess
 
-    project_root = Path(env_overrides.get("DEER_FLOW_PROJECT_ROOT", checkout))
-    if "DEER_FLOW_CONFIG_PATH" not in env_overrides and project_root.is_dir() and not (project_root / "config.yaml").is_file():
+    project_root = Path(env_overrides.get("NKYEL_PROJECT_ROOT", checkout))
+    if "NKYEL_CONFIG_PATH" not in env_overrides and project_root.is_dir() and not (project_root / "config.yaml").is_file():
         assert not any(path.exists() for path in _legacy_config_candidates()), "would fall back to the real repository's config.yaml"
 
     repo_root = Path(__file__).resolve().parents[2]
@@ -656,7 +656,7 @@ def _run_config_upgrade_in_checkout(checkout: Path, **env_overrides: str):
     shutil.copy2(repo_root / "scripts" / "config-upgrade.sh", checkout / "scripts" / "config-upgrade.sh")
     shutil.copy2(repo_root / "config.example.yaml", checkout / "config.example.yaml")
 
-    env = {key: value for key, value in os.environ.items() if key not in {"DEER_FLOW_CONFIG_PATH", "DEER_FLOW_PROJECT_ROOT", "DEER_FLOW_ENV_FILE"}}
+    env = {key: value for key, value in os.environ.items() if key not in {"NKYEL_CONFIG_PATH", "NKYEL_PROJECT_ROOT", "NKYEL_ENV_FILE"}}
     env["UV_PROJECT"] = str(repo_root / "backend")
     env.update(env_overrides)
     return subprocess.run(
@@ -670,7 +670,7 @@ def _run_config_upgrade_in_checkout(checkout: Path, **env_overrides: str):
 
 def _write_outdated_config(path: Path) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = yaml.dump({"config_version": 1, "sandbox": {"use": "deerflow.sandbox.local:LocalSandboxProvider"}})
+    text = yaml.dump({"config_version": 1, "sandbox": {"use": "nkyel.sandbox.local:LocalSandboxProvider"}})
     path.write_text(text, encoding="utf-8")
     return text
 
@@ -693,14 +693,14 @@ def test_config_upgrade_targets_checkout_config_over_legacy_backend_copy(tmp_pat
 
 
 @pytest.mark.skipif(SCRIPT_BASH is None, reason="repo shell-script tests need Git Bash on Windows")
-def test_config_upgrade_honors_deer_flow_project_root(tmp_path):
-    """An exported DEER_FLOW_PROJECT_ROOT decides the file, as it does for the Gateway."""
+def test_config_upgrade_honors_nkyel_project_root(tmp_path):
+    """An exported NKYEL_PROJECT_ROOT decides the file, as it does for the Gateway."""
     checkout = tmp_path / "checkout"
     project_root = tmp_path / "project"
     checkout_text = _write_outdated_config(checkout / "config.yaml")
     _write_outdated_config(project_root / "config.yaml")
 
-    result = _run_config_upgrade_in_checkout(checkout, DEER_FLOW_PROJECT_ROOT=str(project_root))
+    result = _run_config_upgrade_in_checkout(checkout, NKYEL_PROJECT_ROOT=str(project_root))
     assert result.returncode == 0, result.stdout + result.stderr
 
     upgraded = yaml.safe_load((project_root / "config.yaml").read_text(encoding="utf-8"))
@@ -709,41 +709,41 @@ def test_config_upgrade_honors_deer_flow_project_root(tmp_path):
 
 
 @pytest.mark.skipif(SCRIPT_BASH is None, reason="repo shell-script tests need Git Bash on Windows")
-def test_config_upgrade_fails_on_missing_deer_flow_config_path(tmp_path):
+def test_config_upgrade_fails_on_missing_nkyel_config_path(tmp_path):
     """A missing explicit config stops the Gateway, so no fallback file is upgraded instead."""
     checkout = tmp_path / "checkout"
     checkout_text = _write_outdated_config(checkout / "config.yaml")
     legacy_text = _write_outdated_config(checkout / "backend" / "config.yaml")
     missing = tmp_path / "missing" / "config.yaml"
 
-    result = _run_config_upgrade_in_checkout(checkout, DEER_FLOW_CONFIG_PATH=str(missing))
+    result = _run_config_upgrade_in_checkout(checkout, NKYEL_CONFIG_PATH=str(missing))
     assert result.returncode != 0
-    assert "DEER_FLOW_CONFIG_PATH" in result.stderr
+    assert "NKYEL_CONFIG_PATH" in result.stderr
     assert (checkout / "config.yaml").read_text(encoding="utf-8") == checkout_text
     assert (checkout / "backend" / "config.yaml").read_text(encoding="utf-8") == legacy_text
 
 
 @pytest.mark.skipif(SCRIPT_BASH is None, reason="repo shell-script tests need Git Bash on Windows")
-def test_config_upgrade_reports_invalid_deer_flow_project_root(tmp_path):
+def test_config_upgrade_reports_invalid_nkyel_project_root(tmp_path):
     """A project root the Gateway rejects fails with its message, not a traceback."""
     checkout = tmp_path / "checkout"
     checkout_text = _write_outdated_config(checkout / "config.yaml")
 
-    result = _run_config_upgrade_in_checkout(checkout, DEER_FLOW_PROJECT_ROOT=str(tmp_path / "missing"))
+    result = _run_config_upgrade_in_checkout(checkout, NKYEL_PROJECT_ROOT=str(tmp_path / "missing"))
     assert result.returncode != 0
-    assert "DEER_FLOW_PROJECT_ROOT is set to" in result.stderr
+    assert "NKYEL_PROJECT_ROOT is set to" in result.stderr
     assert "Traceback" not in result.stderr
     assert (checkout / "config.yaml").read_text(encoding="utf-8") == checkout_text
 
 
 @pytest.mark.skipif(SCRIPT_BASH is None, reason="repo shell-script tests need Git Bash on Windows")
-def test_config_upgrade_honors_deer_flow_config_path_from_dotenv(tmp_path):
+def test_config_upgrade_honors_nkyel_config_path_from_dotenv(tmp_path):
     """`make config-upgrade` does not source .env, but the Gateway loads it; follow the Gateway."""
     checkout = tmp_path / "checkout"
     live = tmp_path / "live" / "config.yaml"
     checkout_text = _write_outdated_config(checkout / "config.yaml")
     _write_outdated_config(live)
-    (checkout / ".env").write_text(f"DEER_FLOW_CONFIG_PATH={live}\n", encoding="utf-8")
+    (checkout / ".env").write_text(f"NKYEL_CONFIG_PATH={live}\n", encoding="utf-8")
 
     result = _run_config_upgrade_in_checkout(checkout)
     assert result.returncode == 0, result.stdout + result.stderr
@@ -753,13 +753,13 @@ def test_config_upgrade_honors_deer_flow_config_path_from_dotenv(tmp_path):
 
 
 @pytest.mark.skipif(SCRIPT_BASH is None, reason="repo shell-script tests need Git Bash on Windows")
-def test_config_upgrade_resolves_relative_deer_flow_config_path_from_backend(tmp_path):
-    """The Gateway runs from backend/, so a relative DEER_FLOW_CONFIG_PATH is relative to it."""
+def test_config_upgrade_resolves_relative_nkyel_config_path_from_backend(tmp_path):
+    """The Gateway runs from backend/, so a relative NKYEL_CONFIG_PATH is relative to it."""
     checkout = tmp_path / "checkout"
     checkout_text = _write_outdated_config(checkout / "config.yaml")
     _write_outdated_config(checkout / "backend" / "custom.yaml")
 
-    result = _run_config_upgrade_in_checkout(checkout, DEER_FLOW_CONFIG_PATH="custom.yaml")
+    result = _run_config_upgrade_in_checkout(checkout, NKYEL_CONFIG_PATH="custom.yaml")
     assert result.returncode == 0, result.stdout + result.stderr
 
     upgraded = yaml.safe_load((checkout / "backend" / "custom.yaml").read_text(encoding="utf-8"))
@@ -793,12 +793,12 @@ def test_config_upgrade_feeds_inline_python_on_stdin():
     repo_root = Path(__file__).resolve().parents[2]
     script = (repo_root / "scripts" / "config-upgrade.sh").read_text(encoding="utf-8")
     assert 'python -c "' not in script
-    assert script.count("<<'DEERFLOW_UPGRADE_PY'") == 2
+    assert script.count("<<'NKYEL_UPGRADE_PY'") == 2
 
 
 @pytest.mark.skipif(SCRIPT_BASH is None, reason="repo shell-script tests need Git Bash on Windows")
-def test_config_upgrade_honors_deer_flow_env_file_over_checkout_dotenv(tmp_path):
-    """An explicit DEER_FLOW_ENV_FILE selection must win over the checkout .env.
+def test_config_upgrade_honors_nkyel_env_file_over_checkout_dotenv(tmp_path):
+    """An explicit NKYEL_ENV_FILE selection must win over the checkout .env.
 
     The Gateway loads the selected env file and upgrades the config it points
     at; this script must not pre-load the checkout .env first, or its values
@@ -810,11 +810,11 @@ def test_config_upgrade_honors_deer_flow_env_file_over_checkout_dotenv(tmp_path)
     _write_outdated_config(checkout / "config.yaml")
     _write_outdated_config(live)
     _write_outdated_config(other)
-    (checkout / ".env").write_text(f"DEER_FLOW_CONFIG_PATH={other}\n", encoding="utf-8")
+    (checkout / ".env").write_text(f"NKYEL_CONFIG_PATH={other}\n", encoding="utf-8")
     stage = checkout / "stage.env"
-    stage.write_text(f"DEER_FLOW_CONFIG_PATH={live}\n", encoding="utf-8")
+    stage.write_text(f"NKYEL_CONFIG_PATH={live}\n", encoding="utf-8")
 
-    result = _run_config_upgrade_in_checkout(checkout, DEER_FLOW_ENV_FILE=str(stage))
+    result = _run_config_upgrade_in_checkout(checkout, NKYEL_ENV_FILE=str(stage))
     assert result.returncode == 0, result.stdout + result.stderr
 
     assert yaml.safe_load(live.read_text(encoding="utf-8"))["config_version"] > 1
@@ -829,8 +829,8 @@ def test_config_upgrade_checkout_helper_ignores_inherited_env_file(tmp_path, mon
     developer_config = tmp_path / "developer" / "config.yaml"
     developer_text = _write_outdated_config(developer_config)
     developer_env = tmp_path / "developer.env"
-    developer_env.write_text(f"DEER_FLOW_CONFIG_PATH={developer_config}\n", encoding="utf-8")
-    monkeypatch.setenv("DEER_FLOW_ENV_FILE", str(developer_env))
+    developer_env.write_text(f"NKYEL_CONFIG_PATH={developer_config}\n", encoding="utf-8")
+    monkeypatch.setenv("NKYEL_ENV_FILE", str(developer_env))
 
     result = _run_config_upgrade_in_checkout(checkout)
     assert result.returncode == 0, result.stdout + result.stderr

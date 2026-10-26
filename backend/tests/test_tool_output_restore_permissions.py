@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.agents.middlewares import tool_output_budget_middleware as mw
+from nkyel.agents.middlewares import tool_output_budget_middleware as mw
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits are not available on Windows")
@@ -27,9 +27,9 @@ from types import SimpleNamespace
 
 from langchain.agents.middleware.types import ModelRequest
 from langchain_core.messages import ToolMessage
-from deerflow.agents.middlewares import tool_output_budget_middleware as mw
-from deerflow.config.tool_output_config import ToolOutputConfig
-from deerflow.storage.backends.local_fs import LocalFsBlobStore
+from nkyel.agents.middlewares import tool_output_budget_middleware as mw
+from nkyel.config.tool_output_config import ToolOutputConfig
+from nkyel.storage.backends.local_fs import LocalFsBlobStore
 
 root = Path(sys.argv[1])
 os.umask(int(sys.argv[2]))

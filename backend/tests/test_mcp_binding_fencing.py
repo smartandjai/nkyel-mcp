@@ -8,9 +8,9 @@ import pytest
 from langchain_core.tools import StructuredTool
 from pydantic import BaseModel
 
-from deerflow.config.extensions_config import ExtensionsConfig
-from deerflow.mcp import session_pool as session_pool_module
-from deerflow.mcp.session_pool import (
+from nkyel.config.extensions_config import ExtensionsConfig
+from nkyel.mcp import session_pool as session_pool_module
+from nkyel.mcp.session_pool import (
     MCPSessionPool,
     StaleMCPBindingError,
     normalized_connection_fingerprint,
@@ -240,7 +240,7 @@ class _EmptyArgs(BaseModel):
 
 @pytest.mark.asyncio
 async def test_discovery_captures_pool_and_binding_before_first_await():
-    from deerflow.mcp.tools import get_mcp_tools
+    from nkyel.mcp.tools import get_mcp_tools
 
     config = ExtensionsConfig.model_validate(
         {
@@ -285,12 +285,12 @@ async def test_discovery_captures_pool_and_binding_before_first_await():
             return [tool]
 
     with (
-        patch("deerflow.mcp.tools.get_session_pool", return_value=pool),
-        patch("deerflow.mcp.tools.build_servers_config", return_value=servers),
-        patch("deerflow.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
-        patch("deerflow.mcp.tools.build_mcp_tool_interceptors", return_value=[]),
+        patch("nkyel.mcp.tools.get_session_pool", return_value=pool),
+        patch("nkyel.mcp.tools.build_servers_config", return_value=servers),
+        patch("nkyel.mcp.tools.get_initial_oauth_headers", new_callable=AsyncMock, return_value={}),
+        patch("nkyel.mcp.tools.build_mcp_tool_interceptors", return_value=[]),
         patch("langchain_mcp_adapters.client.MultiServerMCPClient", FakeClient),
-        patch("deerflow.mcp.tools._make_session_pool_tool", side_effect=lambda wrapped, *_args, **_kwargs: wrapped) as wrap,
+        patch("nkyel.mcp.tools._make_session_pool_tool", side_effect=lambda wrapped, *_args, **_kwargs: wrapped) as wrap,
     ):
         tools = await get_mcp_tools(config)
 
@@ -302,7 +302,7 @@ async def test_discovery_captures_pool_and_binding_before_first_await():
 
 @pytest.mark.asyncio
 async def test_durable_stdio_call_binds_base_connection_before_workspace_augmentation():
-    from deerflow.mcp.task_tool_caller import McpTaskToolCaller
+    from nkyel.mcp.task_tool_caller import McpTaskToolCaller
 
     config = ExtensionsConfig.model_validate(
         {
@@ -334,8 +334,8 @@ async def test_durable_stdio_call_binds_base_connection_before_workspace_augment
     caller = McpTaskToolCaller(config)
     try:
         with (
-            patch("deerflow.mcp.task_tool_caller.get_session_pool", return_value=pool),
-            patch("deerflow.mcp.task_tool_caller._prepare_stdio_connection", return_value=prepared),
+            patch("nkyel.mcp.task_tool_caller.get_session_pool", return_value=pool),
+            patch("nkyel.mcp.task_tool_caller._prepare_stdio_connection", return_value=prepared),
             patch("langchain_mcp_adapters.sessions.create_session", return_value=cm),
         ):
             actual = await caller.call_tool(
@@ -455,7 +455,7 @@ async def test_joiner_rechecks_binding_after_ready_resolves():
         await release.wait()
         return result
 
-    with patch("deerflow.mcp.session_pool.asyncio.shield", new=gated_shield):
+    with patch("nkyel.mcp.session_pool.asyncio.shield", new=gated_shield):
         joiner = asyncio.create_task(pool.get_session("A", "u:t", _CONNECTION, binding=old))
 
         # Proves the joiner cleared admission, saw the in-flight entry and

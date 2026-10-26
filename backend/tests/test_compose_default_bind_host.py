@@ -1,6 +1,6 @@
 """Regression test for the Docker Compose default published bind address.
 
-``README.md`` documents DeerFlow as being deployed by default "in a local
+``README.md`` documents nkyel as being deployed by default "in a local
 trusted environment (accessible only via the 127.0.0.1 loopback interface)",
 but the shipped compose files published the nginx entry as
 ``"${PORT:-2026}:2026"``, which Docker binds to ``0.0.0.0`` (and ``[::]``). The
@@ -90,7 +90,7 @@ def test_dev_frontend_allows_default_loopback_origins():
     compose = yaml.safe_load(COMPOSE_PATHS["dev"].read_text(encoding="utf-8"))
     environment = compose["services"]["frontend"]["environment"]
 
-    assert "DEER_FLOW_DEV_ALLOWED_ORIGINS=${DEER_FLOW_DEV_ALLOWED_ORIGINS:-127.0.0.1,::1}" in environment
+    assert "NKYEL_DEV_ALLOWED_ORIGINS=${NKYEL_DEV_ALLOWED_ORIGINS:-127.0.0.1,::1}" in environment
 
 
 def _bind_address(mapping: str) -> str | None:
@@ -143,7 +143,7 @@ def test_compose_env_files_are_optional(variant: str):
     compose = yaml.safe_load(COMPOSE_PATHS[variant].read_text(encoding="utf-8"))
     for service_name, path in EXPECTED_ENV_FILES.items():
         if variant == "prod" and service_name in {"gateway", "provisioner"}:
-            path = "${DEER_FLOW_COMPOSE_ENV_FILE:-../.env}"
+            path = "${NKYEL_COMPOSE_ENV_FILE:-../.env}"
         entries = compose["services"][service_name]["env_file"]
         assert entries == [{"path": path, "required": False}], f"{variant} {service_name} env_file must be optional; got: {entries!r}"
 
@@ -156,24 +156,24 @@ def _render(tmp_path: Path, variant: str) -> subprocess.CompletedProcess[str]:
     docker_dir = tmp_path / "docker"
     shutil.copytree(REPO_ROOT / "docker", docker_dir)
     (tmp_path / "frontend").mkdir(exist_ok=True)
-    env = {key: value for key, value in os.environ.items() if not key.startswith(("DEER_FLOW_", "COMPOSE_"))}
+    env = {key: value for key, value in os.environ.items() if not key.startswith(("NKYEL_", "COMPOSE_"))}
     # Values deploy.sh / docker.sh export before calling Compose; without them
     # the bind-mount specs render empty and Compose fails for another reason.
     env.update(
-        DEER_FLOW_ROOT=str(tmp_path),
-        DEER_FLOW_HOME=str(tmp_path / "home"),
-        DEER_FLOW_REPO_ROOT=str(tmp_path),
-        DEER_FLOW_CONFIG_PATH=str(tmp_path / "config.yaml"),
-        DEER_FLOW_EXTENSIONS_CONFIG_PATH=str(tmp_path / "extensions_config.json"),
+        NKYEL_ROOT=str(tmp_path),
+        NKYEL_HOME=str(tmp_path / "home"),
+        NKYEL_REPO_ROOT=str(tmp_path),
+        NKYEL_CONFIG_PATH=str(tmp_path / "config.yaml"),
+        NKYEL_EXTENSIONS_CONFIG_PATH=str(tmp_path / "extensions_config.json"),
         BETTER_AUTH_SECRET="test-secret",
-        DEER_FLOW_INTERNAL_AUTH_TOKEN="test-token",
+        NKYEL_INTERNAL_AUTH_TOKEN="test-token",
     )
     return subprocess.run(
         # Enable every profile so profile-gated services (the dev provisioner)
         # still render: `config` omits them otherwise, and these assertions are
         # about a present .env reaching each service, not about what `up`
         # starts by default.
-        [DOCKER, "compose", "--profile", "*", "-p", "deer-flow-env-file-test", "-f", str(docker_dir / COMPOSE_PATHS[variant].name), "config", "--format", "json"],
+        [DOCKER, "compose", "--profile", "*", "-p", "nkyel-env-file-test", "-f", str(docker_dir / COMPOSE_PATHS[variant].name), "config", "--format", "json"],
         env=env,
         capture_output=True,
         text=True,

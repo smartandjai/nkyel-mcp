@@ -59,7 +59,7 @@ def _has_postgres_stamps(metadata: dict[str, Any]) -> bool:
 def is_duration_only_checkpoint(checkpoint_tuple: Any, *, parent: Any | None = None, stamp_fallback: bool = True, versions: dict[str, Any] | None = None, parent_versions: dict[str, Any] | None = None) -> bool:
     """Return whether the tuple is a metadata-only run-duration checkpoint.
 
-    ``persist_run_history_metadata`` (``deerflow.runtime.runs.worker``) is the
+    ``persist_run_history_metadata`` (``nkyel.runtime.runs.worker``) is the
     only writer of these checkpoints. It stamps
     ``metadata["writes"]["runtime_run_duration"]``, and the memory and SQLite
     savers round-trip that marker unchanged — so whenever ``writes`` is

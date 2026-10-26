@@ -9,17 +9,17 @@ import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.persistence.base import Base
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.run import RunRepository
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_events import ScheduledTaskEventRow
-from deerflow.persistence.scheduled_task_runs import ScheduledTaskAdmissionRejected, ScheduledTaskRunRepository
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.persistence.scheduled_tasks import ScheduledTaskLimitsExhausted, ScheduledTaskRepository
-from deerflow.persistence.scheduled_tasks.model import ScheduledTaskRow
-from deerflow.persistence.scheduled_tasks.sql import ActiveScheduledTaskMutationConflict
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.persistence.base import Base
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.run import RunRepository
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_events import ScheduledTaskEventRow
+from nkyel.persistence.scheduled_task_runs import ScheduledTaskAdmissionRejected, ScheduledTaskRunRepository
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.persistence.scheduled_tasks import ScheduledTaskLimitsExhausted, ScheduledTaskRepository
+from nkyel.persistence.scheduled_tasks.model import ScheduledTaskRow
+from nkyel.persistence.scheduled_tasks.sql import ActiveScheduledTaskMutationConflict
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
 
 NOW = datetime(2026, 10, 3, 8, tzinfo=UTC)
 VERDICT = {"satisfied": False, "blocker": "goal_not_met_yet", "reason": "missing evidence", "evidence_summary": "none", "relied_on_assumption": False, "stand_down_reason": "max_continuations"}
@@ -750,8 +750,8 @@ def test_no_inline_end_condition_completion():
     import ast
     from pathlib import Path
 
-    from deerflow.persistence.scheduled_task_runs import sql as run_sql
-    from deerflow.persistence.scheduled_tasks import sql as task_sql
+    from nkyel.persistence.scheduled_task_runs import sql as run_sql
+    from nkyel.persistence.scheduled_tasks import sql as task_sql
 
     class Finder(ast.NodeVisitor):
         def __init__(self):

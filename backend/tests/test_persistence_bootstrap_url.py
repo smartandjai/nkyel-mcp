@@ -19,7 +19,7 @@ from types import SimpleNamespace
 
 from sqlalchemy.engine.url import make_url
 
-from deerflow.persistence.bootstrap import _alembic_safe_url, _escape_url_for_alembic, _get_alembic_config
+from nkyel.persistence.bootstrap import _alembic_safe_url, _escape_url_for_alembic, _get_alembic_config
 
 
 def _fake_engine(url: str) -> SimpleNamespace:
@@ -76,18 +76,18 @@ def test_alembic_config_forwards_postgres_schema_option() -> None:
     # pin its search_path; otherwise alembic_version + migration DDL land in
     # ``public`` while the ORM tables land in the custom schema.
     engine = _fake_engine("postgresql://a:b@h/d")
-    cfg = _get_alembic_config(engine, postgres_schema="deerflow")
-    assert cfg.get_main_option("deerflow_pg_schema") == "deerflow"
+    cfg = _get_alembic_config(engine, postgres_schema="nkyel")
+    assert cfg.get_main_option("nkyel_pg_schema") == "nkyel"
 
 
 def test_alembic_config_omits_schema_option_when_unset() -> None:
     engine = _fake_engine("postgresql://a:b@h/d")
     cfg = _get_alembic_config(engine)
-    assert cfg.get_main_option("deerflow_pg_schema") is None
+    assert cfg.get_main_option("nkyel_pg_schema") is None
 
 
 def test_env_module_pins_search_path_from_schema_option() -> None:
-    """env.py must read ``deerflow_pg_schema`` and pin the alembic-spawned
+    """env.py must read ``nkyel_pg_schema`` and pin the alembic-spawned
     engine's search_path. That engine is built from the bare URL and does not
     inherit the app engine's asyncpg ``server_settings``, so without this both
     ``alembic_version`` and migration DDL would land in ``public`` while the
@@ -96,7 +96,7 @@ def test_env_module_pins_search_path_from_schema_option() -> None:
     """
     from pathlib import Path
 
-    env_path = Path(__file__).resolve().parents[1] / "packages/harness/deerflow/persistence/migrations/env.py"
+    env_path = Path(__file__).resolve().parents[1] / "packages/harness/nkyel/persistence/migrations/env.py"
     src = env_path.read_text(encoding="utf-8")
-    assert 'get_main_option("deerflow_pg_schema")' in src, "env.py must read the deerflow_pg_schema option set by _get_alembic_config"
+    assert 'get_main_option("nkyel_pg_schema")' in src, "env.py must read the nkyel_pg_schema option set by _get_alembic_config"
     assert "build_asyncpg_connect_args" in src, "env.py must pin the alembic engine's search_path via build_asyncpg_connect_args"

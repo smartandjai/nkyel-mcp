@@ -23,20 +23,20 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import InMemorySaver
 
-from deerflow.agents.middlewares.durable_context_middleware import DurableContextMiddleware
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.agents.task_continuity import archive
-from deerflow.agents.task_continuity.tools import history_read, history_search, task_note
-from deerflow.agents.thread_state import ThreadState
-from deerflow.config.paths import Paths
-from deerflow.config.task_continuity_config import TaskContinuityConfig
+from nkyel.agents.middlewares.durable_context_middleware import DurableContextMiddleware
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.agents.task_continuity import archive
+from nkyel.agents.task_continuity.tools import history_read, history_search, task_note
+from nkyel.agents.thread_state import ThreadState
+from nkyel.config.paths import Paths
+from nkyel.config.task_continuity_config import TaskContinuityConfig
 
 
 async def run(args):
     private = json.loads(Path(args.endpoints).read_text())
     model = ChatOpenAI(model=private["llm_model"], base_url=private["llm_base"], api_key=private.get("llm_key", "unused"), temperature=0, max_tokens=2048, timeout=180, max_retries=1, extra_body={"reasoning_effort": "none"})
     results = []
-    with tempfile.TemporaryDirectory(prefix="deerflow-continuity-") as directory:
+    with tempfile.TemporaryDirectory(prefix="nkyel-continuity-") as directory:
         root = Path(directory)
         original_paths = archive.get_paths
         archive.get_paths = lambda: Paths(base_dir=root)
@@ -55,7 +55,7 @@ async def run(args):
                 saver = InMemorySaver()
                 context = {"thread_id": f"live-{index}", "user_id": "continuity-check"}
                 config = {"configurable": {"thread_id": context["thread_id"]}, "recursion_limit": 30}
-                middleware = DeerFlowSummarizationMiddleware(
+                middleware = NkyelSummarizationMiddleware(
                     model=model,
                     trigger=("messages", 4),
                     keep=("messages", 2),

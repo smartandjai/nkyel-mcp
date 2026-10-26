@@ -23,7 +23,7 @@ def _setup_auth(tmp_path):
     """Fresh SQLite engine + auth config per test."""
     from app.gateway import deps
     from app.gateway.routers.auth import _SETUP_STATUS_CACHE, _SETUP_STATUS_INFLIGHT
-    from deerflow.persistence.engine import close_engine, init_engine
+    from nkyel.persistence.engine import close_engine, init_engine
 
     set_auth_config(AuthConfig(jwt_secret=_TEST_SECRET))
     url = f"sqlite+aiosqlite:///{tmp_path}/init_admin.db"
@@ -285,7 +285,7 @@ async def test_create_first_admin_claim_is_atomic(_setup_auth):
     """The storage claim itself is the guard: only one concurrent caller wins."""
     from app.gateway.auth.models import User
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-    from deerflow.persistence.engine import get_session_factory
+    from nkyel.persistence.engine import get_session_factory
 
     repo = SQLiteUserRepository(get_session_factory())
 
@@ -306,7 +306,7 @@ async def test_create_first_admin_claim_is_atomic(_setup_auth):
 async def test_create_first_admin_declines_once_an_admin_exists(_setup_auth):
     from app.gateway.auth.models import User
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-    from deerflow.persistence.engine import get_session_factory
+    from nkyel.persistence.engine import get_session_factory
 
     repo = SQLiteUserRepository(get_session_factory())
     await repo.create_user(User(email="first@example.com", password_hash="hash", system_role="admin", needs_setup=False))
@@ -322,7 +322,7 @@ async def test_create_first_admin_reports_a_taken_email(_setup_auth):
     """A regular account already holding the address is still an email conflict."""
     from app.gateway.auth.models import User
     from app.gateway.auth.repositories.sqlite import SQLiteUserRepository
-    from deerflow.persistence.engine import get_session_factory
+    from nkyel.persistence.engine import get_session_factory
 
     repo = SQLiteUserRepository(get_session_factory())
     await repo.create_user(User(email="taken@example.com", password_hash="hash", system_role="user", needs_setup=False))

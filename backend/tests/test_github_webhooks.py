@@ -51,7 +51,7 @@ def _set_secret(monkeypatch: pytest.MonkeyPatch) -> None:
     ``monkeypatch.setenv``.
     """
     monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", SECRET)
-    monkeypatch.delenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
+    monkeypatch.delenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
 
 
 @pytest.fixture(autouse=True)
@@ -362,7 +362,7 @@ def test_unset_secret_rejects_with_503_by_default(client: TestClient, monkeypatc
     a restart).
     """
     monkeypatch.delenv("GITHUB_WEBHOOK_SECRET", raising=False)
-    monkeypatch.delenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
+    monkeypatch.delenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
     body = json.dumps({"zen": "ok"}).encode()
 
     with caplog.at_level("ERROR", logger="app.gateway.routers.github_webhooks"):
@@ -375,16 +375,16 @@ def test_unset_secret_rejects_with_503_by_default(client: TestClient, monkeypatc
     assert response.status_code == 503
     detail = response.json()["detail"]
     assert "GITHUB_WEBHOOK_SECRET" in detail
-    assert "DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS" in detail
+    assert "NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS" in detail
     assert any("rejecting delivery" in rec.message for rec in caplog.records)
 
 
 def test_unset_secret_with_dev_optin_accepts_unverified(client: TestClient, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
-    """Explicit dev/loopback opt-in: ``DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS=1``
+    """Explicit dev/loopback opt-in: ``NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS=1``
     causes the handler to accept unverified deliveries with a loud WARNING.
     """
     monkeypatch.delenv("GITHUB_WEBHOOK_SECRET", raising=False)
-    monkeypatch.setenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", "1")
+    monkeypatch.setenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", "1")
     body = json.dumps({"zen": "ok"}).encode()
 
     with caplog.at_level("WARNING", logger="app.gateway.routers.github_webhooks"):
@@ -404,7 +404,7 @@ def test_empty_string_secret_rejects_without_optin(client: TestClient, monkeypat
     the explicit unverified opt-in is set.
     """
     monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", "   ")
-    monkeypatch.delenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
+    monkeypatch.delenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
     body = json.dumps({"zen": "ok"}).encode()
     response = client.post(
         "/api/webhooks/github",
@@ -421,7 +421,7 @@ def test_unverified_optin_falsy_values_reject(client: TestClient, monkeypatch: p
     else — including 0/false/empty — keeps the fail-closed posture.
     """
     monkeypatch.delenv("GITHUB_WEBHOOK_SECRET", raising=False)
-    monkeypatch.setenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", value)
+    monkeypatch.setenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", value)
     body = json.dumps({"zen": "ok"}).encode()
     response = client.post(
         "/api/webhooks/github",
@@ -436,7 +436,7 @@ def test_unverified_optin_falsy_values_reject(client: TestClient, monkeypatch: p
 def test_unverified_optin_truthy_values_accept(client: TestClient, monkeypatch: pytest.MonkeyPatch, value: str) -> None:
     """Case-insensitive accepted truthy values for the dev opt-in."""
     monkeypatch.delenv("GITHUB_WEBHOOK_SECRET", raising=False)
-    monkeypatch.setenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", value)
+    monkeypatch.setenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", value)
     body = json.dumps({"zen": "ok"}).encode()
     response = client.post(
         "/api/webhooks/github",
@@ -452,20 +452,20 @@ def test_is_route_enabled_requires_secret_or_optin(monkeypatch: pytest.MonkeyPat
     mounting the router. Fail-closed: neither var set => route NOT mounted.
     """
     monkeypatch.delenv("GITHUB_WEBHOOK_SECRET", raising=False)
-    monkeypatch.delenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
+    monkeypatch.delenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
     assert github_webhooks.is_route_enabled() is False
 
     monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", "anything")
     assert github_webhooks.is_route_enabled() is True
 
     monkeypatch.delenv("GITHUB_WEBHOOK_SECRET", raising=False)
-    monkeypatch.setenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", "1")
+    monkeypatch.setenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", "1")
     assert github_webhooks.is_route_enabled() is True
 
     # Empty / whitespace-only secret is treated as unset, so the opt-in
     # alone decides.
     monkeypatch.setenv("GITHUB_WEBHOOK_SECRET", "  ")
-    monkeypatch.delenv("DEER_FLOW_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
+    monkeypatch.delenv("NKYEL_ALLOW_UNVERIFIED_GITHUB_WEBHOOKS", raising=False)
     assert github_webhooks.is_route_enabled() is False
 
 
@@ -795,7 +795,7 @@ def test_operator_default_mention_login_is_threaded_to_fanout(client: TestClient
     ``operator_default_mention_login`` to ``fanout_event``. Without this,
     the documented operator default is never honoured: an agent named
     ``coder`` with ``require_mention: true`` silently requires ``@coder``
-    mentions instead of the configured ``@deerflow-bot``.
+    mentions instead of the configured ``@nkyel-bot``.
     """
     bus = MessageBus()
 
@@ -808,7 +808,7 @@ def test_operator_default_mention_login_is_threaded_to_fanout(client: TestClient
 
         def get_channel_config(self, name: str) -> dict | None:
             if name == "github":
-                return {"enabled": True, "default_mention_login": "deerflow-bot"}
+                return {"enabled": True, "default_mention_login": "nkyel-bot"}
             return None
 
     import app.channels.service as service_module
@@ -842,7 +842,7 @@ def test_operator_default_mention_login_is_threaded_to_fanout(client: TestClient
     assert fake_fanout.await_count == 1
     # The kwarg must have been passed through with the configured value.
     _, kwargs = fake_fanout.await_args
-    assert kwargs["operator_default_mention_login"] == "deerflow-bot"
+    assert kwargs["operator_default_mention_login"] == "nkyel-bot"
 
 
 def test_operator_default_mention_login_absent_passes_none(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:

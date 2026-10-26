@@ -49,13 +49,13 @@ from typing import TYPE_CHECKING
 import httpx
 from sqlalchemy import text
 
-from deerflow.persistence.engine import get_engine
-from deerflow.utils.file_io import await_drained
+from nkyel.persistence.engine import get_engine
+from nkyel.utils.file_io import await_drained
 
 if TYPE_CHECKING:
-    from deerflow.config.app_config import AppConfig
-    from deerflow.config.checkpointer_config import CheckpointerConfig
-    from deerflow.runtime.stream_bridge import StreamBridge
+    from nkyel.config.app_config import AppConfig
+    from nkyel.config.checkpointer_config import CheckpointerConfig
+    from nkyel.runtime.stream_bridge import StreamBridge
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +149,7 @@ def resolve_checkpointer_config(startup_config: AppConfig) -> CheckpointerConfig
     callers must treat that as a failure (unreachable), never as
     ``not_configured``.
     """
-    from deerflow.runtime.checkpointer.provider import _resolve_checkpointer_config
+    from nkyel.runtime.checkpointer.provider import _resolve_checkpointer_config
 
     try:
         return _resolve_checkpointer_config(startup_config)
@@ -168,7 +168,7 @@ def _sqlite_disk_uri(conn_str: str) -> str:
     readiness probe can never resurrect a checkpointer/Store file that was
     deleted or lost after startup - absence must surface as unreachable. The
     path is already absolute after
-    ``deerflow.runtime.store._sqlite_utils.resolve_sqlite_conn_str`` and is
+    ``nkyel.runtime.store._sqlite_utils.resolve_sqlite_conn_str`` and is
     converted with ``Path.as_uri`` for correct percent-encoding.
     """
     return f"{pathlib.Path(conn_str).as_uri()}?mode=rw"
@@ -189,7 +189,7 @@ async def _probe_sqlite_backend(conn_string: str | None) -> str:
     except ImportError:
         logger.error("Readiness probe: aiosqlite is not installed for the sqlite checkpointer backend")
         return PROBE_UNREACHABLE
-    from deerflow.runtime.store._sqlite_utils import resolve_sqlite_conn_str
+    from nkyel.runtime.store._sqlite_utils import resolve_sqlite_conn_str
 
     try:
         conn_str = resolve_sqlite_conn_str(conn_string or "store.db")
@@ -219,7 +219,7 @@ async def _probe_postgres_backend(conn_string: str, schema: str) -> str:
         logger.error("Readiness probe: psycopg is not installed for the postgres checkpointer backend")
         return PROBE_UNREACHABLE
     try:
-        from deerflow.persistence.postgres_schema import dsn_with_search_path
+        from nkyel.persistence.postgres_schema import dsn_with_search_path
 
         dsn = dsn_with_search_path(conn_string, schema)
         async with asyncio.timeout(_PROBE_TIMEOUT_SECONDS):
@@ -314,7 +314,7 @@ def _make_provisioner_client(provisioner_url: str) -> httpx.AsyncClient:
     egress would be reported unreachable on every probe.
     """
     # Lazy: importing the aio_sandbox package pulls in the whole provider stack.
-    from deerflow.community.aio_sandbox.backend import sandbox_http_trust_env
+    from nkyel.community.aio_sandbox.backend import sandbox_http_trust_env
 
     return httpx.AsyncClient(timeout=_PROBE_TIMEOUT_SECONDS, trust_env=sandbox_http_trust_env(provisioner_url))
 
@@ -412,7 +412,7 @@ async def readiness_payload(
     degraded = any(results[name] == PROBE_UNREACHABLE for name in _GATING_PROBES)
     payload = {
         "status": "degraded" if degraded else "ready",
-        "service": "deer-flow-gateway",
+        "service": "nkyel-gateway",
         **results,
     }
     return (503 if degraded else 200, payload)

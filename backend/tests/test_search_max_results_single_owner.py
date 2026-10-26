@@ -5,7 +5,7 @@
 floats and ``OverflowError``. Those audits had to be read file by file because
 each provider owned its own copy of the answer.
 
-``deerflow.community.search_max_results`` owns coercion for the migrated
+``nkyel.community.search_max_results`` owns coercion for the migrated
 providers. These tests pin three things the
 refactor must not silently give back:
 
@@ -26,13 +26,13 @@ from pathlib import Path
 
 import pytest
 
-from deerflow.community.ddg_search import tools as ddg_search_tools
-from deerflow.community.fastcrw import tools as fastcrw_tools
-from deerflow.community.firecrawl import tools as firecrawl_tools
-from deerflow.community.image_search import tools as image_search_tools
-from deerflow.community.search_max_results import DEFAULT_MAX_RESULTS, coerce_max_results
-from deerflow.community.serper import tools as serper_tools
-from deerflow.community.youcom import tools as youcom_tools
+from nkyel.community.ddg_search import tools as ddg_search_tools
+from nkyel.community.fastcrw import tools as fastcrw_tools
+from nkyel.community.firecrawl import tools as firecrawl_tools
+from nkyel.community.image_search import tools as image_search_tools
+from nkyel.community.search_max_results import DEFAULT_MAX_RESULTS, coerce_max_results
+from nkyel.community.serper import tools as serper_tools
+from nkyel.community.youcom import tools as youcom_tools
 
 COMMUNITY_ROOT = Path(ddg_search_tools.__file__).resolve().parent.parent
 
@@ -123,7 +123,7 @@ def _shared_calls(tree: ast.Module) -> list[ast.Call]:
 
 def _imports_shared_owner(tree: ast.Module) -> bool:
     for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module == "deerflow.community.search_max_results":
+        if isinstance(node, ast.ImportFrom) and node.module == "nkyel.community.search_max_results":
             return True
     return False
 
@@ -172,10 +172,10 @@ def test_folded_providers_keep_their_historical_warning_label():
 
 def test_warnings_stay_on_the_calling_provider_logger(caplog):
     """Records must keep module attribution: tests/test_ddg_search_tools.py filters on ``record.name``."""
-    provider_logger = logging.getLogger("deerflow.community.example")
+    provider_logger = logging.getLogger("nkyel.community.example")
     with caplog.at_level(logging.WARNING):
         coerce_max_results("abc", provider="Example", logger=provider_logger)
-    assert [record.name for record in caplog.records] == ["deerflow.community.example"]
+    assert [record.name for record in caplog.records] == ["nkyel.community.example"]
     assert "Invalid Example max_results='abc'; using default 5" in caplog.text
 
 

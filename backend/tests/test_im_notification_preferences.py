@@ -13,11 +13,11 @@ from sqlalchemy import event, select, text
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from support.postgres import asyncpg_test_url
 
-from deerflow.persistence.base import Base
-from deerflow.persistence.notification_deliveries import NotificationDeliveryRepository
-from deerflow.persistence.notification_deliveries.model import NotificationDeliveryRow
-from deerflow.persistence.postgres_schema import build_asyncpg_connect_args
-from deerflow.persistence.user.model import UserRow
+from nkyel.persistence.base import Base
+from nkyel.persistence.notification_deliveries import NotificationDeliveryRepository
+from nkyel.persistence.notification_deliveries.model import NotificationDeliveryRow
+from nkyel.persistence.postgres_schema import build_asyncpg_connect_args
+from nkyel.persistence.user.model import UserRow
 
 
 @pytest.fixture
@@ -27,8 +27,8 @@ def anyio_backend():
 
 @pytest.fixture(params=["sqlite", "postgres"])
 async def repositories(tmp_path, request):
-    import deerflow.persistence.models  # noqa: F401 -- production ORM registration
-    from deerflow.persistence.user.im_notifications import ImNotificationPreferencesRepository
+    import nkyel.persistence.models  # noqa: F401 -- production ORM registration
+    from nkyel.persistence.user.im_notifications import ImNotificationPreferencesRepository
 
     schema = None
     if request.param == "postgres":
@@ -236,7 +236,7 @@ async def test_worker_preference_read_failure_parks_without_sending_or_spending_
 @pytest.mark.parametrize("provider", ["feishu", "wecom", "wechat", "qq"])
 async def test_normal_finalization_enqueues_only_enabled_channels_and_no_qq_group_fallback(repositories, provider):
     from app.scheduler.service import ScheduledTaskService
-    from deerflow.persistence.channel_connections.model import ChannelConnectionRow
+    from nkyel.persistence.channel_connections.model import ChannelConnectionRow
 
     preferences, deliveries = repositories
     sessions = deliveries.session_factory
@@ -273,7 +273,7 @@ async def test_normal_finalization_enqueues_only_enabled_channels_and_no_qq_grou
 @pytest.mark.parametrize("binding", [None, {"status": "disconnected"}, {"provider": "slack"}, {"owner_user_id": "bob"}, {"external_account_id": ""}, {"provider": ""}])
 async def test_finalization_without_push_recipients_skips_preference_queries(repositories, binding):
     from app.scheduler.service import ScheduledTaskService
-    from deerflow.persistence.channel_connections.model import ChannelConnectionRow
+    from nkyel.persistence.channel_connections.model import ChannelConnectionRow
 
     _, deliveries = repositories
     sessions = deliveries.session_factory
@@ -306,7 +306,7 @@ async def test_finalization_without_push_recipients_skips_preference_queries(rep
 @pytest.mark.parametrize("enabled", [True, False])
 async def test_group_only_finalization_still_locks_and_honors_preferences(repositories, monkeypatch, enabled):
     from app.scheduler.service import ScheduledTaskService
-    from deerflow.persistence.user.im_notifications import ImNotificationPreferencesRepository
+    from nkyel.persistence.user.im_notifications import ImNotificationPreferencesRepository
 
     preferences, deliveries = repositories
     await preferences.patch("alice", {"feishu": enabled})

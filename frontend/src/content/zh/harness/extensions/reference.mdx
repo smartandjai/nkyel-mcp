@@ -1,19 +1,19 @@
 ---
 title: 参考
-description: deerflow-extension-api 0.2.4 中的每一个公开名称，按主题分组，附签名、字段和默认值。另含兼容性规则和契约的版本历史。
+description: nkyel-extension-api 0.2.4 中的每一个公开名称，按主题分组，附签名、字段和默认值。另含兼容性规则和契约的版本历史。
 ---
 
 import { Callout } from "nextra/components";
 
 # 参考
 
-本页列出契约版本 **0.2.4** 中 `deerflow_extension_api.__all__` 的每一个名称。请从包根导入：
+本页列出契约版本 **0.2.4** 中 `nkyel_extension_api.__all__` 的每一个名称。请从包根导入：
 
 ```python
-from deerflow_extension_api import ExtensionRegistry, MiddlewarePlacement, Placement
+from nkyel_extension_api import ExtensionRegistry, MiddlewarePlacement, Placement
 ```
 
-这个包没有任何依赖，也从不导入 DeerFlow。下文写成 `Any` 的类型（例如中间件或路由器）由宿主在运行时校验，而不是由契约校验。
+这个包没有任何依赖，也从不导入 nkyel。下文写成 `Any` 的类型（例如中间件或路由器）由宿主在运行时校验，而不是由契约校验。
 
 ## 入口点与注册表
 
@@ -27,7 +27,7 @@ ExtensionInstall = Callable[[ExtensionRegistry, Mapping[str, Any]], None]
 
 ### `extension(*, api, name=None)`
 
-装饰器，为 install 函数标记编写时所用的契约版本（`__deerflow_api__`）和一个可选名称（`__deerflow_name__`）。可选；见[兼容性规则](#兼容性规则)。
+装饰器，为 install 函数标记编写时所用的契约版本（`__nkyel_api__`）和一个可选名称（`__nkyel_name__`）。可选；见[兼容性规则](#兼容性规则)。
 
 ```python
 @extension(api="0.2.0", name="hello")
@@ -42,7 +42,7 @@ def install(registry: ExtensionRegistry, config: Mapping[str, Any]) -> None: ...
 | ---------------------------------------------------------- | ------- | ---------------------------------------------------------------------------- |
 | `middlewares(contributor: MiddlewareContributor)`          | `None`  | 一个中间件贡献者                                                             |
 | `task_lifecycle(contributor: TaskLifecycleContributor)`    | `None`  | Lead 运行和子 Agent 的开始、结束钩子                                         |
-| `system_model_observer(observer: SystemModelCallObserver)` | `None`  | DeerFlow 自有模型调用的观察者                                                |
+| `system_model_observer(observer: SystemModelCallObserver)` | `None`  | nkyel 自有模型调用的观察者                                                |
 | `agent_assembly_observer(observer: AgentAssemblyObserver)` | `None`  | 已组装 Agent 的观察者                                                        |
 | `context_compaction_observer(observer: ContextCompactionObserver)` | `None` | 摘要压缩的观察者                                                     |
 | `service(service: ExtensionService)`                       | `None`  | 与 Gateway 同寿的服务                                                        |
@@ -94,7 +94,7 @@ class MiddlewareContributor(Protocol):
 
 ### `HostPolicySnapshot`
 
-冻结的 dataclass：宿主实际执行的限制，以投影的形式提供，使扩展不依赖 DeerFlow 的配置类型。每个字段都有默认值。
+冻结的 dataclass：宿主实际执行的限制，以投影的形式提供，使扩展不依赖 nkyel 的配置类型。每个字段都有默认值。
 
 | 字段                    | 类型            | 默认值  |
 | ----------------------- | --------------- | ------- |
@@ -127,7 +127,7 @@ class MiddlewareContributor(Protocol):
 
 ### `EXTENSION_TASK_STORE_KEY`
 
-`"__deerflow_extension_task_store"`。`task_store_from_runtime()` 背后由宿主拥有的 runtime context 键。只通过该辅助函数读取，永远不要写入。
+`"__nkyel_extension_task_store"`。`task_store_from_runtime()` 背后由宿主拥有的 runtime context 键。只通过该辅助函数读取，永远不要写入。
 
 ## 任务生命周期
 
@@ -322,7 +322,7 @@ Gateway 的实现接受 1 到 2000 的 `limit` 和非负的 `after_seq`，否则
 
 ### `RUN_EVIDENCE_READER_RESOLVER_KEY`
 
-`"deerflow_extension_run_evidence_reader_resolver"`。宿主安装请求级解析器所用的 `app.state` 属性名，由宿主拥有。
+`"nkyel_extension_run_evidence_reader_resolver"`。宿主安装请求级解析器所用的 `app.state` 属性名，由宿主拥有。
 
 ### `InvalidRunEvidenceCursor`
 
@@ -344,7 +344,7 @@ Gateway 的实现接受 1 到 2000 的 `limit` 和非负的 `after_seq`，否则
 
 ### `EXTENSION_PRINCIPAL_RESOLVER_KEY`
 
-`"deerflow_extension_principal_resolver"`。宿主安装解析器所用的 `app.state` 属性名，由宿主拥有。
+`"nkyel_extension_principal_resolver"`。宿主安装解析器所用的 `app.state` 属性名，由宿主拥有。
 
 ### `require_plugin_management(request: object, namespace: str, *, scope: Literal["read", "write"] = "read") -> ExtensionPrincipal`
 
@@ -360,11 +360,11 @@ Gateway 的实现接受 1 到 2000 的 `limit` 和非负的 `after_seq`，否则
 
 ### `EXTENSION_PLUGIN_AUTHZ_RESOLVER_KEY`
 
-`"deerflow_extension_plugin_authz_resolver"`。宿主安装同步 `plugin_management` 解析器所用的 `app.state` 属性名，签名为 `(request, namespace, scope) -> bool | None`。由宿主拥有。
+`"nkyel_extension_plugin_authz_resolver"`。宿主安装同步 `plugin_management` 解析器所用的 `app.state` 属性名，签名为 `(request, namespace, scope) -> bool | None`。由宿主拥有。
 
 ### `EXTENSION_PLUGIN_AUTHZ_RESOLVER_ASYNC_KEY`
 
-`"deerflow_extension_plugin_authz_resolver_async"`。对应的异步解析器，签名为 `async (request, namespace, scope) -> bool | None`。由宿主拥有。
+`"nkyel_extension_plugin_authz_resolver_async"`。对应的异步解析器，签名为 `async (request, namespace, scope) -> bool | None`。由宿主拥有。
 
 ## 消息来源标记
 
@@ -372,9 +372,9 @@ Gateway 的实现接受 1 到 2000 的 `limit` 和非负的 `after_seq`，否则
 
 | 常量                             | 值                              |
 | -------------------------------- | ------------------------------- |
-| `MESSAGE_CONTENT_KIND_KEY`       | `"deerflow_content_kind"`       |
-| `MESSAGE_PRODUCER_KIND_KEY`      | `"deerflow_producer_kind"`      |
-| `MESSAGE_PRODUCER_ENTITY_ID_KEY` | `"deerflow_producer_entity_id"` |
+| `MESSAGE_CONTENT_KIND_KEY`       | `"nkyel_content_kind"`       |
+| `MESSAGE_PRODUCER_KIND_KEY`      | `"nkyel_producer_kind"`      |
+| `MESSAGE_PRODUCER_ENTITY_ID_KEY` | `"nkyel_producer_entity_id"` |
 | `PROVENANCE_KEYS`                | 这三个键组成的 `frozenset`。宿主把它们视为服务端所有，并从不可信输入中剥离调用方提供的值 |
 
 ### `ContentKind`
@@ -512,7 +512,7 @@ class ReleasePolicyProvider(Protocol):
   - 1.0 之后：major 相同，且宿主版本不低于声明版本。
 
   不是点分数字字符串的标记会被拒绝。没有标记的 install 函数不做检查。
-- **包元数据**是主要机制：声明 `deerflow-extension-api>=0.2,<0.3`，让依赖解析器在任何东西加载之前就拒绝不匹配的宿主。标记用来覆盖绕过依赖解析的安装方式。
+- **包元数据**是主要机制：声明 `nkyel-extension-api>=0.2,<0.3`，让依赖解析器在任何东西加载之前就拒绝不匹配的宿主。标记用来覆盖绕过依赖解析的安装方式。
 - **自己声明框架依赖。** 契约不依赖任何东西。导入 LangChain、LangGraph 或 FastAPI 的扩展需要自己声明它们。
 
 ## 版本历史

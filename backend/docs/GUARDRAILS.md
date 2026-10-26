@@ -1,6 +1,6 @@
 # Guardrails: Pre-Tool-Call Authorization
 
-> **Context:** [Issue #1213](https://github.com/bytedance/deer-flow/issues/1213) — DeerFlow has Docker sandboxing and human approval via `ask_clarification`, but no deterministic, policy-driven authorization layer for tool calls. An agent running autonomous multi-step tasks can execute any loaded tool with any arguments. Guardrails add a middleware that evaluates every tool call against a policy **before** execution.
+> **Context:** [Issue #1213](https://github.com/bytedance/deer-flow/issues/1213) — nkyel has Docker sandboxing and human approval via `ask_clarification`, but no deterministic, policy-driven authorization layer for tool calls. An agent running autonomous multi-step tasks can execute any loaded tool with any arguments. Guardrails add a middleware that evaluates every tool call against a policy **before** execution.
 
 ## Why Guardrails
 
@@ -82,14 +82,14 @@ The `GuardrailMiddleware` implements `wrap_tool_call` / `awrap_tool_call` (the s
 
 ### Option 1: Built-in AllowlistProvider (Zero Dependencies)
 
-The simplest option. Ships with DeerFlow. Block or allow tools by name. No external packages, no passport, no network.
+The simplest option. Ships with nkyel. Block or allow tools by name. No external packages, no passport, no network.
 
 **config.yaml:**
 ```yaml
 guardrails:
   enabled: true
   provider:
-    use: deerflow.guardrails.builtin:AllowlistProvider
+    use: nkyel.guardrails.builtin:AllowlistProvider
     config:
       denied_tools: ["bash", "write_file"]
 ```
@@ -101,20 +101,20 @@ You can also use an allowlist (only these tools are permitted):
 guardrails:
   enabled: true
   provider:
-    use: deerflow.guardrails.builtin:AllowlistProvider
+    use: nkyel.guardrails.builtin:AllowlistProvider
     config:
       allowed_tools: ["web_search", "read_file", "ls"]
 ```
 
 **Try it:**
 1. Add the config above to your `config.yaml`
-2. Start DeerFlow: `make dev`
+2. Start nkyel: `make dev`
 3. Ask the agent: "Use bash to run echo hello"
 4. The agent sees: `Guardrail denied: tool 'bash' was blocked (oap.tool_not_allowed)`
 
 ### Option 2: OAP Passport Provider (Policy-Based)
 
-For policy enforcement based on the [Open Agent Passport (OAP)](https://github.com/aporthq/aport-spec) open standard. An OAP passport is a JSON document that declares an agent's identity, capabilities, and operational limits. Any provider that reads an OAP passport and returns OAP-compliant decisions works with DeerFlow.
+For policy enforcement based on the [Open Agent Passport (OAP)](https://github.com/aporthq/aport-spec) open standard. An OAP passport is a JSON document that declares an agent's identity, capabilities, and operational limits. Any provider that reads an OAP passport and returns OAP-compliant decisions works with nkyel.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -156,12 +156,12 @@ An OAP passport is just a JSON file. You can create one by hand following the [O
 
 ```bash
 pip install aport-agent-guardrails
-aport setup --framework deerflow
+aport setup --framework nkyel
 ```
 
 This creates:
-- `~/.aport/deerflow/config.yaml` -- evaluator config (local or API mode)
-- `~/.aport/deerflow/aport/passport.json` -- OAP passport with capabilities and limits
+- `~/.aport/nkyel/config.yaml` -- evaluator config (local or API mode)
+- `~/.aport/nkyel/aport/passport.json` -- OAP passport with capabilities and limits
 
 **config.yaml (using APort as the provider):**
 ```yaml
@@ -181,7 +181,7 @@ guardrails:
       passport_path: ./my-passport.json
 ```
 
-Any provider that accepts `framework` as a kwarg and implements `evaluate`/`aevaluate` works. The OAP standard defines the passport format and decision codes; DeerFlow doesn't care which provider reads them.
+Any provider that accepts `framework` as a kwarg and implements `evaluate`/`aevaluate` works. The OAP standard defines the passport format and decision codes; nkyel doesn't care which provider reads them.
 
 **What the passport controls:**
 
@@ -201,11 +201,11 @@ OAP providers may support different evaluation modes. For example, the APort ref
 | **Local** | Evaluates passport locally (bash script). | None | ~300ms |
 | **API** | Sends passport + context to a hosted evaluator. Signed decisions. | Yes | ~65ms |
 
-A custom OAP provider can implement any evaluation strategy -- the DeerFlow middleware doesn't care how the provider reaches its decision.
+A custom OAP provider can implement any evaluation strategy -- the nkyel middleware doesn't care how the provider reaches its decision.
 
 **Try it:**
 1. Install and set up as above
-2. Start DeerFlow and ask: "Create a file called test.txt with content hello"
+2. Start nkyel and ask: "Create a file called test.txt with content hello"
 3. Then ask: "Now delete it using bash rm -rf"
 4. Guardrail blocks it: `oap.blocked_pattern: Command contains blocked pattern: rm -rf`
 
@@ -220,7 +220,7 @@ class MyGuardrailProvider:
     name = "my-company"
 
     def evaluate(self, request):
-        from deerflow.guardrails.provider import GuardrailDecision, GuardrailReason
+        from nkyel.guardrails.provider import GuardrailDecision, GuardrailReason
 
         # Example: block any bash command containing "delete"
         if request.tool_name == "bash" and "delete" in str(request.tool_input):
@@ -250,7 +250,7 @@ Make sure `my_guardrail.py` is on the Python path (e.g. in the backend directory
 **Try it:**
 1. Create `my_guardrail.py` in the backend directory
 2. Add the config
-3. Start DeerFlow and ask: "Use bash to delete test.txt"
+3. Start nkyel and ask: "Use bash to delete test.txt"
 4. Your provider blocks it
 
 #### Optional: Runtime Attribution
@@ -259,7 +259,7 @@ Runtime attribution fields are optional. Providers that need richer policy conte
 
 | Field | Example use |
 |---|---|
-| `user_id` | Attach the authenticated DeerFlow user to a provider-side policy or audit record |
+| `user_id` | Attach the authenticated nkyel user to a provider-side policy or audit record |
 | `user_role` | Apply simple role-based policy, such as allowing an admin-only tool. Sourced from the authenticated user's `system_role` (renamed for the guardrail-facing surface, not a separate field) |
 | `oauth_provider` | Link a decision to an external identity provider, when present |
 | `oauth_id` | Link a decision to the external provider's subject/user id, when present |
@@ -278,7 +278,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from deerflow.guardrails.provider import GuardrailDecision, GuardrailReason
+from nkyel.guardrails.provider import GuardrailDecision, GuardrailReason
 
 
 class ContextAwareGuardrailProvider:
@@ -301,7 +301,7 @@ class ContextAwareGuardrailProvider:
     async def aevaluate(self, request):
         # ``_decide`` is in-memory policy work; the audit write is blocking
         # file I/O, so offload it off the event loop with ``asyncio.to_thread``
-        # (DeerFlow enforces a blocking-IO gate in CI). If your policy
+        # (nkyel enforces a blocking-IO gate in CI). If your policy
         # evaluation itself does blocking I/O — external policy service, file
         # read per call — move that behind ``asyncio.to_thread`` too, or
         # implement a native async evaluator and await it here.
@@ -310,7 +310,7 @@ class ContextAwareGuardrailProvider:
         return decision
 
     def _decide(self, request):
-        # 1. Normalize DeerFlow request data into policy context.
+        # 1. Normalize nkyel request data into policy context.
         context = {
             "tool_name": request.tool_name,
             "tool_input": request.tool_input,
@@ -333,7 +333,7 @@ class ContextAwareGuardrailProvider:
         # 2. Evaluate the provider-defined policy schema.
         result = self._evaluate_policy(self.policy, context)
 
-        # 3. Convert the policy result back to DeerFlow's decision object.
+        # 3. Convert the policy result back to nkyel's decision object.
         return GuardrailDecision(
             allow=result["allow"],
             reasons=[
@@ -434,7 +434,7 @@ defaults:
 
 ### Option 4: TypeSafe (Jev) Risk Gate (Network Provider)
 
-Ships with DeerFlow. Sends **one `noul` question** to [TypeSafe](https://docs.typesafe.ai/api) System One (`POST {base_url}/v1/systemone`) — "does executing this tool call risk an irreversible or out-of-scope side effect?" — and denies the call when the returned probability reaches `threshold`. It is the only provider here that sends tool arguments to a third party.
+Ships with nkyel. Sends **one `noul` question** to [TypeSafe](https://docs.typesafe.ai/api) System One (`POST {base_url}/v1/systemone`) — "does executing this tool call risk an irreversible or out-of-scope side effect?" — and denies the call when the returned probability reaches `threshold`. It is the only provider here that sends tool arguments to a third party.
 
 **config.yaml:**
 ```yaml
@@ -442,7 +442,7 @@ guardrails:
   enabled: true
   fail_closed: true
   provider:
-    use: deerflow.guardrails.typesafe:TypeSafeGuardrailProvider
+    use: nkyel.guardrails.typesafe:TypeSafeGuardrailProvider
     config:
       # api_key: <explicit key>; when omitted, read from api_key_env
       api_key_env: TYPESAFE_API_KEY
@@ -470,7 +470,7 @@ guardrails:
 
 The eight connection settings (`api_key` / `api_key_env` / `base_url` / `model` / `timeout` / `deadline_seconds` / `max_attempts` / `retry_backoff`) may instead live once in a top-level `typesafe:` block and be shared by every TypeSafe consumer; a value written here still wins (see "Shared client" below). The two credential settings are resolved per *layer*: the first layer that sets either one decides, and inside a layer a literal `api_key` beats that layer's own `api_key_env` — so a consumer configured with `api_key_env` keeps reading its own variable even when the block also carries a literal key. A connection value that no request could use is refused where it is configured: a `base_url` that is not `http(s)`, or that carries a query, fragment or embedded credentials, and a credential that cannot travel as a header value (surrounding whitespace from a mounted secret, a non-printable character) all fail at construction instead of on every call — the last one used to put the whole `Bearer <key>` value into h11's error message, which reaches the guardrail's exception log. The block itself is validated in pydantic's strict mode, so `max_attempts: true` is an error rather than a silent `1`.
 
-**Shared client.** The transport half of this provider — authentication, client lifecycle, retry and backoff, the deadline budget, response parsing and the error taxonomy, UTF-8 wire-size counting — lives in `packages/harness/deerflow/typesafe/` and is shared with the other host-side TypeSafe consumers (memory pre-screening and signal classification, planned). Everything that makes this a *gate* stays in the provider: the state it builds, its question and rubric, its threshold and direction, its local preflight, its cache, and the rule that an error denies. The same rule holds in the other direction: nothing in the shared client knows what a "risky tool call" is, and a change that would move a failure policy, a threshold or a cache into it is a design change, not a refactor.
+**Shared client.** The transport half of this provider — authentication, client lifecycle, retry and backoff, the deadline budget, response parsing and the error taxonomy, UTF-8 wire-size counting — lives in `packages/harness/nkyel/typesafe/` and is shared with the other host-side TypeSafe consumers (memory pre-screening and signal classification, planned). Everything that makes this a *gate* stays in the provider: the state it builds, its question and rubric, its threshold and direction, its local preflight, its cache, and the rule that an error denies. The same rule holds in the other direction: nothing in the shared client knows what a "risky tool call" is, and a change that would move a failure policy, a threshold or a cache into it is a design change, not a refactor.
 
 **Effective configuration.** Connection settings resolve with the precedence consumer `config` > top-level `typesafe:` > built-in defaults, so an existing `guardrails.provider.config` keeps working unchanged while a deployment with several TypeSafe consumers shares one block:
 
@@ -484,7 +484,7 @@ guardrails:
   enabled: true
   fail_closed: true
   provider:
-    use: deerflow.guardrails.typesafe:TypeSafeGuardrailProvider
+    use: nkyel.guardrails.typesafe:TypeSafeGuardrailProvider
     config:
       threshold: 0.5     # consumer policy stays here
       tools: ["bash"]
@@ -522,7 +522,7 @@ authorization:
   fail_closed: true
   default_role: user
   provider:
-    use: deerflow.authz.rbac:RbacAuthorizationProvider
+    use: nkyel.authz.rbac:RbacAuthorizationProvider
     config:
       roles:
         user:
@@ -544,7 +544,7 @@ make dev   # then ask the agent to delete the disposable file with bash
 
 Check the denial message the agent receives and the `middleware:guardrail` journal event. Do not run this against real project data or a production key.
 
-**The same gate over another endpoint: OpenAI Decisions.** `deerflow.guardrails.openai_decisions:OpenAIDecisionsGuardrailProvider` asks one `predicate` question about the call at `POST {base_url}/v1/decisions` and denies at the same `threshold`. It is the same *gate*, not a re-implementation: the strict-JSON local preflight, `max_state_chars` as a character count, the cache, the fail-closed rule and the whole transport (auth, retry, deadline, bounded body) are inherited from the Option 4 provider and `deerflow.typesafe`, so a change to the security boundary lands once. What differs is the envelope:
+**The same gate over another endpoint: OpenAI Decisions.** `nkyel.guardrails.openai_decisions:OpenAIDecisionsGuardrailProvider` asks one `predicate` question about the call at `POST {base_url}/v1/decisions` and denies at the same `threshold`. It is the same *gate*, not a re-implementation: the strict-JSON local preflight, `max_state_chars` as a character count, the cache, the fail-closed rule and the whole transport (auth, retry, deadline, bounded body) are inherited from the Option 4 provider and `nkyel.typesafe`, so a change to the security boundary lands once. What differs is the envelope:
 
 | | TypeSafe (Jev) | OpenAI Decisions |
 |---|---|---|
@@ -554,7 +554,7 @@ Check the denial message the agent receives and the `middleware:guardrail` journ
 | Refusal | not a response shape | `{"type": "refusal"}` — a per-question outcome, so the gate still denies for want of a verdict |
 | `model` | defaults to `jev-latest` | **required**: no default model is shipped, so a deployment cannot send tool text to a model nobody named |
 
-`use:` is the only wiring — `guardrails.provider.config` keeps accepting the same fields, and there is no new config schema. The memory pre-screen and signal classification have siblings in the same shape (`deerflow.agents.memory.prescreen.openai_decisions:OpenAIDecisionsMemoryPrescreen`, `deerflow.agents.memory.signals.openai_decisions:OpenAIDecisionsSignalClassifier`); their thresholds, modes, cache buckets and `request_failed` reporting are the coordinator's and unchanged, and a `sharing_key` difference keeps a Decisions side from ever being combined into a Jev request. Offline suite: `tests/test_openai_decisions.py`.
+`use:` is the only wiring — `guardrails.provider.config` keeps accepting the same fields, and there is no new config schema. The memory pre-screen and signal classification have siblings in the same shape (`nkyel.agents.memory.prescreen.openai_decisions:OpenAIDecisionsMemoryPrescreen`, `nkyel.agents.memory.signals.openai_decisions:OpenAIDecisionsSignalClassifier`); their thresholds, modes, cache buckets and `request_failed` reporting are the coordinator's and unchanged, and a `sharing_key` difference keeps a Decisions side from ever being combined into a Jev request. Offline suite: `tests/test_openai_decisions.py`.
 
 The endpoint path participates in the sharing key and public policy identity, so
 `combine: auto` keeps Jev and Decisions requests separate even when their gateway
@@ -598,7 +598,7 @@ combine. Missing credential and model errors name the configured service.
                                 └──────────────────────────┘
 ```
 
-### DeerFlow Tool Names
+### nkyel Tool Names
 
 These are the tool names your provider will see in `request.tool_name`:
 
@@ -634,14 +634,14 @@ Standard codes used by the [OAP specification](https://github.com/aporthq/aport-
 
 ### Provider Loading
 
-DeerFlow loads providers via `resolve_variable()` -- the same mechanism used for models, tools, and sandbox providers. The `use:` field is a Python class path: `package.module:ClassName`.
+nkyel loads providers via `resolve_variable()` -- the same mechanism used for models, tools, and sandbox providers. The `use:` field is a Python class path: `package.module:ClassName`.
 
-The provider is instantiated with `**config` kwargs if `config:` is set, plus `framework="deerflow"` is always injected. Accept `**kwargs` to stay forward-compatible:
+The provider is instantiated with `**config` kwargs if `config:` is set, plus `framework="nkyel"` is always injected. Accept `**kwargs` to stay forward-compatible:
 
 ```python
 class YourProvider:
     def __init__(self, framework: str = "generic", **kwargs):
-        # framework="deerflow" tells you which config dir to use
+        # framework="nkyel" tells you which config dir to use
         ...
 ```
 
@@ -661,7 +661,7 @@ guardrails:
 
   # Provider: loaded by class path via resolve_variable
   provider:
-    use: deerflow.guardrails.builtin:AllowlistProvider
+    use: nkyel.guardrails.builtin:AllowlistProvider
     config:  # optional kwargs passed to provider.__init__
       denied_tools: ["bash"]
 ```
@@ -717,25 +717,25 @@ server, with a meta-check proving the sync path on the loop trips the Blockbuste
 ## Files
 
 ```
-packages/harness/deerflow/guardrails/
+packages/harness/nkyel/guardrails/
     __init__.py              # Public exports
     provider.py              # GuardrailProvider protocol, GuardrailRequest, GuardrailDecision
     middleware.py             # GuardrailMiddleware (AgentMiddleware subclass)
     builtin.py               # AllowlistProvider (zero deps)
     typesafe.py              # TypeSafeGuardrailProvider (state, question, threshold, cache, failure policy)
 
-packages/harness/deerflow/typesafe/
+packages/harness/nkyel/typesafe/
     __init__.py              # Public exports + the shared/not-shared boundary
     client.py                # TypeSafeClient: request, retry, deadline, response parsing, wire_size
     connection.py            # Effective connection: precedence, credential fingerprint, sharing_key inputs
     errors.py                # One error taxonomy (transport / http_status / invalid_response / deadline)
     validation.py            # Eager config-value validation shared with consumers
 
-packages/harness/deerflow/config/
+packages/harness/nkyel/config/
     guardrails_config.py     # GuardrailsConfig Pydantic model + singleton
     typesafe_config.py       # Top-level `typesafe:` defaults + singleton
 
-packages/harness/deerflow/agents/middlewares/
+packages/harness/nkyel/agents/middlewares/
     tool_error_handling_middleware.py  # Registers GuardrailMiddleware in chain
 
 config.example.yaml          # Four provider options + the top-level `typesafe:` defaults

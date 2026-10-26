@@ -15,11 +15,11 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import AIMessage
 
-from deerflow.config.projects_config import ProjectsConfig
-from deerflow.persistence.projects import ProjectDocumentRepository, ProjectRepository
-from deerflow.projects import summaries
-from deerflow.projects.summaries import SummaryGenerator, _sanitize_summary
-from deerflow.utils.oneshot_llm import OneshotLLMResult
+from nkyel.config.projects_config import ProjectsConfig
+from nkyel.persistence.projects import ProjectDocumentRepository, ProjectRepository
+from nkyel.projects import summaries
+from nkyel.projects.summaries import SummaryGenerator, _sanitize_summary
+from nkyel.utils.oneshot_llm import OneshotLLMResult
 
 pytestmark = pytest.mark.anyio
 
@@ -81,7 +81,7 @@ class TestSanitizeSummary:
 
 @pytest.fixture
 async def repos(tmp_path):
-    from deerflow.persistence.engine import close_engine, get_session_factory, init_engine
+    from nkyel.persistence.engine import close_engine, get_session_factory, init_engine
 
     url = f"sqlite+aiosqlite:///{tmp_path / 'test.db'}"
     await init_engine("sqlite", url=url, sqlite_dir=str(tmp_path))
@@ -325,7 +325,7 @@ class TestGenerator:
         await generator.stop()
 
     async def test_invocation_tracing_user_is_the_job_owner(self, repos, text_file, monkeypatch):
-        from deerflow.runtime.user_context import get_effective_user_id
+        from nkyel.runtime.user_context import get_effective_user_id
 
         sf, projects, docs = repos
         await _shelf_row(projects, docs)

@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 import pytest
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
 
 
 def _record_os_close(monkeypatch: pytest.MonkeyPatch) -> list[int]:

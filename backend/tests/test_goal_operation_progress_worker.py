@@ -19,12 +19,12 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langgraph.prebuilt import ToolNode
 
-from deerflow.agents.middlewares.summarization_middleware import DeerFlowSummarizationMiddleware
-from deerflow.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
-from deerflow.agents.middlewares.tool_receipt_middleware import ToolReceiptMiddleware
-from deerflow.agents.thread_state import ThreadState
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.goal import (
+from nkyel.agents.middlewares.summarization_middleware import NkyelSummarizationMiddleware
+from nkyel.agents.middlewares.tool_error_handling_middleware import ToolErrorHandlingMiddleware
+from nkyel.agents.middlewares.tool_receipt_middleware import ToolReceiptMiddleware
+from nkyel.agents.thread_state import ThreadState
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.goal import (
     GoalEvaluation,
     attach_goal_evaluation,
     build_goal_state,
@@ -32,9 +32,9 @@ from deerflow.runtime.goal import (
     read_thread_goal,
     write_thread_goal,
 )
-from deerflow.runtime.runs import worker
-from deerflow.sandbox.local.local_sandbox import LocalSandbox, PathMapping
-from deerflow.sandbox.tools import bash_tool, read_file_tool, write_file_tool
+from nkyel.runtime.runs import worker
+from nkyel.sandbox.local.local_sandbox import LocalSandbox, PathMapping
+from nkyel.sandbox.tools import bash_tool, read_file_tool, write_file_tool
 
 
 class _Bridge:
@@ -76,8 +76,8 @@ def _no_models_or_network(monkeypatch):
     def denied(*_args, **_kwargs):
         raise AssertionError("Goal worker regression attempted a provider/network call")
 
-    from deerflow import models
-    from deerflow.runtime import goal
+    from nkyel import models
+    from nkyel.runtime import goal
 
     monkeypatch.setattr(socket.socket, "connect", denied)
     monkeypatch.setattr(socket.socket, "connect_ex", denied)
@@ -112,7 +112,7 @@ async def _decide(saver, accessor, thread_id, **kwargs):
 
 
 async def _append_turn(accessor, thread_id, messages, *, turn):
-    await accessor.aupdate(_config(thread_id), {"messages": [HumanMessage(content="Continue", id=f"hidden-{turn}", additional_kwargs={"hide_from_ui": True, "deerflow_goal_continuation": True}), *messages]}, as_node="goal_evaluator")
+    await accessor.aupdate(_config(thread_id), {"messages": [HumanMessage(content="Continue", id=f"hidden-{turn}", additional_kwargs={"hide_from_ui": True, "nkyel_goal_continuation": True}), *messages]}, as_node="goal_evaluator")
 
 
 @pytest.mark.asyncio
@@ -183,7 +183,7 @@ async def test_worker_sqlite_reopen_preserves_exact_history(tmp_path, mode):
 
 
 def _summary_middleware(*, keep):
-    return DeerFlowSummarizationMiddleware(
+    return NkyelSummarizationMiddleware(
         model=FakeListChatModel(responses=["Earlier operations summarized. Work remains."]),
         trigger=("messages", 4),
         keep=("messages", keep),
@@ -296,16 +296,16 @@ def _native_tool_graph(tmp_path, monkeypatch, *, receipts):
     (tmp_path / "workspace").mkdir()
     (tmp_path / "workspace/input.txt").write_text("Stable input contents.\n", encoding="utf-8")
     sandbox = LocalSandbox("local", path_mappings=[PathMapping("/mnt/user-data/workspace", str(tmp_path / "workspace"))])
-    monkeypatch.setattr("deerflow.sandbox.local.local_sandbox.build_sandbox_env", lambda _injected: {"PATH": os.defpath})
+    monkeypatch.setattr("nkyel.sandbox.local.local_sandbox.build_sandbox_env", lambda _injected: {"PATH": os.defpath})
     # Bind only execution policy and the test-owned sandbox; tools, their real
     # results, normalization, receipt stamping and worker decisions stay native.
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: sandbox)
 
     async def initialized(_runtime):
         return sandbox
 
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized_async", initialized)
-    monkeypatch.setattr("deerflow.sandbox.tools.is_host_bash_allowed", lambda: True)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized_async", initialized)
+    monkeypatch.setattr("nkyel.sandbox.tools.is_host_bash_allowed", lambda: True)
     errors = ToolErrorHandlingMiddleware()
     receipt = ToolReceiptMiddleware() if receipts else None
 
@@ -356,7 +356,7 @@ async def test_native_tool_results_cannot_buy_goal_continuations(tmp_path, monke
         counts, decisions, results = [], [], []
         for turn in range(3):
             messages, result = await _native_tool_turn(graph, tmp_path, thread_id="native-progress", turn=turn, kind=kind)
-            assert ("deerflow_tool_receipt" in result.additional_kwargs) is receipts
+            assert ("nkyel_tool_receipt" in result.additional_kwargs) is receipts
             if kind == "failed-bash":
                 assert str(result.content).endswith("Exit Code: 2")
             else:
@@ -370,7 +370,7 @@ async def test_native_tool_results_cannot_buy_goal_continuations(tmp_path, monke
         assert decisions == [True, True, False]
         assert goal["last_evaluation"]["stand_down_reason"] == "no_progress_detected"
         assert len(goal["last_evaluation"]["operation_progress"]["seen_keys"]) == (0 if kind == "failed-bash" else 1)
-        assert all(result.additional_kwargs["deerflow_tool_meta"]["status"] == ("error" if kind == "failed-bash" else "success") for result in results)
+        assert all(result.additional_kwargs["nkyel_tool_meta"]["status"] == ("error" if kind == "failed-bash" else "success") for result in results)
         assert (tmp_path / "workspace/input.txt").read_text(encoding="utf-8") == "Stable input contents.\n"
 
 
@@ -386,7 +386,7 @@ async def test_native_success_after_failed_tools_resets_goal_stall(tmp_path, mon
         counts = []
         for turn, kind in enumerate(["failed-bash", "failed-bash", "same-write"]):
             messages, result = await _native_tool_turn(graph, tmp_path, thread_id="native-recovery", turn=turn, kind=kind)
-            assert result.additional_kwargs["deerflow_tool_meta"]["status"] == ("error" if kind == "failed-bash" else "success")
+            assert result.additional_kwargs["nkyel_tool_meta"]["status"] == ("error" if kind == "failed-bash" else "success")
             await _append_turn(accessor, "native-recovery", messages, turn=turn)
             continuation, goal = await _decide(saver, accessor, "native-recovery")
             assert continuation is not None

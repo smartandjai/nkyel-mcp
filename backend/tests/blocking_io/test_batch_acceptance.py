@@ -7,21 +7,21 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from deerflow.config.paths import Paths
-from deerflow.subagents import batch_acceptance
-from deerflow.subagents.acceptance_checks import check_acceptance_criteria
+from nkyel.config.paths import Paths
+from nkyel.subagents import batch_acceptance
+from nkyel.subagents.acceptance_checks import check_acceptance_criteria
 
 pytestmark = pytest.mark.asyncio
 
 
 async def _setup(monkeypatch, tmp_path):
     paths = await asyncio.to_thread(Paths, str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", paths)
+    monkeypatch.setattr("nkyel.config.paths._paths", paths)
     probe = tmp_path / "probe.txt"
     probe.write_text("actual output")
     lease = SimpleNamespace(sandbox_id="local", owner_id="check-lease", release=AsyncMock())
-    monkeypatch.setattr("deerflow.sandbox.sandbox_provider.get_sandbox_provider", lambda: object())
-    monkeypatch.setattr("deerflow.sandbox.lease.acquire_sandbox_client_lease", AsyncMock(return_value=lease))
+    monkeypatch.setattr("nkyel.sandbox.sandbox_provider.get_sandbox_provider", lambda: object())
+    monkeypatch.setattr("nkyel.sandbox.lease.acquire_sandbox_client_lease", AsyncMock(return_value=lease))
     return probe, lease
 
 

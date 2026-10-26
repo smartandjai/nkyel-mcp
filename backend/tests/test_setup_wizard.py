@@ -52,9 +52,9 @@ class TestProviders:
         assert expected.issubset(providers)
 
         assert providers["openai_responses"].extra_config["use_responses_api"] is True
-        assert providers["gemini_openai_gateway"].use == "deerflow.models.patched_openai:PatchedChatOpenAI"
-        assert providers["mimo"].use == "deerflow.models.patched_mimo:PatchedChatMiMo"
-        assert providers["deepseek"].use == "deerflow.models.patched_deepseek:PatchedChatDeepSeek"
+        assert providers["gemini_openai_gateway"].use == "nkyel.models.patched_openai:PatchedChatOpenAI"
+        assert providers["mimo"].use == "nkyel.models.patched_mimo:PatchedChatMiMo"
+        assert providers["deepseek"].use == "nkyel.models.patched_deepseek:PatchedChatDeepSeek"
         assert providers["volcengine"].extra_config["api_base"] == "https://ark.cn-beijing.volces.com/api/v3"
 
     def test_zai_glm_flash_declares_the_reasoning_contract(self):
@@ -66,7 +66,7 @@ class TestProviders:
         provider = next(p for p in LLM_PROVIDERS if p.name == "zai")
         config = provider.extra_config_for("glm-5.3-flash")
 
-        assert provider.use == "deerflow.models.patched_deepseek:PatchedChatDeepSeek"
+        assert provider.use == "nkyel.models.patched_deepseek:PatchedChatDeepSeek"
         assert provider.env_var == "ZAI_API_KEY"
         assert config["api_base"] == "https://api.z.ai/api/paas/v4"
         assert config["reasoning"] == {
@@ -107,8 +107,8 @@ class TestProviders:
         assert model["extra_body"] == {"tool_stream": True}
 
     def test_zai_glm_flash_generated_config_loads_as_a_required_thinking_model(self):
-        from deerflow.config.model_config import ModelConfig
-        from deerflow.models.reasoning import resolve_reasoning_contract, resolve_reasoning_request
+        from nkyel.config.model_config import ModelConfig
+        from nkyel.models.reasoning import resolve_reasoning_contract, resolve_reasoning_request
 
         provider = next(p for p in LLM_PROVIDERS if p.name == "zai")
         content = build_minimal_config(
@@ -231,7 +231,7 @@ class TestBuildMinimalConfig:
             display_name="OpenAI",
             api_key_field="api_key",
             env_var="OPENAI_API_KEY",
-            search_use="deerflow.community.tavily.tools:web_search_tool",
+            search_use="nkyel.community.tavily.tools:web_search_tool",
             search_extra_config={"max_results": 5},
         )
         data = yaml.safe_load(content)
@@ -268,7 +268,7 @@ class TestBuildMinimalConfig:
             display_name="OpenAI",
             api_key_field="api_key",
             env_var="OPENAI_API_KEY",
-            web_fetch_use="deerflow.community.jina_ai.tools:web_fetch_tool",
+            web_fetch_use="nkyel.community.jina_ai.tools:web_fetch_tool",
             web_fetch_extra_config={"timeout": 10},
         )
         data = yaml.safe_load(content)
@@ -299,7 +299,7 @@ class TestBuildMinimalConfig:
         data = yaml.safe_load(content)
         assert "sandbox" in data
         assert "use" in data["sandbox"]
-        assert data["sandbox"]["use"] == "deerflow.sandbox.local:LocalSandboxProvider"
+        assert data["sandbox"]["use"] == "nkyel.sandbox.local:LocalSandboxProvider"
         assert data["sandbox"]["allow_host_bash"] is False
 
     def test_bash_tool_disabled_by_default(self):
@@ -321,11 +321,11 @@ class TestBuildMinimalConfig:
             display_name="OpenAI",
             api_key_field="api_key",
             env_var="OPENAI_API_KEY",
-            sandbox_use="deerflow.community.aio_sandbox:AioSandboxProvider",
+            sandbox_use="nkyel.community.aio_sandbox:AioSandboxProvider",
             include_bash_tool=True,
         )
         data = yaml.safe_load(content)
-        assert data["sandbox"]["use"] == "deerflow.community.aio_sandbox:AioSandboxProvider"
+        assert data["sandbox"]["use"] == "nkyel.community.aio_sandbox:AioSandboxProvider"
         assert "allow_host_bash" not in data["sandbox"]
         tool_names = [t["name"] for t in data.get("tools", [])]
         assert "bash" in tool_names
@@ -358,7 +358,7 @@ class TestBuildMinimalConfig:
 
     def test_cli_provider_does_not_emit_fake_api_key(self):
         content = build_minimal_config(
-            provider_use="deerflow.models.openai_codex_provider:CodexChatModel",
+            provider_use="nkyel.models.openai_codex_provider:CodexChatModel",
             model_name="gpt-5.4",
             display_name="Codex CLI",
             api_key_field="api_key",
@@ -396,7 +396,7 @@ class TestBuildMinimalConfig:
         )
         data = yaml.safe_load(content)
         model = data["models"][0]
-        assert model["use"] == "deerflow.models.patched_mimo:PatchedChatMiMo"
+        assert model["use"] == "nkyel.models.patched_mimo:PatchedChatMiMo"
         assert model["base_url"] == "https://api.xiaomimimo.com/v1"
         assert model["api_key"] == "$MIMO_API_KEY"
         assert model["supports_thinking"] is True
@@ -700,27 +700,27 @@ class TestWriteConfigYaml:
                         {
                             "name": "web_search",
                             "group": "web",
-                            "use": "deerflow.community.ddg_search.tools:web_search_tool",
+                            "use": "nkyel.community.ddg_search.tools:web_search_tool",
                             "max_results": 5,
                         },
                         {
                             "name": "web_fetch",
                             "group": "web",
-                            "use": "deerflow.community.jina_ai.tools:web_fetch_tool",
+                            "use": "nkyel.community.jina_ai.tools:web_fetch_tool",
                             "timeout": 10,
                         },
                         {
                             "name": "image_search",
                             "group": "web",
-                            "use": "deerflow.community.image_search.tools:image_search_tool",
+                            "use": "nkyel.community.image_search.tools:image_search_tool",
                             "max_results": 5,
                         },
-                        {"name": "ls", "group": "file:read", "use": "deerflow.sandbox.tools:ls_tool"},
-                        {"name": "write_file", "group": "file:write", "use": "deerflow.sandbox.tools:write_file_tool"},
-                        {"name": "bash", "group": "bash", "use": "deerflow.sandbox.tools:bash_tool"},
+                        {"name": "ls", "group": "file:read", "use": "nkyel.sandbox.tools:ls_tool"},
+                        {"name": "write_file", "group": "file:write", "use": "nkyel.sandbox.tools:write_file_tool"},
+                        {"name": "bash", "group": "bash", "use": "nkyel.sandbox.tools:bash_tool"},
                     ],
                     "sandbox": {
-                        "use": "deerflow.sandbox.local:LocalSandboxProvider",
+                        "use": "nkyel.sandbox.local:LocalSandboxProvider",
                         "allow_host_bash": False,
                     },
                     "summarization": {"max_tokens": 2048},

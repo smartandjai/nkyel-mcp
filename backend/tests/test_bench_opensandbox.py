@@ -10,9 +10,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from deerflow.community.opensandbox import provider as provider_module
-from deerflow.config.app_config import AppConfig, get_app_config, pop_current_app_config, push_current_app_config
-from deerflow.config.sandbox_config import SandboxConfig
+from nkyel.community.opensandbox import provider as provider_module
+from nkyel.config.app_config import AppConfig, get_app_config, pop_current_app_config, push_current_app_config
+from nkyel.config.sandbox_config import SandboxConfig
 from scripts.benchmark.sandbox import bench_provider as bench
 from scripts.benchmark.sandbox import summarize
 
@@ -63,10 +63,10 @@ def transport(monkeypatch, tmp_path):
         return remote
 
     monkeypatch.setattr(provider_module, "_import_sdk", lambda: (SimpleNamespace(create=create), SimpleNamespace, SimpleNamespace))
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path / "home"))
     config = AppConfig(
         sandbox=SandboxConfig(
-            use="deerflow.community.opensandbox:OpenSandboxProvider",
+            use="nkyel.community.opensandbox:OpenSandboxProvider",
             image="test-image@sha256:fixture",
             api_key="sentinel-api-key",
             domain="sandbox.invalid:443",

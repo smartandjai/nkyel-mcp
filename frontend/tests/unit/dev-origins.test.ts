@@ -57,9 +57,9 @@ describe("parseAllowedDevOrigins", () => {
 });
 
 describe("getAllowedDevOrigins", () => {
-  test("reads DEER_FLOW_DEV_ALLOWED_ORIGINS", () => {
+  test("reads NKYEL_DEV_ALLOWED_ORIGINS", () => {
     expect(
-      getAllowedDevOrigins({ DEER_FLOW_DEV_ALLOWED_ORIGINS: "192.168.1.10" }),
+      getAllowedDevOrigins({ NKYEL_DEV_ALLOWED_ORIGINS: "192.168.1.10" }),
     ).toEqual(["192.168.1.10"]);
   });
 

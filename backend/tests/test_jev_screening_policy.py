@@ -11,14 +11,14 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from deerflow_extension_api import AgentBuildContext, AgentScope, Placement
+from nkyel_extension_api import AgentBuildContext, AgentScope, Placement
 
-from deerflow.agents.assembly_descriptor import build_assembly_descriptor
-from deerflow.extensions.anchors import outermost
-from deerflow.extensions.injection import inject_middlewares
-from deerflow.extensions.loader import ExtensionSpec, load_extensions
+from nkyel.agents.assembly_descriptor import build_assembly_descriptor
+from nkyel.extensions.anchors import outermost
+from nkyel.extensions.injection import inject_middlewares
+from nkyel.extensions.loader import ExtensionSpec, load_extensions
 
-EXAMPLE = Path(__file__).resolve().parents[2] / "examples/deerflow-extension-jev-screening"
+EXAMPLE = Path(__file__).resolve().parents[2] / "examples/nkyel-extension-jev-screening"
 
 
 @pytest.fixture(autouse=True)
@@ -27,7 +27,7 @@ def example_path(monkeypatch):
 
 
 def contributed(**options):
-    extensions, diagnostics = load_extensions([ExtensionSpec(use="deerflow_extension_jev_screening:install", config={"enabled": True, **options})])
+    extensions, diagnostics = load_extensions([ExtensionSpec(use="nkyel_extension_jev_screening:install", config={"enabled": True, **options})])
     assert [d for d in diagnostics if d.level == "error"] == []
     stack, _provenance, construction = inject_middlewares([], {Placement.TOOL_VISIBLE: outermost()}, AgentScope.LEAD, AgentBuildContext(scope=AgentScope.LEAD), extensions)
     assert construction == []
@@ -70,7 +70,7 @@ def test_each_screening_option_changes_the_real_assembly_fingerprint(options):
 
 @pytest.mark.parametrize("field", ["_INSTRUCTION", "_CRITERIA", "_MARKER"])
 def test_screening_text_changes_move_the_assembly_fingerprint(monkeypatch, field):
-    from deerflow_extension_jev_screening import screener
+    from nkyel_extension_jev_screening import screener
 
     before = assembly().fingerprint
     original = getattr(screener, field)
@@ -80,7 +80,7 @@ def test_screening_text_changes_move_the_assembly_fingerprint(monkeypatch, field
 
 
 def test_policy_is_stable_json_safe_and_does_not_expose_endpoint_prompt_or_keys(monkeypatch):
-    from deerflow_extension_jev_screening import screener
+    from nkyel_extension_jev_screening import screener
 
     endpoint = "https://private.example.test/tenant-canary"
     instruction = "Synthetic private screening question canary."

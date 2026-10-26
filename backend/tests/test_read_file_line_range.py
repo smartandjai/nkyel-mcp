@@ -11,8 +11,8 @@ empty/garbage slice).
 from pathlib import Path
 from types import SimpleNamespace
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
-from deerflow.sandbox.tools import read_file_tool
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.tools import read_file_tool
 
 _FIVE_LINES = "line1\nline2\nline3\nline4\nline5"
 
@@ -34,8 +34,8 @@ def _local_runtime(tmp_path: Path) -> SimpleNamespace:
 def _read(tmp_path, monkeypatch, **kwargs) -> str:
     runtime = _local_runtime(tmp_path)
     (tmp_path / "uploads" / "five.txt").write_text(_FIVE_LINES, encoding="utf-8", newline="\n")
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     return read_file_tool.func(
         runtime=runtime,
         description="read a line range",
@@ -67,7 +67,7 @@ def test_start_line_negative_returns_clean_error(tmp_path, monkeypatch) -> None:
 
 
 def test_start_line_greater_than_end_line_returns_clean_error(tmp_path, monkeypatch) -> None:
-    from deerflow.sandbox.read_file_contract import READ_FILE_EMPTY_RANGE
+    from nkyel.sandbox.read_file_contract import READ_FILE_EMPTY_RANGE
 
     result = _read(tmp_path, monkeypatch, start_line=4, end_line=2)
     assert result == READ_FILE_EMPTY_RANGE
@@ -106,7 +106,7 @@ def test_end_line_past_eof_clamps_to_last_line(tmp_path, monkeypatch) -> None:
 def test_contract_constants_parity_with_localsandbox() -> None:
     """count_file_lines must agree with LocalSandbox line numbering and all no-content
     strings must remain in READ_FILE_NO_CONTENT_RESULTS."""
-    from deerflow.sandbox.read_file_contract import (
+    from nkyel.sandbox.read_file_contract import (
         READ_FILE_INVALID_RANGE,
         READ_FILE_NO_CONTENT_RESULTS,
         count_file_lines,

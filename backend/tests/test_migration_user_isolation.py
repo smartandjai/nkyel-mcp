@@ -12,10 +12,10 @@ from types import SimpleNamespace
 import pytest
 from sqlalchemy import create_engine
 
-from deerflow.config.database_config import DatabaseConfig
-from deerflow.config.paths import Paths
-from deerflow.persistence.base import Base
-from deerflow.persistence.thread_meta.model import ThreadMetaRow
+from nkyel.config.database_config import DatabaseConfig
+from nkyel.config.paths import Paths
+from nkyel.persistence.base import Base
+from nkyel.persistence.thread_meta.model import ThreadMetaRow
 
 
 @pytest.fixture
@@ -436,7 +436,7 @@ class TestThreadOwnersFromDatabase:
             raise ModuleNotFoundError("No module named 'psycopg'")
 
         monkeypatch.setattr("sqlalchemy.create_engine", _no_driver)
-        database = DatabaseConfig(backend="postgres", postgres_url="postgresql://user@localhost/deerflow")
+        database = DatabaseConfig(backend="postgres", postgres_url="postgresql://user@localhost/nkyel")
         _make_legacy_threads(base_dir, "t-alice")
 
         assert _run_migration(monkeypatch, base_dir, database) == 1
@@ -500,9 +500,9 @@ class TestThreadOwnersFromDatabase:
         assert (base_dir / "users" / "default" / "memory.json").exists()
 
     def test_threads_follow_owners_in_configured_postgres_schema(self, base_dir: Path, monkeypatch):
-        url = os.getenv("DEERFLOW_TEST_POSTGRES_URL") or os.getenv("TEST_POSTGRES_URI")
+        url = os.getenv("NKYEL_TEST_POSTGRES_URL") or os.getenv("TEST_POSTGRES_URI")
         if not url:
-            pytest.skip("set TEST_POSTGRES_URI or DEERFLOW_TEST_POSTGRES_URL to run live PostgreSQL tests")
+            pytest.skip("set TEST_POSTGRES_URI or NKYEL_TEST_POSTGRES_URL to run live PostgreSQL tests")
         psycopg = pytest.importorskip("psycopg")
         url = url.replace("postgresql+asyncpg://", "postgresql://")
         schema = f"migrate_owners_{uuid.uuid4().hex[:12]}"

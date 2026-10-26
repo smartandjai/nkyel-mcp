@@ -145,7 +145,7 @@ test.describe("Branch from turn", () => {
           title: "Pinned branch (2)",
           updated_at: "2026-08-24T00:01:00Z",
           metadata: {
-            deerflow_branch: true,
+            nkyel_branch: true,
             branch_parent_thread_id: MOCK_THREAD_ID,
             [THREAD_PINNED_METADATA_KEY]: true,
           },

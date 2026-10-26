@@ -109,7 +109,7 @@ class _BlockingRemoteProvider(_RemoteProvider):
 
 
 async def test_receive_file_remote_sandbox_does_not_block_event_loop(tmp_path, monkeypatch) -> None:
-    from deerflow.config.paths import Paths
+    from nkyel.config.paths import Paths
 
     paths = await asyncio.to_thread(Paths, str(tmp_path))
     provider = _RemoteProvider()
@@ -141,7 +141,7 @@ async def test_receive_file_remote_sandbox_does_not_block_event_loop(tmp_path, m
 
 
 async def test_receive_file_mounted_sandbox_skips_redundant_sync(tmp_path, monkeypatch) -> None:
-    from deerflow.config.paths import Paths
+    from nkyel.config.paths import Paths
 
     paths = await asyncio.to_thread(Paths, str(tmp_path))
     monkeypatch.setattr("app.channels.feishu.get_paths", lambda: paths)
@@ -162,8 +162,8 @@ async def test_receive_file_mounted_sandbox_skips_redundant_sync(tmp_path, monke
 
 @pytest.mark.parametrize("has_active_run", [False, True])
 async def test_cancelled_receive_file_holds_sandbox_lease_until_remote_sync_finishes(tmp_path, monkeypatch, has_active_run) -> None:
-    from deerflow.config.paths import Paths
-    from deerflow.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
+    from nkyel.config.paths import Paths
+    from nkyel.sandbox.lease import discard_sandbox_lease_manager, get_sandbox_lease_manager
 
     paths = await asyncio.to_thread(Paths, str(tmp_path))
     provider = _BlockingRemoteProvider()

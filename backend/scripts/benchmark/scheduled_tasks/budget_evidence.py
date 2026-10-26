@@ -12,19 +12,19 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from sqlalchemy import URL, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from deerflow.config.database_config import DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY
-from deerflow.persistence.run.model import RunRow
-from deerflow.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
-from deerflow.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
-from deerflow.runtime.user_context import DEFAULT_USER_ID
+from nkyel.config.database_config import DEFAULT_CHECKPOINT_SNAPSHOT_FREQUENCY
+from nkyel.persistence.run.model import RunRow
+from nkyel.persistence.scheduled_task_runs.model import ScheduledTaskRunRow
+from nkyel.runtime.checkpoint_state import CheckpointStateAccessor, build_state_mutation_graph
+from nkyel.runtime.user_context import DEFAULT_USER_ID
 
 from .protocol import assert_arm_installed, goal_history_evidence, load_pilot_config
 
 
 def _disposable_db(directory: Path) -> Path:
-    if not directory.is_absolute() or not (directory / ".scheduled-benchmark-disposable").is_file() or not (directory / "deerflow.db").is_file():
+    if not directory.is_absolute() or not (directory / ".scheduled-benchmark-disposable").is_file() or not (directory / "nkyel.db").is_file():
         raise ValueError("Use only the existing marked absolute disposable SQLite directory")
-    return directory / "deerflow.db"
+    return directory / "nkyel.db"
 
 
 async def read_native_goal_evidence(

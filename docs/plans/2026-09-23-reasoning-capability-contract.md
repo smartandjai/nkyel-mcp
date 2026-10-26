@@ -14,7 +14,7 @@ delivers, the compatibility boundary, and the validation rules.
 
 ## Problem
 
-DeerFlow modeled reasoning support with two independent booleans and then
+nkyel modeled reasoning support with two independent booleans and then
 applied generic runtime values (`thinking_enabled`, `reasoning_effort`)
 uniformly across providers. Three things could not be expressed:
 
@@ -39,7 +39,7 @@ uniformly across providers. Three things could not be expressed:
 ```yaml
 models:
   - name: glm-5.3-flash
-    use: deerflow.models.patched_deepseek:PatchedChatDeepSeek
+    use: nkyel.models.patched_deepseek:PatchedChatDeepSeek
     model: glm-5.3-flash
     api_base: https://api.z.ai/api/paas/v4
     api_key: $ZAI_API_KEY
@@ -51,7 +51,7 @@ models:
       effort:
         values: [low, high, max]    # provider vocabulary, in display order
         default: high               # used when the caller does not choose (also background calls)
-        aliases:                    # DeerFlow generic value -> provider value
+        aliases:                    # nkyel generic value -> provider value
           minimal: low
           medium: high
         path: reasoning_effort      # where the value is serialized (dotted identifier path)
@@ -62,7 +62,7 @@ means the model exposes no effort control.
 
 ### Normalized contract
 
-`deerflow.models.reasoning.resolve_reasoning_contract(model_config)` returns a
+`nkyel.models.reasoning.resolve_reasoning_contract(model_config)` returns a
 frozen `ReasoningContract`:
 
 | Field | Legacy derivation | Contract |
@@ -159,7 +159,7 @@ for every reader that has not migrated yet.
 
 ### API projection
 
-`GET /api/models` and `DeerFlowClient.list_models()` / `get_model()` keep the
+`GET /api/models` and `NkyelClient.list_models()` / `get_model()` keep the
 legacy booleans and add a `reasoning` object for every model:
 
 ```json

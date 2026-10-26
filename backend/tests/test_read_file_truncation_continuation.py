@@ -11,8 +11,8 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
-from deerflow.sandbox.local.local_sandbox import LocalSandbox
-from deerflow.sandbox.tools import read_file_tool
+from nkyel.sandbox.local.local_sandbox import LocalSandbox
+from nkyel.sandbox.tools import read_file_tool
 
 _CONTINUE = re.compile(r"Continue with start_line=(\d+)")
 _WHOLE_LINE = re.compile(r"Read that line whole with start_line=(\d+), end_line=(\d+)(?:, then continue with start_line=(\d+))?")
@@ -41,8 +41,8 @@ def test_following_the_markers_reads_the_whole_file_without_gap_or_overlap(tmp_p
     lines = [f"{i:05d} " + "x" * (50 + i % 7) for i in range(1, 2601)]  # 2,600 lines of ~57 chars, > 150k chars
     content = "\n".join(lines) + "\n"
     (tmp_path / "uploads" / "long.txt").write_text(content, encoding="utf-8", newline="\n")
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
 
     segments, starts, kwargs = [], [], {}
     for _hop in range(10):
@@ -112,8 +112,8 @@ def _follow_markers(runtime, content: str) -> tuple[str, list[str]]:
 
 def test_long_lines_near_the_budget_are_followed_without_gap_or_overlap(tmp_path, monkeypatch) -> None:
     runtime = _local_runtime(tmp_path)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     tail = "".join(f"{i:05d} tail line\n" for i in range(1, 3001))
     for length in (49600, 49743, 49750, 49760, 50000):
         content = "a\n" + "y" * length + "\n" + tail
@@ -125,8 +125,8 @@ def test_long_lines_near_the_budget_are_followed_without_gap_or_overlap(tmp_path
 
 def test_a_line_longer_than_max_chars_is_pointed_at_bash_not_at_a_read(tmp_path, monkeypatch) -> None:
     runtime = _local_runtime(tmp_path)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     content = "a\n" + "y" * 50001 + "\n" + "".join(f"{i:05d} tail line\n" for i in range(1, 301))
     (tmp_path / "uploads" / "long.txt").write_text(content, encoding="utf-8", newline="\n")
     result = _read(runtime)
@@ -139,8 +139,8 @@ def test_a_line_longer_than_max_chars_is_pointed_at_bash_not_at_a_read(tmp_path,
 
 def test_a_ranged_read_ending_in_a_blank_line_reports_the_full_span(tmp_path, monkeypatch) -> None:
     runtime = _local_runtime(tmp_path)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     content = "".join(f"{i:05d} " + "x" * 51 + "\n" for i in range(1, 3001)) + "\n"  # 3,001 lines, the last one blank
     (tmp_path / "uploads" / "long.txt").write_text(content, encoding="utf-8", newline="\n")
     assert "of 3001 lines" in _read(runtime)
@@ -150,8 +150,8 @@ def test_a_ranged_read_ending_in_a_blank_line_reports_the_full_span(tmp_path, mo
 
 def test_a_last_line_read_whole_is_the_end_of_the_walk(tmp_path, monkeypatch) -> None:
     runtime = _local_runtime(tmp_path)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     content = "a\n" + "y" * 50000 + "\n"
     (tmp_path / "uploads" / "long.txt").write_text(content, encoding="utf-8", newline="\n")
     rebuilt, forms = _follow_markers(runtime, content)
@@ -161,8 +161,8 @@ def test_a_last_line_read_whole_is_the_end_of_the_walk(tmp_path, monkeypatch) ->
 
 def test_a_bounded_read_cut_inside_its_last_line_still_names_the_line_after_it(tmp_path, monkeypatch) -> None:
     runtime = _local_runtime(tmp_path)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     lines = [f"{i:05d} line" for i in range(1, 1002)] + ["y" * 49900] + [f"{i:05d} after" for i in range(1, 301)]
     content = "\n".join(lines) + "\n"
     (tmp_path / "uploads" / "long.txt").write_text(content, encoding="utf-8", newline="\n")
@@ -177,8 +177,8 @@ def test_a_bounded_read_cut_inside_its_last_line_still_names_the_line_after_it(t
 
 def test_a_start_line_only_read_cut_inside_the_files_last_line_names_nothing_further(tmp_path, monkeypatch) -> None:
     runtime = _local_runtime(tmp_path)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     content = "a\n" + "x" * 40000 + "\n" + "y" * 49900 + "\n"
     (tmp_path / "uploads" / "long.txt").write_text(content, encoding="utf-8", newline="\n")
     result = _read(runtime, start_line=2)  # no end_line: the read runs to the end of the file
@@ -189,8 +189,8 @@ def test_a_start_line_only_read_cut_inside_the_files_last_line_names_nothing_fur
 
 def test_a_blank_line_named_by_a_marker_reads_as_empty_not_as_past_the_end(tmp_path, monkeypatch) -> None:
     runtime = _local_runtime(tmp_path)
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
-    monkeypatch.setattr("deerflow.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_sandbox_initialized", lambda runtime: LocalSandbox("t1"))
+    monkeypatch.setattr("nkyel.sandbox.tools.ensure_thread_directories_exist", lambda runtime: None)
     lines = [f"{i:05d} line" for i in range(1, 1099)] + ["y" * 49800, ""] + [f"{i:05d} after" for i in range(1, 401)]
     content = "\n".join(lines) + "\n"  # line 1100 is blank, 400 lines follow it
     (tmp_path / "uploads" / "long.txt").write_text(content, encoding="utf-8", newline="\n")

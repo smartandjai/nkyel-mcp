@@ -119,7 +119,7 @@ async def test_wechat_auth_state_load_does_not_block_event_loop(tmp_path: Path) 
 
 
 async def test_wechat_startup_sweeps_stale_auth_staging_off_loop(tmp_path: Path) -> None:
-    orphan = tmp_path / ".wechat-auth.json.deerflow-orphan.tmp"
+    orphan = tmp_path / ".wechat-auth.json.nkyel-orphan.tmp"
 
     def seed():
         orphan.write_text("stale-credential", encoding="utf-8")

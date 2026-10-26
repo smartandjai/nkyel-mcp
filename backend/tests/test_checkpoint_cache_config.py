@@ -1,6 +1,6 @@
 """Config parsing for database.checkpoint_cache."""
 
-from deerflow.config.database_config import CheckpointCacheConfig, DatabaseConfig
+from nkyel.config.database_config import CheckpointCacheConfig, DatabaseConfig
 
 
 def test_checkpoint_cache_defaults():

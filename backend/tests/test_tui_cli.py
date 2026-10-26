@@ -2,7 +2,7 @@
 
 import pytest
 
-from deerflow.tui.cli import LaunchPlan, build_parser, plan_launch
+from nkyel.tui.cli import LaunchPlan, build_parser, plan_launch
 
 
 def plan(argv, *, stdin_tty=True, stdout_tty=True, env=None):
@@ -10,7 +10,7 @@ def plan(argv, *, stdin_tty=True, stdout_tty=True, env=None):
 
 
 def test_top_level_help_points_to_extension_management():
-    assert "deerflow extensions --help" in build_parser().format_help()
+    assert "nkyel extensions --help" in build_parser().format_help()
 
 
 def test_bare_command_on_tty_launches_tui():
@@ -142,7 +142,7 @@ def test_force_tui_even_without_tty():
 
 
 def test_env_var_forces_tui():
-    p = plan([], stdin_tty=False, stdout_tty=False, env={"DEER_FLOW_TUI": "1"})
+    p = plan([], stdin_tty=False, stdout_tty=False, env={"NKYEL_TUI": "1"})
     assert p.mode == "tui"
 
 
@@ -153,7 +153,7 @@ def test_transparent_flag_is_carried_to_tui_plan():
 
 
 def test_transparent_env_is_carried_to_tui_plan():
-    p = plan([], env={"DEER_FLOW_TUI_TRANSPARENT": "yes"})
+    p = plan([], env={"NKYEL_TUI_TRANSPARENT": "yes"})
     assert p.mode == "tui"
     assert p.transparent is True
 

@@ -26,7 +26,7 @@ _CHANNEL_ID = "136852ee-63e1-49c2-8927-413b5ee8e5f7"
 def _event() -> dict:
     tags = [["h", _CHANNEL_ID], ["p", _BOT_PUBLIC]]
     created_at = 1_700_000_100
-    content = "@DeerFlow hello"
+    content = "@nkyel hello"
     return {
         "id": buzz_nostr.event_id(_OWNER_PUBLIC, created_at, 9, tags, content),
         "pubkey": _OWNER_PUBLIC,
@@ -199,7 +199,7 @@ async def test_start_channel_resolves_seen_store_path_off_the_loop(tmp_path: Pat
     # The offline twin of this test (``test_service_wiring_injects_persistent_store_path``)
     # replaces ``get_paths`` with a stub whose ``base_dir`` is a plain string, so
     # it cannot see the syscall at all; here the real ``Paths`` object stays in
-    # place and is isolated through ``DEER_FLOW_HOME`` instead.
+    # place and is isolated through ``NKYEL_HOME`` instead.
     captured: dict[str, object] = {}
 
     class StubChannel:
@@ -210,9 +210,9 @@ async def test_start_channel_resolves_seen_store_path_off_the_loop(tmp_path: Pat
         async def start(self):
             pass
 
-    monkeypatch.setenv("DEER_FLOW_HOME", str(tmp_path))
-    monkeypatch.setattr("deerflow.config.paths._paths", None)
-    monkeypatch.setattr("deerflow.reflection.resolve_class", lambda _path, base_class=None: StubChannel)
+    monkeypatch.setenv("NKYEL_HOME", str(tmp_path))
+    monkeypatch.setattr("nkyel.config.paths._paths", None)
+    monkeypatch.setattr("nkyel.reflection.resolve_class", lambda _path, base_class=None: StubChannel)
 
     # Construction is IO-free by contract: ``start_channel_service`` builds the
     # service in a worker thread because ``ChannelStore`` resolves its JSON file
