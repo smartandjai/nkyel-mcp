@@ -3,10 +3,14 @@
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
+  CompassIcon,
+  FolderIcon,
   GlobeIcon,
   Loader2Icon,
   MonitorIcon,
   RadioIcon,
+  ServerIcon,
+  TerminalIcon,
   XIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -22,7 +26,11 @@ import { cn } from "@/lib/utils";
 
 import { navigateBrowser } from "./api";
 import { useMaybeBrowserView } from "./context";
+import { FilesTab } from "./files-tab";
 import { decideBrowserKeyInput } from "./keyboard";
+import { SandboxTab } from "./sandbox-tab";
+import { TavilyTab } from "./tavily-tab";
+import { TerminalTab } from "./terminal-tab";
 import { type BrowserInputEvent, useBrowserStream } from "./use-browser-stream";
 
 export function BrowserViewPanel({
@@ -39,6 +47,9 @@ export function BrowserViewPanel({
     ? resolveArtifactURL(frame.screenshot, threadId)
     : null;
 
+  const [activeTab, setActiveTab] = useState<
+    "desktop" | "terminal" | "files" | "tavily" | "sandbox"
+  >("desktop");
   const [urlInput, setUrlInput] = useState("");
   const [navigating, setNavigating] = useState(false);
   const [live, setLive] = useState(true);
@@ -133,8 +144,8 @@ export function BrowserViewPanel({
     }
   }, [liveUrl, live]);
 
-  const handleNavigate = async () => {
-    const target = urlInput.trim();
+  const handleNavigate = async (targetOverride?: string) => {
+    const target = (targetOverride ?? urlInput).trim();
     if (!target) {
       return;
     }
@@ -343,108 +354,190 @@ export function BrowserViewPanel({
         event.stopPropagation();
       }}
     >
-      <header className="flex shrink-0 items-center gap-2 border-b px-3 py-2">
-        <MonitorIcon className="size-4 shrink-0" />
-        <span className="shrink-0 text-sm font-medium">Browser</span>
-        <div className="flex shrink-0 items-center">
+      {/* Ordinateur nkyel - Unified Workspace Tabs */}
+      <div className="flex shrink-0 items-center justify-between border-b bg-muted/40 px-2 py-1.5">
+        <div className="flex items-center gap-1 overflow-x-auto">
           <Button
-            size="icon-sm"
-            variant="ghost"
-            className="shrink-0"
-            disabled={!live}
-            onClick={() => sendInput({ type: "back" })}
-            title="Back"
+            size="sm"
+            variant={activeTab === "desktop" ? "secondary" : "ghost"}
+            className={cn(
+              "h-7 gap-1.5 px-2.5 text-xs font-medium",
+              activeTab === "desktop" &&
+                "bg-background text-foreground shadow-xs font-semibold",
+            )}
+            onClick={() => setActiveTab("desktop")}
           >
-            <ArrowLeftIcon />
+            <MonitorIcon className="size-3.5 text-blue-500" />
+            <span>Bureau distant</span>
           </Button>
+
           <Button
-            size="icon-sm"
-            variant="ghost"
-            className="shrink-0"
-            disabled={!live}
-            onClick={() => sendInput({ type: "forward" })}
-            title="Forward"
+            size="sm"
+            variant={activeTab === "tavily" ? "secondary" : "ghost"}
+            className={cn(
+              "h-7 gap-1.5 px-2.5 text-xs font-medium",
+              activeTab === "tavily" &&
+                "bg-background text-foreground shadow-xs font-semibold",
+            )}
+            onClick={() => setActiveTab("tavily")}
           >
-            <ArrowRightIcon />
+            <CompassIcon className="size-3.5 text-emerald-500" />
+            <span>Recherche Tavily</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant={activeTab === "terminal" ? "secondary" : "ghost"}
+            className={cn(
+              "h-7 gap-1.5 px-2.5 text-xs font-medium",
+              activeTab === "terminal" &&
+                "bg-background text-foreground shadow-xs font-semibold",
+            )}
+            onClick={() => setActiveTab("terminal")}
+          >
+            <TerminalIcon className="size-3.5 text-amber-500" />
+            <span>Console</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant={activeTab === "files" ? "secondary" : "ghost"}
+            className={cn(
+              "h-7 gap-1.5 px-2.5 text-xs font-medium",
+              activeTab === "files" &&
+                "bg-background text-foreground shadow-xs font-semibold",
+            )}
+            onClick={() => setActiveTab("files")}
+          >
+            <FolderIcon className="size-3.5 text-indigo-500" />
+            <span>Fichiers de mission</span>
+          </Button>
+
+          <Button
+            size="sm"
+            variant={activeTab === "sandbox" ? "secondary" : "ghost"}
+            className={cn(
+              "h-7 gap-1.5 px-2.5 text-xs font-medium",
+              activeTab === "sandbox" &&
+                "bg-background text-foreground shadow-xs font-semibold",
+            )}
+            onClick={() => setActiveTab("sandbox")}
+          >
+            <ServerIcon className="size-3.5 text-purple-500" />
+            <span>Bac à sable E2B</span>
           </Button>
         </div>
-        <form
-          className="relative flex min-w-0 flex-1 items-center"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleNavigate();
-          }}
-        >
-          <GlobeIcon className="text-muted-foreground pointer-events-none absolute left-2 size-3.5" />
-          <Input
-            value={urlInput}
-            onChange={(event) => {
-              urlEditingRef.current = true;
-              setUrlInput(event.target.value);
-            }}
-            onFocus={(event) => {
-              urlEditingRef.current = true;
-              event.currentTarget.select();
-            }}
-            onBlur={() => {
-              urlEditingRef.current = false;
-            }}
-            onKeyDown={(event) => {
-              // Keep browser select-all/copy/cut/paste working inside the URL
-              // bar; stop the panel + global shortcut handlers from swallowing.
-              event.stopPropagation();
-            }}
-            placeholder="Enter a URL and press Enter"
-            spellCheck={false}
-            autoComplete="off"
-            className="h-8 pl-7 text-xs"
-          />
-          {navigating && (
-            <Loader2Icon className="text-muted-foreground absolute right-2 size-3.5 animate-spin" />
-          )}
-        </form>
-        <Button
-          size="sm"
-          variant={live ? "default" : "ghost"}
-          className="shrink-0 gap-1"
-          onClick={() => setLive((prev) => !prev)}
-          title={live ? "Stop live control" : "Take live control"}
-        >
-          <RadioIcon className="size-3.5" />
-          {live && status !== "open"
-            ? status === "closed"
-              ? t.browserStream.disconnected
-              : t.browserStream.connecting
-            : "Live"}
-        </Button>
+
         <Button
           size="icon-sm"
           variant="ghost"
-          className="shrink-0"
+          className="size-7 shrink-0"
           onClick={() => {
             setLive(false);
             browserView?.close();
           }}
+          title="Fermer le panneau"
         >
-          <XIcon />
+          <XIcon className="size-3.5" />
         </Button>
-      </header>
-      <main className="relative flex min-h-0 grow flex-col overflow-hidden bg-neutral-950">
-        {liveFailureMessage && (
-          <p
-            role="status"
-            className="bg-background shrink-0 border-b px-3 py-2 text-xs"
+      </div>
+
+      {/* Desktop View Navigation Bar (Shown when desktop tab is active) */}
+      {activeTab === "desktop" && (
+        <header className="flex shrink-0 items-center gap-2 border-b px-3 py-1.5">
+          <div className="flex shrink-0 items-center">
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="size-7 shrink-0"
+              disabled={!live}
+              onClick={() => sendInput({ type: "back" })}
+              title="Précédent"
+            >
+              <ArrowLeftIcon className="size-3.5" />
+            </Button>
+            <Button
+              size="icon-sm"
+              variant="ghost"
+              className="size-7 shrink-0"
+              disabled={!live}
+              onClick={() => sendInput({ type: "forward" })}
+              title="Suivant"
+            >
+              <ArrowRightIcon className="size-3.5" />
+            </Button>
+          </div>
+          <form
+            className="relative flex min-w-0 flex-1 items-center"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleNavigate();
+            }}
           >
-            {liveFailureMessage}
-          </p>
-        )}
+            <GlobeIcon className="text-muted-foreground pointer-events-none absolute left-2 size-3.5" />
+            <Input
+              value={urlInput}
+              onChange={(event) => {
+                urlEditingRef.current = true;
+                setUrlInput(event.target.value);
+              }}
+              onFocus={(event) => {
+                urlEditingRef.current = true;
+                event.currentTarget.select();
+              }}
+              onBlur={() => {
+                urlEditingRef.current = false;
+              }}
+              onKeyDown={(event) => {
+                event.stopPropagation();
+              }}
+              placeholder="Saisissez une URL et appuyez sur Entrée"
+              spellCheck={false}
+              autoComplete="off"
+              className="h-7 pl-7 text-xs"
+            />
+            {navigating && (
+              <Loader2Icon className="text-muted-foreground absolute right-2 size-3.5 animate-spin" />
+            )}
+          </form>
+          <Button
+            size="sm"
+            variant={live ? "default" : "ghost"}
+            className="h-7 shrink-0 gap-1 px-2 text-xs"
+            onClick={() => setLive((prev) => !prev)}
+            title={live ? "Arrêter le direct" : "Prendre le contrôle en direct"}
+          >
+            <RadioIcon className="size-3" />
+            {live && status !== "open"
+              ? status === "closed"
+                ? t.browserStream.disconnected
+                : t.browserStream.connecting
+              : "Direct"}
+          </Button>
+        </header>
+      )}
+
+      {/* Main Container */}
+      <main className="relative flex min-h-0 grow flex-col overflow-hidden bg-neutral-950">
+        {/* Desktop Browser Screencast (Always kept mounted to preserve stream connection) */}
         <div
           ref={stageRef}
-          className="relative min-h-0 grow bg-neutral-900"
+          className={cn(
+            "relative min-h-0 grow bg-neutral-900",
+            activeTab !== "desktop" && "hidden",
+          )}
           onMouseDown={() => {
             panelRef.current?.focus({ preventScroll: true });
           }}
         >
+          {liveFailureMessage && (
+            <p
+              role="status"
+              className="bg-background shrink-0 border-b px-3 py-2 text-xs"
+            >
+              {liveFailureMessage}
+            </p>
+          )}
           {displayUrl ? (
             <img
               ref={surfaceRef}
@@ -462,15 +555,15 @@ export function BrowserViewPanel({
                 liveFailureMessage
                   ? t.browserStream.disconnected
                   : live
-                    ? "Connecting to live browser…"
-                    : "No browser activity yet"
+                    ? "Connexion au navigateur en direct…"
+                    : "Aucune activité de navigation pour l'instant"
               }
               description={
                 liveFailureMessage
                   ? ""
                   : live
-                    ? "Waiting for the first live frame."
-                    : "Enter a URL above or let the agent browse — the live view will appear here."
+                    ? "En attente de la première image transmise par E2B."
+                    : "Saisissez une URL ci-dessus ou lancez une mission : le flux en direct apparaîtra ici."
               }
             />
           )}
@@ -480,6 +573,41 @@ export function BrowserViewPanel({
             </div>
           )}
         </div>
+
+        {/* Tab: Recherche Tavily */}
+        {activeTab === "tavily" && (
+          <div className="flex size-full flex-col overflow-hidden">
+            <TavilyTab
+              threadId={threadId}
+              onNavigateToUrl={(url) => {
+                setUrlInput(url);
+                void handleNavigate(url);
+                setActiveTab("desktop");
+              }}
+            />
+          </div>
+        )}
+
+        {/* Tab: Console / Terminal */}
+        {activeTab === "terminal" && (
+          <div className="flex size-full flex-col overflow-hidden">
+            <TerminalTab threadId={threadId} />
+          </div>
+        )}
+
+        {/* Tab: Fichiers de mission */}
+        {activeTab === "files" && (
+          <div className="flex size-full flex-col overflow-hidden">
+            <FilesTab threadId={threadId} />
+          </div>
+        )}
+
+        {/* Tab: Bac à sable E2B Cloud */}
+        {activeTab === "sandbox" && (
+          <div className="flex size-full flex-col overflow-hidden">
+            <SandboxTab threadId={threadId} />
+          </div>
+        )}
       </main>
     </div>
   );

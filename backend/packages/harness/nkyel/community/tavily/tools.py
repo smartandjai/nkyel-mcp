@@ -120,3 +120,122 @@ async def web_fetch_tool(url: str) -> str:
     if not isinstance(raw_content, str):
         raw_content = "" if raw_content is None else str(raw_content)
     return f"# {title}\n\n{raw_content[:4096]}"
+
+
+@tool("web_map", parse_docstring=True)
+async def web_map_tool(url: str, max_depth: int = 1) -> str:
+    """Discover the site hierarchy and page structure of a target domain using Tavily Map.
+
+    Args:
+        url: The root website or domain URL to map.
+        max_depth: Maximum hierarchy depth to explore (1-3, default 1).
+    """
+    import httpx
+
+    config = get_app_config().get_tool_config("web_map")
+    api_key = None
+    if config is not None and "api_key" in config.model_extra:
+        api_key = config.model_extra.get("api_key")
+    if not api_key:
+        import os
+
+        api_key = os.environ.get("TAVILY_API_KEY")
+
+    if not api_key:
+        return json.dumps({"error": "TAVILY_API_KEY is not configured", "url": url})
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as http_client:
+            resp = await http_client.post(
+                "https://api.tavily.com/map",
+                json={"api_key": api_key, "url": url, "max_depth": max_depth},
+            )
+            if resp.status_code != 200:
+                return json.dumps({"status": "partial", "url": url, "pages": [url], "message": f"Tavily Map returned HTTP {resp.status_code}"})
+            data = resp.json()
+            return json.dumps(data, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        logger.warning("Tavily Map failed: %s", exc)
+        return json.dumps({"error": str(exc), "url": url})
+
+
+@tool("web_crawl", parse_docstring=True)
+async def web_crawl_tool(url: str, max_depth: int = 2, limit: int = 10) -> str:
+    """Systematically explore and crawl linked pages of a website using Tavily Crawl.
+
+    Args:
+        url: The entry point URL to crawl.
+        max_depth: Maximum link depth to follow (default 2).
+        limit: Maximum number of pages to extract (default 10).
+    """
+    import httpx
+
+    config = get_app_config().get_tool_config("web_crawl")
+    api_key = None
+    if config is not None and "api_key" in config.model_extra:
+        api_key = config.model_extra.get("api_key")
+    if not api_key:
+        import os
+
+        api_key = os.environ.get("TAVILY_API_KEY")
+
+    if not api_key:
+        return json.dumps({"error": "TAVILY_API_KEY is not configured", "url": url})
+
+    try:
+        async with httpx.AsyncClient(timeout=45.0) as http_client:
+            resp = await http_client.post(
+                "https://api.tavily.com/crawl",
+                json={"api_key": api_key, "url": url, "max_depth": max_depth, "limit": limit},
+            )
+            if resp.status_code != 200:
+                return json.dumps({"status": "partial", "url": url, "limit": limit, "message": f"Tavily Crawl returned HTTP {resp.status_code}"})
+            data = resp.json()
+            return json.dumps(data, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        logger.warning("Tavily Crawl failed: %s", exc)
+        return json.dumps({"error": str(exc), "url": url})
+
+
+@tool("web_research", parse_docstring=True)
+async def web_research_tool(query: str, topic: str = "general") -> str:
+    """Conduct comprehensive multi-source deep research on a topic with verified citations using Tavily Research.
+
+    Args:
+        query: The detailed topic or research goal.
+        topic: Research domain or scope ('general', 'finance', 'news', 'academic').
+    """
+    import httpx
+
+    config = get_app_config().get_tool_config("web_research")
+    api_key = None
+    if config is not None and "api_key" in config.model_extra:
+        api_key = config.model_extra.get("api_key")
+    if not api_key:
+        import os
+
+        api_key = os.environ.get("TAVILY_API_KEY")
+
+    if not api_key:
+        return json.dumps({"error": "TAVILY_API_KEY is not configured", "query": query})
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as http_client:
+            resp = await http_client.post(
+                "https://api.tavily.com/research",
+                json={"api_key": api_key, "input": query, "model": "mini", "topic": topic},
+            )
+            if resp.status_code != 200:
+                # Fallback to rich web_search synthesis if dedicated endpoint returns non-200
+                client = _get_tavily_client()
+                try:
+                    res = await client.search(query, search_depth="advanced", max_results=8)
+                    return json.dumps(res, indent=2, ensure_ascii=False)
+                finally:
+                    await client.close()
+            data = resp.json()
+            return json.dumps(data, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        logger.warning("Tavily Research failed: %s", exc)
+        return json.dumps({"error": str(exc), "query": query})
+

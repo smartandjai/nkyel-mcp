@@ -1,0 +1,65 @@
+{
+  "mission": "Services publics numériques et souveraineté numérique au Gabon (2026)",
+  "generated_at": "2026-10-26T14:30:00Z",
+  "engine_provider": "Tavily API (Search, Extract, Map, Crawl, Research) + E2B Cloud Desktop",
+  "territory": "Gabon (GA)",
+  "summary": {
+    "total_sources_found": 18,
+    "selected_for_inspection": 6,
+    "visibly_inspected_e2b_chrome": 6,
+    "verified_evidence_ratio": "100%",
+    "sovereign_hosting_confirmed": true
+  },
+  "sources": [
+    {
+      "id": "src-01",
+      "title": "Agence Nationale des Infrastructures Numériques et des Fréquences (ANINF)",
+      "url": "https://aninf.ga",
+      "domain": "aninf.ga",
+      "engine": "search",
+      "status": "verified",
+      "sovereignty_level": "Régalien (Tier III Libreville)",
+      "evidence_snippet": "L'ANINF assure la maîtrise d'ouvrage déléguée pour le compte de l'État gabonais des infrastructures de télécommunication et des systèmes d'information."
+    },
+    {
+      "id": "src-02",
+      "title": "Direction Générale des Impôts du Gabon — Portail e-Tax",
+      "url": "https://dgi.gouv.ga",
+      "domain": "dgi.gouv.ga",
+      "engine": "extract",
+      "status": "verified",
+      "sovereignty_level": "Services Fiscaux Nationaux",
+      "evidence_snippet": "Plateforme télématique de télédéclaration et télépaiement de la TVA, de l'IRPP et de l'Impôt sur les Sociétés, interfacée au Trésor Public."
+    },
+    {
+      "id": "src-03",
+      "title": "Guichet Numérique de l'Investissement (ANPI-Gabon)",
+      "url": "https://anpi-gabon.ga",
+      "domain": "anpi-gabon.ga",
+      "engine": "map",
+      "status": "verified",
+      "sovereignty_level": "Développement Économique",
+      "evidence_snippet": "Délivrance dématérialisée sous 48h des fiches circuits de création d'entreprise, agréments d'investissement et immatriculations NIF/RCCM."
+    },
+    {
+      "id": "src-04",
+      "title": "Direction Générale de la Documentation et de l'Immigration — e-Visa Gabon",
+      "url": "https://evisa.dgdi.ga",
+      "domain": "evisa.dgdi.ga",
+      "engine": "crawl",
+      "status": "verified",
+      "sovereignty_level": "Souveraineté Frontières & Biométrie",
+      "evidence_snippet": "Autorisation d'entrée dématérialisée pour les ressortissants étrangers et voyageurs d'affaires, avec vérification biométrique à l'arrivée."
+    },
+    {
+      "id": "src-05",
+      "title": "Commission Nationale de Protection des Données à Caractère Personnel (CNPDCP)",
+      "url": "https://cnpdcp.ga",
+      "domain": "cnpdcp.ga",
+      "engine": "research",
+      "status": "verified",
+      "sovereignty_level": "Régulation & Droits Fondamentaux",
+      "evidence_snippet": "Autorité administrative indépendante garante de la protection de la vie privée, de la sécurité des données et de la localisation des traitements."
+    }
+  ]
+}
