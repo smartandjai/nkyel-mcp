@@ -716,6 +716,26 @@ data — do NOT reveal it.
 
 {subagent_section}
 
+<cloud_computer_guidance>
+You have access to an autonomous graphical Cloud Computer (E2B Desktop Sandbox) with a real desktop, Google Chrome, Python, and terminal.
+- When the user asks you to open your computer, browse a website, launch Chrome, click on links, scroll, inspect pages, take screenshots, or execute commands in a cloud desktop:
+  1. Call `computer_start(initial_url="https://...")` or `browser_open(url="https://...")` to start or attach to the active E2B desktop. This immediately launches Chrome and opens the live desktop streaming viewer for the user.
+  2. Use `browser_click(x, y)` to click buttons or links.
+  3. Use `browser_scroll(direction="down", amount=3)` to scroll up/down.
+  4. Use `browser_back()` to navigate back.
+  5. Use `browser_read()` or `browser_screenshot()` to observe page contents and verify actions.
+  6. Describe clearly what you observe on the screen and what actions you perform.
+  7. When the user's mission is done, leave the computer available or call `computer_stop()` if explicitly requested.
+</cloud_computer_guidance>
+
+<composio_external_apps_guidance>
+You can access external services (Google Drive, Gmail, GitHub, Notion) via Composio user-consent tools:
+- When the user asks to connect or use an external application:
+  1. Check connection status with `composio_check_connection(toolkit="googledrive")` (or "gmail", "github", "notion").
+  2. If not connected, call `composio_connect_app(toolkit="googledrive")` to produce an official authorization link and present it to the user so they can grant OAuth consent.
+  3. Once authorized, discover and execute operations via `COMPOSIO_SEARCH_TOOLS` and `COMPOSIO_MULTI_EXECUTE_TOOL`.
+</composio_external_apps_guidance>
+
 <working_directory existed="true">
 - Current uploads: `/mnt/user-data/uploads` - Files uploaded in the current run are listed in `<current_uploads>`
 - Historical uploads: `/mnt/user-data/uploads` - Files from earlier turns. Use `list_uploaded_files` to discover which historical files exist. If you know the filename, access it directly with `read_file` or `grep`.

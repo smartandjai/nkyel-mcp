@@ -25,8 +25,21 @@ logger = logging.getLogger(__name__)
 
 def _resolve_session(runtime: Runtime | None, thread_id: str | None = None) -> ComputerSession:
     """Helper to resolve active session from runtime or fallback."""
-    tid = thread_id or getattr(runtime, "thread_id", None) or "global-mission"
-    user_id = getattr(runtime, "user_id", None) or "default"
+    from nkyel.runtime.user_context import resolve_runtime_user_id
+
+    tid = thread_id
+    if not tid and runtime is not None:
+        context = getattr(runtime, "context", None)
+        if isinstance(context, dict):
+            tid = context.get("thread_id")
+        if not tid:
+            config = getattr(runtime, "config", None)
+            if isinstance(config, dict):
+                tid = config.get("configurable", {}).get("thread_id")
+        if not tid:
+            tid = getattr(runtime, "thread_id", None)
+    tid = tid or "global-mission"
+    user_id = resolve_runtime_user_id(runtime)
     run_id = getattr(runtime, "run_id", None) or ""
     return computer_sessions.get_or_create_session(thread_id=tid, user_id=user_id, run_id=run_id)
 

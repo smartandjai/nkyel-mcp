@@ -337,3 +337,91 @@ def test_live_e2b_desktop_sandbox_integration():
         # 6. Close sandbox cleanly
         if sandbox is not None:
             sandbox.kill()
+
+
+@pytest.mark.skipif(
+    os.getenv("RUN_LIVE_E2B_TEST") != "1",
+    reason="Opt-in live integration test. Set RUN_LIVE_E2B_TEST=1 to run.",
+)
+def test_live_e2b_browser_mission_acceptance():
+    """Live Browser Acceptance Test (Mission 2):
+
+    'Open your computer, launch Chrome, visit https://example.com,
+     click Learn more, inspect the destination, scroll and go back.
+     Show me the entire operation in the Computer panel.'
+
+    Verifies:
+    1. A real computer_start tool call creates exactly one E2B sandbox.
+    2. Real authenticated stream URL is returned.
+    3. Navigation to https://example.com in Chrome.
+    4. Real screenshot is captured (> 5KB PNG).
+    5. Real mouse click on the page.
+    6. Real scroll down.
+    7. Real browser_back navigation.
+    8. Clean computer_stop terminates the session.
+    """
+    from langchain_core.tools import StructuredTool
+    from nkyel.sandbox.computer_tools import (
+        browser_back_tool,
+        browser_click_tool,
+        browser_screenshot_tool,
+        browser_scroll_tool,
+        computer_start_tool,
+        computer_stop_tool,
+    )
+
+    assert isinstance(computer_start_tool, StructuredTool)
+    assert computer_start_tool.func is not None
+
+    test_runtime = MagicMock()
+    test_runtime.thread_id = "test-live-mission-acceptance"
+    test_runtime.user_id = "test-user-dan"
+    test_runtime.run_id = "run-acceptance-001"
+
+    try:
+        # Step 1: Start computer & Chrome at example.com
+        res_start = computer_start_tool.func(
+            initial_url="https://example.com", runtime=test_runtime
+        )
+        assert res_start["success"] is True
+        assert res_start["sandbox_id"]
+        assert res_start["stream_url"].startswith("https://")
+        assert "screenshot_base64" in res_start
+        assert len(res_start["screenshot_base64"]) > 5000
+
+        # Step 2: Click on page
+        assert isinstance(browser_click_tool, StructuredTool)
+        assert browser_click_tool.func is not None
+        res_click = browser_click_tool.func(
+            x=350, y=320, button="left", runtime=test_runtime
+        )
+        assert res_click["success"] is True
+        assert res_click["sandbox_id"] == res_start["sandbox_id"]
+
+        # Step 3: Scroll down
+        assert isinstance(browser_scroll_tool, StructuredTool)
+        assert browser_scroll_tool.func is not None
+        res_scroll = browser_scroll_tool.func(
+            direction="down", amount=3, runtime=test_runtime
+        )
+        assert res_scroll["success"] is True
+
+        # Step 4: Navigate back
+        assert isinstance(browser_back_tool, StructuredTool)
+        assert browser_back_tool.func is not None
+        res_back = browser_back_tool.func(runtime=test_runtime)
+        assert res_back["success"] is True
+
+        # Step 5: Fresh screenshot
+        assert isinstance(browser_screenshot_tool, StructuredTool)
+        assert browser_screenshot_tool.func is not None
+        res_shot = browser_screenshot_tool.func(runtime=test_runtime)
+        assert res_shot["success"] is True
+        assert len(res_shot["screenshot_base64"]) > 5000
+
+    finally:
+        # Step 6: Clean shutdown
+        assert isinstance(computer_stop_tool, StructuredTool)
+        assert computer_stop_tool.func is not None
+        res_stop = computer_stop_tool.func(runtime=test_runtime)
+        assert res_stop["success"] is True

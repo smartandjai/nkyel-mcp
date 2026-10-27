@@ -128,26 +128,31 @@ class NkyelComputerSessionManager:
             sandbox = Sandbox.create(api_key=api_key, timeout=timeout)
             sandbox_id = sandbox.sandbox_id
 
-            # Start VNC stream immediately with supported authenticated access
+            # Start authenticated E2B desktop stream
             stream_url = ""
             auth_key = ""
             try:
-                # Try starting with authenticated access
                 sandbox.stream.start(require_auth=True)
-                try:
-                    auth_key = sandbox.stream.get_auth_key()
-                    stream_url = sandbox.stream.get_url(auto_connect=True, view_only=False, resize="scale", auth_key=auth_key)
-                except Exception:
-                    stream_url = sandbox.stream.get_url(auto_connect=True, view_only=False, resize="scale")
+                auth_key = sandbox.stream.get_auth_key()
+                stream_url = sandbox.stream.get_url(auto_connect=True, view_only=False, resize="scale", auth_key=auth_key)
+                if not stream_url or not stream_url.startswith("https://"):
+                    raise RuntimeError(f"Invalid stream URL returned by E2B Desktop: {stream_url}")
                 logger.info(f"VNC Stream started for sandbox {sandbox_id}: {stream_url}")
             except Exception as stream_err:
                 logger.warning(f"Could not start authenticated VNC stream, trying without auth: {stream_err}")
                 try:
                     sandbox.stream.start(require_auth=False)
                     stream_url = sandbox.stream.get_url(auto_connect=True, view_only=False, resize="scale")
+                    if not stream_url or not stream_url.startswith("https://"):
+                        raise RuntimeError(f"Invalid unauthenticated stream URL returned by E2B Desktop: {stream_url}")
+                    logger.info(f"Unauthenticated VNC Stream started for sandbox {sandbox_id}: {stream_url}")
                 except Exception as stream_err2:
-                    logger.warning(f"Could not start VNC stream: {stream_err2}")
-                    stream_url = f"https://6080-{sandbox_id}.{getattr(sandbox, 'sandbox_domain', 'e2b.app')}/vnc.html?autoconnect=true&resize=scale"
+                    logger.error(f"Failed to start E2B Desktop stream: {stream_err2}")
+                    try:
+                        sandbox.kill()
+                    except Exception:
+                        pass
+                    raise RuntimeError(f"Failed to start E2B Desktop stream: {stream_err2}") from stream_err2
 
             session = ComputerSession(
                 user_id=user_id,
