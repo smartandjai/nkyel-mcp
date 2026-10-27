@@ -1,4 +1,4 @@
-# 🦌 Ñkyel — Plateforme Souveraine de Super-Agents Autonomes
+# Ñkyel — Plateforme Souveraine de Super-Agents Autonomes
 
 <div align="center">
 

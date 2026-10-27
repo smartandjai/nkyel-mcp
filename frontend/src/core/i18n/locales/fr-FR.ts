@@ -311,11 +311,11 @@ export const frFR: Translations = {
   welcome: {
     greeting: "Que souhaites-tu accomplir ?",
     description:
-      "Bienvenue sur nkyel, votre super agent IA. With built-in and custom skills, nkyel helps you search on the web, analyze data, and generate artifacts like slides, web pages and do almost anything.",
+      "Bienvenue sur nkyel, votre super agent d'intelligence artificielle souverain. Grâce à ses compétences intégrées et personnalisées, nkyel vous aide à chercher sur le web, analyser vos données et générer des documents comme des présentations ou des pages web.",
 
     createYourOwnSkill: "Créer votre propre compétence",
     createYourOwnSkillDescription:
-      "Create your own skill to release the power of nkyel. With customized skills,\nnkyel can help you search on the web, analyze data, and generate\n artifacts like slides, web pages and do almost anything.",
+      "Créez votre propre compétence pour libérer la puissance de nkyel. Avec des compétences personnalisées,\nnkyel peut vous aider à chercher sur le web, analyser des données et générer\ndes présentations, pages web et bien plus encore.",
   },
 
   // Clipboard
