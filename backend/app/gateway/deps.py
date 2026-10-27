@@ -1406,6 +1406,11 @@ async def get_current_user_from_request(request: Request):
             detail=AuthErrorResponse(code=error, message="Account disabled" if error is AuthErrorCode.ACCOUNT_DISABLED else "Token revoked (password changed)").model_dump(),
         )
 
+    if state is not None:
+        state.user = user
+        if getattr(state, "auth_source", None) is None:
+            state.auth_source = AUTH_SOURCE_SESSION
+
     return user
 
 
@@ -1486,3 +1491,26 @@ async def get_current_user(request: Request) -> str | None:
     """
     user = await get_optional_user_from_request(request)
     return str(user.id) if user else None
+
+
+async def get_verified_interactive_user(request: Request):
+    """Require an authenticated user from a verified Clerk or browser session.
+
+    Reuses ``get_current_user_from_request``. Rejects anonymous requests (401),
+    and strictly forbids internal, PAT, and auth-disabled identities (403)
+    from managing external connections or third-party credentials.
+    """
+    from app.gateway.auth_disabled import AUTH_SOURCE_CLERK, AUTH_SOURCE_SESSION
+
+    user = await get_current_user_from_request(request)
+    auth_source = getattr(getattr(request, "state", None), "auth_source", None)
+
+    if auth_source not in {AUTH_SOURCE_SESSION, AUTH_SOURCE_CLERK}:
+        raise HTTPException(
+            status_code=403,
+            detail="Managing third-party connections requires a verified Clerk or browser session.",
+        )
+    return user
+
+
+get_authenticated_user = get_verified_interactive_user

@@ -13,7 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from app.gateway.deps import get_authenticated_user
+from app.gateway.deps import get_verified_interactive_user
 from nkyel.mcp.composio.client import ComposioClient
 from nkyel.runtime.user_context import get_effective_user_id
 
@@ -47,7 +47,7 @@ class AuthorizeConnectionResponse(BaseModel):
 @router.get("", response_model=list[ConnectionResponse])
 async def list_user_connections(
     request: Request,
-    user: Any = Depends(get_authenticated_user),
+    user: Any = Depends(get_verified_interactive_user),
 ) -> list[ConnectionResponse]:
     """List external applications and connection statuses for the current user."""
     user_id = str(user.id) if user else get_effective_user_id()
@@ -77,7 +77,7 @@ async def list_user_connections(
 async def authorize_user_connection(
     req: AuthorizeConnectionRequest,
     request: Request,
-    user: Any = Depends(get_authenticated_user),
+    user: Any = Depends(get_verified_interactive_user),
 ) -> AuthorizeConnectionResponse:
     """Generate a secure Connect Link for user authorization."""
     user_id = str(user.id) if user else get_effective_user_id()
@@ -107,7 +107,7 @@ async def authorize_user_connection(
 async def disconnect_user_connection(
     toolkit: str,
     request: Request,
-    user: Any = Depends(get_authenticated_user),
+    user: Any = Depends(get_verified_interactive_user),
 ) -> dict[str, Any]:
     """Disconnect and revoke access to an external application."""
     user_id = str(user.id) if user else get_effective_user_id()
