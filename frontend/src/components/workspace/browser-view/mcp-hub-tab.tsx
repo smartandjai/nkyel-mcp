@@ -44,11 +44,11 @@ export interface GmailDraft {
 }
 
 export function McpHubTab({
-  _threadId,
-  _onNavigateToUrl,
+  threadId: _threadId,
+  onNavigateToUrl: _onNavigateToUrl,
 }: {
-  _threadId?: string;
-  _onNavigateToUrl?: (url: string) => void;
+  threadId?: string;
+  onNavigateToUrl?: (url: string) => void;
 }) {
   const [tools, setTools] = useState<Record<string, MCPToolItem>>({});
   const [totalCount, setTotalCount] = useState<number>(50);
