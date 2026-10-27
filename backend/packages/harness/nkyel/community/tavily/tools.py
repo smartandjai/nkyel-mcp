@@ -1,5 +1,7 @@
 import json
 import logging
+import os
+from urllib.parse import urlparse
 
 from langchain.tools import tool
 from tavily import AsyncTavilyClient
@@ -13,11 +15,22 @@ logger = logging.getLogger(__name__)
 _FORMAT_ERROR = "Tavily returned an unexpected response format"
 
 
-def _get_tavily_client(tool_name: str = "web_search") -> AsyncTavilyClient:
+def _get_tavily_api_key(tool_name: str = "web_search") -> str | None:
     config = get_app_config().get_tool_config(tool_name)
-    api_key = None
     if config is not None and "api_key" in config.model_extra:
-        api_key = config.model_extra.get("api_key")
+        configured = config.model_extra.get("api_key")
+        if configured:
+            return configured
+    keys_pool = os.environ.get("TAVILY_API_KEYS")
+    if keys_pool:
+        keys = [k.strip() for k in keys_pool.split(",") if k.strip()]
+        if keys:
+            return keys[0]
+    return os.environ.get("TAVILY_API_KEY")
+
+
+def _get_tavily_client(tool_name: str = "web_search") -> AsyncTavilyClient:
+    api_key = _get_tavily_api_key(tool_name)
     return AsyncTavilyClient(api_key=api_key)
 
 
@@ -53,7 +66,7 @@ async def web_search_tool(query: str, time_range: SearchTimeRange | None = None)
         time_range: Optional relative publication/update window. Use only when the request requires recent results.
     """
     config = get_app_config().get_tool_config("web_search")
-    max_results = 5
+    max_results = 6
     if config is not None and "max_results" in config.model_extra:
         max_results = config.model_extra.get("max_results")
 
@@ -69,21 +82,40 @@ async def web_search_tool(query: str, time_range: SearchTimeRange | None = None)
     client = _get_tavily_client()
     try:
         res = await client.search(query, **search_kwargs)
+    except Exception as exc:
+        logger.warning("Tavily search failed: %s, attempting DuckDuckGo fallback", exc)
+        try:
+            from nkyel.community.ddg_search.tools import web_search_tool as ddg_search_tool
+
+            return await ddg_search_tool(query)
+        except Exception:
+            return json.dumps({"error": f"Search failed: {exc}", "query": query}, ensure_ascii=False)
     finally:
         await client.close()
+
     results = _response_objects(res, "results")
     if results is None:
         return json.dumps({"error": _FORMAT_ERROR, "query": query}, ensure_ascii=False)
-    normalized_results = [
-        {
-            "title": result.get("title") or "",
-            "url": safe_public_result_url(result.get("url")),
-            "snippet": result.get("content") or "",
-        }
-        for result in results
-    ]
-    json_results = json.dumps(normalized_results, indent=2, ensure_ascii=False)
-    return json_results
+
+    normalized_results = []
+    seen_urls = set()
+    for result in results:
+        raw_url = result.get("url")
+        url = safe_public_result_url(raw_url)
+        if not url or url in seen_urls:
+            continue
+        seen_urls.add(url)
+        domain = urlparse(url).netloc
+        normalized_results.append(
+            {
+                "title": result.get("title") or domain,
+                "url": url,
+                "domain": domain,
+                "snippet": result.get("content") or "",
+            }
+        )
+
+    return json.dumps(normalized_results, indent=2, ensure_ascii=False)
 
 
 @tool("web_fetch", parse_docstring=True)
@@ -238,4 +270,3 @@ async def web_research_tool(query: str, topic: str = "general") -> str:
     except Exception as exc:
         logger.warning("Tavily Research failed: %s", exc)
         return json.dumps({"error": str(exc), "query": query})
-

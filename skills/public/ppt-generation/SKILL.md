@@ -1,6 +1,6 @@
 ---
 name: ppt-generation
-description: Generate professional PowerPoint presentations (PPTX). Supports two distinct modes: (1) True-Editable Native Presentation Mode with native text boxes, shapes, metric cards, and tables (via artifact-engineer); and (2) Visual-Art Slide Mode using generative slide imagery.
+description: "Generate professional PowerPoint presentations (PPTX). Supports two distinct modes: (1) True-Editable Native Presentation Mode with native text boxes, shapes, metric cards, and tables (via artifact-engineer); and (2) Visual-Art Slide Mode using generative slide imagery."
 ---
 
 # PPT Generation Skill

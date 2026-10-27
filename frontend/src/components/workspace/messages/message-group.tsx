@@ -38,6 +38,8 @@ import { useI18n } from "@/core/i18n/hooks";
 import { isErrorToolMessage } from "@/core/messages/tool-error";
 import { formatTokenCount } from "@/core/messages/usage";
 import type { TokenDebugStep } from "@/core/messages/usage-model";
+import { NkyelToolActivityCard } from "@/components/workspace/research/NkyelToolActivityCard";
+import { NkyelSourceCard, type NkyelSourceItem } from "@/components/workspace/research/NkyelSourceCard";
 import {
   extractContentFromMessage,
   extractReasoningContentFromMessage,
@@ -717,8 +719,18 @@ function getToolCallKind(name: string) {
   if (name.startsWith("browser_")) return "browser";
   switch (name) {
     case "web_search":
-    case "image_search":
+    case "tavily_search":
+    case "web_crawl":
+    case "tavily_crawl":
+    case "web_map":
+    case "tavily_map":
+    case "web_research":
+    case "tavily_research":
+      return "web_search";
     case "web_fetch":
+    case "tavily_extract":
+      return "web_fetch";
+    case "image_search":
     case "ls":
     case "read_file":
     case "write_file":
@@ -875,51 +887,58 @@ function ToolCall({
       </ChainOfThoughtStep>
     );
   } else if (kind === "web_search") {
-    let label: React.ReactNode = t.toolCalls.searchForRelatedInfo;
-    if (typeof args.query === "string") {
-      label = t.toolCalls.searchOnWebFor(args.query);
-    }
-    const results = Array.isArray(result)
-      ? result
-      : typeof result === "object" && result !== null
-        ? result.results
+    const rawData =
+      typeof result === "string"
+        ? (() => {
+            try {
+              return JSON.parse(result);
+            } catch {
+              return undefined;
+            }
+          })()
+        : result;
+
+    const results = Array.isArray(rawData)
+      ? rawData
+      : typeof rawData === "object" && rawData !== null
+        ? (rawData as Record<string, unknown>).results
         : undefined;
-    const sources = Array.isArray(results)
-      ? results.filter(
-          (item: unknown): item is { title: string; url: string } =>
-            typeof item === "object" &&
-            item !== null &&
-            "title" in item &&
-            typeof item.title === "string" &&
-            "url" in item &&
-            typeof item.url === "string",
-        )
+
+    const sources: NkyelSourceItem[] = Array.isArray(results)
+      ? results
+          .filter(
+            (item: unknown): item is { title?: string; url: string; domain?: string; snippet?: string; content?: string } =>
+              typeof item === "object" &&
+              item !== null &&
+              "url" in item &&
+              typeof (item as { url: unknown }).url === "string",
+          )
+          .map((item) => ({
+            title: item.title || item.domain || item.url,
+            url: item.url,
+            domain: item.domain,
+            snippet: item.snippet || item.content,
+          }))
       : [];
+
+    const activityStatus = failed ? "error" : isLoading && isLast ? "running" : "completed";
+
     return (
-      <ChainOfThoughtStep
-        key={id}
-        label={resolveLabel(label)}
-        icon={SearchIcon}
-      >
+      <div key={id} className="space-y-2.5 my-2 w-full max-w-full">
+        <NkyelToolActivityCard
+          toolName={name}
+          args={args}
+          result={result}
+          status={activityStatus}
+        />
         {sources.length > 0 && (
-          <ChainOfThoughtSearchResults>
-            {/* Tool args and results are model- or provider-controlled, so
-                every tool link passes the same scheme allowlist as markdown
-                links and degrades to the same UnsafeLink marker. */}
-            {sources.map((item) => (
-              <ChainOfThoughtSearchResult key={item.url}>
-                {isSafeHref(item.url) ? (
-                  <a href={item.url} target="_blank" rel="noopener noreferrer">
-                    {item.title}
-                  </a>
-                ) : (
-                  <UnsafeLink href={item.url}>{item.title}</UnsafeLink>
-                )}
-              </ChainOfThoughtSearchResult>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2">
+            {sources.map((s, idx) => (
+              <NkyelSourceCard key={s.url || idx} source={s} index={idx} />
             ))}
-          </ChainOfThoughtSearchResults>
+          </div>
         )}
-      </ChainOfThoughtStep>
+      </div>
     );
   } else if (kind === "image_search") {
     let label: React.ReactNode = t.toolCalls.searchForRelatedImages;
@@ -984,38 +1003,16 @@ function ToolCall({
       </ChainOfThoughtStep>
     );
   } else if (kind === "web_fetch") {
-    // Models occasionally emit non-string args mid-stream; an object here
-    // would reach the JSX below and throw.
-    const url = typeof args.url === "string" ? args.url : undefined;
-    let title = url;
-    if (typeof result === "string") {
-      const potentialTitle = extractTitleFromMarkdown(result);
-      if (potentialTitle && potentialTitle.toLowerCase() !== "untitled") {
-        title = potentialTitle;
-      }
-    }
+    const activityStatus = failed ? "error" : isLoading && isLast ? "running" : "completed";
     return (
-      <ChainOfThoughtStep
-        key={id}
-        label={resolveLabel(t.toolCalls.viewWebPage)}
-        icon={GlobeIcon}
-      >
-        <ChainOfThoughtSearchResult>
-          {url &&
-            (isSafeHref(url) ? (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cursor-pointer"
-              >
-                {title}
-              </a>
-            ) : (
-              <UnsafeLink href={url}>{title}</UnsafeLink>
-            ))}
-        </ChainOfThoughtSearchResult>
-      </ChainOfThoughtStep>
+      <div key={id} className="space-y-2 my-2 w-full max-w-full">
+        <NkyelToolActivityCard
+          toolName={name}
+          args={args}
+          result={result}
+          status={activityStatus}
+        />
+      </div>
     );
   } else if (kind === "ls") {
     let description: string | undefined = (args as { description: string })

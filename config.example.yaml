@@ -987,17 +987,12 @@ tools:
   #   max_results: 5                  # Capped at 20 by the Brave Search API
   #   # api_key: $BRAVE_SEARCH_API_KEY  # Optional if the env var is set
 
-  # Web search tool (requires Tavily API key)
-  # - name: web_search
-  #   group: web
-  #   use: nkyel.community.tavily.tools:web_search_tool
-  #   max_results: 5
-  #   # Optional search-source filters; omit or use [] for no restriction of that kind.
-  #   # include_domains:
-  #   #   - docs.python.org
-  #   #   - developer.mozilla.org
-  #   # exclude_domains: []
-  #   # api_key: $TAVILY_API_KEY  # Set if needed
+  # Web search tool (primary engine: official Tavily API)
+  - name: web_search
+    group: web
+    use: nkyel.community.tavily.tools:web_search_tool
+    max_results: 6
+    api_key: $TAVILY_API_KEY
 
   # Web search tool (uses InfoQuest, requires InfoQuest API key)
   # - name: web_search
