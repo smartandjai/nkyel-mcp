@@ -48,7 +48,9 @@ def run_test():
     print("STEP 3: Recherche d'informations fraîches via Tavily MCP...")
     import httpx
     tavily_auth = os.getenv("TAVILY_MCP_AUTH")
-    headers = {"Authorization": tavily_auth, "Content-Type": "application/json"}
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    if tavily_auth:
+        headers["Authorization"] = tavily_auth
     call_payload = {
         "jsonrpc": "2.0",
         "id": 10,

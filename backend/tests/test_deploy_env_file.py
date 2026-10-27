@@ -9,15 +9,15 @@ import subprocess
 
 import pytest
 try:
-    import test_deploy_dotenv_secrets as deploy_secret_tests
-    from test_deploy_dotenv_secrets import BASH, _run_deploy_build, _worktree
-    from test_deploy_home_writability import _run_deploy
-    from test_deploy_home_writability import deploy_fixture as deploy_fixture
+    from tests import test_deploy_dotenv_secrets as deploy_secret_tests
+    from tests.test_deploy_dotenv_secrets import BASH, _run_deploy_build, _worktree
+    from tests.test_deploy_home_writability import _run_deploy
+    from tests.test_deploy_home_writability import deploy_fixture as deploy_fixture
 except ImportError:
-    from tests import test_deploy_dotenv_secrets as deploy_secret_tests  # type: ignore[no-redef]
-    from tests.test_deploy_dotenv_secrets import BASH, _run_deploy_build, _worktree  # type: ignore[no-redef]
-    from tests.test_deploy_home_writability import _run_deploy  # type: ignore[no-redef]
-    from tests.test_deploy_home_writability import deploy_fixture as deploy_fixture  # type: ignore[no-redef]
+    import test_deploy_dotenv_secrets as deploy_secret_tests  # type: ignore[no-redef]
+    from test_deploy_dotenv_secrets import BASH, _run_deploy_build, _worktree  # type: ignore[no-redef]
+    from test_deploy_home_writability import _run_deploy  # type: ignore[no-redef]
+    from test_deploy_home_writability import deploy_fixture as deploy_fixture  # type: ignore[no-redef]
 
 pytestmark = pytest.mark.skipif(BASH is None, reason="repo shell-script tests need Git Bash on Windows")
 
