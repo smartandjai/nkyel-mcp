@@ -1,4 +1,4 @@
-# 🦌 Ñkyel — Sovereign SuperAgent Platform
+# Ñkyel — Sovereign SuperAgent Platform
 
 <div align="center">
 
