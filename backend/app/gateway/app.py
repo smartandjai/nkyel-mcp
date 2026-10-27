@@ -59,6 +59,7 @@ from app.gateway.routers import (
     threads,
     trash,
     uploads,
+    user_connections,
     user_preferences,
     nkyel_api,
 )
@@ -1348,6 +1349,8 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
 
     # First-party integrations API is mounted at /api/integrations
     app.include_router(integrations.router)
+    # User-consented app connections (Composio) mounted at /api/connections
+    app.include_router(user_connections.router)
 
     # Read-only RAGFlow catalog for chat knowledge-scope selection.
     app.include_router(knowledge.router)

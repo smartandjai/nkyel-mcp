@@ -44,6 +44,7 @@ from nkyel.persistence.thread_meta.model import ThreadMetaRow
 from nkyel.persistence.thread_reads.model import ThreadReadMarkerRow, ThreadReadVersionRow
 from nkyel.persistence.user.im_notifications import ImNotificationPreferenceRow
 from nkyel.persistence.user.model import UserPreferenceRow, UserRow
+from nkyel.persistence.user_mcp_connections.model import UserMcpConnectionRow
 from nkyel.persistence.webhook_delivery.model import WebhookDeliveryRow
 
 __all__ = [
@@ -84,5 +85,6 @@ __all__ = [
     "UserPreferenceRow",
     "ImNotificationPreferenceRow",
     "UserRow",
+    "UserMcpConnectionRow",
     "WebhookDeliveryRow",
 ]

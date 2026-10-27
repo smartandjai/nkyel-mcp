@@ -336,14 +336,28 @@ def get_available_tools(
     except Exception as e:
         logger.warning(f"Failed to load autonomous computer tools: {e}")
 
-    logger.info(f"Total tools loaded: {len(loaded_tools)}, built-in tools: {len(builtin_tools)}, MCP tools: {len(mcp_tools)}, ACP tools: {len(acp_tools)}, Computer tools: {len(computer_tools)}")
+    composio_tools: list[BaseTool] = []
+    try:
+        from nkyel.mcp.composio.tools import COMPOSIO_MANAGEMENT_TOOLS, get_composio_session_mcp_tools
+        from nkyel.runtime.user_context import resolve_runtime_user_id
+
+        composio_tools.extend(COMPOSIO_MANAGEMENT_TOOLS)
+        current_uid = resolve_runtime_user_id(None)
+        if current_uid and current_uid != "default":
+            session_tools = get_composio_session_mcp_tools(current_uid)
+            composio_tools.extend(session_tools)
+        logger.info(f"Loaded {len(composio_tools)} Composio user-consent tools")
+    except Exception as e:
+        logger.warning(f"Failed to load Composio user tools: {e}")
+
+    logger.info(f"Total tools loaded: {len(loaded_tools)}, built-in tools: {len(builtin_tools)}, MCP tools: {len(mcp_tools)}, ACP tools: {len(acp_tools)}, Computer tools: {len(computer_tools)}, Composio tools: {len(composio_tools)}")
 
     # Deduplicate by tool name — config-loaded tools take priority, followed by
-    # built-ins, MCP tools, ACP tools, and computer tools.
+    # built-ins, MCP tools, ACP tools, computer tools, and Composio tools.
     from nkyel.extensions import get_agent_build_extensions
     from nkyel.extensions.plugin_tools import build_plugin_tools
 
-    ordinary_tools = loaded_tools + builtin_tools + mcp_tools + acp_tools + computer_tools
+    ordinary_tools = loaded_tools + builtin_tools + mcp_tools + acp_tools + computer_tools + composio_tools
     # Keep plugin-vs-plugin validation strict. Host/plugin collisions use the
     # ordinary-first deduplication below, without dropping unrelated tools.
     plugin_tools = build_plugin_tools(extensions if extensions is not None else get_agent_build_extensions(), groups=groups)
