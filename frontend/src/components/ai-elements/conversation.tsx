@@ -72,6 +72,7 @@ export type ConversationScrollButtonProps = ComponentProps<typeof Button>;
 
 export const ConversationScrollButton = ({
   className,
+  children,
   ...props
 }: ConversationScrollButtonProps) => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
@@ -80,21 +81,23 @@ export const ConversationScrollButton = ({
     scrollToBottom();
   }, [scrollToBottom]);
 
+  if (isAtBottom) return null;
+
   return (
-    !isAtBottom && (
-      <Button
-        className={cn(
-          "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full",
-          className,
-        )}
-        onClick={handleScrollToBottom}
-        size="icon"
-        type="button"
-        variant="outline"
-        {...props}
-      >
-        <ArrowDownIcon className="size-4" />
-      </Button>
-    )
+    <Button
+      className={cn(
+        "absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 rounded-full border border-border/80 bg-background/90 px-3.5 py-1.5 text-xs font-medium text-foreground shadow-md backdrop-blur-md transition-all hover:bg-muted hover:scale-105 active:scale-95",
+        className,
+      )}
+      onClick={handleScrollToBottom}
+      size="sm"
+      type="button"
+      variant="outline"
+      title="Défiler vers le dernier message"
+      {...props}
+    >
+      <ArrowDownIcon className="size-3.5 text-primary" />
+      <span className="hidden sm:inline">Derniers messages</span>
+    </Button>
   );
 };

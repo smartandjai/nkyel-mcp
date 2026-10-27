@@ -29,6 +29,7 @@ import {
   ChainOfThoughtStep,
 } from "@/components/ai-elements/chain-of-thought";
 import { CodeBlock } from "@/components/ai-elements/code-block";
+import { Sources, SourcesTrigger, SourcesContent, SourceItem } from "@/components/ai-elements/sources";
 import { Button } from "@/components/ui/button";
 import {
   buildWriteFileArtifactURL,
@@ -1026,11 +1027,21 @@ function ToolCall({
           status={activityStatus}
         />
         {sources.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2">
-            {sources.map((s, idx) => (
-              <NkyelSourceCard key={s.url || idx} source={s} index={idx} />
-            ))}
-          </div>
+          <Sources count={sources.length} defaultOpen={true}>
+            <SourcesTrigger count={sources.length} />
+            <SourcesContent>
+              {sources.map((s, idx) => (
+                <SourceItem
+                  key={s.url || idx}
+                  title={s.title}
+                  url={s.url}
+                  domain={s.domain}
+                  snippet={s.snippet}
+                  index={idx}
+                />
+              ))}
+            </SourcesContent>
+          </Sources>
         )}
       </div>
     );
