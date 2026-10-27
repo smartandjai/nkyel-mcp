@@ -28,6 +28,7 @@ import {
   SidecarProvider,
   SidecarTrigger,
 } from "@/components/workspace/sidecar";
+import { E2BVisualPanel, E2BModeToggle } from "@/components/workspace/e2b";
 import { ThreadArchiveStatus } from "@/components/workspace/thread-archive-status";
 import { ThreadBackgroundTasks } from "@/components/workspace/thread-background-tasks";
 import { ThreadExtensionActions } from "@/components/workspace/thread-extension-actions";
@@ -114,6 +115,7 @@ export default function ChatPage() {
   // the moment the user submits so the UI animates immediately, even though
   // `isNewThread` stays true until the backend actually creates the thread.
   const [isWelcomeMode, setIsWelcomeMode] = useState(isNewThread);
+  const [isE2BVisualOpen, setIsE2BVisualOpen] = useState(false);
   const queryClient = useQueryClient();
   const [settings, setSettings] = useThreadSettings(threadId);
   const modelControl = useModelControl(
@@ -585,8 +587,13 @@ export default function ChatPage() {
         isMock={isMock}
       >
         <ChatBox threadId={threadId} browserEnabled={browserEnabled}>
-          <div className="relative flex size-full min-h-0 justify-between">
-            <header
+          <div className="relative flex size-full min-h-0 overflow-hidden">
+            <E2BVisualPanel
+              isOpen={isE2BVisualOpen}
+              onToggle={() => setIsE2BVisualOpen(!isE2BVisualOpen)}
+            />
+            <div className="relative flex flex-1 min-w-0 size-full min-h-0 flex-col justify-between overflow-hidden">
+              <header
               className={cn(
                 "absolute top-0 right-0 left-0 flex h-12 shrink-0 items-center gap-2 px-2 sm:px-4",
                 isWelcomeMode
@@ -643,6 +650,10 @@ export default function ChatPage() {
                 ) : (
                   <ContextUsageBadge contextUsage={contextUsage} />
                 )}
+                <E2BModeToggle
+                  isOpen={isE2BVisualOpen}
+                  onToggle={() => setIsE2BVisualOpen(!isE2BVisualOpen)}
+                />
                 <SidecarTrigger />
                 {browserEnabled && <BrowserTrigger />}
                 <ExportTrigger threadId={threadId} />
@@ -835,6 +846,7 @@ export default function ChatPage() {
                 </div>
               </div>
             </main>
+            </div>
           </div>
         </ChatBox>
       </SidecarProvider>

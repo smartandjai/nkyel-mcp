@@ -44,6 +44,16 @@ class E2BActionRequest(BaseModel):
     press_enter: bool = False
 
 
+class E2BCodeRunRequest(BaseModel):
+    code: str
+    sandbox_id: str | None = None
+
+
+class E2BTerminalRunRequest(BaseModel):
+    command: str
+    sandbox_id: str | None = None
+
+
 class GmailDraftRequest(BaseModel):
     to: str
     subject: str
@@ -56,7 +66,51 @@ class GmailApprovalRequest(BaseModel):
     approved: bool
 
 
-# ─── Endpoints ────────────────────────────────────────────────────────────────
+# ─── Live State & Event Buffer ────────────────────────────────────────────────
+import time
+from datetime import datetime, timezone
+
+ACTIVE_CODE_SESSIONS: dict[str, Any] = {}
+E2B_EVENT_LOG: list[dict[str, Any]] = [
+    {
+        "id": "init-1",
+        "type": "system",
+        "title": "E2B Cloud MicroVM Engine Initialized",
+        "details": "Prêt pour l'exécution de code Python, terminal bash et inspection Chrome",
+        "status": "success",
+        "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
+    }
+]
+
+def record_e2b_event(event_type: str, title: str, details: str, status: str = "success") -> None:
+    E2B_EVENT_LOG.append({
+        "id": f"evt-{int(time.time() * 1000)}",
+        "type": event_type,
+        "title": title,
+        "details": details,
+        "status": status,
+        "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
+    })
+    if len(E2B_EVENT_LOG) > 60:
+        del E2B_EVENT_LOG[:-50]
+
+
+def _get_or_create_code_sandbox(sandbox_id: str | None = None):
+    from e2b_code_interpreter import Sandbox
+    api_key = os.getenv("E2B_API_KEY")
+    if sandbox_id and sandbox_id in ACTIVE_CODE_SESSIONS:
+        return ACTIVE_CODE_SESSIONS[sandbox_id]
+    
+    # Check if any session is active
+    if not sandbox_id and ACTIVE_CODE_SESSIONS:
+        first_id = next(iter(ACTIVE_CODE_SESSIONS))
+        return ACTIVE_CODE_SESSIONS[first_id]
+
+    sbx = Sandbox.create(api_key=api_key)
+    ACTIVE_CODE_SESSIONS[sbx.sandbox_id] = sbx
+    record_e2b_event("microvm", "Nouvelle MicroVM E2B créée", f"ID: {sbx.sandbox_id}")
+    return sbx
+
 
 @router.get("/mcp/registry")
 async def get_registry():
@@ -138,24 +192,157 @@ async def call_tool(req: ToolCallRequest):
     raise HTTPException(status_code=404, detail=f"Tool '{name}' execution handler not implemented.")
 
 
+@router.get("/e2b/status")
+async def get_e2b_status():
+    """Return live E2B cloud status, capabilities, and active sessions."""
+    api_key = os.getenv("E2B_API_KEY")
+    return {
+        "connected": bool(api_key),
+        "api_key_configured": bool(api_key),
+        "engine": "E2B Cloud Sandboxes (Debian 13 MicroVM)",
+        "capabilities": ["desktop_chrome", "code_interpreter", "bash_terminal", "live_stream", "filesystem"],
+        "active_desktop_sessions": list(ACTIVE_SESSIONS.keys()),
+        "active_code_sessions": list(ACTIVE_CODE_SESSIONS.keys()),
+        "total_active": len(ACTIVE_SESSIONS) + len(ACTIVE_CODE_SESSIONS),
+    }
+
+
+@router.get("/e2b/events")
+async def get_e2b_events():
+    """Return rolling live execution events for the frontend visual panel."""
+    return {"events": list(reversed(E2B_EVENT_LOG))}
+
+
+@router.post("/e2b/run_code")
+async def run_e2b_code(req: E2BCodeRunRequest):
+    """Execute Python code in isolated E2B Cloud MicroVM."""
+    t0 = time.time()
+    try:
+        sbx = _get_or_create_code_sandbox(req.sandbox_id)
+        execution = sbx.run_code(req.code)
+        duration_ms = int((time.time() - t0) * 1000)
+
+        stdout = execution.logs.stdout
+        stderr = execution.logs.stderr
+
+        results_data = []
+        for r in (execution.results or []):
+            if hasattr(r, "png") and r.png:
+                results_data.append({"type": "image/png", "data": r.png})
+            elif hasattr(r, "text") and r.text:
+                results_data.append({"type": "text/plain", "data": r.text})
+            else:
+                results_data.append({"type": "raw", "data": str(r)})
+
+        error_msg = None
+        if execution.error:
+            error_msg = f"{execution.error.name}: {execution.error.value}\n{execution.error.traceback}"
+            record_e2b_event("code", "Erreur d'exécution Python", error_msg[:120], "error")
+        else:
+            record_e2b_event("code", "Exécution Python réussie", f"{len(stdout)} ligne(s) · {duration_ms}ms", "success")
+
+        return {
+            "sandbox_id": sbx.sandbox_id,
+            "stdout": stdout,
+            "stderr": stderr,
+            "results": results_data,
+            "error": error_msg,
+            "execution_time_ms": duration_ms,
+            "status": "COMPLETED" if not error_msg else "ERROR"
+        }
+    except Exception as e:
+        record_e2b_event("code", "Exception MicroVM E2B", str(e), "error")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/e2b/terminal")
+async def run_e2b_terminal(req: E2BTerminalRunRequest):
+    """Execute bash command inside E2B Cloud microVM."""
+    t0 = time.time()
+    try:
+        sbx = _get_or_create_code_sandbox(req.sandbox_id)
+        cmd_proc = sbx.commands.run(req.command)
+        duration_ms = int((time.time() - t0) * 1000)
+
+        stdout = getattr(cmd_proc, "stdout", "")
+        stderr = getattr(cmd_proc, "stderr", "")
+        exit_code = getattr(cmd_proc, "exit_code", 0)
+
+        record_e2b_event("terminal", f"$ {req.command[:40]}", f"Code {exit_code} · {duration_ms}ms", "success" if exit_code == 0 else "error")
+
+        return {
+            "sandbox_id": sbx.sandbox_id,
+            "command": req.command,
+            "stdout": stdout,
+            "stderr": stderr,
+            "exit_code": exit_code,
+            "execution_time_ms": duration_ms
+        }
+    except Exception as e:
+        stdout = getattr(e, "stdout", "")
+        stderr = getattr(e, "stderr", str(e))
+        code = getattr(e, "exit_code", 1)
+        record_e2b_event("terminal", f"$ {req.command[:40]}", f"Exit {code}", "error")
+        return {
+            "sandbox_id": req.sandbox_id or "error",
+            "command": req.command,
+            "stdout": stdout,
+            "stderr": stderr,
+            "exit_code": code,
+            "execution_time_ms": int((time.time() - t0) * 1000)
+        }
+
+
+@router.get("/e2b/files")
+async def list_e2b_files(path: str = "/home/user", sandbox_id: str | None = None):
+    """List files in the E2B Cloud sandbox workspace."""
+    try:
+        sbx = _get_or_create_code_sandbox(sandbox_id)
+        file_entries = sbx.files.list(path)
+        items = []
+        for f in file_entries:
+            items.append({
+                "name": f.name,
+                "type": getattr(f, "type", "file"),
+                "path": f"{path.rstrip('/')}/{f.name}"
+            })
+        return {"path": path, "items": items, "sandbox_id": sbx.sandbox_id}
+    except Exception as e:
+        return {"path": path, "items": [], "error": str(e)}
+
+
 @router.post("/e2b/action")
 async def execute_e2b_action(req: E2BActionRequest):
     """Control the real E2B live visual computer."""
     act = req.action
     if act == "launch":
-        return computer_launch_session(req.url or "https://aninf.ga")
+        res = computer_launch_session(req.url or "https://aninf.ga")
+        record_e2b_event("desktop", "Lancement session Chrome E2B", req.url or "https://aninf.ga")
+        return res
     elif act == "navigate":
-        return computer_navigate(req.sandbox_id, req.url or "https://google.com")
+        res = computer_navigate(req.sandbox_id, req.url or "https://google.com")
+        record_e2b_event("desktop", "Navigation Chrome", req.url or "https://google.com")
+        return res
     elif act == "click":
-        return computer_click(req.sandbox_id, req.x or 500, req.y or 300, req.button)
+        res = computer_click(req.sandbox_id, req.x or 500, req.y or 300, req.button)
+        record_e2b_event("desktop", f"Clic ({req.x}, {req.y})", f"Bouton {req.button}")
+        return res
     elif act == "scroll":
-        return computer_scroll(req.sandbox_id, req.direction, req.amount)
+        res = computer_scroll(req.sandbox_id, req.direction, req.amount)
+        record_e2b_event("desktop", f"Défilement {req.direction}", f"Facteur {req.amount}")
+        return res
     elif act == "type":
-        return computer_type_text(req.sandbox_id, req.text or "", req.press_enter)
+        res = computer_type_text(req.sandbox_id, req.text or "", req.press_enter)
+        record_e2b_event("desktop", "Saisie clavier", f"« {req.text} »")
+        return res
     elif act == "screenshot":
-        return computer_take_screenshot(req.sandbox_id)
+        res = computer_take_screenshot(req.sandbox_id)
+        record_e2b_event("desktop", "Capture d'écran", "Flux visuel actualisé")
+        return res
     elif act == "close":
-        return computer_close_session(req.sandbox_id)
+        res = computer_close_session(req.sandbox_id)
+        record_e2b_event("desktop", "Fermeture session", req.sandbox_id)
+        return res
     raise HTTPException(status_code=400, detail=f"Unknown E2B action: {act}")
 
 
