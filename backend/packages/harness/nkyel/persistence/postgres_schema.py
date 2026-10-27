@@ -162,9 +162,15 @@ def normalize_libpq_dsn(dsn: str) -> str:
     scheme_base = parts.scheme.split("+", 1)[0]
     if scheme_base not in {"postgres", "postgresql"}:
         raise ValueError(f"Unsupported PostgreSQL DSN scheme for schema injection: {parts.scheme!r}")
-    if scheme_base == parts.scheme:
-        return dsn
-    return urlunsplit((scheme_base, parts.netloc, parts.path, parts.query, parts.fragment))
+    query = parts.query
+    if query:
+        from urllib.parse import parse_qsl, urlencode
+
+        q_pairs = parse_qsl(query, keep_blank_values=True)
+        new_pairs = [("sslmode", v) if k == "ssl" else (k, v) for k, v in q_pairs]
+        query = urlencode(new_pairs)
+
+    return urlunsplit((scheme_base, parts.netloc, parts.path, query, parts.fragment))
 
 
 def dsn_with_search_path(dsn: str, schema: str) -> str:

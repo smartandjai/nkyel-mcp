@@ -17,7 +17,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useThread } from "@/core/threads/hooks";
+import { useThreadHistory } from "@/core/threads/hooks";
 
 export type SourceInspectionState =
   | "found" // Trouvée par Tavily
@@ -47,15 +47,15 @@ export function TavilyTab({
   threadId: string;
   onNavigateToUrl?: (url: string) => void;
 }) {
-  const { thread } = useThread();
+  const { messages } = useThreadHistory(threadId);
   const [activeEngine, setActiveEngine] = useState<string>("all");
 
   // Extract Tavily search & fetch results from thread messages
   const sources: TavilySourceItem[] = useMemo(() => {
     const list: TavilySourceItem[] = [];
-    if (!thread?.messages) return list;
+    if (!messages) return list;
 
-    for (const msg of thread.messages) {
+    for (const msg of messages) {
       if (msg.type === "tool") {
         const toolMsg = msg as any;
         const toolName = toolMsg.name || "";
@@ -152,7 +152,7 @@ export function TavilyTab({
     }
 
     return list;
-  }, [thread?.messages]);
+  }, [messages]);
 
   const filteredSources = useMemo(() => {
     if (activeEngine === "all") return sources;

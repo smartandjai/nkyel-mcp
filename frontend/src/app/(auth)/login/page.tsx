@@ -9,6 +9,7 @@ import { RememberSessionOption } from "@/components/auth/remember-session-option
 import { Button } from "@/components/ui/button";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { Input } from "@/components/ui/input";
+import { NkyelEmblem } from "@/components/ui/nkyel-logo";
 import { AuthDisabledContext, useAuth } from "@/core/auth/AuthProvider";
 import { isValidEmail } from "@/core/auth/email";
 import { resolveAuthNextPath } from "@/core/auth/next-path";
@@ -231,10 +232,32 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleSignIn = () => {
+    const googleProvider = ssoProviders.find(
+      (p) =>
+        p.id.toLowerCase().includes("google") ||
+        p.display_name.toLowerCase().includes("google"),
+    );
+    if (googleProvider) {
+      window.location.href = `/api/v1/auth/oauth/${googleProvider.id}?next=${encodeURIComponent(redirectPath)}&remember_me=${String(rememberMe)}`;
+    } else if (
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_CLERK_FRONTEND_API_URL
+    ) {
+      window.location.href = `https://clerk.smartandjai.com/oauth/google?redirect_url=${encodeURIComponent(
+        typeof window !== "undefined"
+          ? window.location.origin + redirectPath
+          : redirectPath,
+      )}`;
+    } else {
+      window.location.href = `/api/v1/auth/oauth/google?next=${encodeURIComponent(redirectPath)}&remember_me=${String(rememberMe)}`;
+    }
+  };
+
   const actualTheme = theme === "system" ? resolvedTheme : theme;
 
   return (
-    <div className="bg-background relative flex min-h-screen items-center justify-center overflow-x-hidden overflow-y-auto">
+    <div className="bg-background relative flex min-h-screen items-center justify-center overflow-x-hidden overflow-y-auto px-4 py-8">
       <FlickeringGrid
         className="absolute inset-0 z-0 mask-[url(/images/nkyel.svg)] mask-size-[100vw] mask-center mask-no-repeat md:mask-size-[72vh]"
         squareSize={4}
@@ -243,11 +266,18 @@ export default function LoginPage() {
         maxOpacity={0.3}
         flickerChance={0.25}
       />
-      <div className="border-border/20 bg-background/5 w-full max-w-md space-y-6 rounded-3xl border p-8 backdrop-blur-sm">
-        <div className="text-center">
-          <h1 className="text-foreground font-serif text-3xl">nkyel</h1>
-          <p className="text-muted-foreground mt-2">
-            {isLogin ? t.login.signInTitle : t.login.createAccountTitle}
+      <div className="border-border/40 bg-card/60 w-full max-w-md space-y-6 rounded-3xl border p-8 shadow-2xl backdrop-blur-xl ring-1 ring-white/5 relative z-10">
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-b from-primary/15 via-primary/5 to-transparent p-3 ring-1 ring-border/50 shadow-inner">
+            <NkyelEmblem size={44} className="text-foreground" />
+          </div>
+          <h1 className="text-foreground text-2xl font-bold tracking-tight">
+            nkyel
+          </h1>
+          <p className="text-muted-foreground mt-1 text-xs sm:text-sm">
+            {isLogin
+              ? (t.login.signInTitle ?? "Connexion à votre espace souverain")
+              : (t.login.createAccountTitle ?? "Créer votre compte")}
           </p>
         </div>
 
@@ -294,9 +324,52 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-2">
-          <div className="flex flex-col space-y-1">
-            <label htmlFor="email" className="text-sm font-medium">
+        {/* Google SSO Prominent Button */}
+        <div className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full flex items-center justify-center gap-3 py-5 font-medium border-border/70 hover:bg-muted/60 transition-all rounded-xl shadow-xs"
+            disabled={loading}
+            onClick={handleGoogleSignIn}
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              />
+            </svg>
+            <span>{isLogin ? "Continuer avec Google" : "S'inscrire avec Google"}</span>
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border/50" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground text-[11px] tracking-wider">
+                {t.login.orContinueWith ?? "ou continuer avec email"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Email & Password Form */}
+        <form onSubmit={handleSubmit} noValidate className="space-y-3">
+          <div className="flex flex-col space-y-1.5">
+            <label htmlFor="email" className="text-xs font-medium text-foreground/80">
               {t.login.email}
             </label>
             <Input
@@ -306,10 +379,11 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t.login.emailPlaceholder}
               required
+              className="rounded-xl h-10 border-border/60"
             />
           </div>
-          <div className="flex flex-col space-y-1">
-            <label htmlFor="password" className="text-sm font-medium">
+          <div className="flex flex-col space-y-1.5">
+            <label htmlFor="password" className="text-xs font-medium text-foreground/80">
               {t.login.password}
             </label>
             <Input
@@ -320,6 +394,7 @@ export default function LoginPage() {
               placeholder={t.login.passwordPlaceholder}
               required
               minLength={isLogin ? 6 : 8}
+              className="rounded-xl h-10 border-border/60"
             />
           </div>
 
@@ -328,9 +403,14 @@ export default function LoginPage() {
             onCheckedChange={setRememberMe}
           />
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+          {showSsoHint && (
+            <p className="text-xs text-amber-500 text-center">
+              {t.login.ssoHint ?? "Veuillez vous connecter avec Google."}
+            </p>
+          )}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full rounded-xl h-10 font-medium" disabled={loading}>
             {loading
               ? t.login.pleaseWait
               : isLogin
@@ -339,44 +419,8 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {ssoProviders.length > 0 && (
-          <div className="space-y-2">
-            {isLogin && (
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background text-muted-foreground px-2">
-                    {t.login.orContinueWith}
-                  </span>
-                </div>
-              </div>
-            )}
-            {showSsoHint && (
-              <p className="text-muted-foreground text-center text-sm">
-                {t.login.ssoHint}
-              </p>
-            )}
-            {ssoProviders.map((provider) => (
-              <Button
-                key={provider.id}
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled={loading}
-                onClick={() => {
-                  window.location.href = `/api/v1/auth/oauth/${provider.id}?next=${encodeURIComponent(redirectPath)}&remember_me=${String(rememberMe)}`;
-                }}
-              >
-                {t.login.continueWith(provider.display_name)}
-              </Button>
-            ))}
-          </div>
-        )}
-
         {regularSignupAllowed && (
-          <div className="text-center text-sm">
+          <div className="text-center text-xs">
             <button
               type="button"
               onClick={() => {
@@ -384,18 +428,13 @@ export default function LoginPage() {
                 setError("");
                 setShowSsoHint(false);
               }}
-              className="text-blue-500 hover:underline"
+              className="text-primary hover:underline font-medium"
             >
               {isLogin ? t.login.noAccountSignUp : t.login.haveAccountSignIn}
             </button>
           </div>
         )}
 
-        <div className="text-muted-foreground text-center text-xs">
-          <Link href="/" className="hover:underline">
-            {t.login.backToHome}
-          </Link>
-        </div>
       </div>
     </div>
   );

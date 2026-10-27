@@ -37,12 +37,12 @@ export async function Header({
     >
       <div className="flex min-w-0 items-center gap-6">
         <a
-          href={homeURL ?? "https://github.com/bytedance/deer-flow"}
+          href={homeURL ?? "https://nkyel.smartandjai.com"}
           target={isExternalHome ? "_blank" : "_self"}
           rel={isExternalHome ? "noopener noreferrer" : undefined}
-          className="font-serif text-xl whitespace-nowrap"
+          className="font-serif text-xl font-bold tracking-tight whitespace-nowrap"
         >
-          nkyel
+          Ñkyel AI
         </a>
       </div>
       <nav className="ml-auto hidden items-center gap-5 text-sm font-medium sm:flex md:mr-8 md:gap-8">
@@ -75,13 +75,11 @@ export async function Header({
           className="group relative z-10"
         >
           <a
-            href="https://github.com/bytedance/deer-flow"
+            href="https://nkyel.smartandjai.com"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <GitHubLogoIcon className="size-4" />
-            <span className="hidden sm:inline">Star on GitHub</span>
-            {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" && <StarCounter />}
+            <span className="inline">Ñkyel Sovereign</span>
           </a>
         </Button>
       </div>

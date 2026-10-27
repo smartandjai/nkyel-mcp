@@ -60,6 +60,7 @@ from app.gateway.routers import (
     trash,
     uploads,
     user_preferences,
+    nkyel_api,
 )
 from app.gateway.trace_middleware import TraceMiddleware
 from nkyel.config import app_config as nkyel_app_config
@@ -1413,6 +1414,9 @@ This gateway provides runtime endpoints for agent runs plus custom endpoints for
 
     # Stateless Runs API (stream/wait without a pre-existing thread)
     app.include_router(runs.router)
+
+    # Ñkyel Live MCP, E2B Visual Computer & Human Approval API
+    app.include_router(nkyel_api.router)
 
     # GitHub webhooks API is mounted at /api/webhooks/github
     # Exempt from auth and CSRF middleware (see auth_middleware._PUBLIC_PATH_PREFIXES

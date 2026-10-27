@@ -4,6 +4,7 @@ import { MessageSquarePlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { NkyelEmblem } from "@/components/ui/nkyel-logo";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -11,7 +12,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useI18n } from "@/core/i18n/hooks";
-import { env } from "@/env";
 import { cn } from "@/lib/utils";
 
 import { useWorkspaceSidebarExpanded } from "./workspace-sidebar-frame";
@@ -34,10 +34,12 @@ export function WorkspaceHeader({ className }: { className?: string }) {
           <div className="group-has-data-[collapsible=icon]/sidebar-wrapper:-translate-y flex w-full cursor-pointer items-center justify-center">
             <div
               className={cn(
-                "text-primary block pt-1 font-serif group-hover/workspace-header:hidden",
+                "block pt-1 group-hover/workspace-header:hidden transition-transform hover:scale-105",
                 isMobile && "hidden",
               )}
-            >NK</div>
+            >
+              <NkyelEmblem size={22} className="text-foreground" />
+            </div>
             <WorkspaceSidebarTrigger
               className={cn(
                 "pl-2",
@@ -47,15 +49,17 @@ export function WorkspaceHeader({ className }: { className?: string }) {
           </div>
         ) : (
           <div className="flex items-center justify-between gap-2">
-            {env.NEXT_PUBLIC_STATIC_WEBSITE_ONLY === "true" ? (
-              <Link href="/" className="text-primary ml-2 font-serif">
-                nkyel
-              </Link>
-            ) : (
-              <div className="text-primary ml-2 cursor-default font-serif">
+            <Link
+              href="/workspace"
+              className="flex items-center gap-2.5 ml-1.5 select-none rounded-lg p-1 transition-colors hover:bg-muted/40"
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 p-1 ring-1 ring-border/50">
+                <NkyelEmblem size={18} className="text-foreground" />
+              </div>
+              <div className="font-bold tracking-tight text-foreground text-sm">
                 nkyel
               </div>
-            )}
+            </Link>
             <WorkspaceSidebarTrigger />
           </div>
         )}

@@ -303,6 +303,10 @@ class DatabaseConfig(BaseModel):
             elif url.startswith("postgres://"):
                 # libpq's short alias: accepted by the psycopg checkpointer, but not a SQLAlchemy dialect.
                 url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+            # asyncpg accepts ssl= but not sslmode= or channel_binding=
+            if "ssl=" not in url and "sslmode=" in url:
+                url = url.replace("?sslmode=", "?ssl=").replace("&sslmode=", "&ssl=")
+            url = url.replace("&channel_binding=require", "").replace("?channel_binding=require", "?").rstrip("?")
             return url
         raise ValueError(f"No SQLAlchemy URL for backend={self.backend!r}")
 
@@ -336,5 +340,8 @@ class DatabaseConfig(BaseModel):
                 url = url.replace("postgresql://", "postgresql+psycopg://", 1)
             elif url.startswith("postgres://"):
                 url = url.replace("postgres://", "postgresql+psycopg://", 1)
+            # psycopg strictly requires sslmode instead of ssl query parameter
+            if "sslmode=" not in url and "ssl=" in url:
+                url = url.replace("?ssl=", "?sslmode=").replace("&ssl=", "&sslmode=")
             return url
         raise ValueError(f"No SQLAlchemy URL for backend={self.backend!r}")

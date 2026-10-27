@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useThread } from "@/core/threads/hooks";
+import { useThreadHistory } from "@/core/threads/hooks";
 
 interface CommandLogEntry {
   id: string;
@@ -19,16 +19,16 @@ interface CommandLogEntry {
 }
 
 export function TerminalTab({ threadId }: { threadId: string }) {
-  const { thread } = useThread();
+  const { messages } = useThreadHistory(threadId);
   const [customCommand, setCustomCommand] = useState("");
   const [localLogs, setLocalLogs] = useState<CommandLogEntry[]>([]);
 
   // Extract commands executed in this thread from tool messages
   const commandEntries: CommandLogEntry[] = useMemo(() => {
     const list: CommandLogEntry[] = [];
-    if (!thread?.messages) return list;
+    if (!messages) return list;
 
-    for (const msg of thread.messages) {
+    for (const msg of messages) {
       // Check for tool calls on assistant messages
       if (msg.type === "ai" && Array.isArray((msg as any).tool_calls)) {
         for (const tc of (msg as any).tool_calls) {
@@ -80,7 +80,7 @@ export function TerminalTab({ threadId }: { threadId: string }) {
     }
 
     return [...list, ...localLogs];
-  }, [thread?.messages, localLogs]);
+  }, [messages, localLogs]);
 
   const handleRunCommand = (e: React.FormEvent) => {
     e.preventDefault();

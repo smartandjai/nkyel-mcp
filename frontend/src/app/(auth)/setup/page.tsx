@@ -8,6 +8,7 @@ import { RememberSessionOption } from "@/components/auth/remember-session-option
 import { Button } from "@/components/ui/button";
 import { FlickeringGrid } from "@/components/ui/flickering-grid";
 import { Input } from "@/components/ui/input";
+import { NkyelEmblem } from "@/components/ui/nkyel-logo";
 import { getCsrfHeaders } from "@/core/api/fetcher";
 import { useAuth } from "@/core/auth/AuthProvider";
 import { isValidEmail } from "@/core/auth/email";
@@ -244,10 +245,13 @@ export default function SetupPage() {
           flickerChance={0.25}
         />
         <div className="border-border/20 bg-background/5 w-full max-w-md space-y-6 rounded-3xl border p-8 backdrop-blur-sm">
-          <div className="text-center">
-            <h1 className="font-serif text-3xl">nkyel</h1>
-            <p className="text-muted-foreground mt-2">Create admin account</p>
-            <p className="text-muted-foreground mt-1 text-xs">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-b from-primary/15 via-primary/5 to-transparent p-2.5 ring-1 ring-border/50 shadow-inner">
+              <NkyelEmblem size={36} className="text-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">nkyel</h1>
+            <p className="text-muted-foreground mt-1 text-sm font-medium">Create admin account</p>
+            <p className="text-muted-foreground mt-0.5 text-xs">
               Set up the administrator account to get started.
             </p>
           </div>
@@ -319,12 +323,15 @@ export default function SetupPage() {
         flickerChance={0.25}
       />
       <div className="border-border/20 bg-background/5 w-full max-w-md space-y-6 rounded-3xl border p-8 backdrop-blur-sm">
-        <div className="text-center">
-          <h1 className="font-serif text-3xl">nkyel</h1>
-          <p className="text-muted-foreground mt-2">
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-b from-primary/15 via-primary/5 to-transparent p-2.5 ring-1 ring-border/50 shadow-inner">
+            <NkyelEmblem size={36} className="text-foreground" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">nkyel</h1>
+          <p className="text-muted-foreground mt-1 text-sm font-medium">
             Complete admin account setup
           </p>
-          <p className="text-muted-foreground mt-1 text-xs">
+          <p className="text-muted-foreground mt-0.5 text-xs">
             Set your real email and a new password.
           </p>
         </div>

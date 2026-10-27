@@ -1,26 +1,26 @@
-# 🦌 [About nkyel 2.0](https://github.com/bytedance/deer-flow)
+# Ñkyel 2.0 — Local Sovereign Agent Platform
 
-> **From Open Source, Back to Open Source**
+> **SuperAgent Harness — Stack Locale & Souveraine**
 
-**nkyel** (**D**eep **E**xploration and **E**fficient **R**esearch **Flow**) is a community-driven SuperAgent harness that researches, codes, and creates.
-With the help of sandboxes, memories, tools and skills, it handles
-different levels of tasks that could take minutes to hours.
+**Ñkyel** est une plateforme d'agents autonomes orchestrée avec LangGraph, Next.js et des environnements isolés.
+Elle intègre directement :
 
----
-
-## 🌟 GitHub Repository
-
-Explore nkyel on GitHub: [github.com/bytedance/deer-flow](https://github.com/bytedance/deer-flow)
-
-## 🌐 Official Website
-
-Visit the official website of nkyel: [nkyel.tech](https://nkyel.tech/)
-
-## 📧 Support
-
-If you have any questions or need help, please contact us at [support@nkyel.tech](mailto:support@nkyel.tech).
+* **Authentification & Sessions** : Clerk (`clerk.smartandjai.com`)
+* **Persistance des Missions & Checkpoints** : Neon PostgreSQL (`neondb`)
+* **Stockage Sécurisé des Livrables** : Cloudflare R2 (`nkyel-artifacts-prod`)
+* **Moteur Agent Principal** : Qwen3 32B AWQ sur RunPod
+* **Moteur Rapide Conversationnel** : Qwen 27B sur Groq Free
+* **Recherche & Exploration Web** : Tavily API (Search, Extract, Map, Crawl)
+* **Exécution & Navigation Réelle** : Bac à sable E2B Cloud Desktop
 
 ---
+
+## 💻 Architecture de l'Application Locale
+
+* **Gateway API & Runtime** : FastAPI + Embedded LangGraph (`localhost:8001`)
+* **Interface Web** : Next.js App Router (`localhost:3000`)
+* **Reverse Proxy Unifié** : Nginx (`localhost:2026`)
+
 
 ## 📜 License
 

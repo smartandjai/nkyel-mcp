@@ -365,9 +365,10 @@ def _get_revision_metadata() -> tuple[str, frozenset[str]]:
     return _get_head_revision(), _get_known_revisions()
 
 
-async def _read_database_revision(conn: Any) -> str:
+async def _read_database_revision(conn: Any, schema: str = "") -> str:
     """Read and validate the database's single alembic revision row."""
-    result = await conn.execute(text("SELECT version_num FROM alembic_version"))
+    table = f'"{schema}".alembic_version' if schema else "alembic_version"
+    result = await conn.execute(text(f"SELECT version_num FROM {table}"))
     rows = list(result.scalars())
     if len(rows) != 1:
         raise RuntimeError(f"bootstrap: expected exactly one alembic_version row, found {len(rows)}")
@@ -400,7 +401,7 @@ def _validate_forward_schema(sync_conn: Any) -> None:
         )
 
 
-def _reflect_state(sync_conn: Any) -> dict[str, bool]:
+def _reflect_state(sync_conn: Any, schema: str = "") -> dict[str, bool]:
     """Inspect *sync_conn* (sync connection inside ``run_sync``) and return:
 
     - ``has_alembic_version``: bool
@@ -419,7 +420,7 @@ def _reflect_state(sync_conn: Any) -> dict[str, bool]:
         logger.debug("nkyel.persistence.models not found; metadata may be incomplete")
 
     insp = sa_inspect(sync_conn)
-    reflected = set(insp.get_table_names())
+    reflected = set(insp.get_table_names(schema=schema or None))
     metadata_tables = set(Base.metadata.tables)
     return {
         "has_alembic_version": "alembic_version" in reflected,
@@ -652,9 +653,10 @@ async def bootstrap_schema(engine: AsyncEngine, *, backend: str, postgres_schema
     cfg = _get_alembic_config(engine, postgres_schema=postgres_schema if backend == "postgres" else "")
 
     async with _bootstrap_lock(engine, backend=backend):
+        target_schema = postgres_schema if backend == "postgres" else ""
         async with engine.connect() as conn:
-            state = await conn.run_sync(_reflect_state)
-            database_revision = await _read_database_revision(conn) if state["has_alembic_version"] else None
+            state = await conn.run_sync(lambda sync_conn: _reflect_state(sync_conn, schema=target_schema))
+            database_revision = await _read_database_revision(conn, schema=target_schema) if state["has_alembic_version"] else None
         decision = _decide_state(state)
 
         if decision == "empty":

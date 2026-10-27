@@ -8,8 +8,14 @@ import { DEFAULT_LOCALE } from "@/core/i18n/locale";
 
 export const metadata: Metadata = {
   title: "nkyel",
-  description: "A LangChain-based framework for building super agents.",
+  description: "Plateforme souveraine d'agents IA orchestrant subagents, mémoire et bac à sable.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/images/nkyel-icon.svg",
+  },
 };
+
 
 export default function RootLayout({
   children,

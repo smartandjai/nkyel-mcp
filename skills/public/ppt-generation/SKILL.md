@@ -1,21 +1,22 @@
 ---
 name: ppt-generation
-description: Use this skill when the user requests to generate, create, or make presentations (PPT/PPTX). Creates visually rich slides by generating images for each slide and composing them into a PowerPoint file.
+description: Generate professional PowerPoint presentations (PPTX). Supports two distinct modes: (1) True-Editable Native Presentation Mode with native text boxes, shapes, metric cards, and tables (via artifact-engineer); and (2) Visual-Art Slide Mode using generative slide imagery.
 ---
 
 # PPT Generation Skill
 
 ## Overview
 
-This skill generates professional PowerPoint presentations by creating AI-generated images for each slide and composing them into a PPTX file. The workflow includes planning the presentation structure with a consistent visual style, generating slide images sequentially (using the previous slide as a reference for style consistency), and assembling them into a final presentation.
+This skill generates professional PowerPoint deliverables with two dedicated operational modes:
+1. **True-Editable Native Presentation Mode (Default & Sovereign Recommended)**: Employs `artifact-engineer` to generate 100% native PowerPoint objects (editable text boxes, shapes, metric highlight cards, and styled tables). No flattened background screenshots; fully modifiable in Microsoft PowerPoint, Keynote, and Google Slides.
+2. **Visual-Art Presentation Mode (Optional)**: Creates full-bleed artistic slide images using diffusion/image generation and stitches them into slides for creative visual showcases. Do not falsely present this mode as editable.
 
 ## Core Capabilities
 
-- Plan and structure multi-slide presentations with unified visual style
-- Support multiple presentation styles: Business, Academic, Minimal, Apple Keynote, Creative
-- Generate unique AI images for each slide using image-generation skill
-- Maintain visual consistency by using previous slide as reference image
-- Compose images into a professional PPTX file
+- **Native Editable Presentations**: Real text frames, custom typography scales, 16:9 geometry, native metric cards, and structured tables.
+- **Visual Inspection & Quality Assurance**: Automatically validated with DeepSeek Vision QA.
+- **Multiple Aesthetic Styles**: Consulting, Executive, Investor Deck, Corporate Modern, Keynote.
+- **Visual-Art Fallback**: Sequential AI-illustrated slide generation for narrative visual decks.
 
 ## Presentation Styles
 

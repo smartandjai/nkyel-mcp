@@ -10,6 +10,7 @@ import {
   MonitorIcon,
   RadioIcon,
   ServerIcon,
+  SparklesIcon,
   TerminalIcon,
   XIcon,
 } from "lucide-react";
@@ -28,6 +29,7 @@ import { navigateBrowser } from "./api";
 import { useMaybeBrowserView } from "./context";
 import { FilesTab } from "./files-tab";
 import { decideBrowserKeyInput } from "./keyboard";
+import { McpHubTab } from "./mcp-hub-tab";
 import { SandboxTab } from "./sandbox-tab";
 import { TavilyTab } from "./tavily-tab";
 import { TerminalTab } from "./terminal-tab";
@@ -48,7 +50,7 @@ export function BrowserViewPanel({
     : null;
 
   const [activeTab, setActiveTab] = useState<
-    "desktop" | "terminal" | "files" | "tavily" | "sandbox"
+    "desktop" | "terminal" | "files" | "tavily" | "sandbox" | "mcp"
   >("desktop");
   const [urlInput, setUrlInput] = useState("");
   const [navigating, setNavigating] = useState(false);
@@ -426,6 +428,20 @@ export function BrowserViewPanel({
             <ServerIcon className="size-3.5 text-purple-500" />
             <span>Bac à sable E2B</span>
           </Button>
+
+          <Button
+            size="sm"
+            variant={activeTab === "mcp" ? "secondary" : "ghost"}
+            className={cn(
+              "h-7 gap-1.5 px-2.5 text-xs font-medium",
+              activeTab === "mcp" &&
+                "bg-background text-foreground shadow-xs font-semibold",
+            )}
+            onClick={() => setActiveTab("mcp")}
+          >
+            <SparklesIcon className="size-3.5 text-primary" />
+            <span>MCP Studio & Drive</span>
+          </Button>
         </div>
 
         <Button
@@ -606,6 +622,20 @@ export function BrowserViewPanel({
         {activeTab === "sandbox" && (
           <div className="flex size-full flex-col overflow-hidden">
             <SandboxTab threadId={threadId} />
+          </div>
+        )}
+
+        {/* Tab: MCP Studio & Connecteurs */}
+        {activeTab === "mcp" && (
+          <div className="flex size-full flex-col overflow-hidden">
+            <McpHubTab
+              threadId={threadId}
+              onNavigateToUrl={(url) => {
+                setUrlInput(url);
+                void handleNavigate(url);
+                setActiveTab("desktop");
+              }}
+            />
           </div>
         )}
       </main>

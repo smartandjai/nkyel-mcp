@@ -1,14 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 import { useI18n } from "@/core/i18n/hooks";
 import { cn } from "@/lib/utils";
 
 import { AuroraText } from "../ui/aurora-text";
-
-let waved = false;
+import { NkyelEmblem } from "../ui/nkyel-logo";
 
 function WelcomeDescription({ children }: { children: string }) {
   return (
@@ -34,24 +33,25 @@ export function Welcome({
     }
     return ["var(--color-foreground)"];
   }, [isUltra]);
-  useEffect(() => {
-    waved = true;
-  }, []);
   return (
     <div
       className={cn(
-        "mx-auto flex w-full max-w-full flex-col items-center justify-center gap-2 px-4 py-4 text-center sm:px-8",
+        "mx-auto flex w-full max-w-full flex-col items-center justify-center gap-3 px-4 py-6 text-center sm:px-8",
         className,
       )}
     >
-      <div className="max-w-full text-2xl font-bold">
+      <div className="relative flex items-center justify-center">
+        <div className="absolute -inset-3 rounded-3xl bg-gradient-to-tr from-primary/25 via-primary/5 to-transparent blur-lg opacity-75" />
+        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-b from-card to-card/70 border border-border/60 shadow-lg ring-1 ring-white/5">
+          <NkyelEmblem size={36} className="text-foreground" />
+        </div>
+      </div>
+
+      <div className="max-w-full text-2xl font-bold tracking-tight">
         {searchParams.get("mode") === "skill" ? (
           `✨ ${t.welcome.createYourOwnSkill} ✨`
         ) : (
           <div className="flex max-w-full flex-wrap items-center justify-center gap-2">
-            <div className={cn("inline-block", !waved ? "animate-wave" : "")}>
-              {isUltra ? "🚀" : "👋"}
-            </div>
             <AuroraText colors={colors}>{t.welcome.greeting}</AuroraText>
           </div>
         )}

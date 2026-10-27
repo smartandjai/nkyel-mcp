@@ -58,7 +58,7 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0,<3.0",
     "aiosqlite>=0.19",
     "alembic>=1.13",
-    "cryptography>=50.0.0",
+    "cryptography>=43.0.0",
     "e2b-code-interpreter>=2.8.0",
     # zoneinfo fallback: ZoneInfo reads the OS zone database first and this
     # wheel when the image has none (stripped containers, Windows without

@@ -4,37 +4,36 @@
  */
 import { APP_VERSION } from "@/version";
 
-export const aboutMarkdown = `# 🦌 [About nkyel ${APP_VERSION}](https://github.com/bytedance/deer-flow)
+export const aboutMarkdown = `# [About Ñkyel AI ${APP_VERSION}](https://nkyel.smartandjai.com)
 
-> **From Open Source, Back to Open Source**
+> **Sovereign Agent Harness & Super Intelligence Platform**
 
-nkyel (**D**eep **E**xploration and **E**fficient **R**esearch **Flow**) is an open-source **super agent harness** that orchestrates **sub-agents**, **memory**, and **sandboxes** to do almost anything — powered by **extensible skills**.
+Ñkyel AI is an advanced **super agent harness** that orchestrates **sub-agents**, **memory**, and **cloud sandboxes** to solve complex real-world tasks — powered by **extensible sovereign skills**.
 
 ---
 
 ## 🚀 Core Features
 
-* **Skills & Tools**: With built-in and extensible skills and tools, nkyel can do almost anything.
-* **Sub-Agents**: Sub-Agents help the main agent to do the tasks that are too complex to be done by the main agent.
-* **Sandbox & File System**: Safely execute code and manipulate files in the sandbox.
-* **Context Engineering**: Isolated sub-agent context, summarization to keep the context window sharp.
-* **Long-Term Memory**: Keep recording the user's profile, top of mind, and conversation history.
+* **Skills & Tools**: Built-in and extensible skills (Tavily search & crawl, E2B cloud browser, document generation).
+* **Sub-Agents**: Sub-Agents help the main agent to execute tasks with isolated context.
+* **Sandbox & File System**: Safely execute code, control real browsers, and manipulate files in E2B sandboxes.
+* **Context Engineering**: Sharp context windows through streaming compaction and summarization.
+* **Sovereign Persistence**: Mission history and checkpoints persisted securely in Neon PostgreSQL and Cloudflare R2.
 
 ---
 
-## 🌟 GitHub Repository
+## 🌐 Official Platform
 
-![Star History Chart](https://api.star-history.com/svg?repos=bytedance/nkyel&type=Date)
+Explore Ñkyel AI: [nkyel.smartandjai.com](https://nkyel.smartandjai.com)
 
-Explore nkyel on GitHub: [github.com/bytedance/deer-flow](https://github.com/bytedance/deer-flow)
 
-## 🌐 Official Website
+## 🌐 Official Platform
 
-Visit the official website of nkyel: [nkyel.tech](https://nkyel.tech/)
+Visit the official platform of Ñkyel AI: [nkyel.smartandjai.com](https://nkyel.smartandjai.com)
 
 ## 📧 Support
 
-If you have any questions or need help, please contact us at [support@nkyel.tech](mailto:support@nkyel.tech).
+Contact the engineering team at [contact@smartandjai.com](mailto:contact@smartandjai.com).
 
 ---
 
