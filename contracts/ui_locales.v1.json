@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "languages": {
+    "en-US": "English",
+    "fr-FR": "Français",
+    "zh-CN": "Simplified Chinese"
+  }
+}
