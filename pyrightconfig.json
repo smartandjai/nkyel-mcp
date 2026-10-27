@@ -6,6 +6,7 @@
     "backend/packages/harness",
     "backend/packages/extension-api",
     "backend/app",
-    "skills/public/artifact-engineer/scripts"
+    "skills/public/artifact-engineer/scripts",
+    "backend/.venv/lib/python3.12/site-packages"
   ]
 }

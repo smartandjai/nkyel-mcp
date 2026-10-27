@@ -2,8 +2,9 @@
 
 import os
 from pathlib import Path
-import pytest
+
 import httpx
+import pytest
 from dotenv import load_dotenv
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -46,13 +47,6 @@ async def test_demo_database_schema_runs():
 def test_tavily_mcp_search_via_gateway():
     """Verify Tavily MCP tool call directly through Gateway /api/nkyel/mcp/call."""
     auth = os.getenv("TAVILY_MCP_AUTH")
-    headers = {"Content-Type": "application/json"}
-    if auth:
-        headers["Authorization"] = auth
-    payload = {
-        "tool_name": "tavily_search",
-        "arguments": {"query": "ANINF Gabon numérique", "max_results": 2},
-    }
     with httpx.Client(timeout=15.0) as client:
         # Check gateway health first
         h = client.get(f"{GATEWAY_URL}/health")

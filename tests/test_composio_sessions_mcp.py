@@ -16,7 +16,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from langchain_core.tools import ToolException, tool
+from langchain_core.tools import StructuredTool, ToolException, tool
 from nkyel.mcp.composio.client import (
     ComposioAuthLink,
     ComposioClient,
@@ -252,6 +252,8 @@ def test_composio_connect_tool_returns_auth_link():
         mock_get_client.return_value = mock_client
 
         mock_runtime = MagicMock(user_id="user_clerk_1")
+        assert isinstance(composio_connect_app_tool, StructuredTool)
+        assert composio_connect_app_tool.func is not None
         res = composio_connect_app_tool.func(toolkit="gmail", runtime=mock_runtime)
 
         assert res["status"] == "AWAITING_USER_AUTHORIZATION"

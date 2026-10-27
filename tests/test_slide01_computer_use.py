@@ -93,6 +93,7 @@ def test_session_manager_singleton_and_stream_url():
 
     manager._sessions["thread_abc"] = session
     retrieved = manager.get_session("thread_abc")
+    assert retrieved is not None
     assert retrieved is session
     assert retrieved.status == "live"
 
