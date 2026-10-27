@@ -6,6 +6,7 @@ import base64
 import os
 from pathlib import Path
 from typing import Any
+
 from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parents[5]
@@ -44,13 +45,7 @@ def computer_launch_session(initial_url: str = "https://google.com") -> dict[str
     except Exception:
         stream_url = f"https://{sandbox.sandbox_id}.{sandbox.sandbox_domain}"
 
-    return {
-        "sandbox_id": sandbox.sandbox_id,
-        "current_url": initial_url,
-        "stream_url": stream_url,
-        "screenshot_base64": b64_img,
-        "status": "RUNNING"
-    }
+    return {"sandbox_id": sandbox.sandbox_id, "current_url": initial_url, "stream_url": stream_url, "screenshot_base64": b64_img, "status": "RUNNING"}
 
 
 def computer_navigate(sandbox_id: str, url: str) -> dict[str, Any]:
@@ -63,12 +58,7 @@ def computer_navigate(sandbox_id: str, url: str) -> dict[str, Any]:
     screenshot_bytes = sandbox.screenshot()
     b64_img = base64.b64encode(screenshot_bytes).decode("utf-8")
 
-    return {
-        "sandbox_id": sandbox_id,
-        "current_url": url,
-        "screenshot_base64": b64_img,
-        "status": "NAVIGATED"
-    }
+    return {"sandbox_id": sandbox_id, "current_url": url, "screenshot_base64": b64_img, "status": "NAVIGATED"}
 
 
 def computer_click(sandbox_id: str, x: int, y: int, button: str = "left") -> dict[str, Any]:
@@ -88,13 +78,7 @@ def computer_click(sandbox_id: str, x: int, y: int, button: str = "left") -> dic
     screenshot_bytes = sandbox.screenshot()
     b64_img = base64.b64encode(screenshot_bytes).decode("utf-8")
 
-    return {
-        "sandbox_id": sandbox_id,
-        "action": f"click_{button}",
-        "x": x,
-        "y": y,
-        "screenshot_base64": b64_img
-    }
+    return {"sandbox_id": sandbox_id, "action": f"click_{button}", "x": x, "y": y, "screenshot_base64": b64_img}
 
 
 def computer_scroll(sandbox_id: str, direction: str = "down", amount: int = 3) -> dict[str, Any]:
@@ -109,12 +93,7 @@ def computer_scroll(sandbox_id: str, direction: str = "down", amount: int = 3) -
     screenshot_bytes = sandbox.screenshot()
     b64_img = base64.b64encode(screenshot_bytes).decode("utf-8")
 
-    return {
-        "sandbox_id": sandbox_id,
-        "action": "scroll",
-        "direction": direction,
-        "screenshot_base64": b64_img
-    }
+    return {"sandbox_id": sandbox_id, "action": "scroll", "direction": direction, "screenshot_base64": b64_img}
 
 
 def computer_type_text(sandbox_id: str, text: str, press_enter: bool = False) -> dict[str, Any]:
@@ -130,12 +109,7 @@ def computer_type_text(sandbox_id: str, text: str, press_enter: bool = False) ->
     screenshot_bytes = sandbox.screenshot()
     b64_img = base64.b64encode(screenshot_bytes).decode("utf-8")
 
-    return {
-        "sandbox_id": sandbox_id,
-        "action": "typed_text",
-        "length": len(text),
-        "screenshot_base64": b64_img
-    }
+    return {"sandbox_id": sandbox_id, "action": "typed_text", "length": len(text), "screenshot_base64": b64_img}
 
 
 def computer_take_screenshot(sandbox_id: str) -> dict[str, Any]:
@@ -147,10 +121,7 @@ def computer_take_screenshot(sandbox_id: str) -> dict[str, Any]:
     screenshot_bytes = sandbox.screenshot()
     b64_img = base64.b64encode(screenshot_bytes).decode("utf-8")
 
-    return {
-        "sandbox_id": sandbox_id,
-        "screenshot_base64": b64_img
-    }
+    return {"sandbox_id": sandbox_id, "screenshot_base64": b64_img}
 
 
 def computer_close_session(sandbox_id: str) -> dict[str, Any]:

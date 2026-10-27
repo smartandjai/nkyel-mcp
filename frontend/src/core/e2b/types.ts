@@ -10,7 +10,7 @@ export interface E2BStatusResponse {
 
 export interface E2BEvent {
   id: string;
-  type: "system" | "code" | "terminal" | "desktop" | "microvm";
+  type: "system" | "code" | "terminal" | "desktop" | "microvm" | "browser" | "control";
   title: string;
   details: string;
   status: "success" | "error" | "running";
@@ -54,4 +54,45 @@ export interface E2BDesktopActionResponse {
   screenshot_base64?: string;
   status?: string;
   error?: string;
+}
+
+export interface ComputerSessionResponse {
+  active: boolean;
+  thread_id: string;
+  sandbox_id?: string;
+  status: "STARTING" | "LIVE" | "AGENT_CONTROLLING" | "USER_CONTROLLING" | "PAUSED" | "CLOSED" | "FAILED" | "NO_SESSION";
+  stream_url: string;
+  current_url: string;
+  current_app: string;
+  screenshot_base64?: string | null;
+  terminal_logs?: Array<{
+    id: string;
+    command: string;
+    stdout: string;
+    stderr: string;
+    exit_code: number;
+    timestamp: string;
+  }>;
+  events?: Array<{
+    id: string;
+    type: string;
+    action: string;
+    details: string;
+    status: string;
+    timestamp: string;
+  }>;
+}
+
+export interface ComputerActionParams {
+  thread_id: string;
+  action: "click" | "move" | "type" | "keypress" | "scroll" | "navigate" | "screenshot" | "takeover" | "release_control";
+  x?: number;
+  y?: number;
+  button?: "left" | "right" | "double";
+  text?: string;
+  key?: string;
+  url?: string;
+  direction?: "up" | "down";
+  amount?: number;
+  press_enter?: boolean;
 }

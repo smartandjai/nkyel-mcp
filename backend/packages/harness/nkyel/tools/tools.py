@@ -328,15 +328,22 @@ def get_available_tools(
     except Exception as e:
         logger.warning(f"Failed to load ACP tool: {e}")
 
-    logger.info(f"Total tools loaded: {len(loaded_tools)}, built-in tools: {len(builtin_tools)}, MCP tools: {len(mcp_tools)}, ACP tools: {len(acp_tools)}")
+    computer_tools: list[BaseTool] = []
+    try:
+        from nkyel.sandbox.computer_tools import ALL_COMPUTER_TOOLS
+        computer_tools = list(ALL_COMPUTER_TOOLS)
+        logger.info(f"Loaded {len(computer_tools)} autonomous cloud computer tools")
+    except Exception as e:
+        logger.warning(f"Failed to load autonomous computer tools: {e}")
+
+    logger.info(f"Total tools loaded: {len(loaded_tools)}, built-in tools: {len(builtin_tools)}, MCP tools: {len(mcp_tools)}, ACP tools: {len(acp_tools)}, Computer tools: {len(computer_tools)}")
 
     # Deduplicate by tool name — config-loaded tools take priority, followed by
-    # built-ins, MCP tools, and ACP tools.  Duplicate names cause the LLM to
-    # receive ambiguous or concatenated function schemas (issue #1803).
+    # built-ins, MCP tools, ACP tools, and computer tools.
     from nkyel.extensions import get_agent_build_extensions
     from nkyel.extensions.plugin_tools import build_plugin_tools
 
-    ordinary_tools = loaded_tools + builtin_tools + mcp_tools + acp_tools
+    ordinary_tools = loaded_tools + builtin_tools + mcp_tools + acp_tools + computer_tools
     # Keep plugin-vs-plugin validation strict. Host/plugin collisions use the
     # ordinary-first deduplication below, without dropping unrelated tools.
     plugin_tools = build_plugin_tools(extensions if extensions is not None else get_agent_build_extensions(), groups=groups)

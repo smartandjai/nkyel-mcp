@@ -2,29 +2,25 @@
 
 from __future__ import annotations
 
+import base64
 import os
-from pathlib import Path
+import time
+from datetime import UTC, datetime
 from typing import Any
-from fastapi import APIRouter, HTTPException, Request
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from nkyel.mcp.tool_registry import TOOL_REGISTRY, get_verified_tools_count, get_tools_for_mission
-from nkyel.mcp.gmail_send_adapter import prepare_gmail_draft, send_gmail_with_approval, APPROVAL_STORE
-from nkyel.sandbox.e2b_desktop_tools import (
-    computer_launch_session,
-    computer_navigate,
-    computer_click,
-    computer_scroll,
-    computer_type_text,
-    computer_take_screenshot,
-    computer_close_session,
-    ACTIVE_SESSIONS
-)
+from nkyel.mcp.gmail_send_adapter import APPROVAL_STORE, prepare_gmail_draft, send_gmail_with_approval
+from nkyel.mcp.tool_registry import TOOL_REGISTRY, get_verified_tools_count
+from nkyel.sandbox.computer_session_manager import computer_sessions
+from nkyel.sandbox.e2b_desktop_tools import ACTIVE_SESSIONS, computer_click, computer_close_session, computer_launch_session, computer_navigate, computer_scroll, computer_take_screenshot, computer_type_text
 
 router = APIRouter(prefix="/api/nkyel", tags=["nkyel-mcp-studio"])
 
 
 # ─── Pydantic Schemas ─────────────────────────────────────────────────────────
+
 
 class ToolCallRequest(BaseModel):
     tool_name: str
@@ -66,9 +62,39 @@ class GmailApprovalRequest(BaseModel):
     approved: bool
 
 
+class ComputerStartRequest(BaseModel):
+    thread_id: str = "global-mission"
+    user_id: str = "default"
+    initial_url: str = "https://example.com"
+
+
+class ComputerActionRequest(BaseModel):
+    thread_id: str = "global-mission"
+    action: str  # click, move, type, keypress, scroll, navigate, screenshot, takeover, release_control
+    x: int | None = None
+    y: int | None = None
+    button: str = "left"
+    text: str | None = None
+    key: str | None = None
+    url: str | None = None
+    direction: str = "down"
+    amount: int = 3
+    press_enter: bool = False
+
+
+class ComputerShellRequest(BaseModel):
+    thread_id: str = "global-mission"
+    command: str
+    workdir: str | None = None
+
+
+class ComputerPythonRequest(BaseModel):
+    thread_id: str = "global-mission"
+    code: str
+    filename: str = "script.py"
+
+
 # ─── Live State & Event Buffer ────────────────────────────────────────────────
-import time
-from datetime import datetime, timezone
 
 ACTIVE_CODE_SESSIONS: dict[str, Any] = {}
 E2B_EVENT_LOG: list[dict[str, Any]] = [
@@ -78,29 +104,24 @@ E2B_EVENT_LOG: list[dict[str, Any]] = [
         "title": "E2B Cloud MicroVM Engine Initialized",
         "details": "Prêt pour l'exécution de code Python, terminal bash et inspection Chrome",
         "status": "success",
-        "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
+        "timestamp": datetime.now(UTC).strftime("%H:%M:%S"),
     }
 ]
 
+
 def record_e2b_event(event_type: str, title: str, details: str, status: str = "success") -> None:
-    E2B_EVENT_LOG.append({
-        "id": f"evt-{int(time.time() * 1000)}",
-        "type": event_type,
-        "title": title,
-        "details": details,
-        "status": status,
-        "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S")
-    })
+    E2B_EVENT_LOG.append({"id": f"evt-{int(time.time() * 1000)}", "type": event_type, "title": title, "details": details, "status": status, "timestamp": datetime.now(UTC).strftime("%H:%M:%S")})
     if len(E2B_EVENT_LOG) > 60:
         del E2B_EVENT_LOG[:-50]
 
 
 def _get_or_create_code_sandbox(sandbox_id: str | None = None):
     from e2b_code_interpreter import Sandbox
+
     api_key = os.getenv("E2B_API_KEY")
     if sandbox_id and sandbox_id in ACTIVE_CODE_SESSIONS:
         return ACTIVE_CODE_SESSIONS[sandbox_id]
-    
+
     # Check if any session is active
     if not sandbox_id and ACTIVE_CODE_SESSIONS:
         first_id = next(iter(ACTIVE_CODE_SESSIONS))
@@ -126,8 +147,8 @@ async def get_registry():
             "artifact-engineer": {"status": "CONNECTED", "protocol": "Rust Typst 0.15 + Openpyxl + python-pptx"},
             "duckduckgo": {"status": "CONNECTED", "protocol": "Stdio MCP"},
             "wikipedia": {"status": "CONNECTED", "protocol": "Stdio MCP"},
-            "arxiv": {"status": "CONNECTED", "protocol": "Stdio MCP"}
-        }
+            "arxiv": {"status": "CONNECTED", "protocol": "Stdio MCP"},
+        },
     }
 
 
@@ -139,19 +160,16 @@ async def call_tool(req: ToolCallRequest):
 
     if name.startswith("tavily_"):
         import httpx
+
         auth = os.getenv("TAVILY_MCP_AUTH")
         headers = {"Authorization": auth, "Content-Type": "application/json"}
-        payload = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "tools/call",
-            "params": {"name": name, "arguments": args}
-        }
+        payload = {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": name, "arguments": args}}
         try:
             r = httpx.post("https://mcp.tavily.com/mcp/", headers=headers, json=payload, timeout=20.0)
             for line in r.text.splitlines():
                 if line.startswith("data:"):
                     import json
+
                     return json.loads(line[5:].strip())
             return {"raw": r.text}
         except Exception as e:
@@ -176,18 +194,10 @@ async def call_tool(req: ToolCallRequest):
         return computer_close_session(args["sandbox_id"])
 
     elif name == "gmail_prepare_draft_with_attachment":
-        return prepare_gmail_draft(
-            to=args["to"],
-            subject=args["subject"],
-            body=args["body"],
-            attachment_paths=args.get("attachment_paths", [])
-        )
+        return prepare_gmail_draft(to=args["to"], subject=args["subject"], body=args["body"], attachment_paths=args.get("attachment_paths", []))
 
     elif name == "gmail_send_with_approval":
-        return send_gmail_with_approval(
-            approval_token=args["approval_token"],
-            approved=args.get("approved", True)
-        )
+        return send_gmail_with_approval(approval_token=args["approval_token"], approved=args.get("approved", True))
 
     raise HTTPException(status_code=404, detail=f"Tool '{name}' execution handler not implemented.")
 
@@ -226,7 +236,7 @@ async def run_e2b_code(req: E2BCodeRunRequest):
         stderr = execution.logs.stderr
 
         results_data = []
-        for r in (execution.results or []):
+        for r in execution.results or []:
             if hasattr(r, "png") and r.png:
                 results_data.append({"type": "image/png", "data": r.png})
             elif hasattr(r, "text") and r.text:
@@ -241,15 +251,7 @@ async def run_e2b_code(req: E2BCodeRunRequest):
         else:
             record_e2b_event("code", "Exécution Python réussie", f"{len(stdout)} ligne(s) · {duration_ms}ms", "success")
 
-        return {
-            "sandbox_id": sbx.sandbox_id,
-            "stdout": stdout,
-            "stderr": stderr,
-            "results": results_data,
-            "error": error_msg,
-            "execution_time_ms": duration_ms,
-            "status": "COMPLETED" if not error_msg else "ERROR"
-        }
+        return {"sandbox_id": sbx.sandbox_id, "stdout": stdout, "stderr": stderr, "results": results_data, "error": error_msg, "execution_time_ms": duration_ms, "status": "COMPLETED" if not error_msg else "ERROR"}
     except Exception as e:
         record_e2b_event("code", "Exception MicroVM E2B", str(e), "error")
         raise HTTPException(status_code=500, detail=str(e))
@@ -270,27 +272,13 @@ async def run_e2b_terminal(req: E2BTerminalRunRequest):
 
         record_e2b_event("terminal", f"$ {req.command[:40]}", f"Code {exit_code} · {duration_ms}ms", "success" if exit_code == 0 else "error")
 
-        return {
-            "sandbox_id": sbx.sandbox_id,
-            "command": req.command,
-            "stdout": stdout,
-            "stderr": stderr,
-            "exit_code": exit_code,
-            "execution_time_ms": duration_ms
-        }
+        return {"sandbox_id": sbx.sandbox_id, "command": req.command, "stdout": stdout, "stderr": stderr, "exit_code": exit_code, "execution_time_ms": duration_ms}
     except Exception as e:
         stdout = getattr(e, "stdout", "")
         stderr = getattr(e, "stderr", str(e))
         code = getattr(e, "exit_code", 1)
         record_e2b_event("terminal", f"$ {req.command[:40]}", f"Exit {code}", "error")
-        return {
-            "sandbox_id": req.sandbox_id or "error",
-            "command": req.command,
-            "stdout": stdout,
-            "stderr": stderr,
-            "exit_code": code,
-            "execution_time_ms": int((time.time() - t0) * 1000)
-        }
+        return {"sandbox_id": req.sandbox_id or "error", "command": req.command, "stdout": stdout, "stderr": stderr, "exit_code": code, "execution_time_ms": int((time.time() - t0) * 1000)}
 
 
 @router.get("/e2b/files")
@@ -301,11 +289,7 @@ async def list_e2b_files(path: str = "/home/user", sandbox_id: str | None = None
         file_entries = sbx.files.list(path)
         items = []
         for f in file_entries:
-            items.append({
-                "name": f.name,
-                "type": getattr(f, "type", "file"),
-                "path": f"{path.rstrip('/')}/{f.name}"
-            })
+            items.append({"name": f.name, "type": getattr(f, "type", "file"), "path": f"{path.rstrip('/')}/{f.name}"})
         return {"path": path, "items": items, "sandbox_id": sbx.sandbox_id}
     except Exception as e:
         return {"path": path, "items": [], "error": str(e)}
@@ -357,3 +341,181 @@ async def approve_and_send_email(req: GmailApprovalRequest):
     """Execute human approval action for sending email with attachment."""
     res = send_gmail_with_approval(req.approval_token, req.approved)
     return res
+
+
+# ─── 7. UNIFIED NKYEL COMPUTER API ───────────────────────────────────────────
+
+
+@router.get("/computer/session")
+async def get_computer_session(thread_id: str = "global-mission"):
+    """Get active session details and live stream URL for the thread."""
+    session = computer_sessions.get_session(thread_id)
+    if not session:
+        return {"active": False, "thread_id": thread_id, "status": "NO_SESSION", "stream_url": ""}
+    return {
+        "active": True,
+        "thread_id": session.thread_id,
+        "sandbox_id": session.sandbox_id,
+        "status": session.status,
+        "stream_url": session.stream_url,
+        "current_url": session.current_url,
+        "current_app": session.current_app,
+        "screenshot_base64": session.last_screenshot_b64,
+        "terminal_logs": session.terminal_logs,
+        "events": list(reversed(session.action_events)),
+    }
+
+
+@router.post("/computer/start")
+async def start_computer_session(req: ComputerStartRequest):
+    """Start or reconnect to the thread's unified cloud computer."""
+    session = computer_sessions.get_or_create_session(thread_id=req.thread_id, user_id=req.user_id, initial_url=req.initial_url or "https://example.com")
+    return {
+        "active": True,
+        "thread_id": session.thread_id,
+        "sandbox_id": session.sandbox_id,
+        "status": session.status,
+        "stream_url": session.stream_url,
+        "current_url": session.current_url,
+        "current_app": session.current_app,
+        "screenshot_base64": session.last_screenshot_b64,
+    }
+
+
+@router.post("/computer/stop")
+async def stop_computer_session(thread_id: str = "global-mission"):
+    """Terminate active computer sandbox for thread."""
+    ok = computer_sessions.close_session(thread_id)
+    return {"success": ok, "thread_id": thread_id, "status": "CLOSED"}
+
+
+@router.post("/computer/action")
+async def handle_computer_action(req: ComputerActionRequest):
+    """Direct interactive actions or human takeover on the cloud computer."""
+    session = computer_sessions.get_session(req.thread_id)
+    if not session:
+        session = computer_sessions.get_or_create_session(thread_id=req.thread_id, initial_url=req.url or "https://example.com")
+
+    act = req.action
+    if act == "takeover":
+        session.status = "USER_CONTROLLING"
+        session.add_event("control", "takeover", "User assumed direct control of cloud computer")
+        return {"status": "USER_CONTROLLING", "sandbox_id": session.sandbox_id}
+    elif act == "release_control":
+        session.status = "LIVE"
+        session.add_event("control", "release", "Control returned to Ñkyel Agent")
+        return {"status": "LIVE", "sandbox_id": session.sandbox_id}
+    elif act == "navigate":
+        url = req.url or "https://example.com"
+        session.sandbox.open(url)
+        session.current_url = url
+        session.current_app = "Google Chrome"
+        session.add_event("browser", "navigate", f"Navigated to {url}")
+    elif act == "click":
+        x, y = req.x or 512, req.y or 384
+        session.sandbox.move_mouse(x, y)
+        if req.button == "right":
+            session.sandbox.right_click()
+        elif req.button == "double":
+            session.sandbox.double_click()
+        else:
+            session.sandbox.left_click()
+        session.add_event("desktop", f"click_{req.button}", f"Clicked at ({x}, {y})")
+    elif act == "move":
+        x, y = req.x or 512, req.y or 384
+        session.sandbox.move_mouse(x, y)
+    elif act == "type":
+        text = req.text or ""
+        session.sandbox.write(text)
+        if req.press_enter:
+            session.sandbox.press("Enter")
+        session.add_event("desktop", "type", f"Typed {len(text)} characters")
+    elif act == "keypress":
+        key = req.key or "Enter"
+        session.sandbox.press(key)
+        session.add_event("desktop", "keypress", f"Keypress {key}")
+    elif act == "scroll":
+        delta = req.amount if req.direction == "down" else -req.amount
+        session.sandbox.scroll(delta)
+        session.add_event("desktop", "scroll", f"Scroll {req.direction} {req.amount}")
+
+    # Fresh screenshot
+    b64 = None
+    try:
+        shot = session.sandbox.screenshot()
+        b64 = base64.b64encode(shot).decode("utf-8")
+        session.last_screenshot_b64 = b64
+    except Exception:
+        pass
+
+    return {"success": True, "action": act, "sandbox_id": session.sandbox_id, "status": session.status, "current_url": session.current_url, "screenshot_base64": b64}
+
+
+@router.post("/computer/shell")
+async def execute_computer_shell(req: ComputerShellRequest):
+    """Run shell command inside active mission computer."""
+    session = computer_sessions.get_session(req.thread_id)
+    if not session:
+        session = computer_sessions.get_or_create_session(thread_id=req.thread_id)
+
+    t0 = time.time()
+    run_cmd = f"cd {req.workdir} && {req.command}" if req.workdir else req.command
+    try:
+        res = session.sandbox.commands.run(run_cmd, timeout=90)
+        stdout, stderr, code = res.stdout, res.stderr, 0
+    except Exception as e:
+        stdout, stderr, code = getattr(e, "stdout", ""), getattr(e, "stderr", str(e)), getattr(e, "exit_code", 1)
+
+    session.add_terminal_log(req.command, stdout, stderr, code)
+    return {"sandbox_id": session.sandbox_id, "command": req.command, "stdout": stdout, "stderr": stderr, "exit_code": code, "duration_ms": int((time.time() - t0) * 1000)}
+
+
+@router.post("/computer/python")
+async def execute_computer_python(req: ComputerPythonRequest):
+    """Save and execute Python code in active mission computer."""
+    session = computer_sessions.get_session(req.thread_id)
+    if not session:
+        session = computer_sessions.get_or_create_session(thread_id=req.thread_id)
+
+    t0 = time.time()
+    filepath = f"/home/user/{req.filename}"
+    session.sandbox.files.write(filepath, req.code)
+
+    try:
+        res = session.sandbox.commands.run(f"python3 {filepath}", timeout=90)
+        stdout, stderr, code = res.stdout, res.stderr, 0
+    except Exception as e:
+        stdout, stderr, code = getattr(e, "stdout", ""), getattr(e, "stderr", str(e)), getattr(e, "exit_code", 1)
+
+    session.add_terminal_log(f"python3 {filepath}", stdout, stderr, code)
+    return {"sandbox_id": session.sandbox_id, "filepath": filepath, "stdout": stdout, "stderr": stderr, "exit_code": code, "duration_ms": int((time.time() - t0) * 1000)}
+
+
+@router.get("/computer/files")
+async def list_computer_files(thread_id: str = "global-mission", path: str = "/home/user"):
+    """List files in computer filesystem."""
+    session = computer_sessions.get_session(thread_id)
+    if not session:
+        session = computer_sessions.get_or_create_session(thread_id=thread_id)
+
+    try:
+        entries = session.sandbox.files.list(path)
+        items = []
+        for f in entries:
+            items.append({"name": f.name, "type": getattr(f, "type", "file"), "path": f"{path.rstrip('/')}/{f.name}"})
+        return {"path": path, "items": items, "sandbox_id": session.sandbox_id}
+    except Exception as e:
+        return {"path": path, "items": [], "error": str(e)}
+
+
+@router.get("/computer/read_file")
+async def read_computer_file(thread_id: str = "global-mission", path: str = ""):
+    """Read file content from computer sandbox."""
+    session = computer_sessions.get_session(thread_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="No active computer session")
+    try:
+        content = session.sandbox.files.read(path)
+        return {"path": path, "content": content, "sandbox_id": session.sandbox_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

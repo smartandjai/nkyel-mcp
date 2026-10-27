@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { type PromptInputMessage } from "@/components/ai-elements/prompt-input";
+import { Button } from "@/components/ui/button";
 import { ArtifactTrigger } from "@/components/workspace/artifacts";
 import { BrowserTrigger } from "@/components/workspace/browser-view";
 import { ContextUsageBadge } from "@/components/workspace/context-usage-badge";
@@ -28,7 +29,8 @@ import {
   SidecarProvider,
   SidecarTrigger,
 } from "@/components/workspace/sidecar";
-import { E2BVisualPanel, E2BModeToggle } from "@/components/workspace/e2b";
+import { NkyelComputerPanel } from "@/components/workspace/computer";
+import { MonitorIcon } from "lucide-react";
 import { ThreadArchiveStatus } from "@/components/workspace/thread-archive-status";
 import { ThreadBackgroundTasks } from "@/components/workspace/thread-background-tasks";
 import { ThreadExtensionActions } from "@/components/workspace/thread-extension-actions";
@@ -115,7 +117,7 @@ export default function ChatPage() {
   // the moment the user submits so the UI animates immediately, even though
   // `isNewThread` stays true until the backend actually creates the thread.
   const [isWelcomeMode, setIsWelcomeMode] = useState(isNewThread);
-  const [isE2BVisualOpen, setIsE2BVisualOpen] = useState(false);
+  const [isComputerOpen, setIsComputerOpen] = useState(false);
   const queryClient = useQueryClient();
   const [settings, setSettings] = useThreadSettings(threadId);
   const modelControl = useModelControl(
@@ -245,8 +247,20 @@ export default function ChatPage() {
   });
 
   const hasThreadMessages = thread.messages.length > 0;
-  // A schedule_task result refreshes the header button and cards at once.
-  useScheduleToolResultRefresh(isMock ? null : threadId, thread.messages);
+
+  // Auto-open visual computer workspace whenever computer actions occur
+  useEffect(() => {
+    const hasComputerAction = thread.messages.some((msg) => {
+      const toolCalls = (msg as any).tool_calls || [];
+      return toolCalls.some((tc: any) => {
+        const name = tc?.function?.name || tc?.name || "";
+        return name.startsWith("computer_") || name.startsWith("browser_") || name.startsWith("desktop_");
+      });
+    });
+    if (hasComputerAction) {
+      setIsComputerOpen(true);
+    }
+  }, [thread.messages]);
 
   useEffect(() => {
     if (
@@ -588,11 +602,12 @@ export default function ChatPage() {
       >
         <ChatBox threadId={threadId} browserEnabled={browserEnabled}>
           <div className="relative flex size-full min-h-0 overflow-hidden">
-            <E2BVisualPanel
-              isOpen={isE2BVisualOpen}
-              onToggle={() => setIsE2BVisualOpen(!isE2BVisualOpen)}
-            />
-            <div className="relative flex flex-1 min-w-0 size-full min-h-0 flex-col justify-between overflow-hidden">
+            <div
+              className={cn(
+                "relative flex flex-col justify-between overflow-hidden min-h-0 transition-all duration-300",
+                isComputerOpen ? "w-full lg:w-[38%] shrink-0 border-r border-border/80" : "flex-1 size-full min-w-0"
+              )}
+            >
               <header
               className={cn(
                 "absolute top-0 right-0 left-0 flex h-12 shrink-0 items-center gap-2 px-2 sm:px-4",
@@ -650,10 +665,25 @@ export default function ChatPage() {
                 ) : (
                   <ContextUsageBadge contextUsage={contextUsage} />
                 )}
-                <E2BModeToggle
-                  isOpen={isE2BVisualOpen}
-                  onToggle={() => setIsE2BVisualOpen(!isE2BVisualOpen)}
-                />
+                <Button
+                  size="sm"
+                  variant={isComputerOpen ? "default" : "outline"}
+                  onClick={() => setIsComputerOpen(!isComputerOpen)}
+                  className={cn(
+                    "h-8 gap-1.5 px-2.5 text-xs font-medium transition-all shadow-xs",
+                    isComputerOpen
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-blue-400"
+                      : "bg-background/80 hover:bg-accent border-border/60 text-foreground"
+                  )}
+                  title="Ouvrir l'Ordinateur Cloud Ñkyel"
+                >
+                  <MonitorIcon className="h-3.5 w-3.5 text-blue-400" />
+                  <span className="font-semibold hidden sm:inline">Ñkyel Computer</span>
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                  </span>
+                </Button>
                 <SidecarTrigger />
                 {browserEnabled && <BrowserTrigger />}
                 <ExportTrigger threadId={threadId} />
@@ -847,6 +877,26 @@ export default function ChatPage() {
               </div>
             </main>
             </div>
+            {/* Desktop right split view */}
+            {isComputerOpen && (
+              <div className="hidden lg:flex flex-1 min-w-0 size-full overflow-hidden">
+                <NkyelComputerPanel
+                  threadId={threadId}
+                  isOpen={isComputerOpen}
+                  onClose={() => setIsComputerOpen(false)}
+                />
+              </div>
+            )}
+            {/* Mobile / Tablet Full-Screen Workspace */}
+            {isComputerOpen && (
+              <div className="lg:hidden fixed inset-0 z-50 bg-background">
+                <NkyelComputerPanel
+                  threadId={threadId}
+                  isOpen={isComputerOpen}
+                  onClose={() => setIsComputerOpen(false)}
+                />
+              </div>
+            )}
           </div>
         </ChatBox>
       </SidecarProvider>
