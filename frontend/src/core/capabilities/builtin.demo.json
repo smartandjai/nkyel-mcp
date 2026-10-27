@@ -235,7 +235,7 @@
     "version": "1",
     "adapter": "guide",
     "auth_methods": ["none", "api_key"],
-    "icon": null,
+    "icon": "/images/plugins/tavily.svg",
     "contributions": ["tools"],
     "config_schema": {
       "type": "object",
@@ -486,7 +486,137 @@
     "version": "1",
     "adapter": "guide",
     "auth_methods": ["none", "api_key"],
-    "icon": null,
+    "icon": "/images/plugins/e2b.svg",
+    "contributions": ["tools"],
+    "config_schema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "gmail",
+    "category": "office",
+    "name": { "en-US": "Gmail", "zh-CN": "Gmail" },
+    "description": {
+      "en-US": "Accès et recherche des courriels professionnels.",
+      "zh-CN": "访问与搜索工作邮件。"
+    },
+    "kind": "mcp",
+    "setup": {
+      "en-US": "Connectez votre compte Google pour autoriser l'accès Gmail.",
+      "zh-CN": "连接 Google 账号以授权 Gmail。"
+    },
+    "aliases": ["gmail", "google-mail", "email"],
+    "schema_version": 1,
+    "version": "1",
+    "adapter": "guide",
+    "auth_methods": ["oauth"],
+    "icon": "/images/plugins/gmail.svg",
+    "contributions": ["tools"],
+    "config_schema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "google-drive",
+    "category": "office",
+    "name": { "en-US": "Google Drive", "zh-CN": "Google Drive" },
+    "description": {
+      "en-US": "Synchronisation et recherche dans les fichiers Google Drive.",
+      "zh-CN": "同步与检索 Google Drive 云端文件。"
+    },
+    "kind": "mcp",
+    "setup": {
+      "en-US": "Connectez votre compte Google pour autoriser l'accès Drive.",
+      "zh-CN": "连接 Google 账号以授权 Drive。"
+    },
+    "aliases": ["google-drive", "drive", "gdrive"],
+    "schema_version": 1,
+    "version": "1",
+    "adapter": "guide",
+    "auth_methods": ["oauth"],
+    "icon": "/images/plugins/google-drive.svg",
+    "contributions": ["tools"],
+    "config_schema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "google-docs",
+    "category": "office",
+    "name": { "en-US": "Google Docs", "zh-CN": "Google Docs" },
+    "description": {
+      "en-US": "Lecture et édition de documents Google Docs.",
+      "zh-CN": "读取与编辑 Google Docs 文档。"
+    },
+    "kind": "mcp",
+    "setup": {
+      "en-US": "Connectez votre compte Google Workspace.",
+      "zh-CN": "连接 Google Workspace。"
+    },
+    "aliases": ["google-docs", "docs"],
+    "schema_version": 1,
+    "version": "1",
+    "adapter": "guide",
+    "auth_methods": ["oauth"],
+    "icon": "/images/plugins/google-docs.svg",
+    "contributions": ["tools"],
+    "config_schema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "google-sheets",
+    "category": "office",
+    "name": { "en-US": "Google Sheets", "zh-CN": "Google Sheets" },
+    "description": {
+      "en-US": "Analyse et manipulation de feuilles de calcul Google Sheets.",
+      "zh-CN": "分析与处理 Google Sheets 电子表格。"
+    },
+    "kind": "mcp",
+    "setup": {
+      "en-US": "Connectez votre compte Google Workspace.",
+      "zh-CN": "连接 Google Workspace。"
+    },
+    "aliases": ["google-sheets", "sheets"],
+    "schema_version": 1,
+    "version": "1",
+    "adapter": "guide",
+    "auth_methods": ["oauth"],
+    "icon": "/images/plugins/google-sheets.svg",
+    "contributions": ["tools"],
+    "config_schema": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    }
+  },
+  {
+    "id": "google-calendar",
+    "category": "office",
+    "name": { "en-US": "Google Calendar", "zh-CN": "Google Calendar" },
+    "description": {
+      "en-US": "Consultation et organisation des événements d'agenda.",
+      "zh-CN": "查看与安排 Google 日历日程。"
+    },
+    "kind": "mcp",
+    "setup": {
+      "en-US": "Connectez votre compte Google Calendar.",
+      "zh-CN": "连接 Google Calendar。"
+    },
+    "aliases": ["google-calendar", "calendar", "agenda"],
+    "schema_version": 1,
+    "version": "1",
+    "adapter": "guide",
+    "auth_methods": ["oauth"],
+    "icon": "/images/plugins/google-calendar.svg",
     "contributions": ["tools"],
     "config_schema": {
       "type": "object",

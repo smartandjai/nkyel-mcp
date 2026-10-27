@@ -1344,15 +1344,31 @@ async def get_current_user_from_request(request: Request):
     """
     state = getattr(request, "state", None)
     state_user = getattr(state, "user", None)
-    from app.gateway.auth_disabled import AUTH_SOURCE_AUTH_DISABLED, AUTH_SOURCE_INTERNAL, AUTH_SOURCE_PAT, AUTH_SOURCE_SESSION
+    from app.gateway.auth_disabled import (
+        AUTH_SOURCE_AUTH_DISABLED,
+        AUTH_SOURCE_CLERK,
+        AUTH_SOURCE_INTERNAL,
+        AUTH_SOURCE_PAT,
+        AUTH_SOURCE_SESSION,
+    )
 
     if state_user is not None and getattr(state, "auth_source", None) in {
         AUTH_SOURCE_SESSION,
         AUTH_SOURCE_AUTH_DISABLED,
         AUTH_SOURCE_INTERNAL,
         AUTH_SOURCE_PAT,
+        AUTH_SOURCE_CLERK,
     }:
         return state_user
+
+    from app.gateway.auth.clerk import authenticate_clerk_request
+
+    clerk_user = await authenticate_clerk_request(request)
+    if clerk_user is not None:
+        if state is not None:
+            state.user = clerk_user
+            state.auth_source = AUTH_SOURCE_CLERK
+        return clerk_user
 
     from app.gateway.auth import decode_token
     from app.gateway.auth.errors import AuthErrorCode, AuthErrorResponse, TokenError, token_error_to_code

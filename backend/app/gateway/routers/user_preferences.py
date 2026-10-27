@@ -18,7 +18,7 @@ class Preferences(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     notification_enabled: bool | None = None
     model_name: Annotated[str, StringConstraints(max_length=200)] | None = None
-    mode: Literal["flash", "thinking", "pro", "ultra"] | None = None
+    mode: Literal["flash", "thinking", "pro", "ultra", "radi", "chui"] | None = None
     # Provider vocabularies differ (issue #5073): accept any effort token so a
     # model-specific default such as ``max`` can be remembered. The UI checks
     # remembered values against the selected model; the factory enforces
@@ -31,8 +31,9 @@ class Preferences(BaseModel):
 
 
 async def _owner(request: Request, expected_user: str) -> str:
+    from app.gateway.auth_disabled import AUTH_SOURCE_CLERK, AUTH_SOURCE_SESSION
     user = await get_current_user_from_request(request)
-    if getattr(request.state, "auth_source", None) != AUTH_SOURCE_SESSION:
+    if getattr(request.state, "auth_source", None) not in {AUTH_SOURCE_SESSION, AUTH_SOURCE_CLERK}:
         raise HTTPException(403, "Preferences require an authenticated browser session")
     owner = str(user.id)
     if owner != expected_user:

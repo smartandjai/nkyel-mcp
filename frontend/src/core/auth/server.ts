@@ -29,6 +29,7 @@ export async function getServerSideUser(): Promise<AuthResult> {
 
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("access_token");
+  const clerkCookie = cookieStore.get("__session");
 
   let internalGatewayUrl: string;
   try {
@@ -37,7 +38,7 @@ export async function getServerSideUser(): Promise<AuthResult> {
     return { tag: "config_error", message: String(err) };
   }
 
-  if (!sessionCookie) {
+  if (!sessionCookie && !clerkCookie) {
     // No session — check whether the system has been initialised yet.
     const setupController = new AbortController();
     const setupTimeout = setTimeout(
@@ -70,8 +71,15 @@ export async function getServerSideUser(): Promise<AuthResult> {
   const timeout = setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT_MS);
 
   try {
+    const cookieHeader = [
+      sessionCookie ? `access_token=${sessionCookie.value}` : null,
+      clerkCookie ? `__session=${clerkCookie.value}` : null,
+    ]
+      .filter(Boolean)
+      .join("; ");
+
     const res = await fetch(`${internalGatewayUrl}/api/v1/auth/me`, {
-      headers: { Cookie: `access_token=${sessionCookie.value}` },
+      headers: { Cookie: cookieHeader },
       cache: "no-store",
       signal: controller.signal,
     });

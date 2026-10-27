@@ -1,5 +1,7 @@
 import "@/styles/globals.css";
 
+import { frFR } from "@clerk/localizations";
+import { ClerkProvider } from "@clerk/nextjs";
 import { type Metadata } from "next";
 
 import { ThemeProvider } from "@/components/theme-provider";
@@ -16,21 +18,22 @@ export const metadata: Metadata = {
   },
 };
 
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang={DEFAULT_LOCALE}
-      suppressContentEditableWarning
-      suppressHydrationWarning
-    >
-      <body>
-        <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
-          <ArtifactDraftsProvider>{children}</ArtifactDraftsProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+    <ClerkProvider localization={frFR}>
+      <html
+        lang={DEFAULT_LOCALE}
+        suppressContentEditableWarning
+        suppressHydrationWarning
+      >
+        <body>
+          <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
+            <ArtifactDraftsProvider>{children}</ArtifactDraftsProvider>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

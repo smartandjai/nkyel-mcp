@@ -49,7 +49,7 @@ export function assertNever(x: never): never {
 }
 
 export function buildLoginUrl(returnPath: string): string {
-  return `/login?next=${encodeURIComponent(returnPath)}`;
+  return `/sign-in?redirect_url=${encodeURIComponent(returnPath)}`;
 }
 
 /**

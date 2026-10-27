@@ -169,9 +169,11 @@ services:
     environment:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
-      - CI=true
       - NKYEL_INTERNAL_GATEWAY_BASE_URL=http://gateway:8001
       - NKYEL_DEV_ALLOWED_ORIGINS=${NKYEL_DEV_ALLOWED_ORIGINS:-127.0.0.1,::1}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_live_Y2xlcmsuc21hcnRhbmRqYWkuY29tJA}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=${NEXT_PUBLIC_CLERK_SIGN_IN_URL:-/sign-in}
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=${NEXT_PUBLIC_CLERK_SIGN_UP_URL:-/sign-up}
     env_file:
       - path: ../frontend/.env
         required: false

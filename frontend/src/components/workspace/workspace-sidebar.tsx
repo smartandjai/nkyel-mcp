@@ -1,5 +1,7 @@
 "use client";
 
+import { UserButton } from "@clerk/nextjs";
+
 import {
   type Sidebar,
   SidebarHeader,
@@ -58,7 +60,19 @@ function WorkspaceSidebarContents() {
           </>
         )}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="gap-2">
+        <div className="flex items-center gap-2 px-1 py-1">
+          <UserButton
+            showName={isSidebarOpen}
+            appearance={{
+              elements: {
+                userButtonAvatarBox: "size-7",
+                userButtonOuterIdentifier: "text-xs font-medium text-foreground truncate max-w-36",
+                userButtonPopoverCard: "border border-border/60 bg-card/95 backdrop-blur-xl shadow-xl",
+              },
+            }}
+          />
+        </div>
         <WorkspaceNavMenu />
       </SidebarFooter>
       {!isMobile && <SidebarRail />}

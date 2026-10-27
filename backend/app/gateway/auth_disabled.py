@@ -16,6 +16,7 @@ AUTH_SOURCE_SESSION = "session"
 AUTH_SOURCE_INTERNAL = "internal"
 AUTH_SOURCE_PAT = "pat"
 AUTH_SOURCE_AUTH_DISABLED = "auth_disabled"
+AUTH_SOURCE_CLERK = "clerk"
 
 _PRODUCTION_ENV_VARS: tuple[str, ...] = ("NKYEL_ENV", "ENVIRONMENT")
 _PRODUCTION_ENV_VALUES: frozenset[str] = frozenset({"prod", "production"})

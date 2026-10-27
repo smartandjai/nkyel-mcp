@@ -61,7 +61,9 @@ def mutation_session_factory(url: str, *, postgres_schema: str = ""):
         from nkyel.persistence.postgres_schema import build_psycopg_options
 
         options = build_psycopg_options(validate_postgres_schema(postgres_schema)) or ""
-        args = {"connect_timeout": 5, "options": f"{options} -c lock_timeout=5000 -c statement_timeout=30000 -c synchronous_commit=on".strip()}
+        args = {"connect_timeout": 5}
+        if options:
+            args["options"] = options
     else:
         raise HostCapabilityError("UNSUPPORTED_TOPOLOGY")
     engine = create_engine(url, connect_args=args, pool_size=4, max_overflow=0, pool_timeout=5, pool_pre_ping=True)

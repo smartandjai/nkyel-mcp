@@ -42,7 +42,9 @@ def require_unenrolled(storage, *, global_scope: bool = False) -> None:
             from nkyel.persistence.postgres_schema import build_psycopg_options
 
             options = build_psycopg_options(database.postgres_schema) or ""
-            args = {"connect_timeout": 5, "options": f"{options} -c lock_timeout=5000 -c statement_timeout=5000".strip()}
+            args = {"connect_timeout": 5}
+            if options:
+                args["options"] = options
         # A short-lived connection has no process-wide SDK teardown requirement
         # and cannot retain an enrollment snapshot across later skill calls.
         engine = create_engine(url, connect_args=args, poolclass=NullPool)

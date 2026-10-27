@@ -1,5 +1,6 @@
 "use client";
 
+import { useClerk, useUser } from "@clerk/nextjs";
 import { useRouter, usePathname } from "next/navigation";
 import React, {
   createContext,
@@ -56,31 +57,25 @@ interface AuthProviderProps {
   initialAuthUnknown?: boolean;
 }
 
-/**
- * AuthProvider - Unified authentication context for the application
- *
- * Per RFC-001:
- * - Only holds display information (user), never JWT or tokens
- * - initialUser comes from server-side guard, avoiding client flicker
- * - Provides logout and refresh capabilities
- */
 export function AuthProvider({
   children,
   initialUser,
   initialAuthUnknown = false,
 }: AuthProviderProps) {
+  const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
+  const { signOut } = useClerk();
+
   const [user, setUser] = useState<User | null>(initialUser);
   const [authKnown, setAuthKnown] = useState(!initialAuthUnknown);
   const authQueryScope = authKnown ? (user?.id ?? null) : undefined;
   useArtifactDraftOwner(authQueryScope);
   const [isLoading, setIsLoading] = useState(false);
-  // Logout and externally confirmed users supersede pending auth refreshes.
   const authRequestRef = React.useRef(0);
   const router = useRouter();
   const pathname = usePathname();
   const staticMode = isStaticWebsiteOnly();
 
-  const isAuthenticated = user !== null;
+  const isAuthenticated = user !== null || !!clerkUser;
 
   /**
    * Apply a user value supplied by a caller (e.g. banner probe) that has
@@ -143,51 +138,51 @@ export function AuthProvider({
     }
   }, [staticMode, pathname, router]);
 
+  useEffect(() => {
+    if (clerkLoaded && clerkUser) {
+      const email =
+        clerkUser.primaryEmailAddress?.emailAddress ??
+        `${clerkUser.id}@clerk.smartandjai.com`;
+      const fallbackUser: User = {
+        id: clerkUser.id,
+        email,
+        system_role: "user",
+        needs_setup: false,
+      };
+      setUser((current) => current ?? fallbackUser);
+      setAuthKnown(true);
+      void refreshUser();
+    }
+  }, [clerkLoaded, clerkUser, refreshUser]);
+
   /**
-   * Logout - call FastAPI logout endpoint and clear local state
-   * Per RFC-001: Immediately clear local state, don't wait for server confirmation
-   *
-   * When the gateway is unreachable the fetch silently fails — the SPA
-   * router.push("/") would leave the user on "/" still holding stale
-   * React state and any in-flight SSE / fetch / query subscriptions.
-   * We therefore fall back to a hard navigation (window.location.href),
-   * which discards all client state the same way the legacy form-POST
-   * logout used to.
+   * Logout - call Clerk signOut and FastAPI logout endpoint
    */
   const logout = useCallback(async () => {
-    // Immediately clear local state to prevent UI flicker
     authRequestRef.current++;
     setUser(null);
     setAuthKnown(true);
     setIsLoading(false);
 
-    if (staticMode) {
-      router.push("/");
-      return;
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("Clerk signOut error:", err);
     }
 
-    let logoutFailed = false;
     try {
-      const res = await fetch("/api/v1/auth/logout", {
+      await fetch("/api/v1/auth/logout", {
         method: "POST",
         credentials: "include",
       });
-      if (!res.ok) logoutFailed = true;
-    } catch (err) {
-      console.error("Logout request failed:", err);
-      logoutFailed = true;
+    } catch {
+      // Ignore network errors on logout
     }
 
-    if (logoutFailed && typeof window !== "undefined") {
-      // Hard navigation ensures every in-flight subscription is torn down,
-      // matching the legacy form-POST logout behaviour during a gateway outage.
-      window.location.href = "/";
-      return;
+    if (typeof window !== "undefined") {
+      window.location.href = "/sign-in";
     }
-
-    // Redirect to home page
-    router.push("/");
-  }, [staticMode, router]);
+  }, [signOut]);
 
   /**
    * Handle visibility change - refresh user when tab becomes visible again.

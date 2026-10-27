@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%">
+  <defs>
+    <linearGradient id="tavily-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#tavily-grad)"/>
+  <circle cx="128" cy="128" r="32" fill="#FFFFFF"/>
+  <circle cx="72" cy="100" r="16" fill="#FFFFFF" opacity="0.85"/>
+  <circle cx="184" cy="100" r="16" fill="#FFFFFF" opacity="0.85"/>
+  <circle cx="128" cy="192" r="16" fill="#FFFFFF" opacity="0.85"/>
+  <line x1="128" y1="128" x2="72" y2="100" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="128" y1="128" x2="184" y2="100" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+  <line x1="128" y1="128" x2="128" y2="192" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round"/>
+</svg>
