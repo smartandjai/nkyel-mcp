@@ -59,6 +59,9 @@ def should_check_csrf(request: Request) -> bool:
     # (e.g. GitHub's X-Hub-Signature-256), not the CSRF double-submit cookie.
     if route_path.startswith("/api/webhooks/"):
         return False
+    # Ñkyel MCP and E2B visual studio endpoints
+    if route_path.startswith("/api/nkyel/"):
+        return False
     return True
 
 
