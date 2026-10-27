@@ -9,15 +9,14 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Annotated, Any
+from typing import Any
 
-from langchain.tools import InjectedToolCallId, tool
+from langchain.tools import ToolRuntime, tool
 from langchain_core.tools import BaseTool, ToolException
 
 from nkyel.mcp.composio.client import ComposioClient
 from nkyel.runtime.user_context import resolve_runtime_user_id
 from nkyel.tools.sync import make_sync_tool_wrapper
-from nkyel.tools.types import Runtime
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +36,8 @@ def get_composio_client() -> ComposioClient:
 
 @tool("composio_check_connection")
 def composio_check_connection_tool(
+    runtime: ToolRuntime,
     toolkit: str,
-    runtime: Runtime | None = None,
-    tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> dict[str, Any]:
     """Check if the user has an active, authorized connection for an external application.
 
@@ -84,9 +82,8 @@ def composio_check_connection_tool(
 
 @tool("composio_connect_app")
 def composio_connect_app_tool(
+    runtime: ToolRuntime,
     toolkit: str,
-    runtime: Runtime | None = None,
-    tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> dict[str, Any]:
     """Request user authorization to connect an external app (e.g. 'gmail', 'google_drive').
 
@@ -122,9 +119,8 @@ def composio_connect_app_tool(
 
 @tool("composio_disconnect_app")
 def composio_disconnect_app_tool(
+    runtime: ToolRuntime,
     toolkit: str,
-    runtime: Runtime | None = None,
-    tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> dict[str, Any]:
     """Disconnect and revoke access to an external application.
 

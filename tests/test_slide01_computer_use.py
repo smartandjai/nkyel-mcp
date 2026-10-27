@@ -162,7 +162,8 @@ def test_computer_tools_execution_with_mock_sandbox():
     status_res = _call_tool(computer_status, runtime=mock_runtime)
     assert status_res["status"] == "live"
     assert status_res["sandbox_id"] == "mock_sbx_999"
-    assert "stream_url" in status_res
+    assert "stream_url" not in status_res
+    assert session.stream_url.startswith("https://")
 
     # 2. Test computer_shell
     shell_res = _call_tool(computer_shell, runtime=mock_runtime, command="echo 'Hello'")
@@ -205,12 +206,22 @@ def test_computer_tools_execution_with_mock_sandbox():
 
 
 def test_computer_tools_callable_by_deerflow_via_tool_call():
-    """Test G: Verify Computer tools are genuinely callable by DeerFlow tool invocation.
+    """Test G: Verify Computer tools are genuinely callable by DeerFlow ToolNode.
 
-    DeerFlow passes LLM tool calls formatted as:
-    {'name': <tool_name>, 'args': {<params>}, 'id': <call_id>, 'type': 'tool_call'}
-    This verifies that tools execute without Pydantic 'runtime: Field required' errors.
+    DeerFlow runs ToolNode, which injects ToolRuntime into tools.
+    This verifies that tools execute through a real graph and ToolNode without Pydantic schema errors.
     """
+    import asyncio
+    from typing import Annotated
+
+    from langchain_core.messages import AIMessage, BaseMessage
+    from langgraph.graph import END, START, StateGraph
+    from langgraph.prebuilt import ToolNode
+    from typing_extensions import TypedDict
+
+    class AgentState(TypedDict):
+        messages: Annotated[list[BaseMessage], lambda a, b: a + b]
+
     manager = NkyelComputerSessionManager.get_instance()
     mock_sandbox = MagicMock()
     mock_cmd_res = MagicMock(exit_code=0, stdout="test-ok", stderr="")
@@ -221,7 +232,7 @@ def test_computer_tools_callable_by_deerflow_via_tool_call():
 
     session = ComputerSession(
         user_id="test",
-        thread_id="global-mission",
+        thread_id="test_thread_node",
         run_id="run_1",
         sandbox_id="sbx_test",
         stream_url="https://6080-sbx_test.e2b.app/vnc.html?autoconnect=true&resize=scale&password=pw",
@@ -229,58 +240,77 @@ def test_computer_tools_callable_by_deerflow_via_tool_call():
         status="LIVE",
         sandbox=mock_sandbox,
     )
-    manager._sessions["global-mission"] = session
+    manager._sessions["test_thread_node"] = session
 
-    # Test status tool call
-    res_status = computer_status.invoke(
-        {
-            "name": "computer_status",
-            "args": {},
-            "id": "call_status_1",
-            "type": "tool_call",
-        }
+    node = ToolNode(
+        [computer_status, computer_shell, computer_write_file, computer_read_file]
     )
-    data_status = json.loads(res_status.content)
-    assert data_status["success"] is True
-    assert data_status["sandbox_id"] == "sbx_test"
+    builder = StateGraph(AgentState, context_schema=dict)
+    builder.add_node("tools", node)
+    builder.add_edge(START, "tools")
+    builder.add_edge("tools", END)
+    graph = builder.compile()
 
-    # Test shell tool call
-    res_shell = computer_shell.invoke(
-        {
-            "name": "computer_shell",
-            "args": {"command": "echo 'DeerFlow'"},
-            "id": "call_shell_1",
-            "type": "tool_call",
-        }
-    )
-    data_shell = json.loads(res_shell.content)
-    assert data_shell["success"] is True
-    assert data_shell["command"] == "echo 'DeerFlow'"
+    async def _test():
+        res = await graph.ainvoke(
+            {
+                "messages": [
+                    AIMessage(
+                        content="",
+                        tool_calls=[
+                            {
+                                "name": "computer_status",
+                                "args": {},
+                                "id": "call_status_1",
+                                "type": "tool_call",
+                            },
+                            {
+                                "name": "computer_shell",
+                                "args": {"command": "echo 'DeerFlow'"},
+                                "id": "call_shell_1",
+                                "type": "tool_call",
+                            },
+                            {
+                                "name": "computer_write_file",
+                                "args": {
+                                    "path": "/home/user/test.txt",
+                                    "content": "DeerFlow Test",
+                                },
+                                "id": "call_write_1",
+                                "type": "tool_call",
+                            },
+                            {
+                                "name": "computer_read_file",
+                                "args": {"path": "/home/user/test.txt"},
+                                "id": "call_read_1",
+                                "type": "tool_call",
+                            },
+                        ],
+                    )
+                ]
+            },
+            context={"thread_id": "test_thread_node", "user_id": "test"},
+        )
+        tool_messages = [m for m in res["messages"] if hasattr(m, "tool_call_id")]
+        assert len(tool_messages) == 4
+        data_status = json.loads(tool_messages[0].content)
+        assert data_status["success"] is True
+        assert data_status["sandbox_id"] == "sbx_test"
+        assert "stream_url" not in data_status
+        assert "screenshot_base64" not in data_status
 
-    # Test write_file tool call
-    res_write = computer_write_file.invoke(
-        {
-            "name": "computer_write_file",
-            "args": {"path": "/home/user/test.txt", "content": "DeerFlow Test"},
-            "id": "call_write_1",
-            "type": "tool_call",
-        }
-    )
-    data_write = json.loads(res_write.content)
-    assert data_write["success"] is True
+        data_shell = json.loads(tool_messages[1].content)
+        assert data_shell["success"] is True
+        assert data_shell["command"] == "echo 'DeerFlow'"
 
-    # Test read_file tool call
-    res_read = computer_read_file.invoke(
-        {
-            "name": "computer_read_file",
-            "args": {"path": "/home/user/test.txt"},
-            "id": "call_read_1",
-            "type": "tool_call",
-        }
-    )
-    data_read = json.loads(res_read.content)
-    assert data_read["success"] is True
-    assert data_read["content"] == "content"
+        data_write = json.loads(tool_messages[2].content)
+        assert data_write["success"] is True
+
+        data_read = json.loads(tool_messages[3].content)
+        assert data_read["success"] is True
+        assert "content" in data_read
+
+    asyncio.run(_test())
 
 
 @pytest.mark.skipif(
@@ -385,9 +415,16 @@ def test_live_e2b_browser_mission_acceptance():
         )
         assert res_start["success"] is True
         assert res_start["sandbox_id"]
-        assert res_start["stream_url"].startswith("https://")
-        assert "screenshot_base64" in res_start
-        assert len(res_start["screenshot_base64"]) > 5000
+        # Secure contract: stream_url and base64 screenshot are not leaked in LLM response
+        assert "stream_url" not in res_start
+        assert "screenshot_base64" not in res_start
+
+        from nkyel.sandbox.computer_session_manager import computer_sessions
+
+        active_session = computer_sessions.get_session("test-live-mission-acceptance")
+        assert active_session is not None
+        assert active_session.stream_url.startswith("https://")
+        assert len(active_session.last_screenshot_b64) > 5000
 
         # Step 2: Click on page
         assert isinstance(browser_click_tool, StructuredTool)
@@ -417,7 +454,8 @@ def test_live_e2b_browser_mission_acceptance():
         assert browser_screenshot_tool.func is not None
         res_shot = browser_screenshot_tool.func(runtime=test_runtime)
         assert res_shot["success"] is True
-        assert len(res_shot["screenshot_base64"]) > 5000
+        assert "screenshot_base64" not in res_shot
+        assert len(active_session.last_screenshot_b64) > 5000
 
     finally:
         # Step 6: Clean shutdown
