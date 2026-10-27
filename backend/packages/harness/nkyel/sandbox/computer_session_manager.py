@@ -39,6 +39,7 @@ class ComputerSession:
     provider: str = "e2b_desktop"
     status: str = "STARTING"  # STARTING, LIVE, AGENT_CONTROLLING, USER_CONTROLLING, PAUSED, CLOSED, FAILED
     stream_url: str = ""
+    auth_key: str = ""
     current_url: str = ""
     page_title: str = ""
     current_app: str = "Desktop"
@@ -127,15 +128,26 @@ class NkyelComputerSessionManager:
             sandbox = Sandbox.create(api_key=api_key, timeout=timeout)
             sandbox_id = sandbox.sandbox_id
 
-            # Start VNC stream immediately so the authenticated live URL is available
+            # Start VNC stream immediately with supported authenticated access
             stream_url = ""
+            auth_key = ""
             try:
-                sandbox.stream.start()
-                stream_url = sandbox.stream.get_url(auto_connect=True, view_only=False, resize="scale")
+                # Try starting with authenticated access
+                sandbox.stream.start(require_auth=True)
+                try:
+                    auth_key = sandbox.stream.get_auth_key()
+                    stream_url = sandbox.stream.get_url(auto_connect=True, view_only=False, resize="scale", auth_key=auth_key)
+                except Exception:
+                    stream_url = sandbox.stream.get_url(auto_connect=True, view_only=False, resize="scale")
                 logger.info(f"VNC Stream started for sandbox {sandbox_id}: {stream_url}")
             except Exception as stream_err:
-                logger.warning(f"Could not start VNC stream: {stream_err}")
-                stream_url = f"https://{sandbox_id}.{getattr(sandbox, 'sandbox_domain', 'e2b.app')}"
+                logger.warning(f"Could not start authenticated VNC stream, trying without auth: {stream_err}")
+                try:
+                    sandbox.stream.start(require_auth=False)
+                    stream_url = sandbox.stream.get_url(auto_connect=True, view_only=False, resize="scale")
+                except Exception as stream_err2:
+                    logger.warning(f"Could not start VNC stream: {stream_err2}")
+                    stream_url = f"https://6080-{sandbox_id}.{getattr(sandbox, 'sandbox_domain', 'e2b.app')}/vnc.html?autoconnect=true&resize=scale"
 
             session = ComputerSession(
                 user_id=user_id,
@@ -145,6 +157,7 @@ class NkyelComputerSessionManager:
                 sandbox=sandbox,
                 status="LIVE",
                 stream_url=stream_url,
+                auth_key=auth_key,
                 current_url=initial_url,
                 current_app="Chrome Browser",
             )

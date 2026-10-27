@@ -44,6 +44,7 @@ def _format_result(action: str, success: bool, session: ComputerSession, tool_ca
         "page_title": session.page_title,
         "current_app": session.current_app,
         "stream_url": session.stream_url,
+        "auth_key": getattr(session, "auth_key", ""),
         "duration_sec": round(duration, 3),
         **kwargs,
     }
@@ -54,7 +55,7 @@ def _format_result(action: str, success: bool, session: ComputerSession, tool_ca
 
 
 @tool("computer_start")
-def computer_start_tool(runtime: Runtime, initial_url: str = "https://example.com", tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def computer_start_tool(initial_url: str = "https://example.com", runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Start or attach to the active Ñkyel Cloud Computer (E2B Desktop).
 
     Use this when beginning a mission requiring a live graphical computer,
@@ -82,7 +83,7 @@ def computer_start_tool(runtime: Runtime, initial_url: str = "https://example.co
 
 
 @tool("computer_status")
-def computer_status_tool(runtime: Runtime, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def computer_status_tool(runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Check the health, current URL, active application and stream URL of the computer."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -90,7 +91,7 @@ def computer_status_tool(runtime: Runtime, tool_call_id: Annotated[str, Injected
 
 
 @tool("computer_stop")
-def computer_stop_tool(runtime: Runtime, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def computer_stop_tool(runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Close and terminate the cloud computer when the mission is completed."""
     t0 = time.time()
     tid = getattr(runtime, "thread_id", None) or "global-mission"
@@ -105,7 +106,7 @@ def computer_stop_tool(runtime: Runtime, tool_call_id: Annotated[str, InjectedTo
 
 
 @tool("browser_open")
-def browser_open_tool(runtime: Runtime, url: str, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def browser_open_tool(url: str, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Navigate visible Google Chrome to a web URL inside the cloud computer.
 
     The user watches Chrome visibly load the webpage on the live desktop stream.
@@ -138,7 +139,7 @@ def browser_open_tool(runtime: Runtime, url: str, tool_call_id: Annotated[str, I
 
 
 @tool("browser_click")
-def browser_click_tool(runtime: Runtime, x: int | None = None, y: int | None = None, button: str = "left", tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def browser_click_tool(x: int | None = None, y: int | None = None, button: str = "left", runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Click on the web page at screen coordinates (x, y).
 
     Args:
@@ -169,7 +170,7 @@ def browser_click_tool(runtime: Runtime, x: int | None = None, y: int | None = N
 
 
 @tool("browser_type")
-def browser_type_tool(runtime: Runtime, text: str, press_enter: bool = False, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def browser_type_tool(text: str, press_enter: bool = False, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Type keyboard text into the focused browser input field.
 
     Args:
@@ -192,7 +193,7 @@ def browser_type_tool(runtime: Runtime, text: str, press_enter: bool = False, to
 
 
 @tool("browser_scroll")
-def browser_scroll_tool(runtime: Runtime, direction: str = "down", amount: int = 3, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def browser_scroll_tool(direction: str = "down", amount: int = 3, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Scroll the active web page up or down.
 
     Args:
@@ -214,7 +215,7 @@ def browser_scroll_tool(runtime: Runtime, direction: str = "down", amount: int =
 
 
 @tool("browser_read")
-def browser_read_tool(runtime: Runtime, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def browser_read_tool(runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Read visible content, text, and active URL from the current browser session."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -229,7 +230,7 @@ def browser_read_tool(runtime: Runtime, tool_call_id: Annotated[str, InjectedToo
 
 
 @tool("browser_screenshot")
-def browser_screenshot_tool(runtime: Runtime, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def browser_screenshot_tool(runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Capture an instant high-resolution screenshot of the browser desktop."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -240,7 +241,7 @@ def browser_screenshot_tool(runtime: Runtime, tool_call_id: Annotated[str, Injec
 
 
 @tool("browser_back")
-def browser_back_tool(runtime: Runtime, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def browser_back_tool(runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Navigate backward in browser history using Alt+Left."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -253,7 +254,7 @@ def browser_back_tool(runtime: Runtime, tool_call_id: Annotated[str, InjectedToo
 
 
 @tool("browser_wait")
-def browser_wait_tool(runtime: Runtime, seconds: int = 2, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def browser_wait_tool(seconds: int = 2, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Wait for page elements or async content to finish loading."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -268,7 +269,7 @@ def browser_wait_tool(runtime: Runtime, seconds: int = 2, tool_call_id: Annotate
 
 
 @tool("desktop_observe")
-def desktop_observe_tool(runtime: Runtime, instruction: str = "Analyze screen and recommend next action", tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def desktop_observe_tool(instruction: str = "Analyze screen and recommend next action", runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Capture screen and invoke DeepSeek Vision model to analyze visible elements.
 
     Args:
@@ -289,7 +290,7 @@ def desktop_observe_tool(runtime: Runtime, instruction: str = "Analyze screen an
 
 
 @tool("desktop_click")
-def desktop_click_tool(runtime: Runtime, x: int, y: int, button: str = "left", tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def desktop_click_tool(x: int, y: int, button: str = "left", runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Move cursor to coordinate (x, y) on the graphical desktop and click."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -308,7 +309,7 @@ def desktop_click_tool(runtime: Runtime, x: int, y: int, button: str = "left", t
 
 
 @tool("desktop_type")
-def desktop_type_tool(runtime: Runtime, text: str, press_enter: bool = False, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def desktop_type_tool(text: str, press_enter: bool = False, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Type text into active desktop window."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -321,7 +322,7 @@ def desktop_type_tool(runtime: Runtime, text: str, press_enter: bool = False, to
 
 
 @tool("desktop_keypress")
-def desktop_keypress_tool(runtime: Runtime, key: str, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def desktop_keypress_tool(key: str, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Press keyboard key or key combination (e.g. 'Enter', 'Escape', 'ctrl+c')."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -331,7 +332,7 @@ def desktop_keypress_tool(runtime: Runtime, key: str, tool_call_id: Annotated[st
 
 
 @tool("desktop_launch")
-def desktop_launch_tool(runtime: Runtime, app_name: str, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def desktop_launch_tool(app_name: str, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Launch an application on the graphical desktop (e.g. 'google-chrome', 'xfce4-terminal')."""
     t0 = time.time()
     session = _resolve_session(runtime)
@@ -348,7 +349,7 @@ def desktop_launch_tool(runtime: Runtime, app_name: str, tool_call_id: Annotated
 
 
 @tool("computer_shell")
-def computer_shell_tool(runtime: Runtime, command: str, workdir: str | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def computer_shell_tool(command: str, workdir: str | None = None, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Execute a bash shell command inside the SAME cloud computer sandbox.
 
     All outputs, environment changes, and files reside on the same machine the user watches.
@@ -380,7 +381,7 @@ def computer_shell_tool(runtime: Runtime, command: str, workdir: str | None = No
 
 
 @tool("computer_python")
-def computer_python_tool(runtime: Runtime, code: str, filename: str = "script.py", tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def computer_python_tool(code: str, filename: str = "script.py", runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Write and execute Python code in the active cloud computer sandbox.
 
     Saves the script to /home/user/{filename} and executes it with Python 3.
@@ -418,7 +419,7 @@ def computer_python_tool(runtime: Runtime, code: str, filename: str = "script.py
 
 
 @tool("computer_write_file")
-def computer_write_file_tool(runtime: Runtime, path: str, content: str, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def computer_write_file_tool(path: str, content: str, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Write text data to a file inside the cloud computer.
 
     Args:
@@ -433,7 +434,7 @@ def computer_write_file_tool(runtime: Runtime, path: str, content: str, tool_cal
 
 
 @tool("computer_read_file")
-def computer_read_file_tool(runtime: Runtime, path: str, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def computer_read_file_tool(path: str, runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """Read file content from the cloud computer filesystem.
 
     Args:
@@ -449,7 +450,7 @@ def computer_read_file_tool(runtime: Runtime, path: str, tool_call_id: Annotated
 
 
 @tool("computer_list_files")
-def computer_list_files_tool(runtime: Runtime, path: str = "/home/user", tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
+def computer_list_files_tool(path: str = "/home/user", runtime: Runtime | None = None, tool_call_id: Annotated[str, InjectedToolCallId] = "") -> dict[str, Any]:
     """List directory contents and files in the cloud computer."""
     t0 = time.time()
     session = _resolve_session(runtime)
