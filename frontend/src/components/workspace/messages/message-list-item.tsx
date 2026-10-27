@@ -76,6 +76,7 @@ import {
   MessageArtifactPathsContext,
 } from "./markdown-link";
 import { MessageReasoning } from "./message-reasoning";
+import { NkyelArtifactActions } from "@/components/workspace/research/NkyelArtifactActions";
 
 function FeedbackButtons({
   threadId,
@@ -664,6 +665,9 @@ function MessageContent_({
       </MessageArtifactPathsContext.Provider>
       <CitationSourcesPanel sources={citationSources} />
       <KnowledgeSourcesPanel content={contentToDisplay} />
+      {message.type === "ai" && contentToDisplay && !isLoading && (
+        <NkyelArtifactActions content={contentToDisplay} />
+      )}
       {message.type === "ai" && showWorkspaceChanges && (
         <WorkspaceChangeBadge
           threadId={threadId}

@@ -40,6 +40,8 @@ import { formatTokenCount } from "@/core/messages/usage";
 import type { TokenDebugStep } from "@/core/messages/usage-model";
 import { NkyelToolActivityCard } from "@/components/workspace/research/NkyelToolActivityCard";
 import { NkyelSourceCard, type NkyelSourceItem } from "@/components/workspace/research/NkyelSourceCard";
+import { NkyelResearchHeader } from "@/components/workspace/research/NkyelResearchHeader";
+import { NkyelAgentTimeline, type NkyelTimelineStep } from "@/components/workspace/research/NkyelAgentTimeline";
 import {
   extractContentFromMessage,
   extractReasoningContentFromMessage,
@@ -193,6 +195,88 @@ function MessageGroupComponent({
     () => new Set<CoTStep>(belowLastReasoningAssistantTextSteps),
     [belowLastReasoningAssistantTextSteps],
   );
+
+  const hasResearchTools = useMemo(() => {
+    return steps.some((step) => {
+      if (step.type !== "toolCall") return false;
+      const kind = getToolCallKind(step.name);
+      return (
+        kind === "web_search" ||
+        kind === "web_fetch" ||
+        step.name.includes("tavily") ||
+        step.name.includes("research") ||
+        step.name.includes("search")
+      );
+    });
+  }, [steps]);
+
+  const detectedSourcesCount = useMemo(() => {
+    let count = 0;
+    for (const step of steps) {
+      if (step.type === "toolCall" && step.result) {
+        const results =
+          (step.result as { results?: unknown[] })?.results ??
+          (Array.isArray(step.result) ? step.result : []);
+        if (Array.isArray(results)) {
+          count += results.length;
+        }
+      }
+    }
+    return count;
+  }, [steps]);
+
+  const firstQuery = useMemo(() => {
+    for (const step of steps) {
+      if (step.type === "toolCall" && step.args) {
+        const q = (step.args as { query?: string })?.query;
+        if (q && typeof q === "string") return q;
+      }
+    }
+    return undefined;
+  }, [steps]);
+
+  const timelineSteps = useMemo<NkyelTimelineStep[]>(() => {
+    const items: NkyelTimelineStep[] = [];
+    const hasReasoning = steps.some((s) => s.type === "reasoning");
+    items.push({
+      id: "planning",
+      title: "Cadrage & Stratégie AG-UI",
+      description: "Analyse de la demande et formulation du plan d'investigation",
+      status:
+        hasReasoning && isLoading && !lastToolCallStep ? "running" : "completed",
+    });
+
+    const searchCalls = steps.filter(
+      (s): s is CoTToolCallStep =>
+        s.type === "toolCall" &&
+        (getToolCallKind(s.name) === "web_search" ||
+          s.name.includes("tavily") ||
+          s.name.includes("search")),
+    );
+    if (searchCalls.length > 0) {
+      const isSearching = isLoading && searchCalls.some((c) => !c.result);
+      items.push({
+        id: "search",
+        title: "Recherche Web Souveraine (Tavily API)",
+        description: `${searchCalls.length} requête(s) exécutée(s) — extraction et vérification de sources`,
+        status: isSearching ? "running" : "completed",
+      });
+    }
+
+    const hasAssistantText = steps.some((s) => s.type === "assistantText");
+    if (hasAssistantText || (!isLoading && hasResearchTools)) {
+      items.push({
+        id: "synthesis",
+        title: "Synthèse Documentée & Validation",
+        description:
+          "Recoupement critique des sources et rédaction de la réponse finale",
+        status: isLoading ? "running" : "completed",
+      });
+    }
+
+    return items;
+  }, [steps, isLoading, lastToolCallStep, hasResearchTools]);
+
   const firstEligibleDebugSummaryStepIndexByMessageId = useMemo(() => {
     const firstIndices = new Map<string, number>();
 
@@ -516,7 +600,17 @@ function MessageGroupComponent({
   );
 
   return (
-    <>
+    <div className="w-full space-y-3">
+      {hasResearchTools && (
+        <NkyelResearchHeader
+          query={firstQuery}
+          status={isLoading ? "running" : "completed"}
+          sourceCount={detectedSourcesCount}
+        />
+      )}
+      {hasResearchTools && timelineSteps.length > 0 && (
+        <NkyelAgentTimeline steps={timelineSteps} />
+      )}
       {processingPanel}
       {clarificationTextSteps.map((step) => (
         <div key={step.id} className="w-full">
@@ -527,7 +621,7 @@ function MessageGroupComponent({
           />
         </div>
       ))}
-    </>
+    </div>
   );
 }
 

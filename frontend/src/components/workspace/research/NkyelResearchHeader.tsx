@@ -74,6 +74,14 @@ export function NkyelResearchHeader({
             {modeLabel}
           </Badge>
 
+          <Badge
+            variant="outline"
+            className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold uppercase tracking-wider gap-1.5"
+          >
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            AG-UI
+          </Badge>
+
           {isRunning ? (
             <Badge className="gap-1 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-medium">
               <Loader2Icon className="size-3 animate-spin" />
